@@ -11,4 +11,3 @@ include_directories("include")
 include_directories("../firmware/include")
 
 add_executable(emu_flap main.c ../firmware/chain_comm.c)
-add_executable(bm bit_magic.c)

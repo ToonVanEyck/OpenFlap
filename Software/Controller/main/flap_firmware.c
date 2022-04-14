@@ -25,7 +25,7 @@ void flap_controller_firmware_update(char *data,size_t data_len,size_t data_offs
 {
     static const esp_partition_t *update_partition;
     static esp_ota_handle_t update_handle;
-    error_t err;
+    esp_err_t err;
     if(data_offset == 0){
         ESP_LOGI(TAG, "STARTING OTA UPDATE!");
         update_handle = 0;

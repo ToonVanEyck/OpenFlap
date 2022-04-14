@@ -9,6 +9,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "flap_mdns.h"
 
 void flap_wifi_init_apsta(char* sta_ssid, char*  sta_pwd, char* ap_ssid, char*  ap_pwd);

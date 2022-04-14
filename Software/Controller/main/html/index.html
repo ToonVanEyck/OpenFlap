@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flap Controller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+</head>
+<body>
+    <div class="header">
+        <h1 class="header__title">Open Flap Controller</h1>
+    </div>
+    
+    <div class="content">
+        <div class="card card--12_12_width">
+            <div class="card__title">Display</div>
+            <div class="display" id="display"></div>
+            <div class="card__row">
+                <input type="button" class="card__button" value="Clear Preview" onclick="clear_flaps()">
+                <input type="button" class="card__button" value="Read Flaps" onclick="get_display_message()"/>
+                <input type="button" class="card__button" value="Write Flaps" onclick="set_display_message()"/>
+            </div>
+        </div>
+        <div class="card card--6_12_width">
+            <div class="card__title">Transition Effects (not implemented)</div>
+            <div class="card__row">
+                <select class="card__dropdown">
+                    <option value="1">Instant</option>
+                    <option value="2">Rotate All</option>
+                    <option value="3">Wave</option>
+                    <option value="4">Matrix</option>
+                    <option value="5">Random</option>
+                </select>
+            </div>
+        </div>
+        <div class="card card--6_12_width">
+            <div class="card__title">Advanced Settings</div>
+            <div class="card__row">
+                <input type="button" class="card__button" value="Set Offset" onclick="set_display_offset()"/>
+            </div>
+            Character Set:
+            <div class="card__charset" id="charset">
+                <div class="card__charset">
+                    <div class="charset__subset" id="subset_0">
+                    </div>
+                    <div class="charset__subset" id="subset_1">
+                    </div>
+                </div>
+                <div class="card__charset">
+                    <div class="charset__subset" id="subset_2">
+                    </div>
+                    <div class="charset__subset" id="subset_3"> 
+                    </div>
+                </div>
+            </div>
+            <div class="card__row">
+                <input type="button" class="card__button" value="Write Charset" onclick="set_display_charset()"/>
+            </div>
+        </div>
+        <div class="card card--6_12_width">
+            <div class="card__title">Flap Controller Firmware</div>
+            <form action="/" enctype="multipart/form-data" method="post">
+                <div class="card__fileupload">
+                    <input class="fileupload__path" id="c_fota_p" placeholder="Choose File" disabled="disabled" id="c_fota_p"/>
+                    <div class="fileupload__button" onclick="update_controller_onclick()">
+                        <svg class="fileupload__icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px"><g><rect fill="none" height="24" width="24"/></g><g><path d="M20,6h-8l-2-2H4C2.9,4,2.01,4.9,2.01,6L2,18c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V8C22,6.9,21.1,6,20,6z M20,18L4,18V6h5.17 l2,2H20V18z M9.41,14.42L11,12.84V17h2v-4.16l1.59,1.59L16,13.01L12.01,9L8,13.01L9.41,14.42z"/></g></svg>
+                        <input class="fileupload__hidden_button" name="controller_controller_firmware" type="file" accept=".bin" id="c_fota_b"/>
+                    </div>
+                    <input class="card__button" type="submit" value="Submit" >
+                </div>
+            </form>
+        </div>
+        <div class="card card--6_12_width">
+            <div class="card__title">Flap Modules Firmware</div>
+            <form action="/" enctype="multipart/form-data" method="post">
+                <div class="card__fileupload">
+                    <input class="fileupload__path" id="c_fota_p" placeholder="Choose File" disabled="disabled" id="m_fota_p"/>
+                    <div class="fileupload__button" onclick="update_module_onclick()">
+                        <svg class="fileupload__icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px"><g><rect fill="none" height="24" width="24"/></g><g><path d="M20,6h-8l-2-2H4C2.9,4,2.01,4.9,2.01,6L2,18c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V8C22,6.9,21.1,6,20,6z M20,18L4,18V6h5.17 l2,2H20V18z M9.41,14.42L11,12.84V17h2v-4.16l1.59,1.59L16,13.01L12.01,9L8,13.01L9.41,14.42z"/></g></svg>
+                        <input class="fileupload__hidden_button" name="controller_module_firmware" type="file" accept=".bin" id="m_fota_b"/>
+                    </div>
+                    <input class="card__button" type="submit" value="Submit" >
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener("resize", scale_display, true);
+        let flaps = [];
+        let charset = [];
+        let flap_selected = undefined;
+        let last_selected = undefined;
+        let dimensions = {cols:0,rows:0};
+        
+
+        for (let i = 0; i < 48; i++) {
+            let char = document.createElement("input");
+            char.setAttribute("class","card__charbox");
+            char.setAttribute("type","text");
+            char.setAttribute("maxlength","2");
+            let subset = document.getElementById("subset_"+Math.floor(i/12));
+            subset.appendChild(char);
+            charset.push(char);
+        }
+
+        function flap_above(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                if(index == Math.floor(index/dimensions.rows) * dimensions.rows) index += dimensions.rows;
+                index-=1;
+                return flaps.at(index);
+            }
+            return flaps.at(0);
+        }
+        function flap_below(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                if(index == (Math.floor(index/dimensions.rows)+1) * dimensions.rows -1) index -= dimensions.rows;
+                index+=1;
+                return flaps.at(index);
+            }
+            return flaps.at(0);
+        }
+        function flap_right(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                if(Math.floor(index/dimensions.rows)+1 == dimensions.cols) index -= dimensions.rows * dimensions.cols;
+                index+=dimensions.rows;
+                return flaps.at(index);
+            }
+            return flaps.at(0);
+        }
+        function flap_left(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                if(Math.floor(index/dimensions.rows) == 0) index += dimensions.rows * dimensions.cols;
+                index-=dimensions.rows;
+                return flaps.at(index);
+            }
+            return flaps.at(0);
+        }
+        function flap_next(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                flap = flap_right(flap);
+                if(Math.floor(index/dimensions.rows)+1 == dimensions.cols) flap = flap_below(flap);
+                return flap;
+            }
+            return flaps.at(0);
+        }
+        function flap_prev(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                if(Math.floor(index/dimensions.rows) == 0) flap = flap_above(flap);
+                flap = flap_left(flap);
+                return flap;
+            }
+            return flaps.at(0);
+        }
+        function flap_col_start(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                return flaps.at(index - (index % dimensions.rows));
+            }
+            return flaps.at(0);
+        }
+        function flap_col_end(flap){
+            if(flap){
+                return flap_above(flap_col_start(flap))
+            }
+            return flaps.at(0);
+        }
+        function flap_row_start(flap){
+            if(flap){
+                let index = parseInt(flap.dataset.index);
+                return flaps.at(index - (Math.floor(index/dimensions.rows) * dimensions.rows));
+            }
+            return flaps.at(0);
+        }
+        function flap_row_end(flap){
+            if(flap){
+                return flap_left(flap_row_start(flap))
+            }
+            return flaps.at(0);
+        }
+
+        function flap_unselect(){
+            if(flap_selected){
+                if(flap_selected.firstElementChild.innerHTML == '_') flap_selected.firstElementChild.innerHTML = ' ';
+                flap_selected.firstElementChild.classList.remove("display__letter--selected");
+                flap_selected = undefined;
+            }
+        }
+        function flap_select(flap){
+            flap_unselect();
+            flap_selected = flap;
+            last_selected = flap;
+            if(flap_selected.firstElementChild.innerHTML == ' ') flap_selected.firstElementChild.innerHTML = '_';
+            flap_selected.firstElementChild.classList.add("display__letter--selected");
+            let i = 0;
+            if(flap_selected.dataset.charset){
+                let flap_charset = JSON.parse(flap_selected.dataset.charset); 
+                for (char of flap_charset) {
+                    charset[i++].value = char;
+                }
+            }
+        }
+        function flap_onclick(){
+            event.stopPropagation();
+            flap_select(this);
+        }
+        function body_onclick() {
+            flap_unselect();
+        }
+        document.body.addEventListener("click", body_onclick)
+
+
+        function set_letter(flap,letter){
+            flap.firstElementChild.setAttribute("class","display__letter");
+            if(letter.length == 2) flap.firstElementChild.classList.add("display__letter--small");
+            if(['/','@',',',':'].includes(letter))flap.firstElementChild.classList.add("display__letter--raised");
+            flap.firstElementChild.innerHTML = letter;
+        }
+
+        function get_webpage_message(){
+            let str = '';
+            for (let i = 0; i < flaps.length; i++) {
+                str += flaps.at(i).firstElementChild.innerHTML;
+            }
+            return str;
+        }
+
+        function set_webpage_dimensions(cols,rows){
+            flaps = [];
+            dimensions.rows = rows; dimensions.cols = cols;
+            console.log("creating display of " + cols + " x " + rows);
+            scale_display();    
+            display.innerHTML = '';
+            for (let i = 0; i < cols; i++) {
+                let display__column = document.createElement("div");
+                display__column.setAttribute("class","display__column");
+                for (let j = 0; j < rows; j++) {
+
+                    let display__flap = document.createElement("div");
+                    display__flap.setAttribute("class","display__flap");
+                    display__flap.setAttribute("id","flap_"+(i * rows +j));
+                    display__flap.setAttribute("data-index",(i * rows +j));
+                    let display__letter = document.createElement("div");
+                    display__letter.setAttribute("class","display__letter");
+                    display__letter.innerHTML = ' ';
+                    display__flap.appendChild(display__letter);
+                    display__column.appendChild(display__flap);
+                    flaps.push(display__flap);
+
+                    display__flap.onclick = flap_onclick;
+                }
+                display.appendChild(display__column);
+            }
+            get_display_message();
+            get_display_charset();
+        }        
+        function scale_display() {
+            if(dimensions.cols && dimensions.rows){
+                let root = document.documentElement;
+                const display = document.getElementById("display");
+                let max_width = document.documentElement.clientWidth - 100;
+                if(max_width < 400) max_width = 400;
+                let height = (((max_width + 1 - dimensions.cols) / dimensions.cols) * dimensions.rows * 1.31) + dimensions.rows - 1;
+                if(height > 500) height = 500;
+                let flap_width = ((height - dimensions.rows + 1) / dimensions.rows / 1.31);
+                let width = (flap_width * dimensions.cols) + dimensions.cols - 1;
+                root.style.setProperty('--display-height', height+"px");
+                root.style.setProperty('--display-width', width+"px");
+                root.style.setProperty('--flap-width', flap_width*1.25+"px")
+            }
+        }
+
+        function clear_flaps(){
+            for (f of flaps) {
+                f.firstElementChild.innerHTML = ' ';
+            }
+        }
+
+        window.addEventListener("keydown", function (event) {
+            if (event.defaultPrevented) {
+                return; // Do nothing if the event was already processed
+            }
+            if(flap_selected != undefined){
+                switch (event.key) {
+                    case "Tab":
+                        event.preventDefault();
+                    break;
+                    case "ArrowUp":
+                        event.preventDefault();
+                        if(event.ctrlKey)   flap_select(flap_col_start(flap_selected));
+                        else                flap_select(flap_above(flap_selected));
+                        break;
+                    case "ArrowDown":
+                        event.preventDefault();
+                        if(event.ctrlKey)   flap_select(flap_col_end(flap_selected));
+                        else                flap_select(flap_below(flap_selected));
+                        break;
+                    case "ArrowLeft":
+                        event.preventDefault();
+                        if(event.ctrlKey)   flap_select(flap_row_start(flap_selected));
+                        else                flap_select(flap_left(flap_selected));
+                        break;
+                    case "ArrowRight":
+                        event.preventDefault();
+                        if(event.ctrlKey)   flap_select(flap_row_end(flap_selected));
+                        else                flap_select(flap_right(flap_selected));
+                        break;
+                    case "PageUp":
+                        event.preventDefault();  
+                        flap_select(flap_col_start(flap_selected));
+                        break;
+                    case "PageDown":
+                        event.preventDefault();  
+                        flap_select(flap_col_end(flap_selected));
+                        break;
+                    case "Home":
+                        event.preventDefault();  
+                        flap_select(flap_row_start(flap_selected));
+                        break;
+                    case "End":
+                        event.preventDefault();  
+                        flap_select(flap_row_end(flap_selected));
+                        break;
+                    case "Backspace":
+                        event.preventDefault();  
+                        set_letter(flap_selected,' ');
+                        flap_select(flap_prev(flap_selected));
+                        break;
+                    case "Delete":
+                        event.preventDefault();  
+                        set_letter(flap_selected,' ');
+                        flap_select(flap_next(flap_selected));
+                        break;
+                    case "Enter":
+                        event.preventDefault();  
+                        flap_select(flap_row_start(flap_below(flap_selected)));
+                        break;
+                    case "Escape":
+                        event.preventDefault();  
+                        flap_unselect();
+                        break;
+                    default:
+                        event.preventDefault();  
+                        let char = event.ctrlKey && parseInt(event.key)<10? "c" : "";
+                        char += event.key.toUpperCase(); 
+                        if(flap_selected.dataset.charset && JSON.parse(flap_selected.dataset.charset).includes(char)){
+                            set_letter(flap_selected,char);
+                            flap_select(flap_next(flap_selected));
+                        }
+                    return;
+                }
+            }
+        }, true);
+
+        function parse_ws_message(message){
+            const msg = JSON.parse(message.data);
+            console.log(msg)
+            switch (msg["command"]) {
+                case "get_display_dimensions_res":
+                    set_webpage_dimensions(msg["data"]["width"],msg["data"]["height"]);
+                    break;
+                case "get_display_message_res":
+                    if(dimensions["rows"]*dimensions["cols"] == msg["data"].length){
+                        for (flap of flaps) {
+                            set_letter(flap,msg["data"].charAt(parseInt(flap.dataset.index)));
+                        }
+                    }
+                    break;
+                case "get_display_charset_res":
+                    flaps.at(msg["flap_id"]).setAttribute("data-charset",JSON.stringify(msg["data"]));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        function set_display_message(){
+            flap_unselect();
+            socket.send(JSON.stringify({command:"controller_set_message",data:get_webpage_message()}))
+        }
+
+        function get_display_message(){
+            socket.send(JSON.stringify({command:"controller_get_message",data:""}))
+        }
+
+        function get_display_dimensions(){
+            socket.send(JSON.stringify({command:"controller_get_dimensions",data:""}))
+        }
+
+        function get_display_charset(){
+            socket.send(JSON.stringify({command:"controller_get_charset",data:""}));
+        }
+
+        function set_display_charset(){
+            event.stopPropagation();
+            if(last_selected){
+                let cmd = {};
+                cmd['command'] = "controller_set_charset";
+                cmd['flap_id'] = parseInt(last_selected.dataset.index);
+                cmd['data'] = [];
+                for(char of charset){
+                    let c = char.value.trim();
+                    if(c == "") c=" ";
+                    cmd['data'].push((c.length == 1)?c.toUpperCase():c.toLowerCase());
+                }
+                last_selected.setAttribute("data-charset",JSON.stringify(cmd['data']));
+                socket.send(JSON.stringify(cmd));
+            }
+            flap_select(last_selected);
+        }
+
+        function set_display_offset(){
+            let cmd = {};
+            cmd['command'] = "controller_set_offset";
+            cmd['data'] = [];
+            for (flap of flaps) {
+                cmd['data'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')));
+            }
+            socket.send(JSON.stringify(cmd));
+        }
+
+        let socket = null;
+        window.onload = function (){
+            socket = new WebSocket( "ws://" + document.domain + "/ws" );
+            socket.onopen = function(){ 
+                console.log("socket open"); 
+                get_display_dimensions();
+            }
+            socket.onclose = function() { console.log("socket close"); }
+            socket.onmessage = parse_ws_message;
+        }
+
+        function update_controller_onclick(){ document.getElementById("c_fota_b").click();}
+        document.getElementById("c_fota_b").onchange = function () {document.getElementById("c_fota_p").value = this.value;};
+        function update_module_onclick(){ document.getElementById("m_fota_b").click();}
+        document.getElementById("m_fota_b").onchange = function () {document.getElementById("m_fota_p").value = this.value;};
+   </script>
+</body>
+</html>

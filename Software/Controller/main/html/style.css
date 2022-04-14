@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@300;400;600;700&display=swap');
+
+:root{
+    --display-height: 0px;
+    --display-width: 0px;
+    --flap-width: 0px;
+}
+
+body {
+    --bg-color: #101010;
+    --fg-color: #ffffff;
+    --accent-color: #00D0FF;
+    background-color: var(--bg-color);
+    color: var(--fg-color);
+    font-family: "Red Hat Mono", monospace;
+    display:flex;
+    flex-direction: column;
+    margin: 0px;
+    min-width: 500px;
+}
+
+.header {
+    background: var(--fg-color);
+    color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.header__title {
+    font-weight: 700;
+    font-size: calc(16px + 3vw);
+}
+
+.content {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 30px auto;
+    gap: 30px 30px;
+    padding: 0 30px;
+}
+
+.card {
+    min-width: 400px;
+    border: var(--fg-color) solid 2px;
+    border-radius: 5px;
+    --max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+}
+
+.card--12_12_width {
+    flex: 1 1200px;
+}
+
+.card--9_12_width {
+    flex: 1 900px;
+}
+
+.card--8_12_width {
+    flex: 1 800px;
+}
+
+.card--6_12_width {
+    flex: 1 600px;
+}
+
+.card--4_12_width {
+    flex: 1 400px;
+}
+
+/* .card--3_12_width {
+    flex: 1 300px;
+} */
+
+.card__title{
+    border-bottom: var(--fg-color) solid 2px;
+    padding: 5px;
+    font-weight: 700;
+    font-size: 16px;
+    margin: -15px -15px 0px -15px;
+}
+
+.card__row{
+    display: flex;
+    flex-direction: row;
+    gap: 10%;
+    justify-content: center;
+}
+
+.card__button{
+    background-color: var(--bg-color);
+    border: solid 2px var(--fg-color);
+    color: var(--fg-color);
+    border-radius: 5px;
+    transition: 0.1s;
+    width: 150px;
+    height: 32px;
+    font-weight: 500;
+}
+
+.card__button:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border-color: var(--accent-color);
+    cursor: pointer;
+}
+
+.display {
+    margin: auto;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: var(--fg-color);
+    justify-content: center;
+    display: flex;
+    gap: 1px;
+    width: var(--display-width);
+    height: var(--display-height);
+}
+
+.display__column {
+    display: flex;
+    gap: 1px;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.display__flap {
+    border-radius: 13%;;
+    background-color:var(--bg-color);
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.display__letter {
+    position: absolute;
+    font-size: var(--flap-width);
+    font-weight: 600;
+    user-select: none;
+    pointer-events: none;
+}
+
+.display__letter--small {
+    font-size: calc(var(--flap-width)*0.6);
+}
+
+.display__letter--raised {
+    padding-bottom: 25%;
+}
+
+.display__letter--selected {
+    color: var(--accent-color)
+}
+
+.debug__window{
+    background-color: rgb(39, 37, 43);
+    border-radius: 5px;
+    min-height: 40px;
+    margin: 0px;
+    padding: 8px;
+}
+
+.fileupload__path{
+    background-color: var(--bg-color);
+    border: solid 2px var(--fg-color);
+    color: var(--fg-color);
+    border-bottom-left-radius: 5px;
+    border-top-left-radius: 5px;
+    width: 40%;
+}
+
+.card__fileupload{
+    display: flex;
+    justify-content: center;
+}
+
+.fileupload__button{
+    background-color: var(--bg-color);
+    border: solid 2px var(--fg-color);
+    border-left: none;
+    fill: var(--fg-color);
+    border-bottom-right-radius: 5px;
+    border-top-right-radius: 5px;
+    display: flex;
+    margin-right: 50px;
+}
+
+.fileupload__button:hover {
+    border-color: var(--accent-color);
+    fill: var(--bg-color);
+    background-color: var(--accent-color);
+}
+
+.fileupload__hidden_button {
+    display: none;
+}
+
+.fileupload__icon{
+    height: 28px;
+    width: 40px;
+}
+
+.card__dropdown{
+    height: 32px;
+    background-color: var(--bg-color);
+    border: solid 2px var(--fg-color);
+    color: var(--fg-color);
+    border-radius: 5px;
+    font-weight: 500;
+    width: 40%;
+}
+
+.card__charbox{
+    height: 32px;
+    background-color: var(--bg-color);
+    border: solid 1px var(--fg-color);
+    color: var(--fg-color);
+    border-radius: 5px;
+    font-weight: 500;
+    width: 25px;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 17px;
+}
+
+.card__charset{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    justify-content: center;
+}
+
+.charset__subset{
+    display: flex;
+    gap: 1px;
+}

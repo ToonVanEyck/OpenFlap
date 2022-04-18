@@ -441,6 +441,11 @@
         document.getElementById("c_fota_b").onchange = function () {document.getElementById("c_fota_p").value = this.value;};
         function update_module_onclick(){ document.getElementById("m_fota_b").click();}
         document.getElementById("m_fota_b").onchange = function () {document.getElementById("m_fota_p").value = this.value;};
+
+        function set_default_charset(flap_id)
+        {
+            socket.send('{"command":"controller_set_charset","flap_id":'+flap_id+',"data":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]}');
+        }
    </script>
 </body>
 </html>

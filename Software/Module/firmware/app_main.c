@@ -75,15 +75,8 @@ void set_default_charset(void){
 #define IR_OFF_TICKS 770
 #define IR_ON_TICKS 20
 
-void init_encoder(void){
-    for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS);i++){
-        read_encoder();
-    }
-    char_index = read_encoder();
-}
 
-
-int read_encoder(void)
+uint8_t read_encoder(void)
 {
     static unsigned pulse_cnt = IR_OFF_TICKS;
     static int encoder_dec = 0;
@@ -108,7 +101,14 @@ int read_encoder(void)
     }
     int tmp_encoder_val = encoder_dec + (int)offset;
     if(tmp_encoder_val >= NUM_CHARS) tmp_encoder_val -= NUM_CHARS;
-    return tmp_encoder_val;
+    return (uint8_t) tmp_encoder_val;
+}
+
+void init_encoder(void){
+    for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS);i++){
+        read_encoder();
+    }
+    char_index = read_encoder();
 }
 
 void store_config(void)
@@ -220,6 +220,17 @@ void init_hardware(void)
 void __interrupt() isr(void)
 {
 
+}
+
+void do_nothing(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+{
+    if(cmd_info == NULL){
+    }else{
+        // command info
+        cmd_info->rx_data_len = 0;
+        cmd_info->cmd = cmd_do_nothing;
+        cmd_info->cmd_callback = do_nothing;
+    }
 }
 
 void goto_btl(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
@@ -413,6 +424,7 @@ void main(void)
     INTCONbits.GIE = 0;
     init_hardware();
     set_default_charset();
+    install_command(do_nothing);
     install_command(goto_btl);
     install_command(get_config);
     install_command(set_char);

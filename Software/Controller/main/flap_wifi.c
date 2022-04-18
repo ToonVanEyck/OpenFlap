@@ -68,8 +68,8 @@ void flap_wifi_init_apsta(char* sta_ssid, char*  sta_pwd, char* ap_ssid, char*  
             },
         }
     };
-    strcpy((char*)wifi_config.sta.ssid,sta_ssid);
-    strcpy((char*)wifi_config.sta.password,sta_pwd);
+    if(sta_ssid) strcpy((char*)wifi_config.sta.ssid,sta_ssid);
+    if(sta_pwd) strcpy((char*)wifi_config.sta.password,sta_pwd);
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     wifi_config = (wifi_config_t){
         .ap = {

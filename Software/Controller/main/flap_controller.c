@@ -211,11 +211,18 @@ void flap_module_get_charset(flap_ctx_t *flap_ctx)
 
 void flap_module_set_charset(flap_ctx_t *flap_ctx, char *charset)
 {
-    for(uint16_t flap_id = ((charset[0] << 8) + charset[1]); flap_id; flap_id--){
-        flap_uart_send_data(module_do_nothing,1);
+    uint16_t flap_id = ((charset[0] << 8) + charset[1]);
+    int i = 0;
+    char *buf = malloc(1 + 4*48 + flap_id);
+    while(i < flap_id){
+        buf[i++] = module_do_nothing;
     }
-    charset[1] = module_set_charset;
-    flap_uart_send_data(charset+1,1 + 4*48);
+    buf[i++] = module_set_charset;
+    memcpy(buf+i,charset+2,4*48);
+    // charset[1] = module_set_charset;
+    // flap_uart_send_data(charset+1,1 + 4*48);
+    flap_uart_send_data(buf, (1 + 4*48 + flap_id));
+    free(buf);
 }
 
 void flap_module_set_offset(flap_ctx_t *flap_ctx, char *offset)

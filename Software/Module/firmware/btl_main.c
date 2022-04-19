@@ -66,7 +66,7 @@ void init_hardware(void)
     // Timer 2 --> PWM DRIVER
     T2PR = 249; // period -> 32kHz
     CCP1CON = 0x8C; // pwm mode
-    CCPR1 = 100; // DC -> 10%
+    CCPR1 = 0; // DC -> 0%
     T2HLT = 0x00;
     T2CLKCON = 0x01; // Fosc/4
     T2CON = 0x80;

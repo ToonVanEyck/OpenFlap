@@ -298,7 +298,6 @@ httpd_handle_t flap_start_webserver(void)
 {
     // httpd_handle_t server;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_open_sockets = MAX_WS_CONNECTIONS;
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK) {

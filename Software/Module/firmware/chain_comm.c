@@ -17,7 +17,7 @@ void chain_comm(uint8_t new_comm_data)
     DEBUG_PRINT("comm: %s\n", new_comm_data < comm_timeout? new_comm_data < comm_tx_data? "rx" : "tx" : "time");
     DEBUG_PRINT("state: %s\n", ctx.state < 3 ? ctx.state < 2? ctx.state < 1? "comm_state_command" : "comm_state_data" : "comm_state_passthrough" : "comm_state_transmit");
     switch (new_comm_data){
-        case comm_rx_data:;;
+        case comm_rx_data:;
             reset_cnt = 0;
             uint8_t data;
             RX_BYTE(data);
@@ -54,7 +54,7 @@ void chain_comm(uint8_t new_comm_data)
             if(ctx.state == comm_state_data && ctx.rx_data_cnt == cmd_info[ctx.command & CMD_CMD].rx_data_len){ // is all data received?
                 if(ctx.command & CMD_EXTEND){
                     if(cmd_info[ctx.command & CMD_CMD].cmd_callback != NULL){
-                        // TX_DONE; // transmit last command;
+                        TX_DONE; // transmit last command;
                         cmd_info[ctx.command & CMD_CMD].cmd_callback(ctx.rx_data,ctx.tx_data, NULL);
                     } 
                     if((ctx.command & CMD_CMD) == cmd_read_data){ // transmit
@@ -73,7 +73,7 @@ void chain_comm(uint8_t new_comm_data)
                 }
             }
             break;
-        case comm_tx_data:;;
+        case comm_tx_data:;
             reset_cnt = 0;
             if(ctx.state == comm_state_transmit){
                 uint16_t node_cnt = ((uint16_t)ctx.rx_data[1]<<8) + (ctx.rx_data[0]);
@@ -93,9 +93,9 @@ void chain_comm(uint8_t new_comm_data)
                 }
             }
             break;
-        case comm_timeout:;;
+        case comm_timeout:;
                 if(ctx.state == comm_state_passthrough && cmd_info[ctx.command & CMD_CMD].cmd_callback != NULL){
-                    // TX_DONE; // transmit last command;
+                    TX_DONE; // transmit last command;
                     cmd_info[ctx.command & CMD_CMD].cmd_callback(ctx.rx_data,ctx.tx_data, NULL);
                 } 
                 ctx.command = cmd_do_nothing;

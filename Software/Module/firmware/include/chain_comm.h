@@ -19,7 +19,7 @@
     #define TX_BYTE(_b) while(!PIR1bits.TX1IF); watch_tx = 1; TX1REG = _b
 #endif
 #ifndef TX_DONE
-    #define TX_DONE do{NOP();}while(!PIR1bits.TX1IF && !TX1STAbits.TRMT)
+    #define TX_DONE do{NOP();}while(!(PIR1bits.TX1IF && TX1STAbits.TRMT))
 #endif
 
 #define CMD_EXTEND 0x80

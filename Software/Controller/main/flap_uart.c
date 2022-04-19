@@ -34,6 +34,11 @@ static void flap_uart_task(void *arg)
                     while(rx_len < tx_data->data_len && cnt++ < 5){
                         rx_len += uart_read_bytes(UART_NUM, controller_comm->data+rx_len, tx_data->data_len, 50 / portTICK_RATE_MS);
                     }
+                    for(int i=0;i<tx_data->data_len;i++){
+                        if(tx_data->data[i] != controller_comm->data[i]) ESP_LOGE(TAG,"Received data does not match transmitted data 0x%02x >> 0x%02x",tx_data->data[i], controller_comm->data[i]);
+                    }
+
+
                     ESP_LOGI(TAG,"Got %d returning bytes",rx_len);
                     char *buf = calloc(1,rx_len*5*sizeof(char)+1);
                     for(int i = 0;i<rx_len;i++){

@@ -141,9 +141,10 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
         token = strtok(NULL, "\n");
     }
 
-
-    char msg_buf[5]={0};
-    module_goto_app_msg(msg_buf,1);
-    flap_uart_send_data(msg_buf,1); 
-    vTaskDelay(250 / portTICK_PERIOD_MS);
+    if(data_len + data_offset >= total_data_len){
+        char msg_buf[5]={0};
+        module_goto_app_msg(msg_buf,1);
+        flap_uart_send_data(msg_buf,1); 
+        vTaskDelay(250 / portTICK_PERIOD_MS);
+    }
 }

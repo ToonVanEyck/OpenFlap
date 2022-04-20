@@ -26,13 +26,17 @@ static void flap_uart_task(void *arg)
             }
             ESP_LOGI(TAG,"sending uart: %s",buf);
             free(buf);
-            uart_write_bytes(UART_NUM, tx_data->data, tx_data->data_len);
+            for(int i=0; i<tx_data->data_len;){
+                i+= uart_write_bytes(UART_NUM, tx_data->data+i, 1);
+                vTaskDelay(2 / portTICK_RATE_MS);
+            }
             if(tx_data->data[0] & 0x80){
                 if((tx_data->data[0] & 0x7F) != module_read_data){  // NOT A READ COMMAND
                     ESP_LOGI(TAG,"Expecting %d returning bytes",tx_data->data_len);
                     int rx_len = 0, cnt = 0;
                     while(rx_len < tx_data->data_len && cnt++ < 5){
                         rx_len += uart_read_bytes(UART_NUM, controller_comm->data+rx_len, tx_data->data_len, 50 / portTICK_RATE_MS);
+                        if(rx_len < tx_data->data_len) ESP_LOGW(TAG,"partial data: %d",rx_len);
                     }
                     for(int i=0;i<tx_data->data_len;i++){
                         if(tx_data->data[i] != controller_comm->data[i]) ESP_LOGE(TAG,"Received data does not match transmitted data 0x%02x >> 0x%02x",tx_data->data[i], controller_comm->data[i]);
@@ -66,12 +70,14 @@ static void flap_uart_task(void *arg)
                             while(rx_len < cnt_data && timeout_cnt++ < 17){
                                 rx_len += uart_read_bytes(UART_NUM, controller_comm->data+rx_len, cnt_data-rx_len, 50 / portTICK_RATE_MS);
                             }
-                            char *buf = calloc(1,rx_len*5*sizeof(char)+1);
-                            for(int i = 0;i<rx_len;i++){
-                                sprintf(buf+5*i,"0x%02x ",controller_comm->data[i]);
-                            }ESP_LOGI(TAG,"got %s",buf);free(buf);
-                            controller_respons_enqueue(controller_comm);
-                            controller_comm->data_offset += cnt_data;
+                            if(rx_len){
+                                char *buf = calloc(1,rx_len*5*sizeof(char)+1);
+                                for(int i = 0;i<rx_len;i++){
+                                    sprintf(buf+5*i,"0x%02x ",controller_comm->data[i]);
+                                }ESP_LOGI(TAG,"got %s",buf);free(buf);
+                                controller_respons_enqueue(controller_comm);
+                                controller_comm->data_offset += cnt_data;
+                            }
                         }
                     }else{
                         ESP_LOGI(TAG,"Unexpected data lenght of %d for read command",tx_data->data_len);

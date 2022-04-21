@@ -23,7 +23,7 @@ static void ws_async_send(void *arg)
     int ws_fd[MAX_WS_CONNECTIONS] = {0};
     size_t num_clients = MAX_WS_CONNECTIONS;
     if(httpd_get_client_list(server,&num_clients,ws_fd) == ESP_OK){
-        ESP_LOGI(TAG,"sending \"%s\" to %d clients",data,num_clients);
+        ESP_LOGI(TAG,"sending \"%s\" to %d clients",ws_pkt.payload,num_clients);
         for(int i = 0;i < num_clients;i++){
             if (httpd_ws_get_fd_info(server, ws_fd[i]) == HTTPD_WS_CLIENT_WEBSOCKET) {
                 if(ws_fd[i]>0){
@@ -35,13 +35,15 @@ static void ws_async_send(void *arg)
             }
         }
     }
+    free(data);
 }
 
 esp_err_t trigger_async_send(char *json_data)
 {
     if(json_data == NULL) return ESP_FAIL;
-    static char buf[2048] = {0};
-    strcpy(buf,json_data);
+    char *buf = NULL;
+    asprintf(&buf,"%s",json_data);
+    if(buf == NULL) return ESP_FAIL;
     return httpd_queue_work(server, ws_async_send, buf);
 }
 

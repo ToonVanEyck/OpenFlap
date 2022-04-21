@@ -28,7 +28,8 @@ static void flap_uart_task(void *arg)
             free(buf);
             for(int i=0; i<tx_data->data_len;){
                 i+= uart_write_bytes(UART_NUM, tx_data->data+i, 1);
-                vTaskDelay(2 / portTICK_RATE_MS);
+                esp_rom_delay_us(200);
+                // vTaskDelay(2 / portTICK_RATE_MS);
             }
             if(tx_data->data[0] & 0x80){
                 if((tx_data->data[0] & 0x7F) != module_read_data){  // NOT A READ COMMAND
@@ -108,7 +109,7 @@ void flap_uart_send_data(char* data, int data_len)
 void flap_uart_init(void)
 {
     uart_config_t uart_config = {
-        .baud_rate = 9600,//115200,
+        .baud_rate = /*9600,/*/115200,
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,

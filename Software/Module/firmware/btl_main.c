@@ -46,11 +46,11 @@ void init_hardware(void)
     RC1STA = 0x90;//SPEN | CREN;
     TX1STA = 0x24;//TXEN | BRGH;
 
-    // SP1BRGL = 68; //115200 baud
-    // SP1BRGH = 0;
+    SP1BRGL = 68; //115200 baud
+    SP1BRGH = 0;
 
-    SP1BRGL = 64; //9600 baud
-    SP1BRGH = 3;
+    // SP1BRGL = 64; //9600 baud
+    // SP1BRGH = 3;
 
     // Timer 0 --> PID CLOCK
     T0CON1 = 0x44; // 1:1024 prescaler

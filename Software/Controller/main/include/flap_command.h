@@ -20,6 +20,9 @@ typedef enum{
     controller_set_charset,
     controller_get_charset,
     controller_set_offset,
+    controller_set_AP,
+    controller_set_STA,
+    controller_reboot,
     controller_goto_app
 }controller_command_t;
 

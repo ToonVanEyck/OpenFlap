@@ -118,6 +118,8 @@ static esp_err_t ws_handler(httpd_req_t *req)
                     controller_comm->cmd = controller_set_message;
                 }else if(!strcmp(command->valuestring,"controller_get_message")){
                     controller_comm->cmd = controller_get_message;
+                }else if(!strcmp(command->valuestring,"controller_reboot")){
+                    controller_comm->cmd = controller_reboot;
                 }else if(!strcmp(command->valuestring,"controller_set_charset")){
                     controller_comm->cmd = controller_set_charset;
                     if(cJSON_IsArray(data)){
@@ -147,12 +149,24 @@ static esp_err_t ws_handler(httpd_req_t *req)
                     }
                 }else if(!strcmp(command->valuestring,"controller_get_charset")){
                     controller_comm->cmd = controller_get_charset;
+                }else if(!strcmp(command->valuestring,"controller_set_STA")){
+                    controller_comm->cmd = controller_set_STA;
+                }else if(!strcmp(command->valuestring,"controller_set_AP")){
+                    controller_comm->cmd = controller_set_AP;
                 }
             }
             if (cJSON_IsString(data) && (data->valuestring != NULL)){
                 controller_comm->data_len = strlen(data->valuestring);
                 controller_comm->total_data_len = controller_comm->data_len;
                 strcpy(controller_comm->data,data->valuestring);
+            } else if (cJSON_IsObject(data)){
+                char *sub_json = cJSON_Print(data);
+                if(sub_json){
+                    controller_comm->data_len = strlen(sub_json);
+                    controller_comm->total_data_len = controller_comm->data_len;
+                    strcpy(controller_comm->data,sub_json);
+                    free(sub_json);
+                }
             }
             controller_command_enqueue(controller_comm);
             ESP_LOGI(TAG,"%s",command->valuestring);

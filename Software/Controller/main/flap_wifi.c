@@ -56,7 +56,12 @@ void flap_wifi_init_apsta(char* sta_ssid, char*  sta_pwd, char* ap_ssid, char*  
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,ESP_EVENT_ANY_ID,&event_handler,NULL,&instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,IP_EVENT_STA_GOT_IP,&event_handler,NULL,&instance_got_ip));
     
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA) );
+    wifi_mode_t wifi_mode = WIFI_MODE_NULL;
+    if(strlen(sta_pwd) >= 8) wifi_mode+=WIFI_MODE_STA;
+    if(strlen(ap_pwd) >= 8) wifi_mode+=WIFI_MODE_AP;
+    if(wifi_mode == WIFI_MODE_NULL) return;
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(wifi_mode) );
     wifi_config_t wifi_config = {
         .sta = {
             .ssid = {0},
@@ -70,12 +75,12 @@ void flap_wifi_init_apsta(char* sta_ssid, char*  sta_pwd, char* ap_ssid, char*  
     };
     if(sta_ssid) strcpy((char*)wifi_config.sta.ssid,sta_ssid);
     if(sta_pwd) strcpy((char*)wifi_config.sta.password,sta_pwd);
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    if(wifi_mode == WIFI_MODE_STA || wifi_mode == WIFI_MODE_APSTA) ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     wifi_config = (wifi_config_t){
         .ap = {
             .ssid = {0},
             .password = {0},
-	        .channel = 1,
+            .channel = 1,
             .authmode = WIFI_AUTH_WPA2_PSK,
             .beacon_interval = 400,
             .max_connection = 5,
@@ -83,11 +88,13 @@ void flap_wifi_init_apsta(char* sta_ssid, char*  sta_pwd, char* ap_ssid, char*  
     };
     strcpy((char*)wifi_config.ap.ssid,ap_ssid);
     strcpy((char*)wifi_config.ap.password,ap_pwd);
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config) );
+    if(wifi_mode == WIFI_MODE_AP || wifi_mode == WIFI_MODE_APSTA) ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
     ESP_LOGI(TAG, "flap_wifi_init_apsta finished.");
+    if(wifi_mode == WIFI_MODE_AP) return;
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,pdFALSE,pdFALSE,portMAX_DELAY);
 
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually

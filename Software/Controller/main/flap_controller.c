@@ -43,6 +43,15 @@ static void flap_controller_task(void *pvParameters)
                     case controller_set_offset:
                         flap_module_set_offset(&flap_ctx, controller_comm->data);
                         break;   
+                    case controller_set_AP:
+                        flap_controller_set_AP(&flap_ctx, controller_comm->data);
+                        break;
+                    case controller_set_STA:
+                        flap_controller_set_STA(&flap_ctx, controller_comm->data);
+                        break;
+                    case controller_reboot:
+                        esp_restart();
+                        break;
                     default :
                         break;
                 }
@@ -55,7 +64,11 @@ void controller_command_enqueue(controller_queue_data_t *controller_comm)
 {
     controller_queue_data_t *controller_comm_cpy = malloc(sizeof(controller_queue_data_t));
     memcpy(controller_comm_cpy,controller_comm,sizeof(controller_queue_data_t));
-    xQueueSend(controller_command_queue,&controller_comm_cpy,(portTickType)portMAX_DELAY);
+    if(controller_command_queue){
+        xQueueSend(controller_command_queue,&controller_comm_cpy,(portTickType)portMAX_DELAY);
+    }else{
+        ESP_LOGE(TAG,"Queue controller_command_queue is NULL");
+    }
 }
 
 void controller_respons_enqueue(controller_queue_data_t *controller_comm)
@@ -231,5 +244,31 @@ void flap_module_set_offset(flap_ctx_t *flap_ctx, char *offset)
         char msg_buf[257]={0};
         int len = module_set_offset_msg(msg_buf,0,offset[i]);
         flap_uart_send_data(msg_buf,len);
+    }
+}
+
+void flap_controller_set_AP(flap_ctx_t *flap_ctx, char *data)
+{
+    cJSON * json = cJSON_Parse(data);
+    cJSON * ssid = cJSON_GetObjectItemCaseSensitive(json, "ssid");
+    cJSON * pwd = cJSON_GetObjectItemCaseSensitive(json, "password");
+    if (cJSON_IsString(ssid)){
+        flap_nvs_set_string("AP_ssid",ssid->valuestring);
+    }
+    if (cJSON_IsString(pwd)){
+        flap_nvs_set_string("AP_pwd",pwd->valuestring);
+    }
+}
+
+void flap_controller_set_STA(flap_ctx_t *flap_ctx, char *data)
+{
+    cJSON * json = cJSON_Parse(data);
+    cJSON * ssid = cJSON_GetObjectItemCaseSensitive(json, "ssid");
+    cJSON * pwd = cJSON_GetObjectItemCaseSensitive(json, "password");
+    if (cJSON_IsString(ssid)){
+        flap_nvs_set_string("STA_ssid",ssid->valuestring);
+    }
+    if (cJSON_IsString(pwd)){
+        flap_nvs_set_string("STA_pwd",pwd->valuestring);
     }
 }

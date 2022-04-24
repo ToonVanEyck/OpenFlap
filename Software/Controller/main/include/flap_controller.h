@@ -8,8 +8,10 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include <string.h>
+#include "cJSON.h"
 
 #include "flap_firmware.h"
+#include "flap_nvs.h"
 #include "flap_uart.h"
 #include "flap_command.h"
 #include "flap_http_server.h"
@@ -30,5 +32,7 @@ void flap_module_goto_app(flap_ctx_t *flap_ctx);
 void flap_module_get_charset(flap_ctx_t *flap_ctx);
 void flap_module_set_charset(flap_ctx_t *flap_ctx, char *charset);
 void flap_module_set_offset(flap_ctx_t *flap_ctx, char *offset);
+void flap_controller_set_AP(flap_ctx_t *flap_ctx, char *data);
+void flap_controller_set_STA(flap_ctx_t *flap_ctx, char *data);
 
 #endif

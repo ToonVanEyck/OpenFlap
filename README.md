@@ -77,9 +77,8 @@ Board designs _ToDo_
 Upcoming Changes _ToDo_
 -----------------------
 
-
-[module]: https://github.com/ToonVanEyck/OpenFlap/docs/images/module.png "OpenFlap Module"
-[module_pinout]: https://github.com/ToonVanEyck/OpenFlap/docs/images/module_pinout.svg "OpenFlap Module Pinout"
-[top_con]: https://github.com/ToonVanEyck/OpenFlap/docs/images/top_con.png "OpenFlap Top-Con"
-[controller]: https://github.com/ToonVanEyck/OpenFlap/docs/images/flap_controller.png "OpenFlap Controller"
-[webpage]: https://github.com/ToonVanEyck/OpenFlap/docs/images/webpage.png "OpenFlap Webpage"
+[module]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module.png "OpenFlap Module"
+[module_pinout]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_pinout.svg "OpenFlap Module Pinout"
+[top_con]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/top_con.png "OpenFlap Top-Con"
+[controller]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/flap_controller.png "OpenFlap Controller"
+[webpage]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/webpage.png "OpenFlap Webpage"

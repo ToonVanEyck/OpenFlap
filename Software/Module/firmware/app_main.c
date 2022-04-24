@@ -76,10 +76,12 @@ void set_default_charset(void){
 #define IR_ON_TICKS 20
 
 
-uint8_t read_encoder(void)
+uint8_t read_encoder(uint8_t is_idle)
 {
     static unsigned pulse_cnt = IR_OFF_TICKS;
-    static int encoder_dec = 0;
+    static int encoder_dec = 0; // encoder value converted from graycode to decimal.
+    static int corr_encoder_val = 0; // encoder value with added offset and buffered.
+    static uint8_t enc_buffer[3] = {0};
     if(++pulse_cnt >= IR_OFF_TICKS){
         PORTAbits.RA0 = 1; // Enable IR LEDs
         if(pulse_cnt >= IR_OFF_TICKS + IR_ON_TICKS){
@@ -97,18 +99,24 @@ uint8_t read_encoder(void)
             encoder_dec = NUM_CHARS - encoder_dec - 1;
             pulse_cnt = 0;
             if(prev_encoder_dec - 3 > encoder_dec) rev_add++; // The encoder has roled over, a revolution was completed.
+            
+            int tmp_encoder_val = encoder_dec + (int)offset;
+            if(tmp_encoder_val >= NUM_CHARS) tmp_encoder_val -= NUM_CHARS;
+
+            enc_buffer[0] = is_idle? enc_buffer[1] : (uint8_t)tmp_encoder_val;
+            enc_buffer[1] = is_idle? enc_buffer[2] : (uint8_t)tmp_encoder_val;
+            enc_buffer[2] = (uint8_t)tmp_encoder_val;
+            if(enc_buffer[0] == enc_buffer[1] && enc_buffer[1] == enc_buffer[2]) corr_encoder_val = tmp_encoder_val;
         }
     }
-    int tmp_encoder_val = encoder_dec + (int)offset;
-    if(tmp_encoder_val >= NUM_CHARS) tmp_encoder_val -= NUM_CHARS;
-    return (uint8_t) tmp_encoder_val;
+    return (uint8_t) corr_encoder_val;
 }
 
 void init_encoder(void){
-    for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS);i++){
-        read_encoder();
+    for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS)*5;i++){
+        read_encoder(1);
     }
-    char_index = read_encoder();
+    char_index = read_encoder(1);
 }
 
 void store_config(void)
@@ -294,7 +302,7 @@ void set_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 void get_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
-        strncpy((char*)tx_data, charset + read_encoder()*4, 4);
+        strncpy((char*)tx_data, charset + read_encoder(1)*4, 4);
     }else{
         // command info
         cmd_info->rx_data_len = 0;
@@ -343,9 +351,10 @@ void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 
 int motor_control(void)
 {
-    int distance = (int)char_index - read_encoder();
+    static unsigned short pwm = 0;
+    int distance = (int)char_index - read_encoder(pwm == 0);
     if(distance < 0) distance += NUM_CHARS;
-    unsigned short pwm = 0;
+        pwm = 0;
     if(distance >= 0 && distance < NUM_CHARS){
         pwm = speed[distance];
     }

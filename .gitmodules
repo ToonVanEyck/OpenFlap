@@ -1,3 +1,3 @@
-[submodule "Software/Module/external/cmake-microchip"]
-	path = Software/Module/external/cmake-microchip
+[submodule "software/module/external/cmake-microchip"]
+	path = software/module/external/cmake-microchip
 	url = git://github.com/Elemecca/cmake-microchip.git

@@ -1,4 +1,4 @@
 .vscode
 build/*
-Software/Module/external/*
-Software/*/build
+software/module/external/*
+software/*/build

@@ -25,7 +25,7 @@ The OpenFlap ecosystem consists of 3 different hardware components: the display 
 ### Display Module
 ![OpenFlap Module][module]
 
-The construction of the OpenFlap _module_ consist of PCB's and 3D-printed pats. Only one of the PCB's is populated. The characters and encoder wheels are also PCB's but they only have solder mask and silkscreen layers and no copper layers.
+The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts. Only one of the PCB's is populated. The characters and encoder wheels are also PCB's but they only have solder mask and silkscreen layers and no copper layers.
 
 Each _module_ requires 5V for the microcontroller and other low voltage components and 12V to power the motor. Typically a stepper motor is used for this kind of application, this project however, uses a DC motor as they are cheaper and require less external components.
 

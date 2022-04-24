@@ -6,8 +6,6 @@
 
 #include "chain_comm.h"
 
-#define _XTAL_FREQ 32000000
-
 #define COL_END PORTAbits.RA5
 #define MOTOR_DISABLE TRISAbits.TRISA2
 
@@ -244,7 +242,6 @@ void do_nothing(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 void goto_btl(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
-        // __delay_ms(2);
         RESET();
     }else{
         // command info

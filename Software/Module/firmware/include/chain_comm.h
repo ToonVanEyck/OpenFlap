@@ -6,6 +6,8 @@
 #include <string.h>
 #include "flash.h"
 
+#define _XTAL_FREQ 32000000
+
 #ifndef DEBUG_WIGGLE
     #define DEBUG_WIGGLE() PORTAbits.RA0 ^= 1
 #endif 

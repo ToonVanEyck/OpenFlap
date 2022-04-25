@@ -5,7 +5,7 @@ The OpenFlap project aims to create a open source, affordable split-flap display
 
 ![OpenFlap Module Explode][module_explode]
 
-The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, a _controller_ and a _top-con_. 
+The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, the _controller_ and the _top-con_ board. 
 
 Features
 --------
@@ -65,7 +65,7 @@ Top-Con
 
 The _OpenFlap display_ modules can be stacked, in this way all modules in a column are automatically wired correctly. The top most module however needs to be connected to the columns next to it or to the _OpenFlap controller_. This is where the _top-con_ board comes in handy. 
 
-The _top-con_ board can be mounted on top most module of each column of display _modules_. This allows the columns to be connected to each other using a simple ribbon cable. 
+The _top-con_ board can be mounted on topmost module of each _module_ stack. This allows the columns to be connected to each other using a simple ribbon cable. 
 
 The _top-con_ board features a 12V to 5V buck convertor and automatic data routing similar to the module boards, the routing is used here to detect the end of the row and not the end of the columns.
 

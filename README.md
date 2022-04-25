@@ -3,7 +3,7 @@ OpenFlap
 
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 
-< ToDo: Insert nice gif here >
+![OpenFlap Module Explode][module_explode]
 
 Features
 --------
@@ -77,6 +77,7 @@ Board designs _ToDo_
 Upcoming Changes _ToDo_
 -----------------------
 
+[module_explode]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_explode.gif "OpenFlap Module Explode"
 [module]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module.png "OpenFlap Module"
 [module_pinout]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_pinout.svg "OpenFlap Module Pinout"
 [top_con]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/top_con.png "OpenFlap Top-Con"

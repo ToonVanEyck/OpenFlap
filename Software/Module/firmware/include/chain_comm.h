@@ -35,7 +35,7 @@ typedef enum{
 
     cmd_goto_btl,
     cmd_get_config,
-    cmd_get_fw_vesion,
+    cmd_get_fw_version,
     cmd_get_hw_id,
     cmd_get_rev_cnt,
     cmd_set_char,

@@ -5,6 +5,8 @@ The OpenFlap project aims to create a open source, affordable split-flap display
 
 ![OpenFlap Module Explode][module_explode]
 
+The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, a _controller_ and a _top-con_. 
+
 Features
 --------
 
@@ -17,28 +19,28 @@ Features
 - Web interface
 - Firmware updates through web page.
 
-Architecture
-------------
+Automatic data routing
+----------------------
 
-The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, a _controller_ and a _top-con_. The _modules_ and _top_con_ boards feature a smart switching mechanism that automatically routes the uart data signal. This reduces the amount of wiring required.
-
-### Automatic data routing
+The _modules_ and _top_con_ boards feature a smart switching mechanism that automatically routes the uart data signal. This reduces the amount of wiring required.
 
 ![OpenFlap Wiring][uart_wiring]
 
 Each _module_ and _top-con_ board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in orange. 
 
-### Display Module
+Display Module
+--------------
 ![OpenFlap Module][module]
 
 
-#### Construction
+### Construction
+
 The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts. Only one of the PCB's is populated. The characters and encoder wheels are also PCB's but they only have solder mask and silkscreen layers and no copper layers.
 
-#### Power
+### Power
 Each _module_ requires 5V for the microcontroller and other low voltage components and 12V to power the motor. Typically a stepper motor is used for this kind of application, this project however, uses a DC motor as they are cheaper and require less external components.
 
-##### Signals
+#### Signals
 Besides power, there are 4 other signals on the top or bottom connecter of the _module_. 
 
 A RX_IN and TX_RET allow uart communication with a _module_ through the top connector. 
@@ -47,7 +49,8 @@ The COL_END signal is an input on the bottom connector, this signal becomes grou
 
 ![OpenFlap Module Pinout][module_pinout]
 
-### Controller
+Controller
+----------
 
 ![OpenFlap Controller][controller]
 
@@ -55,7 +58,8 @@ The _controller_ is an ESP32 based board that serves a webpage through which a u
 
 ![OpenFlap Webpage][webpage]
 
-### Top-Con
+Top-Con
+-------
 
 ![OpenFlap Top-Con][top_con]
 
@@ -65,8 +69,44 @@ The _top-con_ board can be mounted on top most module of each column of display 
 
 The _top-con_ board features a 12V to 5V buck convertor and automatic data routing similar to the module boards, the routing is used here to detect the end of the row and not the end of the columns.
 
-UART Communication Protocol _ToDo_
-----------------------------------
+UART Communication Protocol
+---------------------------
+
+The OpenFlap _modules_ communicate over uart at a baud rate of 115200 bps. The _modules_ are daisy chained, meaning that the TX of the previous _module_ is connected to the RX of the next _module_. There are 3 different types of commands:
+
+- Regular command
+- Extended command 
+- Read Command
+
+The structure of the command and the data that follows depends on the type. But the LSB nibble first byte in the command always denotes the meaning of the command itself. The number of data bytes following the command depends on the command.
+
+If the MSB of the command byte is set, the command is seen as an extended command. This means that the _module_ will execute the command and send the command and it's data to the next _module_. This type of command is useful for writing a firmware update to all  _modules_.
+
+If the MSB is not set, it is seen as a regular command. In this case the _module_ will remember the command for later execution. After the command is received, the module will go into passthrough mode. This means that all subsequent commands and data will be send to the next module. When no data has been received for 250ms, the _module_ will exit passthrough mode and execute the command. This type of command is useful for setting a different character to each _module_.
+
+**get_** Commands usually don't require data bytes, while **set_** commands do require data bytes (the data to be set). When executing a **get_** command, the wanted data is stored in a buffer on the _module_. The contents of this buffer can be retreived by executing the **cmd_read_data** command. The **cmd_read_data** command will automatically be converted to an extended command, regardless of the MSB bit value. The **cmd_read_data** command requires 3 data bytes, the first 2 must be zero when send by the controller. These bytes act as a 16 bit counter, each _module_ that forwards the read command will increment its value. The 3th data byte contains the number of bytes that will be send from the buffer. So when the command has passed through all _modules_ and has returned to the _controller_ it will contain the following bytes:
+
+- byte 0: 0x81 (indicating it is a read command)
+- byte 1 - 2 : a 16 bit counter indicating the number of _modules_ in the  display. (**module_cnt**)
+- byte 3: The amount of data retrieved from the _modules_. (**data_len**)
+- byte 4-(n+4): The data, where n is equal to **module_cnt** x **data_len**
+
+Value | Definition         | Data Bytes
+----- | ------------------ | -----------
+0x00  | cmd_do_nothing     | 0          
+0x01  | cmd_read_data      | 3          
+0x02  | cmd_write_page     | 66          
+0x03  | cmd_goto_app       | 0          
+0x04  | cmd_goto_btl       | 0          
+0x05  | cmd_get_config     | 0          
+0x06  | cmd_get_fw_version | 0              
+0x07  | cmd_get_hw_id      | 0          
+0x08  | cmd_get_rev_cnt    | 0          
+0x09  | cmd_set_char       | 4          
+0x0A  | cmd_get_char       | 0          
+0x0B  | cmd_set_charset    | 192          
+0x0C  | cmd_get_charset    | 0         
+0x0D  | cmd_set_offset     | 1          
 
 Controller API _ToDo_
 ---------------------

@@ -12,8 +12,8 @@ Module
 - [side panel: 3D](https://a360.co/3vO3oD5)
 
 ### Flap
-- [side panel: PCB](https://a360.co/3KnExLN)
-- [side panel: 3D](https://a360.co/3KmTDAU)
+- [flap profile: PCB](https://a360.co/3KnExLN)
+- [flap profile: 3D](https://a360.co/3KmTDAU)
 
 ### Encoder Wheel
 - [wheel: PCB](https://a360.co/3LnqMxH)

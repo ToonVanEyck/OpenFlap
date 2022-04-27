@@ -132,4 +132,4 @@ Upcoming Changes _ToDo_
 [top_con]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/top_con.png "OpenFlap Top-Con"
 [controller]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/flap_controller.png "OpenFlap Controller"
 [webpage]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/webpage.png "OpenFlap Webpage"
-[uart_wiring]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/OpenFlap_wiring.svg "OpenFlap Wiring"
+[uart_wiring]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/OpenFlap_wiring.png "OpenFlap Wiring"

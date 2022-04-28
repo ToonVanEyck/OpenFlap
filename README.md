@@ -7,6 +7,12 @@ The OpenFlap project aims to create a open source, affordable split-flap display
 
 The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, the _controller_ and the _top-con_ board. 
 
+Proof Of Concept
+----------------
+
+[![Watch the video](https://img.youtube.com/vi/TG83y_r1YUk/default.jpg)](https://www.youtube.com/watch?v=TG83y_r1YUk)
+
+
 Features
 --------
 

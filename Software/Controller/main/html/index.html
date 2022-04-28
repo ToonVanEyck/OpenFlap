@@ -372,10 +372,10 @@
                         event.preventDefault();  
                         let char = event.ctrlKey && parseInt(event.key)<10? "c" : "";
                         char += event.key.toUpperCase(); 
-                        // if(flap_selected.dataset.charset && JSON.parse(flap_selected.dataset.charset).includes(char)){
+                        if(flap_selected.dataset.charset && JSON.parse(flap_selected.dataset.charset).includes(char)){
                             set_letter(flap_selected,char);
                             flap_select(flap_next(flap_selected));
-                        // }
+                        }
                     return;
                 }
             }

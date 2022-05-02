@@ -115,7 +115,7 @@
         let flap_selected = undefined;
         let last_selected = undefined;
         let dimensions = {cols:0,rows:0};
-        
+        enable_modules(true);
 
         for (let i = 0; i < 48; i++) {
             let char = document.createElement("input");
@@ -237,7 +237,6 @@
             flap_unselect();
         }
         document.body.addEventListener("click", body_onclick)
-
 
         function set_letter(flap,letter){
             flap.firstElementChild.setAttribute("class","display__letter");
@@ -381,50 +380,69 @@
             }
         }, true);
 
-        function parse_ws_message(message){
-            const msg = JSON.parse(message.data);
-            console.log(msg)
-            switch (msg["command"]) {
-                case "get_display_dimensions_res":
-                    set_webpage_dimensions(msg["data"]["width"],msg["data"]["height"]);
-                    break;
-                case "get_display_message_res":
-                    if(dimensions["rows"]*dimensions["cols"] == msg["data"].length){
-                        for (flap of flaps) {
-                            set_letter(flap,msg["data"].charAt(parseInt(flap.dataset.index)));
-                        }
-                    }
-                    break;
-                case "get_display_charset_res":
-                    flaps.at(msg["flap_id"]).setAttribute("data-charset",JSON.stringify(msg["data"]));
-                    break;
-                default:
-                    break;
+        async function enable_modules(enable){
+            flap_unselect();
+            const response = await fetch("/api/v1/enable", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify({"enable":(enable?true:false)})
+            });
+        }
+
+        async function set_display_message(){
+            flap_unselect();
+            const response = await fetch("/api/v1/message", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify({"dimensions":{"width":dimensions.cols,"height":dimensions.rows},"message": get_webpage_message()})
+            });
+        }
+
+        async function get_display_message(){
+            const response = await fetch("/api/v1/message", {
+                method:"GET",
+                headers:{'Content-Type': 'application/json'}
+            });
+            const json_response = await response.json();
+            if(dimensions.cols != json_response.dimensions.width || dimensions.rows != json_response.dimensions.height){
+                set_webpage_dimensions(json_response.dimensions.width,json_response.dimensions.height);
+            } 
+            for (flap of flaps) {
+                set_letter(flap,json_response["message"].charAt(parseInt(flap.dataset.index)));
             }
         }
 
-        function set_display_message(){
-            flap_unselect();
-            socket.send(JSON.stringify({command:"controller_set_message",data:get_webpage_message()}))
+        async function get_dimensions(){
+            const response = await fetch("/api/v1/dimensions", {
+                method:"GET",
+                headers:{'Content-Type': 'application/json'}
+            });
+            const json_response = await response.json();
+            if(dimensions.cols != json_response.dimensions.width || dimensions.rows != json_response.dimensions.height){
+                set_webpage_dimensions(json_response.dimensions.width,json_response.dimensions.height);
+            } 
         }
 
-        function get_display_message(){
-            socket.send(JSON.stringify({command:"controller_get_message",data:""}))
+        async function get_display_charset(){
+            const response = await fetch("/api/v1/charset", {
+                method:"GET",
+                headers:{'Content-Type': 'application/json'}
+            });
+            const json_response = await response.json();
+            for(c of json_response) {
+                flaps.at(c["flap_id"]).setAttribute("data-charset",JSON.stringify(c["charset"]));
+            }
         }
 
-        function get_display_dimensions(){
-            socket.send(JSON.stringify({command:"controller_get_dimensions",data:""}))
+        async function controller_reboot(){
+            const response = await fetch("/api/v1/message", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify({"reboot":true})
+            });
         }
 
-        function get_display_charset(){
-            socket.send(JSON.stringify({command:"controller_get_charset",data:""}));
-        }
-
-        function controller_reboot(){
-            socket.send(JSON.stringify({command:"controller_reboot",data:""}));
-        }
-
-        function set_STA_credentials(){
+        async function set_STA_credentials(){
             let ssid = new String(document.getElementById("STA_SSID").value);
             let pwd = new String(document.getElementById("STA_PWD").value);
             if(pwd.length < 8 || pwd.length > 63){
@@ -432,12 +450,15 @@
             }else if(ssid.length > 32){
                 alert("The ssid must be less than 32 characters long!");
             }else{
-                let data = {ssid:ssid,password:pwd};
-                socket.send(JSON.stringify({command:"controller_set_STA",data:data}));
+                const response = await fetch("/api/v1/wifi_sta", {
+                    method:"POST",
+                    headers:{'Content-Type': 'application/json'},
+                    body: JSON.stringify({"ssid":ssid,"password":pwd})
+                });
             }
         }
 
-        function set_AP_credentials(){
+        async function set_AP_credentials(){
             let ssid = new String(document.getElementById("AP_SSID").value);
             let pwd = new String(document.getElementById("AP_PWD").value);
             if(pwd.length < 8 || pwd.length > 63){
@@ -445,49 +466,63 @@
             }else if(ssid.length > 32){
                 alert("The ssid must be less than 32 characters long!");
             }else{
-                let data = {ssid:ssid,password:pwd};
-                socket.send(JSON.stringify({command:"controller_set_AP",data:data}));
+                const response = await fetch("/api/v1/wifi_ap", {
+                    method:"POST",
+                    headers:{'Content-Type': 'application/json'},
+                    body: JSON.stringify({"ssid":ssid,"password":pwd})
+                });
             }
         }
 
-        function set_display_charset(){
+        async function set_display_charset(){
             event.stopPropagation();
             if(last_selected){
                 let cmd = {};
-                cmd['command'] = "controller_set_charset";
                 cmd['flap_id'] = parseInt(last_selected.dataset.index);
-                cmd['data'] = [];
+                cmd['charset'] = [];
                 for(char of charset){
                     let c = char.value.trim();
                     if(c == "") c=" ";
-                    cmd['data'].push((c.length == 1)?c.toUpperCase():c.toLowerCase());
+                    cmd['charset'].push((c.length == 1)?c.toUpperCase():c.toLowerCase());
                 }
-                last_selected.setAttribute("data-charset",JSON.stringify(cmd['data']));
-                socket.send(JSON.stringify(cmd));
+                last_selected.setAttribute("data-charset",JSON.stringify(cmd['charst']));
+                // socket.send(JSON.stringify(cmd));
+                const response = await fetch("/api/v1/charset", {
+                    method:"POST",
+                    headers:{'Content-Type': 'application/json'},
+                    body: JSON.stringify(cmd)
+                });
             }
             flap_select(last_selected);
         }
 
-        function set_display_offset(){
-            let cmd = {};
-            cmd['command'] = "controller_set_offset";
-            cmd['data'] = [];
+        async function set_display_offset(){
+            let cmd = {dimensions:{"width": dimensions.cols, "height":dimensions.rows},offset:[]};
+            // cmd['dimesions'] = {"width": dimensions.cols, "height":dimensions.rows};
+            // cmd['offset'] = [];
             for (flap of flaps) {
-                cmd['data'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')));
-                if(cmd['data'] < 0) cmd['data'] = 0;
+                cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')));
+                if(cmd['offset'].at(-1) < 0){
+                    cmd['offset'].pop();
+                    cmd['offset'].push(0);
+                }
             }
-            socket.send(JSON.stringify(cmd));
+            // socket.send(JSON.stringify(cmd));
+            const response = await fetch("/api/v1/offset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
         }
 
-        let socket = null;
-        window.onload = function (){
-            socket = new WebSocket( "ws://" + document.domain + "/ws" );
-            socket.onopen = function(){ 
-                console.log("socket open"); 
-                get_display_dimensions();
-            }
-            socket.onclose = function() { console.log("socket close"); }
-            socket.onmessage = parse_ws_message;
+        async function set_default_charset(flap_id)
+        {
+            // socket.send('{"command":"controller_set_charset","flap_id":'+flap_id+',"data":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]}');
+            const response = await fetch("/api/v1/charset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify({"flap_id":flap_id,"charset":[[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]]})
+            });
         }
 
         function update_controller_onclick(){ document.getElementById("c_fota_b").click();}
@@ -495,10 +530,6 @@
         function update_module_onclick(){ document.getElementById("m_fota_b").click();}
         document.getElementById("m_fota_b").onchange = function () {document.getElementById("m_fota_p").value = this.value;};
 
-        function set_default_charset(flap_id)
-        {
-            socket.send('{"command":"controller_set_charset","flap_id":'+flap_id+',"data":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]}');
-        }
    </script>
 </body>
 </html>

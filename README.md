@@ -10,7 +10,7 @@ The OpenFlap ecosystem consists of 3 different hardware components: the display 
 Proof Of Concept
 ----------------
 
-[![Watch the video](https://img.youtube.com/vi/TG83y_r1YUk/default.jpg)](https://www.youtube.com/watch?v=TG83y_r1YUk)
+[![Watch the video](https://img.youtube.com/vi/0Jo2y9TDpzU/default.jpg)](https://www.youtube.com/watch?v=0Jo2y9TDpzU)
 
 
 Features
@@ -117,17 +117,95 @@ Value | Definition         | Data Bytes
 Controller API _ToDo_
 ---------------------
 
+Endpoints:
+
+- /enable
+- /reboot
+- /offset
+- /charset
+- /revolutions
+- /dimensions
+- /message
+- /wifi_ap
+- /wifi_sta
+
+### enable (R/W)
+```
+{
+    "enable": true
+}
+```
+
+### reboot (W)
+```
+{
+    "reboot": true
+}
+```
+
+### offset (W)
+```
+{
+    "dimensions":{
+        "width":5,
+        "height":1
+    },
+    "offset_encoder": [26,9,6,13,40]
+}
+```
+
+### charset (R/W)
+```
+{
+    "flap_id":0,
+    "charset":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]
+}
+``` 
+
+### revolutions (R)
+not implemented
+
+### dimensions (R)
+```
+{
+    "dimensions":{
+        "width":5,
+        "height":1
+    }
+}
+```
+
+### message (R/W)
+```
+{
+    "dimensions":{
+        "width":5,
+        "height":2
+    },
+    "message": "HELLOWORLD"
+}
+```
+
+### wifi_ap (W)
+Use these credentials to create a new access point.
+```
+{
+    "ssid": "my_ssid",
+    "password": "my_password",
+}
+```
+
+### wifi_sta (W)
+Use these credentials to connect to an existing an access point.
+```
+{
+    "ssid": "my_ssid",
+    "password": "my_password",
+}
+```
+
 Bill Of Materials API _ToDo_
 ----------------------------
-
-Schematics _ToDo_
------------------
-
-Board designs _ToDo_
---------------------
-
-3D designs _ToDo_
------------------
 
 Upcoming Changes _ToDo_
 -----------------------

@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "flap_command.h"
-#include "flap_controller.h"
+#include "flap_api_v1.h"
 
 #define UART_BUF_SIZE (1024)
 #define UART_NUM UART_NUM_1

@@ -10,7 +10,8 @@
 
 #include <regex.h>
 
-#include "flap_controller.h"
+#include "flap_api_v1.h"
+#include "flap_firmware.h"
 
 extern const uint8_t index_start[]          asm("_binary_index_html_start");
 extern const uint8_t index_end[]            asm("_binary_index_html_end");

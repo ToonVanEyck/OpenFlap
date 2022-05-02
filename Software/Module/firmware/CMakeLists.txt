@@ -22,7 +22,7 @@ add_custom_target(split_flap_complete ALL
     DEPENDS split_flap_bootloader split_flap_firmware)
 
 add_custom_target(update
-    COMMAND curl -s -F 'controller_module_firmware=@${CMAKE_CURRENT_BINARY_DIR}/split_flap_firmware.hex' openflap.local/
+    COMMAND curl -s -F 'controller_module_firmware=@${CMAKE_CURRENT_BINARY_DIR}/split_flap_firmware.hex' openflap.local/firmware
     DEPENDS split_flap_complete)
 
 add_custom_target(flash_btl

@@ -89,9 +89,12 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
         // cs = 0;
         bzero(buf,45);
         buf_offset = 0;
-        char msg_buf[257]={0};
-        int len = module_goto_btl_msg(msg_buf,1);
-        flap_uart_send_data(msg_buf,len);
+
+        gpio_set_level(FLAP_ENABLE, 1);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+        char cmd_uart_buf[1]={0};
+        cmd_uart_buf[0] = EXTEND + module_goto_btl;
+        flap_uart_send_data(cmd_uart_buf,1);
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 
@@ -122,9 +125,13 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
                         }
                     }
                     if(flash_data_cnt == 64 ){
-                        char msg_buf[257]={0};
-                        int len = module_write_page_msg(msg_buf,1,addr,flash_data);
-                        flap_uart_send_data(msg_buf,len);
+                        char cmd_uart_buf[67]={0};
+                        // int len = module_write_page_msg(cmd_uart_buf,1,addr,flash_data);
+                        cmd_uart_buf[0] = EXTEND + module_write_page;
+                        cmd_uart_buf[1] = (addr>>8) & 0xff;
+                        cmd_uart_buf[2] = (addr>>0) & 0xff;
+                        memcpy(cmd_uart_buf+3,flash_data,64);
+                        flap_uart_send_data(cmd_uart_buf,67);
                         flash_data_cnt = 0;
                         // cs = 0;
                         cmd = 0;
@@ -142,9 +149,9 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
     }
 
     if(data_len + data_offset >= total_data_len){
-        char msg_buf[5]={0};
-        module_goto_app_msg(msg_buf,1);
-        flap_uart_send_data(msg_buf,1); 
+        char cmd_uart_buf[1]={0};
+        cmd_uart_buf[0] = EXTEND + module_goto_app;
+        flap_uart_send_data(cmd_uart_buf,1);
         vTaskDelay(250 / portTICK_PERIOD_MS);
     }
 }

@@ -16,7 +16,6 @@ typedef struct{
 static void flap_uart_task(void *arg)
 {
     controller_queue_data_t *controller_comm = calloc(1,sizeof(controller_queue_data_t));
-    controller_comm->cmd = controller_rx_data;
     uart_tx_data_t *tx_data = NULL;
     while (1){
         if (xQueueReceive(uart_tx_queue, (void *)&tx_data, 50 / portTICK_RATE_MS)){

@@ -161,7 +161,7 @@ static esp_err_t api_v1_offset_post_handler(httpd_req_t *req)
     cJSON_ArrayForEach(offset_i, offset){
         char cmd_uart_buf[2]={0};
         cmd_uart_buf[0] = module_set_offset;
-        cmd_uart_buf[0] = offset_i->valueint;
+        cmd_uart_buf[1] = offset_i->valueint;
         flap_uart_send_data(cmd_uart_buf,2);
     }
 
@@ -203,9 +203,6 @@ static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
     }
 
     char *buf = calloc(1,1 + 4*48 + flap_id);
-    if(!buf){
-        ESP_LOGE(TAG,"CANT ALLOCATE MEMORY");
-    }
     int i = 0;
     while(i < flap_id){
         buf[i++] = module_do_nothing;

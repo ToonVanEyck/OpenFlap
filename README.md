@@ -115,8 +115,8 @@ Value | Definition         | Data Bytes
 0x0C  | cmd_get_charset    | 0         
 0x0D  | cmd_set_offset     | 1          
 
-Controller API _ToDo_
----------------------
+Controller API
+--------------
 
 Endpoints:
 

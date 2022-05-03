@@ -3,6 +3,7 @@ OpenFlap
 
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 
+![OpenFlap Module][module_gif]
 ![OpenFlap Module Explode][module_explode]
 
 The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, the _controller_ and the _top-con_ board. 
@@ -12,7 +13,7 @@ Proof Of Concept Videos
 
 [![Watch the video](https://img.youtube.com/vi/0Jo2y9TDpzU/default.jpg)](https://www.youtube.com/watch?v=0Jo2y9TDpzU)
 [![Watch the video](https://img.youtube.com/vi/TG83y_r1YUk/default.jpg)](https://www.youtube.com/watch?v=TG83y_r1YUk)
-
+[![Watch the video](https://img.youtube.com/vi/qD5cp83qmLA/default.jpg)](https://www.youtube.com/watch?v=qD5cp83qmLA)
 
 Features
 --------
@@ -212,6 +213,7 @@ Upcoming Changes _ToDo_
 -----------------------
 
 [module_explode]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_explode.gif "OpenFlap Module Explode"
+[module_gif]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module.gif "OpenFlap Module"
 [module]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module.png "OpenFlap Module"
 [module_pinout]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_pinout.svg "OpenFlap Module Pinout"
 [top_con]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/top_con.png "OpenFlap Top-Con"

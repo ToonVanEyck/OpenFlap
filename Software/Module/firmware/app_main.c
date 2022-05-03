@@ -14,13 +14,11 @@
 
 #define CHARSET_BASE_ADDR (0x1FA0)
 
+#define UNINITIALIZED 0xff
 #define NUM_CHARS 48
 
-uint8_t watch_tx = 0;
-uint8_t char_index = 0;
-uint8_t rev_add = 0;
-uint32_t rev_cnt = 0;
-uint8_t offset = 0;
+uint8_t watch_tx, char_index, rev_add, offset;
+uint32_t rev_cnt;
 
 char charset[4*NUM_CHARS] = {0};
 const uint16_t speed[NUM_CHARS] = {       // distance to pwm conversion map
@@ -111,13 +109,6 @@ uint8_t read_encoder(uint8_t is_idle)
         }
     }
     return (uint8_t) enc_res;
-}
-
-void init_encoder(void){
-    for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS)*5;i++){
-        read_encoder(1);
-    }
-    char_index = read_encoder(1);
 }
 
 void store_config(void)
@@ -356,7 +347,7 @@ int motor_control(void)
     int distance = (int)char_index - read_encoder(pwm == 0);
     if(distance < 0) distance += NUM_CHARS;
     pwm = 0;
-    if(distance >= 0 && distance < NUM_CHARS){
+    if(char_index != UNINITIALIZED && distance >= 0 && distance < NUM_CHARS){
         pwm = speed[distance];
     }
     CCPR1 = pwm;
@@ -432,6 +423,11 @@ void increment_rev_cnt(){
 void main(void)
 {
     INTCONbits.GIE = 0;
+    watch_tx = 0;
+    char_index = UNINITIALIZED;
+    rev_add = 0;
+    offset = 0;
+    rev_cnt = 0;
     init_hardware();
     set_default_charset();
     install_command(do_nothing);
@@ -445,7 +441,6 @@ void main(void)
     install_command(set_offset);
 
     rev_cnt = calc_rev_cnt();
-    init_encoder(); 
 
     uint8_t toc = 0; // timeout counter
     int distance_to_rotate = 0;

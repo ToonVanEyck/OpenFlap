@@ -21,5 +21,7 @@ extern uint8_t letter[4];
 #define RX_BYTE(_b) int rx = read(pfds[0].fd, &_b, 1)
 #define TX_BYTE(_b) pfds[1].events = POLLOUT; int tx = write(pfds[1].fd, &_b, 1)
 #define TX_DONE do{}while(0)
+#define TX_DELAY do{}while(0)
+
 
 #endif

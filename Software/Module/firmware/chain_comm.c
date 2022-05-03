@@ -80,7 +80,7 @@ void chain_comm(uint8_t new_comm_data)
                 if(ctx.tx_node_cnt+1 >= node_cnt){
                     DEBUG_PRINT("tx data: %d/%d\n", ctx.tx_data_cnt+1,ctx.rx_data[2]);
                     TX_BYTE(ctx.tx_data[ctx.tx_data_cnt++]);
-                    __delay_us(200);
+                    TX_DELAY;
                     DEBUG_PRINT(">> tx data: 0x%02x\n", data);
                     if(ctx.tx_data_cnt == ctx.rx_data[2]){
                         ctx.command = cmd_do_nothing;

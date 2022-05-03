@@ -23,6 +23,9 @@
 #ifndef TX_DONE
     #define TX_DONE do{NOP();}while(!(PIR1bits.TX1IF && TX1STAbits.TRMT))
 #endif
+#ifndef TX_DELAY
+    #define TX_DELAY __delay_us(200)
+#endif
 
 #define CMD_EXTEND 0x80
 #define CMD_CMD 0x0F

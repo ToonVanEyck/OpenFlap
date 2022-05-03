@@ -77,47 +77,47 @@ void set_default_charset(void){
 uint8_t read_encoder(uint8_t is_idle)
 {
     static unsigned pulse_cnt = IR_OFF_TICKS;
-    static int encoder_dec = 0; // encoder value converted from graycode to decimal.
-    static int corr_encoder_val = 0xff; // encoder value with added offset and buffered.
+    static uint8_t enc_res = 0xff;
+    static int8_t prev_enc_d = -1;
     static uint8_t enc_buffer[3] = {0};
     if(++pulse_cnt >= IR_OFF_TICKS){
         PORTAbits.RA0 = 1; // Enable IR LEDs
         if(pulse_cnt >= IR_OFF_TICKS + IR_ON_TICKS){
-            int encoder_grey = 0x3F;
-            encoder_grey ^= PORTCbits.RC3 << 5;
-            encoder_grey ^= PORTCbits.RC2 << 4;
-            encoder_grey ^= PORTCbits.RC4 << 3;
-            encoder_grey ^= PORTCbits.RC1 << 2;
-            encoder_grey ^= PORTCbits.RC5 << 1;
-            encoder_grey ^= PORTCbits.RC0 << 0;
-            PORTAbits.RA0 = 0; // Disable IR LEDs
             pulse_cnt = 0;
-            int prev_encoder_dec = encoder_dec;
-            for (encoder_dec = 0; encoder_grey; encoder_grey = encoder_grey >> 1)
-                encoder_dec ^= encoder_grey;
-            encoder_dec = NUM_CHARS - encoder_dec - 1;
-            if(encoder_dec >= 0 && encoder_dec < NUM_CHARS){
-                if(prev_encoder_dec - 3 > encoder_dec) rev_add++; // The encoder has rolled over, a revolution was completed.
-                int tmp_encoder_val = encoder_dec + (int)offset;
-                if(tmp_encoder_val >= NUM_CHARS) tmp_encoder_val -= NUM_CHARS;
-                enc_buffer[0] = is_idle? enc_buffer[1] : (uint8_t)tmp_encoder_val;
-                enc_buffer[1] = is_idle? enc_buffer[2] : (uint8_t)tmp_encoder_val;
-                enc_buffer[2] = (uint8_t)tmp_encoder_val;
-                if(enc_buffer[0] == enc_buffer[1] && enc_buffer[1] == enc_buffer[2]) corr_encoder_val = tmp_encoder_val;
-            }
+            uint8_t enc_g = 0x3F;
+            uint8_t enc_d = 0;
+            enc_g ^= PORTCbits.RC3 << 5;
+            enc_g ^= PORTCbits.RC2 << 4;
+            enc_g ^= PORTCbits.RC4 << 3;
+            enc_g ^= PORTCbits.RC1 << 2;
+            enc_g ^= PORTCbits.RC5 << 1;
+            enc_g ^= PORTCbits.RC0 << 0;
+            PORTAbits.RA0 = 0; // Disable IR LEDs
+            // convert gray code to decimal 
+            for (enc_d = 0; enc_g; enc_g = enc_g >> 1) enc_d ^= enc_g;
+            if(enc_d >(NUM_CHARS-1))enc_d =(NUM_CHARS-1);
+            enc_d = (uint8_t)NUM_CHARS - enc_d - 1;
+            // apply the encoder offset. 
+            enc_d+= offset;
+            if(enc_d >= NUM_CHARS) enc_d-= NUM_CHARS;
+            // check if the revolution counter needs to be incremented
+            if(prev_enc_d - 3 > enc_d) rev_add++; 
+            prev_enc_d = (int8_t)enc_d;
+            // debounce readings
+            enc_buffer[0] = is_idle? enc_buffer[1] : (uint8_t)enc_d;
+            enc_buffer[1] = is_idle? enc_buffer[2] : (uint8_t)enc_d;
+            enc_buffer[2] = (uint8_t)enc_d;
+            if(enc_buffer[0] == enc_buffer[1] && enc_buffer[1] == enc_buffer[2]) enc_res = enc_d;
         }
     }
-    return (uint8_t) corr_encoder_val;
+    return (uint8_t) enc_res;
 }
 
 void init_encoder(void){
-    // for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS)*20;i++){
-    //     read_encoder(1);
-    // }
-    // char_index = read_encoder(1);
-    while(read_encoder(1) == 0xff);
+    for(int i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS)*5;i++){
+        read_encoder(1);
+    }
     char_index = read_encoder(1);
-    // for(long i = 0; i < (IR_ON_TICKS + IR_OFF_TICKS)*500;i++) read_encoder(1);
 }
 
 void store_config(void)
@@ -340,6 +340,7 @@ void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
         offset = rx_data[0];
+        if(offset >= NUM_CHARS) offset = 0;
         store_config();
     }else{
         // command info

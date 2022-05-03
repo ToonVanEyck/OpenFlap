@@ -312,6 +312,15 @@ static const httpd_uri_t dimensions_get = {
     .user_ctx     = NULL
 };
 
+
+// returns the number of utf8 code points in the buffer at s
+size_t utf8len(char *s)
+{
+    size_t len = 0;
+    for (; *s; ++s) if ((*s & 0xC0) != 0x80) ++len;
+    return len;
+}
+
 static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
@@ -329,7 +338,9 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
     json_get_dimensions(dimensions,&width,&height);
     cJSON * message = cJSON_GetObjectItemCaseSensitive(json, "message");
     
-    if(!(cJSON_IsString(message) && strlen(message->valuestring) == (width * height))){
+    ESP_LOGI(TAG,"%d %d",strlen(message->valuestring),utf8len(message->valuestring));
+
+    if(!(cJSON_IsString(message) && utf8len(message->valuestring) == (width * height))){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
         free(data);
@@ -343,7 +354,7 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
         ESP_LOGI(TAG,"Failed to allocate memory for command");
         return ESP_FAIL;
     }
-    for(int i = 0; i<strlen(message->valuestring); i++){
+    for(int i = 0; i < strlen(message->valuestring); i++){
         char buf[4] = {0};
         int utf8_len = 1;
         buf[0] = message->valuestring[i] ;        

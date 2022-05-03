@@ -114,7 +114,7 @@
         let charset = [];
         let flap_selected = undefined;
         let last_selected = undefined;
-        let dimensions = {cols:0,rows:0};
+        let dimensions = {width:0,height:0};
         enable_modules(true);
 
         for (let i = 0; i < 48; i++) {
@@ -130,7 +130,7 @@
         function flap_above(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                if(index == Math.floor(index/dimensions.rows) * dimensions.rows) index += dimensions.rows;
+                if(index == Math.floor(index/dimensions.height) * dimensions.height) index += dimensions.height;
                 index-=1;
                 return flaps.at(index);
             }
@@ -139,7 +139,7 @@
         function flap_below(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                if(index == (Math.floor(index/dimensions.rows)+1) * dimensions.rows -1) index -= dimensions.rows;
+                if(index == (Math.floor(index/dimensions.height)+1) * dimensions.height -1) index -= dimensions.height;
                 index+=1;
                 return flaps.at(index);
             }
@@ -148,8 +148,8 @@
         function flap_right(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                if(Math.floor(index/dimensions.rows)+1 == dimensions.cols) index -= dimensions.rows * dimensions.cols;
-                index+=dimensions.rows;
+                if(Math.floor(index/dimensions.height)+1 == dimensions.width) index -= dimensions.height * dimensions.width;
+                index+=dimensions.height;
                 return flaps.at(index);
             }
             return flaps.at(0);
@@ -157,8 +157,8 @@
         function flap_left(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                if(Math.floor(index/dimensions.rows) == 0) index += dimensions.rows * dimensions.cols;
-                index-=dimensions.rows;
+                if(Math.floor(index/dimensions.height) == 0) index += dimensions.height * dimensions.width;
+                index-=dimensions.height;
                 return flaps.at(index);
             }
             return flaps.at(0);
@@ -167,7 +167,7 @@
             if(flap){
                 let index = parseInt(flap.dataset.index);
                 flap = flap_right(flap);
-                if(Math.floor(index/dimensions.rows)+1 == dimensions.cols) flap = flap_below(flap);
+                if(Math.floor(index/dimensions.height)+1 == dimensions.width) flap = flap_below(flap);
                 return flap;
             }
             return flaps.at(0);
@@ -175,7 +175,7 @@
         function flap_prev(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                if(Math.floor(index/dimensions.rows) == 0) flap = flap_above(flap);
+                if(Math.floor(index/dimensions.height) == 0) flap = flap_above(flap);
                 flap = flap_left(flap);
                 return flap;
             }
@@ -184,7 +184,7 @@
         function flap_col_start(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                return flaps.at(index - (index % dimensions.rows));
+                return flaps.at(index - (index % dimensions.height));
             }
             return flaps.at(0);
         }
@@ -197,7 +197,7 @@
         function flap_row_start(flap){
             if(flap){
                 let index = parseInt(flap.dataset.index);
-                return flaps.at(index - (Math.floor(index/dimensions.rows) * dimensions.rows));
+                return flaps.at(index - (Math.floor(index/dimensions.height) * dimensions.height));
             }
             return flaps.at(0);
         }
@@ -247,27 +247,28 @@
 
         function get_webpage_message(){
             let str = '';
+            //transpose array
             for (let i = 0; i < flaps.length; i++) {
-                str += flaps.at(i).firstElementChild.innerHTML;
+                str += flaps.at(i%dimensions.width*dimensions.height+Math.floor(i/dimensions.width)).firstElementChild.innerHTML;
             }
             return str;
         }
 
-        function set_webpage_dimensions(cols,rows){
+        function set_webpage_dimensions(width,height){
             flaps = [];
-            dimensions.rows = rows; dimensions.cols = cols;
-            console.log("creating display of " + cols + " x " + rows);
+            dimensions.height = height; dimensions.width = width;
+            console.log("creating display of " + width + " x " + height);
             scale_display();    
             display.innerHTML = '';
-            for (let i = 0; i < cols; i++) {
+            for (let i = 0; i < width; i++) {
                 let display__column = document.createElement("div");
                 display__column.setAttribute("class","display__column");
-                for (let j = 0; j < rows; j++) {
+                for (let j = 0; j < height; j++) {
 
                     let display__flap = document.createElement("div");
                     display__flap.setAttribute("class","display__flap");
-                    display__flap.setAttribute("id","flap_"+(i * rows +j));
-                    display__flap.setAttribute("data-index",(i * rows +j));
+                    display__flap.setAttribute("id","flap_"+(i * height +j));
+                    display__flap.setAttribute("data-index",(i * height +j));
                     let display__letter = document.createElement("div");
                     display__letter.setAttribute("class","display__letter");
                     display__letter.innerHTML = ' ';
@@ -283,15 +284,15 @@
             get_display_charset();
         }        
         function scale_display() {
-            if(dimensions.cols && dimensions.rows){
+            if(dimensions.width && dimensions.height){
                 let root = document.documentElement;
                 const display = document.getElementById("display");
                 let max_width = document.documentElement.clientWidth - 100;
                 if(max_width < 400) max_width = 400;
-                let height = (((max_width + 1 - dimensions.cols) / dimensions.cols) * dimensions.rows * 1.31) + dimensions.rows - 1;
+                let height = (((max_width + 1 - dimensions.width) / dimensions.width) * dimensions.height * 1.31) + dimensions.height - 1;
                 if(height > 500) height = 500;
-                let flap_width = ((height - dimensions.rows + 1) / dimensions.rows / 1.31);
-                let width = (flap_width * dimensions.cols) + dimensions.cols - 1;
+                let flap_width = ((height - dimensions.height + 1) / dimensions.height / 1.31);
+                let width = (flap_width * dimensions.width) + dimensions.width - 1;
                 root.style.setProperty('--display-height', height+"px");
                 root.style.setProperty('--display-width', width+"px");
                 root.style.setProperty('--flap-width', flap_width*1.25+"px")
@@ -394,7 +395,7 @@
             const response = await fetch("/api/v1/message", {
                 method:"POST",
                 headers:{'Content-Type': 'application/json'},
-                body: JSON.stringify({"dimensions":{"width":dimensions.cols,"height":dimensions.rows},"message": get_webpage_message()})
+                body: JSON.stringify({"dimensions":{"width":dimensions.width,"height":dimensions.height},"message": get_webpage_message()})
             });
         }
 
@@ -404,7 +405,7 @@
                 headers:{'Content-Type': 'application/json'}
             });
             const json_response = await response.json();
-            if(dimensions.cols != json_response.dimensions.width || dimensions.rows != json_response.dimensions.height){
+            if(dimensions.width != json_response.dimensions.width || dimensions.height != json_response.dimensions.height){
                 set_webpage_dimensions(json_response.dimensions.width,json_response.dimensions.height);
             } 
             for (flap of flaps) {
@@ -418,7 +419,7 @@
                 headers:{'Content-Type': 'application/json'}
             });
             const json_response = await response.json();
-            if(dimensions.cols != json_response.dimensions.width || dimensions.rows != json_response.dimensions.height){
+            if(dimensions.width != json_response.dimensions.width || dimensions.height != json_response.dimensions.height){
                 set_webpage_dimensions(json_response.dimensions.width,json_response.dimensions.height);
             } 
         }
@@ -497,8 +498,8 @@
         }
 
         async function set_display_offset(){
-            let cmd = {dimensions:{"width": dimensions.cols, "height":dimensions.rows},offset:[]};
-            // cmd['dimesions'] = {"width": dimensions.cols, "height":dimensions.rows};
+            let cmd = {dimensions:{"width": dimensions.width, "height":dimensions.height},offset:[]};
+            // cmd['dimesions'] = {"width": dimensions.width, "height":dimensions.height};
             // cmd['offset'] = [];
             for (flap of flaps) {
                 cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')));

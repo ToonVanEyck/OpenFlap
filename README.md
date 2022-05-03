@@ -4,7 +4,6 @@ OpenFlap
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 
 ![OpenFlap Module][module_gif]
-![OpenFlap Module Explode][module_explode]
 
 The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, the _controller_ and the _top-con_ board. 
 
@@ -44,6 +43,8 @@ Display Module
 ### Construction
 
 The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts. Only one of the PCB's is populated. The characters and encoder wheels are also PCB's but they only have solder mask and silkscreen layers and no copper layers.
+
+![OpenFlap Module Explode][module_explode]
 
 ### Power
 Each _module_ requires 5V for the microcontroller and other low voltage components and 12V to power the motor. Typically a stepper motor is used for this kind of application, this project however, uses a DC motor as they are cheaper and require less external components.

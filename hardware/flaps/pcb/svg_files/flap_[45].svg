@@ -1,0 +1,23 @@
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" width="49mm" height="35mm" viewBox="0 0 49 35" version="1.1" id="svg5" inkscape:version="1.1 (c68e22c387, 2021-05-23)" sodipodi:docname="input.svg">
+  <metadata id="metadata149">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview id="namedview7" pagecolor="#333333" bordercolor="#eeeeee" borderopacity="0" inkscape:pageshadow="0" inkscape:pageopacity="0" inkscape:pagecheckerboard="true" inkscape:document-units="mm" showgrid="true" fit-margin-top="0" fit-margin-left="0" fit-margin-right="0" fit-margin-bottom="0" inkscape:zoom="4" inkscape:cx="107.875" inkscape:cy="101.25" inkscape:window-width="1902" inkscape:window-height="991" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="0" inkscape:current-layer="layer_ss_bot" inkscape:document-rotation="0" inkscape:snap-object-midpoints="true" inkscape:object-nodes="true" inkscape:snap-bbox="true" inkscape:bbox-nodes="true" inkscape:bbox-paths="false" inkscape:object-paths="false" inkscape:showpageshadow="false" showborder="false">
+    <inkscape:grid type="xygrid" id="grid1147" units="mm" spacingx="1" spacingy="1" empspacing="5" originy="0" originx="0"/>
+  </sodipodi:namedview>
+  <defs id="defs2"/>
+  <g inkscape:label="Dimension" inkscape:groupmode="layer" id="layer1" style="display:inline">
+    <path id="path1480" style="fill:none;stroke-width:0.02;stroke-linecap:round;stroke:#ffff00;stroke-miterlimit:4;stroke-dasharray:none" d="M 15.117188,0 A 15.11811,15.11811 0 0 0 0,15.117188 V 81.638672 H 7.5585938 V 122.45703 H 0 v 3.7793 h 7.5585938 v 6.04687 H 177.63867 v -6.04687 h 7.5586 v -3.7793 h -7.5586 V 81.638672 h 7.5586 V 15.117188 A 15.11811,15.11811 0 0 0 170.07812,0 Z" flap="True" transform="scale(0.264583, 0.264583)"/>
+  </g>
+  <g id="layer_ss_bot" inkscape:groupmode="layer" inkscape:label="bPlace">
+    <path id="path832" style="font-size:80px;font-family:'Red Hat Mono';stroke-width:0;fill:#5f5fd3" d="M 94.564453 25.474609 C 80.454217 25.474609 67.251141 29.707686 54.955078 38.173828 C 42.86059 46.63997 33.083268 58.934563 25.625 75.060547 C 18.418247 90.837493 14.70397 109.91895 14.460938 132.2832 L 38.041016 132.2832 C 38.246165 114.74835 40.75692 99.70154 45.582031 87.15625 C 50.621401 74.053888 57.373702 63.97504 65.839844 56.919922 C 74.50756 50.066379 84.082563 46.638672 94.564453 46.638672 C 107.06209 46.638672 118.14863 50.972908 127.82422 59.640625 C 137.70138 68.509916 144.656 81.107988 148.6875 97.435547 L 170.75977 90.482422 C 166.92984 76.97691 161.3856 65.285368 154.12891 55.408203 C 146.87221 45.732613 138.20569 38.274148 128.12695 33.033203 C 118.04821 27.993833 106.86052 25.474609 94.564453 25.474609 z " transform="scale(0.26458333)"/>
+  </g>
+  <g id="layer_ss_top" inkscape:groupmode="layer" inkscape:label="tPlace">
+    <path id="path835" style="font-size:80px;font-family:'Red Hat Mono';stroke-width:0;fill:#ff5599" d="M 24.416016 22.677734 L 24.416016 132.2832 L 135.71094 132.2832 C 129.76701 128.72469 122.90948 126.05079 115.125 124.27148 C 126.61476 120.84471 135.68592 114.99894 142.33789 106.73438 C 149.19143 98.268233 152.61719 88.189385 152.61719 76.498047 C 152.61719 65.613008 149.9968 56.139164 144.75586 48.076172 C 139.51491 40.01318 132.05645 33.764724 122.38086 29.330078 C 112.90684 24.895432 101.71915 22.677734 88.818359 22.677734 L 24.416016 22.677734 z M 47.697266 42.632812 L 87.003906 42.632812 C 99.904694 42.632813 110.18586 45.95936 117.8457 52.611328 C 125.50555 59.061722 129.33594 67.829401 129.33594 78.916016 C 129.33594 90.00263 125.50555 98.871469 117.8457 105.52344 C 110.18586 111.97383 99.904694 115.19922 87.003906 115.19922 L 47.697266 115.19922 L 47.697266 42.632812 z " transform="scale(0.26458333)"/>
+  </g>
+</svg>

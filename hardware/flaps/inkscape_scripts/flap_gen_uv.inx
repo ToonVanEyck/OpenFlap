@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Generate Flap UV print</name>
+    <id>org.ekips.filter.flap_gen_uv</id>
+    <param name="ratio" type="float" precision="1" min="1" max="5" gui-text="Flap To Font Scale Factor">2.3</param>
+    <param name="top_spacing" type="float" precision="1" min="0" max="10" gui-text="Char Top Spacing">6.0</param>
+    <param name="mid_cutout" type="float" precision="1" min="0" max="5" gui-text="Flap clearance">0.3</param>
+    <param name="charset" type="string" gui-text="Character Set"> ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789€$!?.,:/&@#+ </param>
+    <param name="charset_offset" type="int" min="0" max="50" gui-text="Flap Set Offset">0</param>
+    <param name="export" type="boolean" gui-text="Export Silk Screen Layers">true</param>
+    <param name="output_path" type="path" gui-text="Export Path" mode="folder"/>
+    <param name="file_name" type="string" gui-text="File Name">Split_flap_UV</param>
+    <param name="color" type="boolean" gui-text="Color Top and Bottom Layers">true</param>
+    <effect>
+        <object-type>path</object-type>
+        <effects-menu>
+            <submenu name="Split Flap"/>
+        </effects-menu>
+    </effect>
+    <script>
+        <command location="inx" interpreter="python">flap_gen_uv.py</command>
+    </script>
+</inkscape-extension>

@@ -5,8 +5,8 @@
    viewBox="0 0 49 35"
    version="1.1"
    id="svg5"
-   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
-   sodipodi:docname="empty flap base.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   sodipodi:docname="flap_template.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -39,15 +39,15 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:zoom="4"
-     inkscape:cx="107.875"
-     inkscape:cy="101.375"
-     inkscape:window-width="1536"
-     inkscape:window-height="793"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:zoom="1.28"
+     inkscape:cx="364.45313"
+     inkscape:cy="106.64063"
+     inkscape:window-width="2400"
+     inkscape:window-height="1261"
+     inkscape:window-x="2391"
+     inkscape:window-y="-9"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg5"
+     inkscape:current-layer="layer_dimension"
      inkscape:document-rotation="0"
      inkscape:snap-object-midpoints="true"
      inkscape:object-nodes="true"
@@ -56,7 +56,8 @@
      inkscape:bbox-paths="false"
      inkscape:object-paths="false"
      inkscape:showpageshadow="false"
-     showborder="false">
+     showborder="false"
+     inkscape:snap-global="false">
     <inkscape:grid
        type="xygrid"
        id="grid1147"
@@ -72,13 +73,17 @@
   <g
      inkscape:label="Dimension"
      inkscape:groupmode="layer"
-     id="layer1"
+     id="layer_dimension"
      style="display:inline">
     <path
-       id="path1480"
-       style="fill:none;stroke-width:0.02;stroke-linecap:round;stroke:#ffff00;stroke-miterlimit:4;stroke-dasharray:none"
-       d="M 15.117188,0 A 15.11811,15.11811 0 0 0 0,15.117188 V 81.638672 H 7.5585938 V 122.45703 H 0 v 3.7793 h 7.5585938 v 6.04687 H 177.63867 v -6.04687 h 7.5586 v -3.7793 h -7.5586 V 81.638672 h 7.5586 V 15.117188 A 15.11811,15.11811 0 0 0 170.07812,0 Z"
+       id="path1480-7"
+       style="display:inline;fill:#ffffff;stroke:#ffff00;stroke-width:0;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 3.9997515,5.0966779e-7 A 3.9999949,3.9999949 0 0 0 5e-7,3.9997515 V 21.600206 H 1.9998759 V 32.400049 H 5e-7 v 0.999939 h 1.9998754 v 1.599899 H 47.000173 V 33.399988 H 49.00005 V 32.400049 H 47.000173 V 21.600206 H 49.00005 V 3.9997515 A 3.9999949,3.9999949 0 0 0 44.99978,5.0966779e-7 Z"
        flap="True"
-       transform="scale(0.264583, 0.264583)" />
+       mid_cutout="0.5" />
   </g>
+  <g
+     id="layer_gen_charset"
+     inkscape:groupmode="layer"
+     inkscape:label="gen_flapset" />
 </svg>

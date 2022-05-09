@@ -12,7 +12,9 @@ Requirements
 Generate SVG's
 --------------
 1) Open the template svg ```flap_template.svg``` in inkscape.
-2) Run the extention: ```>> Extentions >> Split Flap >> Generate Flap PCB Silkscreen ...``` This can take a couple of minutes.
+2) Run the generate extention: ```>> Extentions >> Split Flap >> Flap Gen ...```.
+3) Modify the generated characters or create custom characters.
+2) Run the splitter extention: ```>> Extentions >> Split Flap >> Flap Split ...```. This can take some minutes as the exetention has to open and close several new inkscape instances.
 3) Place the generated ```.svg``` files in ```hardware/flaps/eagle_default/svg_files/```.
 
 Convert the SVG's

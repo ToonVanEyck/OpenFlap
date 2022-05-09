@@ -4,3 +4,4 @@ software/module/external/*
 software/*/build
 hardware/flaps/pcb/scr_files/*
 hardware/flaps/pcb/production_files/*
+hardware/flaps/pcb/tmp/*

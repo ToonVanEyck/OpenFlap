@@ -4,11 +4,25 @@ static const char *TAG = "[API]";
 
 static QueueHandle_t controller_respons_queue;
 
+/*
+This api file cointains a number of api endpoint handlers. The handler functions all work in a similar way:
+    POST REQUESTS:
+        1) Receive json data from the client.
+        2) Parse the json data.
+        3) Send a uart command to the modules.
+        4) Report result to client.
+    GET REQUESTS:
+        1) Send a uart command to the modules
+        2) Receive uart data from modules.
+        3) Format result in response json.
+        4) Report result to client.
+*/
+
 esp_err_t modules_get_dimensions(int* width, int* height)
 {
     int rcv_complete = 0;
     controller_queue_data_t *uart_response = NULL;
-
+    // Send uart command to read dimesnions
     char cmd_uart_buf[4]={0};
     cmd_uart_buf[0] = EXTEND + module_get_config;
     flap_uart_send_data(cmd_uart_buf,1); 
@@ -20,8 +34,10 @@ esp_err_t modules_get_dimensions(int* width, int* height)
     *width=0;
     *height=0;
     do{
+        // receive uart response for each module
         if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
             number_of_modules = uart_response->total_data_len / uart_response->data_len;
+            // Increment the width counter for each time a module says its the last module in a column.
             if(uart_response->data[0]) (*width)++;
             ESP_LOGI(TAG,"%d %d",uart_response->data[0], *width);
             rcv_complete = uart_response->data_offset + uart_response->data_len >= uart_response->total_data_len;
@@ -33,12 +49,14 @@ esp_err_t modules_get_dimensions(int* width, int* height)
     if(!(rcv_complete > 0 && *width)){
         return ESP_FAIL;
     }
+    // Calculate the height by devicing the toal number modules by the width of the display.
     *height = number_of_modules/(*width); 
     return ESP_OK;
 }
 
 void controller_respons_enqueue(controller_queue_data_t *controller_comm)
 {
+    // This function is used by the uart task to send data to the api handlers.
     ESP_LOGI(TAG,"queue command");
     controller_queue_data_t *controller_comm_cpy = malloc(sizeof(controller_queue_data_t));
     memcpy(controller_comm_cpy,controller_comm,sizeof(controller_queue_data_t));
@@ -47,6 +65,7 @@ void controller_respons_enqueue(controller_queue_data_t *controller_comm)
 
 void json_get_dimensions(cJSON *json, int* width, int* height)
 {
+    // Helper function to parse dimensions from json.
     *width = 0; *height = 0;
     cJSON * j_width = cJSON_GetObjectItemCaseSensitive(json, "width");
     cJSON * j_height = cJSON_GetObjectItemCaseSensitive(json, "height");
@@ -54,9 +73,16 @@ void json_get_dimensions(cJSON *json, int* width, int* height)
     if(cJSON_IsNumber(j_height)) *height = j_height->valueint;
 }
 
+/*
+##########################################
+##    START OF API ENDPOINT HANDLERS    ##
+##########################################
+*/
+
 static esp_err_t api_v1_enable_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -64,7 +90,7 @@ static esp_err_t api_v1_enable_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * enable = cJSON_GetObjectItemCaseSensitive(json, "enable");
     
@@ -74,14 +100,18 @@ static esp_err_t api_v1_enable_post_handler(httpd_req_t *req)
         free(data);
         return ESP_OK;
     }
-
+    // Power modules by enabling relays.
     gpio_set_level(FLAP_ENABLE, enable->valueint);
     if(enable->valueint){
+        // Give microcontroller some time to boot.
         vTaskDelay(50 / portTICK_PERIOD_MS);
+        // Send uart command to set modules in app mode (they will be in bootloader mode when they boot).
         char cmd_uart_buf[1]={0};
         cmd_uart_buf[0] = EXTEND + module_goto_app;
         flap_uart_send_data(cmd_uart_buf,1); 
     }
+    // No uart response expected.
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
@@ -97,6 +127,7 @@ static const httpd_uri_t enable_post = {
 static esp_err_t api_v1_reboot_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -104,7 +135,7 @@ static esp_err_t api_v1_reboot_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * reboot = cJSON_GetObjectItemCaseSensitive(json, "reboot");
     
@@ -114,14 +145,15 @@ static esp_err_t api_v1_reboot_post_handler(httpd_req_t *req)
         free(data);
         return ESP_OK;
     }
-
-    if(reboot->valueint){
-        esp_restart();
-    }
-
+    // Send response to client befor reboot to avoid client side timeout.
+    int do_reboot = reboot->valueint;
+    // No uart response expected.
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
+    // Reboot esp if requested.
+    if(do_reboot) esp_restart();
     return ESP_OK;
 }
 static const httpd_uri_t reboot_post = {
@@ -134,6 +166,7 @@ static const httpd_uri_t reboot_post = {
 static esp_err_t api_v1_offset_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -141,7 +174,7 @@ static esp_err_t api_v1_offset_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * dimensions = cJSON_GetObjectItemCaseSensitive(json, "dimensions");
     int width,height;
@@ -158,13 +191,15 @@ static esp_err_t api_v1_offset_post_handler(httpd_req_t *req)
     }
 
     cJSON *offset_i = NULL;
+    // Send offset commands to each module.
     cJSON_ArrayForEach(offset_i, offset){
         char cmd_uart_buf[2]={0};
         cmd_uart_buf[0] = module_set_offset;
         cmd_uart_buf[1] = offset_i->valueint;
         flap_uart_send_data(cmd_uart_buf,2);
     }
-
+    // No uart response expected.
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
@@ -180,6 +215,7 @@ static const httpd_uri_t offset_post = {
 static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -187,7 +223,7 @@ static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * j_flap_id = cJSON_GetObjectItemCaseSensitive(json, "flap_id");
     cJSON * j_charset = cJSON_GetObjectItemCaseSensitive(json, "charset");
@@ -213,9 +249,11 @@ static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
         strncpy(buf+i,char_it->valuestring,4);
         i+=4;
     }
+    // Send charset to each one module and "do_nothing" to modules before specified module.
     flap_uart_send_data(buf, (1 + 4*48 + flap_id));
     free(buf);
-
+    // No uart response expected.
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
@@ -233,6 +271,7 @@ static esp_err_t api_v1_charset_get_handler(httpd_req_t *req)
     int rcv_complete = 0;
     controller_queue_data_t *uart_response = NULL;
 
+    // Send uart command to read charset
     char cmd_uart_buf[4]={0};
     cmd_uart_buf[0] = EXTEND + module_get_charset;
     flap_uart_send_data(cmd_uart_buf,1);   
@@ -243,6 +282,7 @@ static esp_err_t api_v1_charset_get_handler(httpd_req_t *req)
     cJSON *resp = cJSON_CreateArray();
 
     do{
+        // Receive charset from each module and combine result in json.
         if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
             cJSON *charset_res = cJSON_CreateObject();
             cJSON_AddNumberToObject(charset_res, "flap_id", uart_response->data_offset / uart_response->data_len);
@@ -265,7 +305,7 @@ static esp_err_t api_v1_charset_get_handler(httpd_req_t *req)
         return ESP_OK;
     } 
     
-
+    // Send response to client.
     char *buf = cJSON_PrintUnformatted(resp);
     ESP_LOGI(TAG,"%s",buf);
     httpd_resp_set_status(req, "200 OK");
@@ -293,11 +333,14 @@ static const httpd_uri_t charset_get = {
 static esp_err_t api_v1_dimensions_get_handler(httpd_req_t *req)
 {
     int width=0,height=0;
+    // Get the dimensions using the helper function
     modules_get_dimensions(&width,&height);
 
+    // Create json with response data.
     char *buf = NULL;
     asprintf(&buf,"{\"dimensions\":{\"width\":%d,\"height\":%d}}",width,height);
     ESP_LOGI(TAG,"%s",buf);
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, (const char *)buf, strlen(buf));
@@ -324,6 +367,7 @@ size_t utf8len(char *s)
 static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -331,7 +375,7 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * dimensions = cJSON_GetObjectItemCaseSensitive(json, "dimensions");
     int width,height;
@@ -346,7 +390,7 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
         free(data);
         return ESP_OK;
     }
-
+    // Split the string in to an array. The array has a stride of 4 bytes. This allows for UTF-8 characters to be used.
     int len = 5 * width * height;
     int t = 0;
     char *cmd_uart_buf = calloc(1, len);
@@ -357,7 +401,8 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
     for(int i = 0; i < strlen(message->valuestring); i++){
         char buf[4] = {0};
         int utf8_len = 1;
-        buf[0] = message->valuestring[i] ;        
+        buf[0] = message->valuestring[i] ;     
+        // Copy entire UTF-8 character   
         if(buf[0] == 'c' )          buf[utf8_len++] = message->valuestring[++i];                                                                    
         if((buf[0] & 0xC0) == 0xC0) buf[utf8_len++] = message->valuestring[++i];                                                                        
         if((buf[0] & 0xE0) == 0xE0) buf[utf8_len++] = message->valuestring[++i];                                                                        
@@ -367,9 +412,11 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
         t+= (5*height);
         if(t >= len) t -= (len-5);
     }
+    // Send uart command with 4 character bytes to each module.
     flap_uart_send_data(cmd_uart_buf,len);
     free(cmd_uart_buf);
-
+    // No uart response expected.
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
@@ -388,12 +435,13 @@ static esp_err_t api_v1_message_get_handler(httpd_req_t *req)
     controller_queue_data_t *uart_response = NULL;
 
     int width=0,height=0;
+    // Use helper function to get dimensions.
     if(modules_get_dimensions(&width,&height) == ESP_FAIL){
         httpd_resp_set_status(req, "504 Gateway Timeout");
         httpd_resp_send(req, NULL, 0);
         return ESP_OK;
     }
-
+    // Send uart command to read the display message.
     char cmd_uart_buf[4]={0};
     cmd_uart_buf[0] = EXTEND + module_get_char;
     flap_uart_send_data(cmd_uart_buf,1);
@@ -408,6 +456,7 @@ static esp_err_t api_v1_message_get_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
     do{
+        // Receive the displayed character from each module and combine it to a string.
         if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
             sprintf(message + strlen(message),"%s",uart_response->data);
             rcv_complete = uart_response->data_offset + uart_response->data_len >= uart_response->total_data_len;
@@ -423,10 +472,11 @@ static esp_err_t api_v1_message_get_handler(httpd_req_t *req)
         return ESP_OK;
     } 
     
-
+    // Create a json message containing the display message.
     char *buf = NULL;
     asprintf(&buf,"{\"dimensions\":{\"width\":%d,\"height\":%d},\"message\":\"%s\"}",width,height,message);
     ESP_LOGI(TAG,"%s",buf);
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, (const char *)buf, strlen(buf));
@@ -445,6 +495,7 @@ static const httpd_uri_t message_get = {
 static esp_err_t api_v1_wifiap_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -452,7 +503,7 @@ static esp_err_t api_v1_wifiap_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * ssid = cJSON_GetObjectItemCaseSensitive(json, "ssid");
     cJSON * pwd = cJSON_GetObjectItemCaseSensitive(json, "password");
@@ -463,10 +514,10 @@ static esp_err_t api_v1_wifiap_post_handler(httpd_req_t *req)
         free(data);
         return ESP_OK;
     }
-
+    // Store Wi-Fi credentials in NVM, They will be used when the device reboots.
     flap_nvs_set_string("AP_ssid",ssid->valuestring);
     flap_nvs_set_string("AP_pwd",pwd->valuestring);
-
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
@@ -482,6 +533,7 @@ static const httpd_uri_t wifi_ap_post = {
 static esp_err_t api_v1_wifista_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
+    // Receive data.
     char *data = calloc(1,CMD_COMM_BUF_LEN);
     if (httpd_req_recv(req, data, req->content_len) <= 0){
         free(data);
@@ -489,7 +541,7 @@ static esp_err_t api_v1_wifista_post_handler(httpd_req_t *req)
     } 
     data[req->content_len]=0;
     ESP_LOGI(TAG,"%s",data);
-
+    // Parse json.
     cJSON * json = cJSON_Parse(data);
     cJSON * ssid = cJSON_GetObjectItemCaseSensitive(json, "ssid");
     cJSON * pwd = cJSON_GetObjectItemCaseSensitive(json, "password");
@@ -500,10 +552,10 @@ static esp_err_t api_v1_wifista_post_handler(httpd_req_t *req)
         free(data);
         return ESP_OK;
     }
-
+    // Store Wi-Fi credentials in NVM, They will be used when the device reboots.
     flap_nvs_set_string("STA_ssid",ssid->valuestring);
     flap_nvs_set_string("STA_pwd",pwd->valuestring);
-
+    // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
     free(data);
@@ -529,8 +581,6 @@ void add_api_endpoints(httpd_handle_t *server)
     httpd_register_uri_handler(*server, &dimensions_get);
     httpd_register_uri_handler(*server, &message_post);
     httpd_register_uri_handler(*server, &message_get);
-    // httpd_register_uri_handler(*server, &goto_app_post);
-    // httpd_register_uri_handler(*server, &goto_btl_post);
     httpd_register_uri_handler(*server, &wifi_ap_post);
     httpd_register_uri_handler(*server, &wifi_sta_post);
 }

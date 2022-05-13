@@ -7,7 +7,6 @@ set(srcs
     "${COMPONENT_DIR}/flap_firmware.c"
     "${COMPONENT_DIR}/flap_socket_server.c"
     "${COMPONENT_DIR}/flap_uart.c"
-    "${COMPONENT_DIR}/flap_command.c"
     "${COMPONENT_DIR}/flap_api_v1.c"
 )
 

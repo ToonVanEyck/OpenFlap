@@ -361,7 +361,6 @@ int motor_control(void)
 }
 
 uint32_t calc_rev_cnt(){
-    return 0;
     NVMCON1bits.NVMREGS = 0;
     uint16_t data = 0;
     uint16_t cnt = 0;
@@ -370,7 +369,7 @@ uint32_t calc_rev_cnt(){
         NVMADR = REV_CNT_BASE_ADDR;
         NVMCON1bits.RD = 1;
         data = NVMDAT;
-        for(uint16_t bit_i = 0x3FFF; data < bit_i ; bit_i = (bit_i<<1)&0x3fff){
+        for(uint16_t bit_i = 0x3FFF; data < bit_i ; bit_i = (bit_i << 1) & 0x3FFF){
             cnt++;
         }
         if(data > 0) break;
@@ -402,11 +401,11 @@ void increment_rev_cnt(){
     NVMCON1bits.FREE = 0;
     NVMCON1bits.LWLO = 1;
     NVMCON1bits.WREN = 1;
-    for(int i = 0;i<31;i++){
+    for(int i = 0;i<31;i++){ 
         uint16_t  word = 0x3FFF;
         for(int j = 0; j < 14;j++){
             if(rec_remainder){
-                word = word << 1 & 0x3FFF;
+                word = (word << 1) & 0x3FFF; // shift 0 into word for each remainder
                 rec_remainder--;
             }
         }

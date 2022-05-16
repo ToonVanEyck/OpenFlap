@@ -76,7 +76,7 @@ uint8_t read_encoder(uint8_t is_idle)
 {
     static unsigned pulse_cnt = IR_OFF_TICKS;
     static uint8_t enc_res = 0xff;
-    static int8_t prev_enc_d = -1;
+    static uint8_t prev_rev_cnt_state = 0;
     static uint8_t enc_buffer[3] = {0};
     if(++pulse_cnt >= IR_OFF_TICKS){
         PORTAbits.RA0 = 1; // Enable IR LEDs
@@ -99,8 +99,14 @@ uint8_t read_encoder(uint8_t is_idle)
             enc_d+= offset;
             if(enc_d >= NUM_CHARS) enc_d-= NUM_CHARS;
             // check if the revolution counter needs to be incremented
-            if(prev_enc_d - 3 > enc_d) rev_add++; 
-            prev_enc_d = (int8_t)enc_d;
+            if(prev_rev_cnt_state){
+                if(PORTCbits.RC3 && ! PORTCbits.RC2){
+                    rev_add++; 
+                    prev_rev_cnt_state = 0;
+                }
+            }else{
+                if(PORTCbits.RC2 && ! PORTCbits.RC3) prev_rev_cnt_state = 1; 
+            }
             // debounce readings
             enc_buffer[0] = is_idle? enc_buffer[1] : (uint8_t)enc_d;
             enc_buffer[1] = is_idle? enc_buffer[2] : (uint8_t)enc_d;
@@ -355,6 +361,7 @@ int motor_control(void)
 }
 
 uint32_t calc_rev_cnt(){
+    return 0;
     NVMCON1bits.NVMREGS = 0;
     uint16_t data = 0;
     uint16_t cnt = 0;

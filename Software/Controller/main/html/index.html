@@ -252,6 +252,7 @@
             for (let i = 0; i < flaps.length; i++) {
                 str += flaps.at(i%dimensions.width*dimensions.height+Math.floor(i/dimensions.width)).firstElementChild.innerHTML;
             }
+            str = str.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')
             return str;
         }
 

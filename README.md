@@ -126,8 +126,9 @@ Endpoints:
 - /reboot
 - /offset
 - /charset
-- /revolutions
+- /statistics
 - /dimensions
+- /version
 - /message
 - /wifi_ap
 - /wifi_sta
@@ -165,8 +166,16 @@ Endpoints:
 }
 ``` 
 
-### revolutions (R)
-not implemented
+### statistics (R)
+```
+[
+    {"flap_id":0,"revolutions":4},
+    {"flap_id":1,"revolutions":5},
+    {"flap_id":2,"revolutions":6},
+    {"flap_id":3,"revolutions":5},
+    {"flap_id":4,"revolutions":3}
+]
+```
 
 ### dimensions (R)
 ```
@@ -175,6 +184,21 @@ not implemented
         "width":5,
         "height":1
     }
+}
+```
+
+### version (R)
+```
+{
+    "controller_firmware_version":"v0.0.0-1-g6fed817*",
+    "module_firmware":
+    [
+        {"flap_id":0, "version":"v0.0.0-1-g6fed817*"},
+        {"flap_id":1, "version":"v0.0.0-1-g6fed817*"},
+        {"flap_id":2, "version":"v0.0.0-1-g6fed817*"},
+        {"flap_id":3, "version":"v0.0.0-1-g6fed817*"},
+        {"flap_id":4, "version":"v0.0.0-1-g6fed817*"}
+    ]
 }
 ```
 
@@ -206,12 +230,6 @@ Use these credentials to connect to an existing an access point.
     "password": "my_password",
 }
 ```
-
-Bill Of Materials API _ToDo_
-----------------------------
-
-Upcoming Changes _ToDo_
------------------------
 
 [module_explode]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_explode.gif "OpenFlap Module Explode"
 [module_gif]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module.gif "OpenFlap Module"

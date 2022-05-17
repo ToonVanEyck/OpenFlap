@@ -201,7 +201,7 @@ function(git_describe _var)
     #message(STATUS "Arguments to execute_process: ${ARGN}")
 
     execute_process(
-        COMMAND "${GIT_EXECUTABLE}" describe --tags --always # ${hash} ${ARGN}
+        COMMAND "${GIT_EXECUTABLE}" describe --tags --dirty=* # ${hash} ${ARGN}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         RESULT_VARIABLE res
         OUTPUT_VARIABLE out

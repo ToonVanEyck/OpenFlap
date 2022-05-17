@@ -268,8 +268,11 @@ void get_fw_version(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
         tx_data[0] = git_version_major;
-        tx_data[0] = git_version_minor;
-        tx_data[0] = git_version_patch;
+        tx_data[1] = git_version_minor;
+        tx_data[2] = git_version_patch;
+        tx_data[3] = git_version_commits_after_tag;
+        memcpy((char*)tx_data+4, git_version_hash, 7);
+        tx_data[11] = git_version_is_dirty;
     }else{
         // command info
         cmd_info->rx_data_len = 0;

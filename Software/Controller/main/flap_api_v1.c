@@ -375,7 +375,7 @@ static esp_err_t api_v1_version_get_handler(httpd_req_t *req)
     cmd_uart_buf[0] = EXTEND + module_get_fw_vesion;
     flap_uart_send_data(cmd_uart_buf,1);   
     cmd_uart_buf[0] = EXTEND + module_read_data;
-    cmd_uart_buf[3] = 3;
+    cmd_uart_buf[3] = 12;
     flap_uart_send_data(cmd_uart_buf,4);   
 
     cJSON *module_version_array = cJSON_AddArrayToObject(resp, "module_firmware");
@@ -384,10 +384,11 @@ static esp_err_t api_v1_version_get_handler(httpd_req_t *req)
         if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
             cJSON *version_res = cJSON_CreateObject();
             cJSON_AddNumberToObject(version_res, "flap_id", uart_response->data_offset / uart_response->data_len);
-            char *buf = NULL;
-            asprintf(&buf,"v%d.%d.%d",uart_response->data[0],uart_response->data[1],uart_response->data[2]);
+            char buf[32] = {0};
+            sprintf(buf,"v%d.%d.%d",uart_response->data[0],uart_response->data[1],uart_response->data[2]);
+            if(uart_response->data[3]) sprintf(buf+(strlen(buf)),"-%d-g%.7s",uart_response->data[3],uart_response->data+4);
+            if(uart_response->data[11]) strcat(buf,"*");
             cJSON_AddStringToObject(version_res, "version",buf);
-            free(buf);
             free(uart_response);
             cJSON_AddItemToArray(module_version_array, version_res);
         }else{

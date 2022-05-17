@@ -348,6 +348,78 @@ static const httpd_uri_t dimensions_get = {
     .user_ctx     = NULL
 };
 
+static esp_err_t api_v1_version_get_handler(httpd_req_t *req)
+{
+    int rcv_complete = 0;
+    controller_queue_data_t *uart_response = NULL;
+
+    cJSON *resp = cJSON_CreateObject();
+
+    // get controller firmware.
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_app_desc_t app_info;
+    if (esp_ota_get_partition_description(running, &app_info) == ESP_OK){
+        char* dirty_pointer = strstr(app_info.version,"-dirty");
+        if(dirty_pointer != NULL){
+            *dirty_pointer++ = '*';
+            *dirty_pointer++ = 0;
+        }
+        char *buf = NULL;
+        asprintf(&buf,"%s",app_info.version);
+        cJSON_AddStringToObject(resp, "controller_firmware_version",buf);
+        free(buf);
+    }
+
+    // Send uart command to read module firmware
+    char cmd_uart_buf[4]={0};
+    cmd_uart_buf[0] = EXTEND + module_get_fw_vesion;
+    flap_uart_send_data(cmd_uart_buf,1);   
+    cmd_uart_buf[0] = EXTEND + module_read_data;
+    cmd_uart_buf[3] = 3;
+    flap_uart_send_data(cmd_uart_buf,4);   
+
+    cJSON *module_version_array = cJSON_AddArrayToObject(resp, "module_firmware");
+    do{
+        // Receive firmware from each module and combine result in json.
+        if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
+            cJSON *version_res = cJSON_CreateObject();
+            cJSON_AddNumberToObject(version_res, "flap_id", uart_response->data_offset / uart_response->data_len);
+            char *buf = NULL;
+            asprintf(&buf,"v%d.%d.%d",uart_response->data[0],uart_response->data[1],uart_response->data[2]);
+            cJSON_AddStringToObject(version_res, "version",buf);
+            free(buf);
+            free(uart_response);
+            cJSON_AddItemToArray(module_version_array, version_res);
+        }else{
+            rcv_complete = 1;
+        }
+    }while(!rcv_complete);
+
+    if(!rcv_complete){
+        httpd_resp_set_status(req, "504 Gateway Timeout");
+        httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(resp);
+        return ESP_OK;
+    } 
+    
+    // Send response to client.
+    char *buf = cJSON_PrintUnformatted(resp);
+    ESP_LOGI(TAG,"%s",buf);
+    httpd_resp_set_status(req, "200 OK");
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, (const char *)buf, strlen(buf));
+    cJSON_free(buf);
+    cJSON_Delete(resp);
+
+    return ESP_OK;
+}
+static const httpd_uri_t version_get = {
+    .uri          = "/api/v1/version",
+    .method       = HTTP_GET,
+    .handler      = api_v1_version_get_handler,
+    .user_ctx     = NULL
+};
+
 
 // returns the number of utf8 code points in the buffer at s
 size_t utf8len(char *s)
@@ -625,6 +697,7 @@ void add_api_endpoints(httpd_handle_t *server)
     httpd_register_uri_handler(*server, &charset_get);
     // httpd_register_uri_handler(*server, &revolutions_get);
     httpd_register_uri_handler(*server, &dimensions_get);
+    httpd_register_uri_handler(*server, &version_get);
     httpd_register_uri_handler(*server, &message_post);
     httpd_register_uri_handler(*server, &message_get);
     httpd_register_uri_handler(*server, &wifi_ap_post);

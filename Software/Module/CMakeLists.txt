@@ -12,6 +12,18 @@ project(SplitFlap   VERSION     1.0
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+include(GetGitRevisionDescription)
+git_describe(VERSION --tags --dirty=-d)
+#parse the version information into pieces.
+string(REGEX REPLACE "^v([0-9]+)\\..*" "\\1"                GIT_VERSION_MAJOR "${VERSION}")
+string(REGEX REPLACE "^v[0-9]+\\.([0-9]+).*" "\\1"          GIT_VERSION_MINOR "${VERSION}")
+string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" GIT_VERSION_PATCH "${VERSION}")
+string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.[0-9]+(.*)" "\\1" GIT_VERSION_SHA1  "${VERSION}")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/firmware/version.c.in ${CMAKE_CURRENT_BINARY_DIR}/firmware/version.c)
+
 include(ExternalProject)
 ExternalProject_Add(emulator    SOURCE_DIR      ${CMAKE_SOURCE_DIR}/flap_emulator 
                                 BINARY_DIR      ${CMAKE_BINARY_DIR}/flap_emulator 

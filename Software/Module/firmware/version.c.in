@@ -1,0 +1,5 @@
+#include "version.h"
+
+const unsigned char git_version_major = @GIT_VERSION_MAJOR@;
+const unsigned char git_version_minor = @GIT_VERSION_MINOR@;
+const unsigned char git_version_patch = @GIT_VERSION_PATCH@;

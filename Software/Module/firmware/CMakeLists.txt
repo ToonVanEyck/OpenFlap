@@ -6,11 +6,11 @@ file(GLOB_RECURSE MICROCHIP_MDB /opt/microchip/mplabx/*/mplab_platform/bin/mdb.s
 
 include_directories("include")
 
-add_executable(split_flap_bootloader "btl_main.c" "chain_comm.c" "flash.c" )
+add_executable(split_flap_bootloader "btl_main.c" "chain_comm.c" "flash.c")
 set_target_properties(split_flap_bootloader PROPERTIES LINK_FLAGS "--fill=0x3FFF -mrom=0-07FF")
 target_compile_definitions(split_flap_bootloader PUBLIC IS_BTL)
 
-add_executable(split_flap_firmware "app_main.c" "chain_comm.c")
+add_executable(split_flap_firmware "app_main.c" "chain_comm.c" ${CMAKE_CURRENT_BINARY_DIR}/version.c)
 set_target_properties(split_flap_firmware PROPERTIES LINK_FLAGS "-mrom=0-1F9F -mchecksum=800-1F9E@1F9F,algorithm=2,width=-2 -mcodeoffset=0x800")
 
 get_filename_component(HEXMATE "hexmate" REALPATH BASE_DIR "${CMAKE_C_COMPILER}/../../pic/bin")
@@ -35,3 +35,4 @@ add_custom_target(flash
 
 add_custom_target(dump
     COMMAND ${MICROCHIP_MDB} ${PROJECT_SOURCE_DIR}/mdb_dump.txt)
+

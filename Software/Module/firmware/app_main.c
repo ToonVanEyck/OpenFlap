@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "chain_comm.h"
+#include "version.h"
 
 #define COL_END PORTAbits.RA5
 #define MOTOR_DISABLE TRISAbits.TRISA2
@@ -263,6 +264,20 @@ void get_config(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }
 }
 
+void get_fw_version(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+{
+    if(cmd_info == NULL){
+        tx_data[0] = git_version_major;
+        tx_data[0] = git_version_minor;
+        tx_data[0] = git_version_patch;
+    }else{
+        // command info
+        cmd_info->rx_data_len = 0;
+        cmd_info->cmd = cmd_get_fw_version;
+        cmd_info->cmd_callback = get_fw_version;
+    }
+}
+
 void get_rev_cnt(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
@@ -439,6 +454,7 @@ void main(void)
     install_command(do_nothing);
     install_command(goto_btl);
     install_command(get_config);
+    install_command(get_fw_version);
     install_command(set_char);
     install_command(get_char);
     install_command(get_rev_cnt);

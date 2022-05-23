@@ -1,3 +1,8 @@
+Open Flap Controller
+====================
+
+The open flap controller is based on the esp32-wroom module. The module is programmed with the esp-idf. More information about the working with esp-idf can be found [here](https://www.espressif.com/en/products/sdks/esp-idf).
+
 generate single nvs image:
 --------------------------
 Set according values in ```nvs_data.csv```

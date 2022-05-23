@@ -31,6 +31,9 @@ void app_main(void)
     if(!AP_ssid) asprintf(&AP_ssid,"OpenFlap");
     flap_nvs_get_string("AP_pwd",&AP_pwd);
     if(!AP_pwd) asprintf(&AP_pwd,"myOpenFlap");
+
+    // ESP_LOGI(TAG,"%s %s",STA_ssid,STA_pwd);
+    // ESP_LOGI(TAG,"%s %s",AP_ssid,AP_pwd);
     // Set local hostname 
     flap_mdns_init("openflap");
     // Start Wi-Fi

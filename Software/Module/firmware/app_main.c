@@ -365,14 +365,21 @@ void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }
 }
 
+
+#define V_TRIM 0
 int motor_control(void)
 {
     static unsigned short pwm = 0;
+    static uint32_t v_trim_counter = 0;
+
     int distance = (int)char_index - read_encoder(pwm == 0);
+
     if(distance < 0) distance += NUM_CHARS;
     pwm = 0;
-    if(char_index != UNINITIALIZED && distance >= 0 && distance < NUM_CHARS){
+    if(char_index != UNINITIALIZED && distance > 0 && distance < NUM_CHARS){
         pwm = speed[distance];
+    }else if (distance == 0){
+        pwm = (V_TRIM >= pwm)? 0 : pwm - V_TRIM;
     }
     CCPR1 = pwm;
     return distance;

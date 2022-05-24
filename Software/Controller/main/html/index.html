@@ -252,7 +252,7 @@
             for (let i = 0; i < flaps.length; i++) {
                 str += flaps.at(i%dimensions.width*dimensions.height+Math.floor(i/dimensions.width)).firstElementChild.innerHTML;
             }
-            str = str.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')
+            str = str.replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '\"').replaceAll('&#039;', '\'')
             return str;
         }
 
@@ -503,7 +503,7 @@
         async function set_display_offset(){
             let cmd = {dimensions:{"width": dimensions.width, "height":dimensions.height},offset:[]};
             for (flap of flaps) {
-                cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')));
+                cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '\"').replaceAll('&#039;', '\'')));
                 if(cmd['offset'].at(-1) < 0){
                     cmd['offset'].pop();
                     cmd['offset'].push(0);

@@ -18,13 +18,22 @@ include(GetGitRevisionDescription)
 git_describe(VERSION --tags --dirty=*)
 #parse the version information into pieces.
 
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\1" GIT_VERSION_MAJOR "${VERSION}")
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\2" GIT_VERSION_MINOR "${VERSION}")
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\3" GIT_VERSION_PATCH "${VERSION}")
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\4" GIT_VERSION_COMMITS_AFTER_TAG  "${VERSION}")
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\5" GIT_VERSION_HASH  "${VERSION}")
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\6" GIT_VERSION_IS_DIRTY  "${VERSION}")
-string(REPLACE "*" "1" GIT_VERSION_IS_DIRTY ${GIT_VERSION_IS_DIRTY})
+string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\1" GIT_VERSION_MAJOR "${VERSION}")
+string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\2" GIT_VERSION_MINOR "${VERSION}")
+string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\3" GIT_VERSION_PATCH "${VERSION}")
+string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\4" GIT_VERSION_COMMITS_AFTER_TAG  "${VERSION}")
+string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\5" GIT_VERSION_HASH  "${VERSION}")
+string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\6" GIT_VERSION_IS_DIRTY  "${VERSION}")
+
+if("${GIT_VERSION_IS_DIRTY}" STREQUAL "")
+    set(GIT_VERSION_IS_DIRTY 0)
+else()
+    set(GIT_VERSION_IS_DIRTY 1)
+endif()
+
+if("${GIT_VERSION_COMMITS_AFTER_TAG}" STREQUAL "")
+    set(GIT_VERSION_COMMITS_AFTER_TAG 0)
+endif()
 
 message(STATUS "${GIT_VERSION_MAJOR} ${GIT_VERSION_MINOR} ${GIT_VERSION_PATCH} ${GIT_VERSION_COMMITS_AFTER_TAG} ${GIT_VERSION_HASH} ${GIT_VERSION_IS_DIRTY}")
 

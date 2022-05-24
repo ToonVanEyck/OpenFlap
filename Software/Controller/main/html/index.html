@@ -282,8 +282,8 @@
                 }
                 display.appendChild(display__column);
             }
-            get_display_message();
             get_display_charset();
+            // get_display_message();
         }        
         function scale_display() {
             if(dimensions.width && dimensions.height){
@@ -411,7 +411,9 @@
                 set_webpage_dimensions(json_response.dimensions.width,json_response.dimensions.height);
             } 
             for (flap of flaps) {
-                set_letter(flap,json_response["message"].charAt(parseInt(flap.dataset.index)));
+                if(flap.dataset.charset && JSON.parse(flap.dataset.charset).includes(json_response["message"].charAt(parseInt(flap.dataset.index)))){
+                    set_letter(flap,json_response["message"].charAt(parseInt(flap.dataset.index)));
+                }
             }
         }
 
@@ -433,7 +435,7 @@
             });
             const json_response = await response.json();
             for(c of json_response) {
-                flaps.at(c["flap_id"]).setAttribute("data-charset",JSON.stringify(c["charset"]));
+                flaps.at(c["flap_id"]).dataset.charset = JSON.stringify(c["charset"]);
             }
         }
 
@@ -488,8 +490,7 @@
                     if(c == "") c=" ";
                     cmd['charset'].push((c.length == 1)?c.toUpperCase():c.toLowerCase());
                 }
-                last_selected.setAttribute("data-charset",JSON.stringify(cmd['charst']));
-                // socket.send(JSON.stringify(cmd));
+                last_selected.dataset.charset = JSON.stringify(cmd['charset']);
                 const response = await fetch("/api/v1/charset", {
                     method:"POST",
                     headers:{'Content-Type': 'application/json'},
@@ -501,8 +502,6 @@
 
         async function set_display_offset(){
             let cmd = {dimensions:{"width": dimensions.width, "height":dimensions.height},offset:[]};
-            // cmd['dimesions'] = {"width": dimensions.width, "height":dimensions.height};
-            // cmd['offset'] = [];
             for (flap of flaps) {
                 cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '\"').replace('&#039;', '\'')));
                 if(cmd['offset'].at(-1) < 0){
@@ -510,7 +509,6 @@
                     cmd['offset'].push(0);
                 }
             }
-            // socket.send(JSON.stringify(cmd));
             const response = await fetch("/api/v1/offset", {
                 method:"POST",
                 headers:{'Content-Type': 'application/json'},
@@ -520,11 +518,10 @@
 
         async function set_default_charset(flap_id)
         {
-            // socket.send('{"command":"controller_set_charset","flap_id":'+flap_id+',"data":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]}');
             const response = await fetch("/api/v1/charset", {
                 method:"POST",
                 headers:{'Content-Type': 'application/json'},
-                body: JSON.stringify({"flap_id":flap_id,"charset":[[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]]})
+                body: JSON.stringify({"flap_id":flap_id,"charset":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]})
             });
         }
 

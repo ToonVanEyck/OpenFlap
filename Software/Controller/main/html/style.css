@@ -250,3 +250,16 @@ body {
     display: flex;
     gap: 1px;
 }
+
+.loader_icon__load{
+    fill: var(--fg-color);
+}
+
+.loader_icon__done{
+    fill: var(--accent-color);
+}
+
+.loader_icon--hidden {
+    display: none;
+}
+

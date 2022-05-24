@@ -30,10 +30,4 @@ message(STATUS "${GIT_VERSION_MAJOR} ${GIT_VERSION_MINOR} ${GIT_VERSION_PATCH} $
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/firmware/version.c.in ${CMAKE_CURRENT_BINARY_DIR}/firmware/version.c)
 
-include(ExternalProject)
-ExternalProject_Add(emulator    SOURCE_DIR      ${CMAKE_SOURCE_DIR}/flap_emulator 
-                                BINARY_DIR      ${CMAKE_BINARY_DIR}/flap_emulator 
-                                BUILD_ALWAYS    true
-                                INSTALL_COMMAND "")
-
 add_subdirectory(firmware)

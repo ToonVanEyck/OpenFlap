@@ -14,17 +14,23 @@
 #ifndef DEBUG_PRINT
     #define DEBUG_PRINT(...) ;
 #endif
-#ifndef RX_BYTE
+#ifndef RX_BYTE // receive a byte
     #define RX_BYTE(_b) _b = RC1REG
 #endif 
-#ifndef TX_BYTE
+#ifndef RX_DONE // receive is done (interrupt flag)
+    #define RX_DONE PIR1bits.RC1IF
+#endif 
+#ifndef TX_BYTE // transmit a byte
     #define TX_BYTE(_b) while(!PIR1bits.TX1IF); watch_tx = 1; TX1REG = _b
 #endif
-#ifndef TX_DONE
-    #define TX_DONE do{NOP();}while(!(PIR1bits.TX1IF && TX1STAbits.TRMT))
+#ifndef TX_DONE // transmit is done (interrupt flag)
+    #define TX_DONE PIR1bits.TX1IF
 #endif
-#ifndef TX_DELAY
-    #define TX_DELAY __delay_us(200)
+#ifndef TX_WAIT_DONE // wait until previous transmit has finished is done
+    #define TX_WAIT_DONE do{NOP();}while(!(PIR1bits.TX1IF && TX1STAbits.TRMT))
+#endif
+#ifndef CLOCK_GUARD // wait until timer is triggered 
+    #define CLOCK_GUARD while(!PIR0bits.TMR0IF);PIR0bits.TMR0IF = 0
 #endif
 
 #define CMD_EXTEND 0x80
@@ -89,7 +95,12 @@ typedef struct{
 
 extern uint8_t watch_tx;
 
+/* This function checks if the communication protocol needs or received an update.
+Increments the idle_timeout or resets it if communication occurs. */
+void chain_comm_loop(uint32_t *idle_timeout); 
+/* Adds callback functions to the protocol */
 void install_command(void (*cmd_callback)(uint8_t*,uint8_t*,cmd_info_t*));
+/* This function handles the communication protocol and call appropriate callback functions. */
 void chain_comm(uint8_t new_comm_data);
 
 #endif

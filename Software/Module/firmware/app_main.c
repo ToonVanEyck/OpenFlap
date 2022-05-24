@@ -1,4 +1,4 @@
-#include "config_bytes.h"
+#include "hardware_configuration.h"
 
 #include <xc.h>
 #include <stdint.h>
@@ -10,15 +10,7 @@
 #define COL_END PORTAbits.RA5
 #define MOTOR_DISABLE TRISAbits.TRISA2
 
-#define REV_CNT_BASE_ADDR (0x1FE0)
-#define REV_CNT_MULT_ADDR (REV_CNT_BASE_ADDR + 31)
-
-#define CHARSET_BASE_ADDR (0x1FA0)
-
-#define UNINITIALIZED 0xff
-#define NUM_CHARS 48
-
-uint8_t watch_tx, char_index, rev_add, offset;
+uint8_t /*watch_tx,*/ char_index, rev_add, offset;
 uint32_t rev_cnt;
 
 char charset[4*NUM_CHARS] = {0};
@@ -69,8 +61,8 @@ void set_default_charset(void){
     }
 }
 
-#define IR_OFF_TICKS 770
-#define IR_ON_TICKS 20
+#define IR_OFF_TICKS 97//770
+#define IR_ON_TICKS 3//20
 
 
 uint8_t read_encoder(uint8_t is_idle)
@@ -127,6 +119,7 @@ void store_config(void)
             NVMCON1bits.NVMREGS = 0;
             NVMCON1bits.FREE = 1;
             NVMCON1bits.WREN = 1;
+            // INTCONbits.GIE = 0;
             NVMCON2 = 0x55;
             NVMCON2 = 0xAA;
             NVMCON1bits.WR = 1;
@@ -168,63 +161,13 @@ void store_config(void)
             NVMCON2 = 0xAA;
             NVMCON1bits.WR = 1;
             NVMCON1bits.WREN = 0;
+            // INTCONbits.GIE = 1;
         }
     }
 }
 
-void init_hardware(void)
-{
-    // IO
-    ANSELA = 0x00;       // Enable digital drivers
-    TRISA  = 0b00111000; // Set RA[5:3] as inputs and set others as outputs
-    PORTA  = 0x00;       // Clear PORTA
-    LATA   = 0x00;       // Clear Data Latch
-
-    ANSELC = 0x00;       // Enable digital drivers
-    INLVLC = 0b11000000; // Set TTL voltage levels
-    TRISC  = 0b00111111; // Set RC[6:0] as inputs and set others as outputs
-    PORTC  = 0x00;       // Clear PORTC
-    LATC   = 0x00;       // Clear Data Latch
-   
-    // Peripheral mapping
-    //uart
-    RX1PPS = 0b000000100; // RX --> A4
-    RA1PPS = 0x05;        // TX --> A1
-    //pwm 
-    RA2PPS = 0x01;        // CCP1 --> A2
-
-    // UART
-    BAUD1CON = 0x08;// BRG16;
-    RC1STA = 0x90;//SPEN | CREN;
-    TX1STA = 0x24;//TXEN | BRGH;
-
-    SP1BRGL = 68; //115200 baud
-    SP1BRGH = 0;
-
-    // SP1BRGL = 64; //9600 baud
-    // SP1BRGH = 3;
-
-    // Timer 0 --> PID CLOCK
-    T0CON1 = 0x44; // 1:1024 prescaler
-    TMR0 = 0x00;
-    T0CON0 = 0x90; // enable timer,16-bit, postscaler 1:1
-
-    // Timer 1 --> UART TIMEOUT
-    T1CLK = 0x01; // Fosc/4
-    TMR1H = 00;
-    TMR1L = 00;
-    T1CON = 0x33; // 1:8 prescaler
-
-    // Timer 2 --> PWM DRIVER
-    T2PR = 249; // period -> 32kHz
-    CCP1CON = 0x8C; // pwm mode
-    CCPR1 = 0; // DC -> 0%
-    T2HLT = 0x00;
-    T2CLKCON = 0x01; // Fosc/4
-    T2CON = 0x80;
-}
-
-void __interrupt() isr(void)
+asm("GLOBAL _app__isr");    // ensure ISR is not optimized out by compiler
+__at(0x0808) void app__isr()// "real" isr routine is located in bootloader, that isr will call this function at 0x0808  
 {
 
 }
@@ -417,6 +360,7 @@ void increment_rev_cnt(){
         NVMCON1bits.NVMREGS = 0;
         NVMCON1bits.FREE = 1;
         NVMCON1bits.WREN = 1;
+        // INTCONbits.GIE = 0;
         // Unlock Sequence
         NVMCON2 = 0x55;
         NVMCON2 = 0xAA;
@@ -426,6 +370,7 @@ void increment_rev_cnt(){
     NVMCON1bits.FREE = 0;
     NVMCON1bits.LWLO = 1;
     NVMCON1bits.WREN = 1;
+    // INTCONbits.GIE = 0;
     for(int i = 0;i<31;i++){ 
         uint16_t  word = 0x3FFF;
         for(int j = 0; j < 14;j++){
@@ -446,6 +391,7 @@ void increment_rev_cnt(){
     NVMCON2 = 0xAA;
     NVMCON1bits.WR = 1;
     NVMCON1bits.WREN = 0;
+    // INTCONbits.GIE = 1;
 
     rev_cnt += rev_add;
     rev_add = 0;
@@ -453,14 +399,19 @@ void increment_rev_cnt(){
 
 void main(void)
 {
-    INTCONbits.GIE = 0;
-    watch_tx = 0;
+    // init vars
     char_index = UNINITIALIZED;
     rev_add = 0;
     offset = 0;
     rev_cnt = 0;
+    // init hw and peripherals
     init_hardware();
+    // enable interrupts
+    // INTCONbits.GIE = 1;
+    // INTCONbits.PEIE = 1;
+    // load default charset from NVM
     set_default_charset();
+    // install callbacks for uart chain-comm commands
     install_command(do_nothing);
     install_command(goto_btl);
     install_command(get_config);
@@ -471,39 +422,20 @@ void main(void)
     install_command(set_charset);
     install_command(get_charset);
     install_command(set_offset);
-
+    // load revolution counter
     rev_cnt = calc_rev_cnt();
-
-    uint8_t toc = 0; // timeout counter
+    uint32_t idle_timer = 0; // timeout counter
     int distance_to_rotate = 0;
+    // main loop
     while(1){
         CLRWDT();
-        if(PIR1bits.RC1IF){
-            toc = 0;
-            TMR1H = 0;
-            TMR1L = 0;
-            chain_comm(comm_rx_data);
-        }
-        if(watch_tx && PIR1bits.TX1IF){
-            toc = 0;
-            watch_tx = 0;
-            TMR1H = 0;
-            TMR1L = 0;
-            chain_comm(comm_tx_data);
-        }
-        if(PIR1bits.TMR1IF){
-            PIR1bits.TMR1IF = 0;// clear interrupt flag
-            TMR1H = 0;
-            TMR1L = 0;
-            chain_comm(comm_timeout);
-            if(toc++ > 32)toc = 0;//*/toc++;
-        } 
-        if(distance_to_rotate) toc = 0;
-        if(toc < 8){   // Not idle
+        chain_comm_loop(&idle_timer);
+        if(idle_timer >= 10000 || distance_to_rotate) idle_timer = 0; // 1 seconds 
+        if(idle_timer < 2500){  // 250ms -> Not idle
             distance_to_rotate = motor_control();
         }else{          // Idle
             PORTAbits.RA0 = 0; // disable IR led when idle
-            increment_rev_cnt();
+            // increment_rev_cnt();
         }
     }
 }

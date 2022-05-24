@@ -2,6 +2,32 @@
 
 cmd_info_t cmd_info[CMD_SIZE] = {{0,0,NULL}};
 
+uint8_t watch_tx = 0;
+
+void chain_comm_loop(uint32_t *idle_timeout)
+{
+    static uint16_t comm_timer = 0; // timeout counter
+    CLOCK_GUARD;
+    (*idle_timeout)++;
+    if(RX_DONE){
+        *idle_timeout =0;
+        comm_timer = 0;
+        chain_comm(comm_rx_data);
+    }
+    if(watch_tx && TX_DONE){
+        *idle_timeout =0;
+        comm_timer = 0;
+        watch_tx = 0;
+        chain_comm(comm_tx_data);
+    }
+    if(comm_timer++ >= 500){ // 50ms
+        *idle_timeout =0;
+        comm_timer = 0;
+        chain_comm(comm_timeout);
+        if(comm_timer >= 10000)comm_timer = 0; // 1 seconds 
+    } 
+}
+
 void chain_comm(uint8_t new_comm_data)
 {
     static comm_ctx_t ctx = {.command = 0, .rx_data_cnt = 0, .tx_data_cnt = 0, .carry = 0, .rx_data = {0}, .tx_data = {0},.state = comm_state_command};
@@ -54,7 +80,7 @@ void chain_comm(uint8_t new_comm_data)
             if(ctx.state == comm_state_data && ctx.rx_data_cnt == cmd_info[ctx.command & CMD_CMD].rx_data_len){ // is all data received?
                 if(ctx.command & CMD_EXTEND){
                     if(cmd_info[ctx.command & CMD_CMD].cmd_callback != NULL){
-                        TX_DONE; // transmit last command;
+                        TX_WAIT_DONE; // transmit last command;
                         cmd_info[ctx.command & CMD_CMD].cmd_callback(ctx.rx_data,ctx.tx_data, NULL);
                     } 
                     if((ctx.command & CMD_CMD) == cmd_read_data){ // transmit
@@ -80,7 +106,7 @@ void chain_comm(uint8_t new_comm_data)
                 if(ctx.tx_node_cnt+1 >= node_cnt){
                     DEBUG_PRINT("tx data: %d/%d\n", ctx.tx_data_cnt+1,ctx.rx_data[2]);
                     TX_BYTE(ctx.tx_data[ctx.tx_data_cnt++]);
-                    TX_DELAY;
+                    TX_WAIT_DONE;
                     DEBUG_PRINT(">> tx data: 0x%02x\n", data);
                     if(ctx.tx_data_cnt == ctx.rx_data[2]){
                         ctx.command = cmd_do_nothing;
@@ -96,7 +122,7 @@ void chain_comm(uint8_t new_comm_data)
             break;
         case comm_timeout:;
                 if(ctx.state == comm_state_passthrough && cmd_info[ctx.command & CMD_CMD].cmd_callback != NULL){
-                    TX_DONE; // transmit last command;
+                    TX_WAIT_DONE; // transmit last command;
                     cmd_info[ctx.command & CMD_CMD].cmd_callback(ctx.rx_data,ctx.tx_data, NULL);
                 } 
                 ctx.command = cmd_do_nothing;
@@ -115,15 +141,3 @@ void install_command(void (*cmd_callback)(uint8_t*,uint8_t*,cmd_info_t*))
     memcpy(&(cmd_info[new_cmd_info.cmd]),&new_cmd_info,sizeof(cmd_info_t));
 }
 
-// void read_data(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
-// {
-//     if(cmd_info == NULL){
-//         DEBUG_PRINT("read_data\n");
-//         // command implementation
-//     }else{
-//         // command info
-//         cmd_info->rx_data_len = 3;
-//         cmd_info->cmd = cmd_read_data;
-//         cmd_info->cmd_callback = read_data;
-//     }
-// }

@@ -3,6 +3,27 @@ Open Flap Controller
 
 The open flap controller is based on the esp32-wroom module. The module is programmed with the esp-idf. More information about the working with esp-idf can be found [here](https://www.espressif.com/en/products/sdks/esp-idf).
 
+Debug Over TCP Socket:
+----------------------
+The controller exposes tcp socket on port ```1234```, a client connecting to this port will receive debug information about the operation of the controller.
+Connect to the port using:
+```
+nc openflap.local 1234
+```
+Or using the ```logcat.sh``` script:
+```
+./logcat.sh
+```
+
+Over-The-Air Firmware Update:
+-----------------------------
+A new ```.bin``` file can be uploaded through the controller hosted webpage. Alternatively, the ```update.sh``` script can be used. This script use the latest binary from the build directory.
+
+```
+./update.sh
+```
+
+
 generate single nvs image:
 --------------------------
 Set according values in ```nvs_data.csv```

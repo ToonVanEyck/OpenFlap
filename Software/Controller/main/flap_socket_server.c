@@ -9,7 +9,13 @@ static vprintf_like_t original_log_func;
 int socket_log_func(const char *fmt, va_list args) {   
     char *log_msg;
     int ret = vasprintf(&log_msg,fmt,args);
-	xQueueSend(flap_socket_queue,&log_msg,0);
+    if(ret<0){
+        printf("couldn't allocate memory for message...\n");
+    }else{
+	    if(xQueueSend(flap_socket_queue,&log_msg,50/portTICK_PERIOD_MS) != pdTRUE){
+            free(log_msg);
+        }
+    }
     return ret;
 }
 
@@ -32,7 +38,8 @@ static void flap_log_loop(const int sock)
             while (to_write > 0) {
                 int written = send(sock, tx_buffer + (len - to_write), to_write, 0);
                 if (written < 0) {
-                    printf("Error occurred during sending: errno %d", errno);
+                    printf("Error occurred during sending: errno %d\n", errno);
+                    to_write = 0;
                 }
                 to_write -= written;
             }

@@ -52,9 +52,14 @@ typedef enum{
     cmd_set_charset,
     cmd_get_charset,
     cmd_set_offset,
-
+    cmd_set_vtrim,
     end_of_command //DONT INSERT COMMANDS AFTER THIS ONE
 }command_t;
+
+#define SET_CMD_VALUE(_b)  ((_b) & 0x3F) 
+#define SET_CMD_IS_ABS(_b) (((_b) & 0xC0) == 0x00) 
+#define SET_CMD_IS_INC(_b) ((_b) & 0x80) 
+#define SET_CMD_IS_DEC(_b) ((_b) & 0x40) 
 
 #ifdef IS_BTL
     #define CMD_SIZE (cmd_goto_app +1)

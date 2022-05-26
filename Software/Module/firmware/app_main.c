@@ -10,7 +10,7 @@
 #define COL_END PORTAbits.RA5
 #define MOTOR_DISABLE TRISAbits.TRISA2
 
-uint8_t /*watch_tx,*/ char_index, rev_add, offset;
+uint8_t /*watch_tx,*/ char_index, rev_add, offset, vtrim;
 uint32_t rev_cnt;
 
 char charset[4*NUM_CHARS] = {0};
@@ -31,7 +31,8 @@ void set_default_charset(void){
     NVMCON1bits.NVMREGS = 0;
     NVMADR = CHARSET_BASE_ADDR;
     NVMCON1bits.RD = 1;
-    offset = ((uint8_t)(NVMDAT)) & 0xFF;
+    offset = ((uint8_t)(NVMDAT)) & 0x3F;
+    vtrim = ((uint8_t)(NVMDAT >> 6)) & 0x3F;
 
     // combine 14-bit words to form charset
     for(uint16_t n=1,c=0,r=0,b=1;n/32 < 2 && c<sizeof(charset);){
@@ -127,7 +128,7 @@ void store_config(void)
             NVMCON1bits.LWLO = 1;
 
             if(!(n >> 5)){
-                NVMDAT = offset;
+                NVMDAT = (uint16_t)offset + (uint16_t)(vtrim << 6);
                 NVMCON2 = 0x55;
                 NVMCON2 = 0xAA;
                 NVMCON1bits.WR = 1;
@@ -297,8 +298,17 @@ void get_charset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
-        offset = rx_data[0];
-        if(offset >= NUM_CHARS) offset = 0;
+        if(SET_CMD_VALUE(rx_data[0]) >= 0 && SET_CMD_VALUE(rx_data[0]) < NUM_CHARS){
+            if(SET_CMD_IS_ABS(rx_data[0])){
+                offset = SET_CMD_VALUE(rx_data[0]);
+            }else if(SET_CMD_IS_INC(rx_data[0])){
+                offset += SET_CMD_VALUE(rx_data[0]);
+                if(offset >= NUM_CHARS) offset -= NUM_CHARS;
+            }else if(SET_CMD_IS_DEC(rx_data[0])){
+                if(offset < SET_CMD_VALUE(rx_data[0])) offset += NUM_CHARS;
+                offset -= SET_CMD_VALUE(rx_data[0]);
+            }  
+        }
         store_config();
     }else{
         // command info
@@ -308,23 +318,59 @@ void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }
 }
 
+void set_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+{
+    if(cmd_info == NULL){
+        if(SET_CMD_VALUE(rx_data[0]) >= 0 && SET_CMD_VALUE(rx_data[0]) < 64){
+            if(SET_CMD_IS_ABS(rx_data[0])){
+                vtrim = SET_CMD_VALUE(rx_data[0]);
+            }else if(SET_CMD_IS_INC(rx_data[0])){
+                vtrim += SET_CMD_VALUE(rx_data[0]);
+                if(vtrim >= 64) vtrim -= 64;
+            }else if(SET_CMD_IS_DEC(rx_data[0])){
+                if(vtrim < SET_CMD_VALUE(rx_data[0])) vtrim += 64;
+                vtrim -= SET_CMD_VALUE(rx_data[0]);
+            }  
+        }
+        store_config();
+    }else{
+        // command info
+        cmd_info->rx_data_len = 1;
+        cmd_info->cmd = cmd_set_vtrim;
+        cmd_info->cmd_callback = set_vtrim;
+    }
+}
 
-#define V_TRIM 0
+// Delay the new pwm value with a certain delay. 
+uint16_t virtual_trim(uint16_t pwm_i)
+{
+    static uint16_t pwm_o = 0xFFFF;
+    static uint16_t vtrim_count;
+    if(pwm_o == 0xffff) pwm_o = pwm_i;
+    if(pwm_i != pwm_o){
+        vtrim_count++;  
+        if(vtrim_count > ((uint16_t)vtrim*20)){
+            vtrim_count = 0;
+            pwm_o = pwm_i;
+        }
+    }
+    return pwm_o;
+} 
+
 int motor_control(void)
 {
-    static unsigned short pwm = 0;
-    static uint32_t v_trim_counter = 0;
+    static uint16_t pwm = 0;
 
     int distance = (int)char_index - read_encoder(pwm == 0);
 
     if(distance < 0) distance += NUM_CHARS;
     pwm = 0;
-    if(char_index != UNINITIALIZED && distance > 0 && distance < NUM_CHARS){
+    if(char_index != UNINITIALIZED && distance >= 0 && distance < NUM_CHARS){
         pwm = speed[distance];
-    }else if (distance == 0){
-        pwm = (V_TRIM >= pwm)? 0 : pwm - V_TRIM;
     }
-    CCPR1 = pwm;
+
+
+    CCPR1 = virtual_trim(pwm);
     return distance;
 }
 
@@ -403,6 +449,7 @@ void main(void)
     char_index = UNINITIALIZED;
     rev_add = 0;
     offset = 0;
+    vtrim = 0;
     rev_cnt = 0;
     // init hw and peripherals
     init_hardware();
@@ -422,6 +469,7 @@ void main(void)
     install_command(set_charset);
     install_command(get_charset);
     install_command(set_offset);
+    install_command(set_vtrim);
     // load revolution counter
     rev_cnt = calc_rev_cnt();
     uint32_t idle_timer = 0; // timeout counter

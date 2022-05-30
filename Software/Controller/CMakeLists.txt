@@ -5,4 +5,6 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+include_directories("${CMAKE_SOURCE_DIR}/../chain_comm_abi")
+
 project(split-flap-controller)

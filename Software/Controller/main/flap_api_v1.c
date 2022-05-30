@@ -97,6 +97,7 @@ static esp_err_t api_v1_enable_post_handler(httpd_req_t *req)
     if(!cJSON_IsBool(enable)){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(json);
         free(data);
         return ESP_OK;
     }
@@ -114,6 +115,7 @@ static esp_err_t api_v1_enable_post_handler(httpd_req_t *req)
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     return ESP_OK;
 }
@@ -142,6 +144,7 @@ static esp_err_t api_v1_reboot_post_handler(httpd_req_t *req)
     if(!cJSON_IsBool(reboot)){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(json);
         free(data);
         return ESP_OK;
     }
@@ -151,6 +154,7 @@ static esp_err_t api_v1_reboot_post_handler(httpd_req_t *req)
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     // Reboot esp if requested.
     if(do_reboot) esp_restart();
@@ -176,32 +180,74 @@ static esp_err_t api_v1_offset_post_handler(httpd_req_t *req)
     ESP_LOGI(TAG,"%s",data);
     // Parse json.
     cJSON * json = cJSON_Parse(data);
-    cJSON * dimensions = cJSON_GetObjectItemCaseSensitive(json, "dimensions");
-    int width,height;
-    json_get_dimensions(dimensions,&width,&height);
-    cJSON * offset = cJSON_GetObjectItemCaseSensitive(json, "offset");
-    
-    ESP_LOGI(TAG,"%d %d %d",width,height,cJSON_GetArraySize(offset));
+    if(cJSON_IsArray(json)){
+        cJSON *char_it = NULL;
+        cJSON_ArrayForEach(char_it, json){
+            cJSON * j_flap_id = cJSON_GetObjectItemCaseSensitive(char_it, "flap_id");
+            int flap_id = -1;
+            if(cJSON_IsNumber(j_flap_id)) flap_id = j_flap_id->valueint;
+            cJSON * j_offset = cJSON_GetObjectItemCaseSensitive(char_it, "offset");
+            int offset = 0;
+            if(cJSON_IsNumber(j_offset) && j_offset->valueint >= 0 && j_offset->valueint < 64) offset = j_offset->valueint;
+            cJSON * j_mode = cJSON_GetObjectItemCaseSensitive(char_it, "mode");
+            cmd_set_int_mode_t mode = ABS;
+            if(cJSON_IsString(j_mode)){
+                if(!strncmp(j_mode->valuestring,"INC",3)){
+                    mode = INC;
+                }else if(!strncmp(j_mode->valuestring,"DEC",3)){
+                    mode = DEC;
+                }
+            }
+            if(flap_id >= 0){
+                char *buf = calloc(1,2 + flap_id);
+                int i = 0;
+                while(i < flap_id){
+                    buf[i++] = module_do_nothing;
+                    ESP_LOGI(TAG,"%d",i);
+                }
+                buf[i++] = module_set_offset;
+                if(mode == INC){
+                    buf[i] = SET_CMD_MODE_INC(offset);
+                }else if(mode == DEC){
+                    buf[i] = SET_CMD_MODE_DEC(offset);
+                }else{
+                    buf[i] = SET_CMD_MODE_ABS(offset);
+                }
+                // Send charset to each one module and "do_nothing" to modules before specified module.
+                flap_uart_send_data(buf, (2 + flap_id));
+                free(buf);
+            }
+        }
+    }else{
+        cJSON * dimensions = cJSON_GetObjectItemCaseSensitive(json, "dimensions");
+        int width,height;
+        json_get_dimensions(dimensions,&width,&height);
+        cJSON * offset = cJSON_GetObjectItemCaseSensitive(json, "offset");
+        
+        ESP_LOGI(TAG,"%d %d %d",width,height,cJSON_GetArraySize(offset));
 
-    if(!(cJSON_IsArray(offset) && cJSON_GetArraySize(offset) == (width * height))){
-        httpd_resp_set_status(req, "400 Bad Request");
-        httpd_resp_send(req, NULL, 0);
-        free(data);
-        return ESP_OK;
-    }
+        if(!(cJSON_IsArray(offset) && cJSON_GetArraySize(offset) == (width * height))){
+            httpd_resp_set_status(req, "400 Bad Request");
+            httpd_resp_send(req, NULL, 0);
+            cJSON_Delete(json);
+            free(data);
+            return ESP_OK;
+        }
 
-    cJSON *offset_i = NULL;
-    // Send offset commands to each module.
-    cJSON_ArrayForEach(offset_i, offset){
-        char cmd_uart_buf[2]={0};
-        cmd_uart_buf[0] = module_set_offset;
-        cmd_uart_buf[1] = offset_i->valueint;
-        flap_uart_send_data(cmd_uart_buf,2);
+        cJSON *offset_i = NULL;
+        // Send offset commands to each module.
+        cJSON_ArrayForEach(offset_i, offset){
+            char cmd_uart_buf[2]={0};
+            cmd_uart_buf[0] = module_set_offset;
+            cmd_uart_buf[1] = offset_i->valueint;
+            flap_uart_send_data(cmd_uart_buf,2);
+        }
     }
     // No uart response expected.
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     return ESP_OK;
 }
@@ -209,6 +255,97 @@ static const httpd_uri_t offset_post = {
     .uri          = "/api/v1/offset",
     .method       = HTTP_POST,
     .handler      = api_v1_offset_post_handler,
+    .user_ctx     = NULL
+};
+
+static esp_err_t api_v1_vtrim_post_handler(httpd_req_t *req)
+{
+    LARGE_REQUEST_GUARD(req);
+    // Receive data.
+    char *data = calloc(1,CMD_COMM_BUF_LEN);
+    if (httpd_req_recv(req, data, req->content_len) <= 0){
+        free(data);
+        return ESP_FAIL;
+    } 
+    data[req->content_len]=0;
+    ESP_LOGI(TAG,"%s",data);
+    // Parse json.
+    cJSON * json = cJSON_Parse(data);
+    if(cJSON_IsArray(json)){
+        cJSON *char_it = NULL;
+        cJSON_ArrayForEach(char_it, json){
+            cJSON * j_flap_id = cJSON_GetObjectItemCaseSensitive(char_it, "flap_id");
+            int flap_id = -1;
+            if(cJSON_IsNumber(j_flap_id)) flap_id = j_flap_id->valueint;
+            cJSON * j_vtrim = cJSON_GetObjectItemCaseSensitive(char_it, "vtrim");
+            int vtrim = 0;
+            if(cJSON_IsNumber(j_vtrim) && j_vtrim->valueint >= 0 && j_vtrim->valueint < 64) vtrim = j_vtrim->valueint;
+            cJSON * j_mode = cJSON_GetObjectItemCaseSensitive(char_it, "mode");
+            cmd_set_int_mode_t mode = ABS;
+            if(cJSON_IsString(j_mode)){
+                if(!strncmp(j_mode->valuestring,"INC",3)){
+                    mode = INC;
+                }else if(!strncmp(j_mode->valuestring,"DEC",3)){
+                    mode = DEC;
+                }
+            }
+            if(flap_id >= 0){
+                char *buf = calloc(1,2 + flap_id);
+                int i = 0;
+                while(i < flap_id){
+                    buf[i++] = module_do_nothing;
+                    ESP_LOGI(TAG,"%d",i);
+                }
+                buf[i++] = module_set_vtrim;
+                if(mode == INC){
+                    buf[i] = SET_CMD_MODE_INC(vtrim);
+                }else if(mode == DEC){
+                    buf[i] = SET_CMD_MODE_DEC(vtrim);
+                }else{
+                    buf[i] = SET_CMD_MODE_ABS(vtrim);
+                }
+                // Send charset to each one module and "do_nothing" to modules before specified module.
+                flap_uart_send_data(buf, (2 + flap_id));
+                free(buf);
+            }
+        }
+    }else{
+        cJSON * dimensions = cJSON_GetObjectItemCaseSensitive(json, "dimensions");
+        int width,height;
+        json_get_dimensions(dimensions,&width,&height);
+        cJSON * vtrim = cJSON_GetObjectItemCaseSensitive(json, "vtrim");
+        
+        ESP_LOGI(TAG,"%d %d %d",width,height,cJSON_GetArraySize(vtrim));
+
+        if(!(cJSON_IsArray(vtrim) && cJSON_GetArraySize(vtrim) == (width * height))){
+            httpd_resp_set_status(req, "400 Bad Request");
+            httpd_resp_send(req, NULL, 0);
+            cJSON_Delete(json);
+            free(data);
+            return ESP_OK;
+        }
+
+        cJSON *vtrim_i = NULL;
+        // Send vtrim commands to each module.
+        cJSON_ArrayForEach(vtrim_i, vtrim){
+            char cmd_uart_buf[2]={0};
+            cmd_uart_buf[0] = module_set_vtrim;
+            cmd_uart_buf[1] = vtrim_i->valueint;
+            flap_uart_send_data(cmd_uart_buf,2);
+        }
+    }
+    // No uart response expected.
+    // Send response to client.
+    httpd_resp_set_status(req, "200 OK");
+    httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
+    free(data);
+    return ESP_OK;
+}
+static const httpd_uri_t vtrim_post = {
+    .uri          = "/api/v1/vtrim",
+    .method       = HTTP_POST,
+    .handler      = api_v1_vtrim_post_handler,
     .user_ctx     = NULL
 };
 
@@ -234,6 +371,7 @@ static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
     if(!(cJSON_IsArray(j_charset) && cJSON_GetArraySize(j_charset) == 48 && flap_id >= 0)){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(json);
         free(data);
         return ESP_OK;
     }
@@ -256,6 +394,7 @@ static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     return ESP_OK;
 }
@@ -372,7 +511,7 @@ static esp_err_t api_v1_version_get_handler(httpd_req_t *req)
 
     // Send uart command to read module firmware
     char cmd_uart_buf[4]={0};
-    cmd_uart_buf[0] = EXTEND + module_get_fw_vesion;
+    cmd_uart_buf[0] = EXTEND + module_get_fw_version;
     flap_uart_send_data(cmd_uart_buf,1);   
     cmd_uart_buf[0] = EXTEND + module_read_data;
     cmd_uart_buf[3] = 12;
@@ -453,6 +592,7 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
     if(!(cJSON_IsString(message) && utf8len(message->valuestring) == (width * height))){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(json);
         free(data);
         return ESP_OK;
     }
@@ -485,6 +625,7 @@ static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     return ESP_OK;
 }
@@ -577,6 +718,7 @@ static esp_err_t api_v1_wifiap_post_handler(httpd_req_t *req)
     if(!(cJSON_IsString(ssid) && cJSON_IsString(pwd))){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(json);
         free(data);
         return ESP_OK;
     }
@@ -586,6 +728,7 @@ static esp_err_t api_v1_wifiap_post_handler(httpd_req_t *req)
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     return ESP_OK;
 }
@@ -615,6 +758,7 @@ static esp_err_t api_v1_wifista_post_handler(httpd_req_t *req)
     if(!(cJSON_IsString(ssid) && cJSON_IsString(pwd))){
         httpd_resp_set_status(req, "400 Bad Request");
         httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(json);
         free(data);
         return ESP_OK;
     }
@@ -624,6 +768,7 @@ static esp_err_t api_v1_wifista_post_handler(httpd_req_t *req)
     // Send response to client.
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_send(req, NULL, 0);
+    cJSON_Delete(json);
     free(data);
     return ESP_OK;
 }
@@ -694,6 +839,7 @@ void add_api_endpoints(httpd_handle_t *server)
     httpd_register_uri_handler(*server, &enable_post);
     httpd_register_uri_handler(*server, &reboot_post);
     httpd_register_uri_handler(*server, &offset_post);
+    httpd_register_uri_handler(*server, &vtrim_post);
     httpd_register_uri_handler(*server, &charset_post);
     httpd_register_uri_handler(*server, &charset_get);
     // httpd_register_uri_handler(*server, &revolutions_get);

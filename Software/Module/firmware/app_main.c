@@ -179,7 +179,7 @@ void do_nothing(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_do_nothing;
+        cmd_info->cmd = module_do_nothing;
         cmd_info->cmd_callback = do_nothing;
     }
 }
@@ -191,7 +191,7 @@ void goto_btl(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_goto_btl;
+        cmd_info->cmd = module_goto_btl;
         cmd_info->cmd_callback = goto_btl;
     }
 }
@@ -203,7 +203,7 @@ void get_config(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_get_config;
+        cmd_info->cmd = module_get_config;
         cmd_info->cmd_callback = get_config;
     }
 }
@@ -220,7 +220,7 @@ void get_fw_version(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_get_fw_version;
+        cmd_info->cmd = module_get_fw_version;
         cmd_info->cmd_callback = get_fw_version;
     }
 }
@@ -235,7 +235,7 @@ void get_rev_cnt(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_get_rev_cnt;
+        cmd_info->cmd = module_get_rev_cnt;
         cmd_info->cmd_callback = get_rev_cnt;
     }
 }
@@ -253,7 +253,7 @@ void set_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 4;
-        cmd_info->cmd = cmd_set_char;
+        cmd_info->cmd = module_set_char;
         cmd_info->cmd_callback = set_char;
     }
 }
@@ -265,7 +265,7 @@ void get_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_get_char;
+        cmd_info->cmd = module_get_char;
         cmd_info->cmd_callback = get_char;
     }
 }
@@ -278,7 +278,7 @@ void set_charset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 4*NUM_CHARS;
-        cmd_info->cmd = cmd_set_charset;
+        cmd_info->cmd = module_set_charset;
         cmd_info->cmd_callback = set_charset;
     }
 }
@@ -290,7 +290,7 @@ void get_charset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_get_charset;
+        cmd_info->cmd = module_get_charset;
         cmd_info->cmd_callback = get_charset;
     }
 }
@@ -313,7 +313,7 @@ void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 1;
-        cmd_info->cmd = cmd_set_offset;
+        cmd_info->cmd = module_set_offset;
         cmd_info->cmd_callback = set_offset;
     }
 }
@@ -336,7 +336,7 @@ void set_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 1;
-        cmd_info->cmd = cmd_set_vtrim;
+        cmd_info->cmd = module_set_vtrim;
         cmd_info->cmd_callback = set_vtrim;
     }
 }

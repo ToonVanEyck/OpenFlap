@@ -19,7 +19,7 @@ void write_page(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 66;
-        cmd_info->cmd = cmd_write_page;
+        cmd_info->cmd = module_write_page;
         cmd_info->cmd_callback = write_page;
     }
 }
@@ -31,7 +31,7 @@ void goto_app(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }else{
         // command info
         cmd_info->rx_data_len = 0;
-        cmd_info->cmd = cmd_goto_app;
+        cmd_info->cmd = module_goto_app;
         cmd_info->cmd_callback = goto_app;
     }
 }

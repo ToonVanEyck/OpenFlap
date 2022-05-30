@@ -40,10 +40,18 @@
             </div>
         </div>
         <div class="card card--6_12_width">
-            <div class="card__title">Advanced Settings</div>
+            <div class="card__title">Flap Settings</div>
             Encoder Offset:
             <div class="card__row">
-                <input type="button" class="card__button" value="Set Offset" onclick="set_display_offset()"/>
+                <input type="button" class="card__button" value="Set" onclick="set_module_offset()"/>
+                <input type="button" class="card__button" value="Increment" onclick="inc_module_offset()"/>
+                <input type="button" class="card__button" value="Decrement" onclick="dec_module_offset()"/>
+            </div>
+            Virtual Trim:
+            <div class="card__row">
+                <input type="button" class="card__button" value="Reset" onclick="reset_module_vtrim()"/>
+                <input type="button" class="card__button" value="Increment" onclick="inc_module_vtrim()"/>
+                <input type="button" class="card__button" value="Decrement" onclick="dec_module_vtrim()"/>
             </div>
             Character Set:
             <div class="card__charset" id="charset">
@@ -62,6 +70,13 @@
             </div>
             <div class="card__row">
                 <input type="button" class="card__button" value="Write Charset" onclick="set_display_charset()"/>
+            </div>
+        </div>
+        <div class="card card--6_12_width">
+            <div class="card__title">Encoder Offset</div>
+            <div class="card__row">
+                <input type="button" class="card__button" value="Clear All Offsets" onclick="clear_display_offset()"/>
+                <input type="button" class="card__button" value="Set All Offsets" onclick="set_display_offset()"/>
             </div>
         </div>
         <div class="card card--6_12_width">
@@ -510,13 +525,97 @@
         async function set_display_offset(){
             let cmd = {dimensions:{"width": dimensions.width, "height":dimensions.height},offset:[]};
             for (flap of flaps) {
-                cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '\"').replaceAll('&#039;', '\'')));
+                cmd['offset'].push(JSON.parse(flap.dataset.charset).indexOf(flap.firstChild.innerHTML.replaceAll('_', ' ').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '\"').replaceAll('&#039;', '\'')));
                 if(cmd['offset'].at(-1) < 0){
                     cmd['offset'].pop();
                     cmd['offset'].push(0);
                 }
             }
             const response = await fetch("/api/v1/offset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function clear_display_offset(){
+            let cmd = {dimensions:{"width": dimensions.width, "height":dimensions.height},offset:[]};
+            for (flap of flaps) {
+                cmd['offset'].push(0);
+            }
+            const response = await fetch("/api/v1/offset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function set_module_offset(){
+            let cmd = [];
+            let offset = {flap_id:parseInt(last_selected.dataset.index),mode:"ABS",offset:JSON.parse(last_selected.dataset.charset).indexOf(last_selected.firstChild.innerHTML.replaceAll('_', ' ').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '\"').replaceAll('&#039;', '\''))};
+            cmd.push(offset);  
+            console.log(JSON.stringify(cmd));          
+            const response = await fetch("/api/v1/offset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function inc_module_offset(){
+            let cmd = [];
+            let offset = {flap_id:parseInt(last_selected.dataset.index),mode:"INC",offset:1};
+            cmd.push(offset);  
+            console.log(JSON.stringify(cmd));          
+            const response = await fetch("/api/v1/offset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function dec_module_offset(){
+            let cmd = [];
+            let offset = {flap_id:parseInt(last_selected.dataset.index),mode:"DEC",offset:1};
+            cmd.push(offset); 
+            console.log(JSON.stringify(cmd));           
+            const response = await fetch("/api/v1/offset", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function reset_module_vtrim(){
+            let cmd = [];
+            let vtrim = {flap_id:parseInt(last_selected.dataset.index),mode:"ABS",vtrim:0};
+            cmd.push(vtrim);  
+            console.log(JSON.stringify(cmd));          
+            const response = await fetch("/api/v1/vtrim", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function inc_module_vtrim(){
+            let cmd = [];
+            let vtrim = {flap_id:parseInt(last_selected.dataset.index),mode:"INC",vtrim:1};
+            cmd.push(vtrim);  
+            console.log(JSON.stringify(cmd));          
+            const response = await fetch("/api/v1/vtrim", {
+                method:"POST",
+                headers:{'Content-Type': 'application/json'},
+                body: JSON.stringify(cmd)
+            });
+        }
+
+        async function dec_module_vtrim(){
+            let cmd = [];
+            let vtrim = {flap_id:parseInt(last_selected.dataset.index),mode:"DEC",vtrim:1};
+            cmd.push(vtrim); 
+            console.log(JSON.stringify(cmd));           
+            const response = await fetch("/api/v1/vtrim", {
                 method:"POST",
                 headers:{'Content-Type': 'application/json'},
                 body: JSON.stringify(cmd)

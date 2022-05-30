@@ -93,29 +93,30 @@ If the MSB of the command byte is set, the command is seen as an extended comman
 
 If the MSB is not set, it is seen as a regular command. In this case the _module_ will remember the command for later execution. After the command is received, the module will go into passthrough mode. This means that all subsequent commands and data will be send to the next module. When no data has been received for 250ms, the _module_ will exit passthrough mode and execute the command. This type of command is useful for setting a different character to each _module_.
 
-**get_** Commands usually don't require data bytes, while **set_** commands do require data bytes (the data to be set). When executing a **get_** command, the wanted data is stored in a buffer on the _module_. The contents of this buffer can be retreived by executing the **cmd_read_data** command. The **cmd_read_data** command will automatically be converted to an extended command, regardless of the MSB bit value. The **cmd_read_data** command requires 3 data bytes, the first 2 must be zero when send by the controller. These bytes act as a 16 bit counter, each _module_ that forwards the read command will increment its value. The 3th data byte contains the number of bytes that will be send from the buffer. So when the command has passed through all _modules_ and has returned to the _controller_ it will contain the following bytes:
+**get_** Commands usually don't require data bytes, while **set_** commands do require data bytes (the data to be set). When executing a **get_** command, the wanted data is stored in a buffer on the _module_. The contents of this buffer can be retreived by executing the **module_read_data** command. The **module_read_data** command will automatically be converted to an extended command, regardless of the MSB bit value. The **module_read_data** command requires 3 data bytes, the first 2 must be zero when send by the controller. These bytes act as a 16 bit counter, each _module_ that forwards the read command will increment its value. The 3th data byte contains the number of bytes that will be send from the buffer. So when the command has passed through all _modules_ and has returned to the _controller_ it will contain the following bytes:
 
 - byte 0: 0x81 (indicating it is a read command)
 - byte 1 - 2 : a 16 bit counter indicating the number of _modules_ in the  display. (**module_cnt**)
 - byte 3: The amount of data retrieved from the _modules_. (**data_len**)
 - byte 4-(n+4): The data, where n is equal to **module_cnt** x **data_len**
 
-Value | Definition         | Data Bytes
------ | ------------------ | -----------
-0x00  | cmd_do_nothing     | 0          
-0x01  | cmd_read_data      | 3          
-0x02  | cmd_write_page     | 66          
-0x03  | cmd_goto_app       | 0          
-0x04  | cmd_goto_btl       | 0          
-0x05  | cmd_get_config     | 0          
-0x06  | cmd_get_fw_version | 0              
-0x07  | cmd_get_hw_id      | 0          
-0x08  | cmd_get_rev_cnt    | 0          
-0x09  | cmd_set_char       | 4          
-0x0A  | cmd_get_char       | 0          
-0x0B  | cmd_set_charset    | 192          
-0x0C  | cmd_get_charset    | 0         
-0x0D  | cmd_set_offset     | 1          
+Value | Definition            | Data Bytes
+----- | --------------------- | -----------
+0x00  | module_do_nothing     | 0          
+0x01  | module_read_data      | 3          
+0x02  | module_write_page     | 66          
+0x03  | module_goto_app       | 0          
+0x04  | module_goto_btl       | 0          
+0x05  | module_get_config     | 0          
+0x06  | module_get_fw_version | 0              
+0x07  | module_get_hw_id      | 0          
+0x08  | module_get_rev_cnt    | 0          
+0x09  | module_set_char       | 4          
+0x0A  | module_get_char       | 0          
+0x0B  | module_set_charset    | 192          
+0x0C  | module_get_charset    | 0         
+0x0D  | module_set_offset     | 1  
+0x0E  | module_set_vtrim      | 1          
 
 Controller API
 --------------
@@ -154,9 +155,62 @@ Endpoints:
         "width":5,
         "height":1
     },
-    "offset_encoder": [26,9,6,13,40]
+    "offset": [26,9,6,13,40]
 }
 ```
+
+```
+[
+    {
+        "flap_id":0,
+        "mode":"abs", //default
+        "offset":4
+    },{
+        "flap_id":1,
+        "mode":"inc",
+        "offset":1
+    },{
+        "flap_id":1,
+        "mode":"dec",
+        "offset":1
+    },
+    ...
+]
+```
+The flap_id must be given for each object in the array. The default mode is ABS. The default offset value is 0. The offset must be in the inclusive range from 0 to 63.
+
+### vtrim (W)
+The vtrim value adds a slight time delay between between when the encoder detects the corret position and when th emotor stops. This allows the display to turn a fraction more to ensure thr flap turns over.
+```
+{
+    "dimensions":{
+        "width":5,
+        "height":1
+    },
+    "vtrim": [26,9,6,13,40]
+}
+```
+
+```
+[
+    {
+        "flap_id":0,
+        "mode":"abs", //default
+        "vtrim":4
+    },{
+        "flap_id":1,
+        "mode":"inc",
+        "vtrim":1
+    },{
+        "flap_id":1,
+        "mode":"dec",
+        "vtrim":1
+    },
+    ...
+]
+```
+The flap_id must be given for each object in the array. The default mode is ABS. The default vtrim value is 0. The vtrim must be in the inclusive range from 0 to 63.
+
 
 ### charset (R/W)
 ```

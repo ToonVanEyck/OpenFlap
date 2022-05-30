@@ -34,9 +34,9 @@ void chain_comm(uint8_t new_comm_data)
     static int init = 1;
     static int reset_cnt = 0;
     if(init){ // "install" read command
-        cmd_info[cmd_read_data].rx_data_len = 3;
-        cmd_info[cmd_read_data].cmd = cmd_read_data;
-        cmd_info[cmd_read_data].cmd_callback = NULL;
+        cmd_info[module_read_data].rx_data_len = 3;
+        cmd_info[module_read_data].cmd = module_read_data;
+        cmd_info[module_read_data].cmd_callback = NULL;
         init = 0;
     }
     DEBUG_PRINT("---------------------------\n");
@@ -50,11 +50,11 @@ void chain_comm(uint8_t new_comm_data)
             DEBUG_PRINT("<< rx data: 0x%02x\n", data);
             if(ctx.state == comm_state_command){
                 ctx.command = data;
-                if((ctx.command & CMD_CMD) == cmd_read_data) ctx.command |= CMD_EXTEND; // set the extend bit if it is a read command;
+                if((ctx.command & CMD_CMD) == module_read_data) ctx.command |= CMD_EXTEND; // set the extend bit if it is a read command;
                 DEBUG_PRINT("New Command: extend: %d command: %02d\n", (ctx.command & CMD_EXTEND)>1, (ctx.command & CMD_CMD));
                 ctx.state = comm_state_data;
             }else if(ctx.state == comm_state_data){
-                if((ctx.command & CMD_CMD) == cmd_read_data && ctx.rx_data_cnt < 2){
+                if((ctx.command & CMD_CMD) == module_read_data && ctx.rx_data_cnt < 2){
                     ctx.carry = ((ctx.carry && !++data) || (!ctx.rx_data_cnt && !++data));
                 }
                 ctx.rx_data[ctx.rx_data_cnt++] = data;
@@ -83,11 +83,11 @@ void chain_comm(uint8_t new_comm_data)
                         TX_WAIT_DONE; // transmit last command;
                         cmd_info[ctx.command & CMD_CMD].cmd_callback(ctx.rx_data,ctx.tx_data, NULL);
                     } 
-                    if((ctx.command & CMD_CMD) == cmd_read_data){ // transmit
+                    if((ctx.command & CMD_CMD) == module_read_data){ // transmit
                         ctx.state = comm_state_transmit; 
                         ctx.rx_data_cnt = 0;
                     }else{ // reset
-                        ctx.command = cmd_do_nothing;
+                        ctx.command = module_do_nothing;
                         ctx.state = comm_state_command;
                     }
                     ctx.rx_data_cnt = 0;
@@ -109,7 +109,7 @@ void chain_comm(uint8_t new_comm_data)
                     TX_WAIT_DONE;
                     DEBUG_PRINT(">> tx data: 0x%02x\n", data);
                     if(ctx.tx_data_cnt == ctx.rx_data[2]){
-                        ctx.command = cmd_do_nothing;
+                        ctx.command = module_do_nothing;
                         ctx.state = comm_state_command;
                         ctx.rx_data_cnt = 0;
                         ctx.tx_data_cnt = 0;
@@ -125,7 +125,7 @@ void chain_comm(uint8_t new_comm_data)
                     TX_WAIT_DONE; // transmit last command;
                     cmd_info[ctx.command & CMD_CMD].cmd_callback(ctx.rx_data,ctx.tx_data, NULL);
                 } 
-                ctx.command = cmd_do_nothing;
+                ctx.command = module_do_nothing;
                 ctx.state = comm_state_command;
                 ctx.rx_data_cnt = 0;
                 ctx.tx_data_cnt = 0;

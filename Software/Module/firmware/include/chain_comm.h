@@ -4,6 +4,7 @@
 #include <xc.h>
 #include <stdint.h>
 #include <string.h>
+#include "chain_comm_abi.h"
 #include "flash.h"
 
 #define _XTAL_FREQ 32000000
@@ -36,33 +37,8 @@
 #define CMD_EXTEND 0x80
 #define CMD_CMD 0x0F
 
-typedef enum{
-    cmd_do_nothing,
-    cmd_read_data,
-    cmd_write_page,
-    cmd_goto_app,  // Last command of bootloader supported commands
-
-    cmd_goto_btl,
-    cmd_get_config,
-    cmd_get_fw_version,
-    cmd_get_hw_id,
-    cmd_get_rev_cnt,
-    cmd_set_char,
-    cmd_get_char,
-    cmd_set_charset,
-    cmd_get_charset,
-    cmd_set_offset,
-    cmd_set_vtrim,
-    end_of_command //DONT INSERT COMMANDS AFTER THIS ONE
-}command_t;
-
-#define SET_CMD_VALUE(_b)  ((_b) & 0x3F) 
-#define SET_CMD_IS_ABS(_b) (((_b) & 0xC0) == 0x00) 
-#define SET_CMD_IS_INC(_b) ((_b) & 0x80) 
-#define SET_CMD_IS_DEC(_b) ((_b) & 0x40) 
-
 #ifdef IS_BTL
-    #define CMD_SIZE (cmd_goto_app +1)
+    #define CMD_SIZE (module_goto_app +1)
 #else
     #define CMD_SIZE (end_of_command +1)
 #endif
@@ -82,7 +58,7 @@ typedef enum{
 
 typedef struct cmd_info_t{
     uint8_t rx_data_len;
-    command_t cmd;
+    module_command_t cmd;
     void (*cmd_callback)(uint8_t*,uint8_t*,struct cmd_info_t*);
 }cmd_info_t;
 

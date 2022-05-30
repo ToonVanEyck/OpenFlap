@@ -180,7 +180,7 @@ Endpoints:
 The flap_id must be given for each object in the array. The default mode is ABS. The default offset value is 0. The offset must be in the inclusive range from 0 to 63.
 
 ### vtrim (W)
-The vtrim value adds a slight time delay between between when the encoder detects the corret position and when th emotor stops. This allows the display to turn a fraction more to ensure thr flap turns over.
+The vtrim value adds a slight time delay between between when the encoder detects the corret position and when the motor stops. This allows the display to turn a fraction more to ensure thr flap turns over.
 ```
 {
     "dimensions":{

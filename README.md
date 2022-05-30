@@ -163,15 +163,15 @@ Endpoints:
 [
     {
         "flap_id":0,
-        "mode":"abs", //default
+        "mode":"ABS", //default
         "offset":4
     },{
         "flap_id":1,
-        "mode":"inc",
+        "mode":"INC",
         "offset":1
     },{
         "flap_id":1,
-        "mode":"dec",
+        "mode":"DEC",
         "offset":1
     },
     ...
@@ -195,15 +195,15 @@ The vtrim value adds a slight time delay between between when the encoder detect
 [
     {
         "flap_id":0,
-        "mode":"abs", //default
+        "mode":"ABS", //default
         "vtrim":4
     },{
         "flap_id":1,
-        "mode":"inc",
+        "mode":"INC",
         "vtrim":1
     },{
         "flap_id":1,
-        "mode":"dec",
+        "mode":"DEC",
         "vtrim":1
     },
     ...

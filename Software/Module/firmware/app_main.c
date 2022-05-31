@@ -483,7 +483,7 @@ void main(void)
             distance_to_rotate = motor_control();
         }else{          // Idle
             PORTAbits.RA0 = 0; // disable IR led when idle
-            // increment_rev_cnt();
+            increment_rev_cnt();
         }
     }
 }

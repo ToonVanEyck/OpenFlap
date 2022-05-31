@@ -10,21 +10,19 @@ void chain_comm_loop(uint32_t *idle_timeout)
     CLOCK_GUARD;
     (*idle_timeout)++;
     if(RX_DONE){
-        *idle_timeout =0;
+        *idle_timeout = 0;
         comm_timer = 0;
         chain_comm(comm_rx_data);
     }
     if(watch_tx && TX_DONE){
-        *idle_timeout =0;
+        *idle_timeout = 0;
         comm_timer = 0;
         watch_tx = 0;
         chain_comm(comm_tx_data);
     }
     if(comm_timer++ >= 500){ // 50ms
-        *idle_timeout =0;
         comm_timer = 0;
         chain_comm(comm_timeout);
-        if(comm_timer >= 10000)comm_timer = 0; // 1 seconds 
     } 
 }
 

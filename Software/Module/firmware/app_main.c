@@ -362,14 +362,13 @@ int motor_control(void)
     static uint16_t pwm = 0;
 
     int distance = (int)char_index - read_encoder(pwm == 0);
-
+    if(char_index == UNINITIALIZED) distance = 0;
     if(distance < 0) distance += NUM_CHARS;
+
     pwm = 0;
-    if(char_index != UNINITIALIZED && distance >= 0 && distance < NUM_CHARS){
+    if(distance >= 0 && distance < NUM_CHARS){
         pwm = speed[distance];
     }
-
-
     CCPR1 = virtual_trim(pwm);
     return distance;
 }

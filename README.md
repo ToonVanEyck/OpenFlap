@@ -23,7 +23,7 @@ Features
 - customizable character sets
 - No calibration rotation required
 - Minimal wiring
-- Web interface
+- Web interface and api
 - Firmware updates through web page.
 
 Automatic data routing

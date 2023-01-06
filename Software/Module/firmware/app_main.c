@@ -10,7 +10,7 @@
 #define COL_END PORTAbits.RA5
 #define MOTOR_DISABLE TRISAbits.TRISA2
 
-uint8_t /*watch_tx,*/ char_index, rev_add, offset, vtrim;
+uint8_t /*watch_tx,*/ char_index, do_a_loop, rev_add, offset, vtrim;
 uint32_t rev_cnt;
 
 char charset[4*NUM_CHARS] = {0};
@@ -243,6 +243,9 @@ void get_rev_cnt(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 void set_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
+        if(!strncmp("\0\0\0\n", (char *)rx_data, 4)){ // do a full revolution
+            do_a_loop = 1;
+        }
         for(uint8_t i = 0; i < NUM_CHARS; i++){
             if(!strncmp(charset + i*4,(char*)rx_data,4)){
                 char_index = i;
@@ -362,6 +365,11 @@ int motor_control(void)
     static uint16_t pwm = 0;
 
     int distance = (int)char_index - read_encoder(pwm == 0);
+    if(do_a_loop){
+        if(distance) do_a_loop = 0;
+        distance = NUM_CHARS;
+    }
+
     if(char_index == UNINITIALIZED) distance = 0;
     if(distance < 0) distance += NUM_CHARS;
 
@@ -446,6 +454,7 @@ void main(void)
 {
     // init vars
     char_index = UNINITIALIZED;
+    do_a_loop = 0;
     rev_add = 0;
     offset = 0;
     vtrim = 0;

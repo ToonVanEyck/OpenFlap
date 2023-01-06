@@ -73,6 +73,14 @@ void json_get_dimensions(cJSON *json, int* width, int* height)
     if(cJSON_IsNumber(j_height)) *height = j_height->valueint;
 }
 
+// returns the number of utf8 code points in the buffer at s
+size_t utf8len(char *s)
+{
+    size_t len = 0;
+    for (; *s; ++s) if ((*s & 0xC0) != 0x80) ++len;
+    return len;
+}
+
 /*
 ##########################################
 ##    START OF API ENDPOINT HANDLERS    ##
@@ -559,15 +567,6 @@ static const httpd_uri_t version_get = {
     .handler      = api_v1_version_get_handler,
     .user_ctx     = NULL
 };
-
-
-// returns the number of utf8 code points in the buffer at s
-size_t utf8len(char *s)
-{
-    size_t len = 0;
-    for (; *s; ++s) if ((*s & 0xC0) != 0x80) ++len;
-    return len;
-}
 
 static esp_err_t api_v1_message_post_handler(httpd_req_t *req)
 {

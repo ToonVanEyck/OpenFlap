@@ -10,8 +10,7 @@
 #define COL_END PORTAbits.RA5
 #define MOTOR_DISABLE TRISAbits.TRISA2
 
-uint8_t /*watch_tx,*/ char_index, do_a_loop, rev_add, offset, vtrim;
-uint32_t rev_cnt;
+uint8_t /*watch_tx,*/ char_index, do_a_loop, offset, vtrim;
 
 char charset[4*NUM_CHARS] = {0};
 const uint16_t speed[NUM_CHARS] = {       // distance to pwm conversion map
@@ -70,7 +69,6 @@ uint8_t read_encoder(uint8_t is_idle)
 {
     static unsigned pulse_cnt = IR_OFF_TICKS;
     static uint8_t enc_res = 0xff;
-    static uint8_t prev_rev_cnt_state = 0;
     static uint8_t enc_buffer[3] = {0};
     if(++pulse_cnt >= IR_OFF_TICKS){
         PORTAbits.RA0 = 1; // Enable IR LEDs
@@ -92,15 +90,6 @@ uint8_t read_encoder(uint8_t is_idle)
             // apply the encoder offset. 
             enc_d+= offset;
             if(enc_d >= NUM_CHARS) enc_d-= NUM_CHARS;
-            // check if the revolution counter needs to be incremented
-            if(prev_rev_cnt_state){
-                if(PORTCbits.RC3 && ! PORTCbits.RC2){
-                    rev_add++; 
-                    prev_rev_cnt_state = 0;
-                }
-            }else{
-                if(PORTCbits.RC2 && ! PORTCbits.RC3) prev_rev_cnt_state = 1; 
-            }
             // debounce readings
             enc_buffer[0] = is_idle? enc_buffer[1] : (uint8_t)enc_d;
             enc_buffer[1] = is_idle? enc_buffer[2] : (uint8_t)enc_d;
@@ -222,21 +211,6 @@ void get_fw_version(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
         cmd_info->rx_data_len = 0;
         cmd_info->cmd = module_get_fw_version;
         cmd_info->cmd_callback = get_fw_version;
-    }
-}
-
-void get_rev_cnt(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
-{
-    if(cmd_info == NULL){
-        tx_data[0] = rev_cnt >>  0 & 0xFF; 
-        tx_data[1] = rev_cnt >>  8 & 0xFF; 
-        tx_data[2] = rev_cnt >> 16 & 0xFF; 
-        tx_data[3] = rev_cnt >> 24 & 0xFF; 
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_rev_cnt;
-        cmd_info->cmd_callback = get_rev_cnt;
     }
 }
 
@@ -381,84 +355,13 @@ int motor_control(void)
     return distance;
 }
 
-uint32_t calc_rev_cnt(){
-    NVMCON1bits.NVMREGS = 0;
-    uint16_t data = 0;
-    uint16_t cnt = 0;
-    for(int word_i = 0; word_i < 31;word_i++){
-        CLRWDT();
-        NVMADR = REV_CNT_BASE_ADDR;
-        NVMCON1bits.RD = 1;
-        data = NVMDAT;
-        for(uint16_t bit_i = 0x3FFF; data < bit_i ; bit_i = (bit_i << 1) & 0x3FFF){
-            cnt++;
-        }
-        if(data > 0) break;
-    }
-    NVMADR = REV_CNT_MULT_ADDR;
-    NVMCON1bits.RD = 1;
-    data = 0x3FFF - NVMDAT;
-    return ((uint32_t)cnt + (uint32_t)data * 434);
-}
-
-void increment_rev_cnt(){
-    if(!rev_add) return;   // only execute 
-    uint16_t rev_multiplier = (uint16_t)((rev_cnt + rev_add) / (uint16_t)434);  // number of total filled pages
-    uint16_t rec_remainder = (rev_cnt + rev_add) % (uint16_t)434;   // number of addition bits set
-
-    NVMCON1bits.WRERR = 0;
-    NVMADR = REV_CNT_BASE_ADDR;
-    if(rev_cnt / 434 < rev_multiplier){
-        // clear page
-        NVMCON1bits.NVMREGS = 0;
-        NVMCON1bits.FREE = 1;
-        NVMCON1bits.WREN = 1;
-        // INTCONbits.GIE = 0;
-        // Unlock Sequence
-        NVMCON2 = 0x55;
-        NVMCON2 = 0xAA;
-        NVMCON1bits.WR = 1;
-    }
-
-    NVMCON1bits.FREE = 0;
-    NVMCON1bits.LWLO = 1;
-    NVMCON1bits.WREN = 1;
-    // INTCONbits.GIE = 0;
-    for(int i = 0;i<31;i++){ 
-        uint16_t  word = 0x3FFF;
-        for(int j = 0; j < 14;j++){
-            if(rec_remainder){
-                word = (word << 1) & 0x3FFF; // shift 0 into word for each remainder
-                rec_remainder--;
-            }
-        }
-        NVMDAT = word;
-        NVMCON2 = 0x55;
-        NVMCON2 = 0xAA;
-        NVMCON1bits.WR = 1;
-        ++NVMADR;
-    }
-    NVMDAT = (0X3FFF - rev_multiplier) & 0x3FFF;
-    NVMCON1bits.LWLO = 0;
-    NVMCON2 = 0x55;
-    NVMCON2 = 0xAA;
-    NVMCON1bits.WR = 1;
-    NVMCON1bits.WREN = 0;
-    // INTCONbits.GIE = 1;
-
-    rev_cnt += rev_add;
-    rev_add = 0;
-}
-
 void main(void)
 {
     // init vars
     char_index = UNINITIALIZED;
     do_a_loop = 0;
-    rev_add = 0;
     offset = 0;
     vtrim = 0;
-    rev_cnt = 0;
     // init hw and peripherals
     init_hardware();
     // enable interrupts
@@ -473,13 +376,11 @@ void main(void)
     install_command(get_fw_version);
     install_command(set_char);
     install_command(get_char);
-    install_command(get_rev_cnt);
     install_command(set_charset);
     install_command(get_charset);
     install_command(set_offset);
     install_command(set_vtrim);
-    // load revolution counter
-    rev_cnt = calc_rev_cnt();
+
     uint32_t idle_timer = 0; // timeout counter
     int distance_to_rotate = 0;
     // main loop
@@ -491,7 +392,6 @@ void main(void)
             distance_to_rotate = motor_control();
         }else{          // Idle
             PORTAbits.RA0 = 0; // disable IR led when idle
-            increment_rev_cnt();
         }
     }
 }

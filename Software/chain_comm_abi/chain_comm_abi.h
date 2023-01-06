@@ -25,42 +25,16 @@ typedef enum{
     module_get_config,
     module_get_fw_version,
     module_get_hw_id,
-    module_get_rev_cnt,
     module_set_char,
     module_get_char,
     module_set_charset,
     module_get_charset,
     module_set_offset,
+    module_get_offset,
     module_set_vtrim,
+    module_get_vtrim,
 
     end_of_command //DONT INSERT COMMANDS AFTER THIS ONE
 }module_command_t;
-
-#define MODULE_DO_NOTHING_RX_LEN    0
-#define MODULE_DO_NOTHING_TX_LEN    0
-
-#define MODULE_READ_DATA_RX_LEN    0
-#define MODULE_READ_DATA_TX_LEN    0
-
-#define MODULE_WRITE_PAGE_RX_LEN    0
-#define MODULE_WRITE_PAGE_TX_LEN    0
-
-#define MODULE_GOTO_APP_RX_LEN    0
-#define MODULE_GOTO_APP_TX_LEN    0
-
-#define MODULE_GOTO_BTL_RX_LEN    0
-#define MODULE_GOTO_BTL_TX_LEN    0
-
-#define MODULE_DO_NOTHING_RX_LEN    0
-#define MODULE_DO_NOTHING_TX_LEN    0
-
-#define MODULE_DO_NOTHING_RX_LEN    0
-#define MODULE_DO_NOTHING_TX_LEN    0
-
-#define MODULE_DO_NOTHING_RX_LEN    0
-#define MODULE_DO_NOTHING_TX_LEN    0
-
-#define MODULE_DO_NOTHING_RX_LEN    0
-#define MODULE_DO_NOTHING_TX_LEN    0
 
 #endif 

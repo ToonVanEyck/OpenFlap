@@ -123,16 +123,15 @@ Controller API
 
 Endpoints:
 
-- /enable
-- /reboot
-- /offset
-- /charset
-- /statistics
-- /dimensions
-- /version
-- /message
-- /wifi_ap
-- /wifi_sta
+- /api/v1/enable
+- /api/v1/reboot
+- /api/v1/offset
+- /api/v1/charset
+- /api/v1/dimensions
+- /api/v1/version
+- /api/v1/message
+- /api/v1/wifi_ap
+- /api/v1/wifi_sta
 
 ### enable (R/W)
 ```
@@ -148,7 +147,7 @@ Endpoints:
 }
 ```
 
-### offset (W)
+### offset (R/W)
 ```
 {
     "dimensions":{
@@ -179,7 +178,7 @@ Endpoints:
 ```
 The flap_id must be given for each object in the array. The default mode is ABS. The default offset value is 0. The offset must be in the inclusive range from 0 to 63.
 
-### vtrim (W)
+### vtrim (R/W)
 The vtrim value adds a slight time delay between between when the encoder detects the corret position and when the motor stops. This allows the display to turn a fraction more to ensure thr flap turns over.
 ```
 {
@@ -219,17 +218,6 @@ The flap_id must be given for each object in the array. The default mode is ABS.
     "charset":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]
 }
 ``` 
-
-### statistics (R)
-```
-[
-    {"flap_id":0,"revolutions":4},
-    {"flap_id":1,"revolutions":5},
-    {"flap_id":2,"revolutions":6},
-    {"flap_id":3,"revolutions":5},
-    {"flap_id":4,"revolutions":3}
-]
-```
 
 ### dimensions (R)
 ```

@@ -295,6 +295,19 @@ void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }
 }
 
+void get_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+{
+    if(cmd_info == NULL){
+        tx_data[0] = offset;
+    }else{
+        // command info
+        cmd_info->rx_data_len = 0;
+        cmd_info->cmd = module_get_offset;
+        cmd_info->cmd_callback = get_offset;
+    }
+}
+
+
 void set_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
 {
     if(cmd_info == NULL){
@@ -318,6 +331,17 @@ void set_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
     }
 }
 
+void get_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+{
+    if(cmd_info == NULL){
+        tx_data[0] = vtrim;
+    }else{
+        // command info
+        cmd_info->rx_data_len = 0;
+        cmd_info->cmd = module_get_vtrim;
+        cmd_info->cmd_callback = get_vtrim;
+    }
+}
 // Delay the new pwm value with a certain delay. 
 uint16_t virtual_trim(uint16_t pwm_i)
 {
@@ -379,7 +403,9 @@ void main(void)
     install_command(set_charset);
     install_command(get_charset);
     install_command(set_offset);
+    install_command(get_offset);
     install_command(set_vtrim);
+    install_command(get_vtrim);
 
     uint32_t idle_timer = 0; // timeout counter
     int distance_to_rotate = 0;

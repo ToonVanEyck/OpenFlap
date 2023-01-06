@@ -266,6 +266,59 @@ static const httpd_uri_t offset_post = {
     .user_ctx     = NULL
 };
 
+static esp_err_t api_v1_offset_get_handler(httpd_req_t *req)
+{
+    int rcv_complete = 0;
+    controller_queue_data_t *uart_response = NULL;
+
+    cJSON *resp = cJSON_CreateArray();
+
+    // Send uart command to read module firmware
+    char cmd_uart_buf[4]={0};
+    cmd_uart_buf[0] = EXTEND + module_get_offset;
+    flap_uart_send_data(cmd_uart_buf,1);   
+    cmd_uart_buf[0] = EXTEND + module_read_data;
+    cmd_uart_buf[3] = 1;
+    flap_uart_send_data(cmd_uart_buf,4);   
+
+    do{
+        // Receive firmware from each module and combine result in json.
+        if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
+            cJSON *offset_res = cJSON_CreateObject();
+            cJSON_AddNumberToObject(offset_res, "flap_id", uart_response->data_offset / uart_response->data_len);
+            cJSON_AddNumberToObject(offset_res, "offset",(uint8_t)uart_response->data[0]);
+            free(uart_response);
+            cJSON_AddItemToArray(resp, offset_res);
+        }else{
+            rcv_complete = 1;
+        }
+    }while(!rcv_complete);
+
+    if(!rcv_complete){
+        httpd_resp_set_status(req, "504 Gateway Timeout");
+        httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(resp);
+        return ESP_OK;
+    } 
+    
+    // Send response to client.
+    char *buf = cJSON_PrintUnformatted(resp);
+    ESP_LOGI(TAG,"%s",buf);
+    httpd_resp_set_status(req, "200 OK");
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, (const char *)buf, strlen(buf));
+    cJSON_free(buf);
+    cJSON_Delete(resp);
+
+    return ESP_OK;
+}
+static const httpd_uri_t offset_get = {
+    .uri          = "/api/v1/offset",
+    .method       = HTTP_GET,
+    .handler      = api_v1_offset_get_handler,
+    .user_ctx     = NULL
+};
+
 static esp_err_t api_v1_vtrim_post_handler(httpd_req_t *req)
 {
     LARGE_REQUEST_GUARD(req);
@@ -356,6 +409,60 @@ static const httpd_uri_t vtrim_post = {
     .handler      = api_v1_vtrim_post_handler,
     .user_ctx     = NULL
 };
+
+static esp_err_t api_v1_vtrim_get_handler(httpd_req_t *req)
+{
+    int rcv_complete = 0;
+    controller_queue_data_t *uart_response = NULL;
+
+    cJSON *resp = cJSON_CreateArray();
+
+    // Send uart command to read module firmware
+    char cmd_uart_buf[4]={0};
+    cmd_uart_buf[0] = EXTEND + module_get_vtrim;
+    flap_uart_send_data(cmd_uart_buf,1);   
+    cmd_uart_buf[0] = EXTEND + module_read_data;
+    cmd_uart_buf[3] = 1;
+    flap_uart_send_data(cmd_uart_buf,4);   
+
+    do{
+        // Receive firmware from each module and combine result in json.
+        if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
+            cJSON *vtrim_res = cJSON_CreateObject();
+            cJSON_AddNumberToObject(vtrim_res, "flap_id", uart_response->data_offset / uart_response->data_len);
+            cJSON_AddNumberToObject(vtrim_res, "vtrim",(uint8_t)uart_response->data[0]);
+            free(uart_response);
+            cJSON_AddItemToArray(resp, vtrim_res);
+        }else{
+            rcv_complete = 1;
+        }
+    }while(!rcv_complete);
+
+    if(!rcv_complete){
+        httpd_resp_set_status(req, "504 Gateway Timeout");
+        httpd_resp_send(req, NULL, 0);
+        cJSON_Delete(resp);
+        return ESP_OK;
+    } 
+    
+    // Send response to client.
+    char *buf = cJSON_PrintUnformatted(resp);
+    ESP_LOGI(TAG,"%s",buf);
+    httpd_resp_set_status(req, "200 OK");
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, (const char *)buf, strlen(buf));
+    cJSON_free(buf);
+    cJSON_Delete(resp);
+
+    return ESP_OK;
+}
+static const httpd_uri_t vtrim_get = {
+    .uri          = "/api/v1/vtrim",
+    .method       = HTTP_GET,
+    .handler      = api_v1_vtrim_get_handler,
+    .user_ctx     = NULL
+};
+
 
 static esp_err_t api_v1_charset_post_handler(httpd_req_t *req)
 {
@@ -778,59 +885,6 @@ static const httpd_uri_t wifi_sta_post = {
     .user_ctx     = NULL
 };
 
-static esp_err_t api_v1_statistics_get_handler(httpd_req_t *req)
-{
-    int rcv_complete = 0;
-    controller_queue_data_t *uart_response = NULL;
-
-    // Send uart command to read statistics
-    char cmd_uart_buf[4]={0};
-    cmd_uart_buf[0] = EXTEND + module_get_rev_cnt;
-    flap_uart_send_data(cmd_uart_buf,1);   
-    cmd_uart_buf[0] = EXTEND + module_read_data;
-    cmd_uart_buf[3] = 4;
-    flap_uart_send_data(cmd_uart_buf,4);   
-
-    cJSON *resp = cJSON_CreateArray();
-
-    do{
-        // Receive statistics from each module and combine result in json.
-        if(xQueueReceive(controller_respons_queue, &uart_response, 2000/portTICK_PERIOD_MS)){
-            cJSON *statistics_res = cJSON_CreateObject();
-            cJSON_AddNumberToObject(statistics_res, "flap_id", uart_response->data_offset / uart_response->data_len);
-            cJSON_AddNumberToObject(statistics_res, "revolutions",((uint32_t)uart_response->data[3] << 24) + ((uint32_t)uart_response->data[2] << 16) + ((uint32_t)uart_response->data[1] << 8) + ((uint32_t)uart_response->data[0] << 0));
-            free(uart_response);
-            cJSON_AddItemToArray(resp, statistics_res);
-        }else{
-            rcv_complete = 1;
-        }
-    }while(!rcv_complete);
-
-    if(!rcv_complete){
-        httpd_resp_set_status(req, "504 Gateway Timeout");
-        httpd_resp_send(req, NULL, 0);
-        cJSON_Delete(resp);
-        return ESP_OK;
-    } 
-    
-    // Send response to client.
-    char *buf = cJSON_PrintUnformatted(resp);
-    ESP_LOGI(TAG,"%s",buf);
-    httpd_resp_set_status(req, "200 OK");
-    httpd_resp_set_type(req, "application/json");
-    httpd_resp_send(req, (const char *)buf, strlen(buf));
-    cJSON_free(buf);
-    cJSON_Delete(resp);
-
-    return ESP_OK;
-}
-static const httpd_uri_t statistics_get = {
-    .uri          = "/api/v1/statistics",
-    .method       = HTTP_GET,
-    .handler      = api_v1_statistics_get_handler,
-    .user_ctx     = NULL
-};
-
 void add_api_endpoints(httpd_handle_t *server)
 {
     controller_respons_queue = xQueueCreate(1, sizeof(controller_queue_data_t*));
@@ -838,15 +892,15 @@ void add_api_endpoints(httpd_handle_t *server)
     httpd_register_uri_handler(*server, &enable_post);
     httpd_register_uri_handler(*server, &reboot_post);
     httpd_register_uri_handler(*server, &offset_post);
+    httpd_register_uri_handler(*server, &offset_get);
     httpd_register_uri_handler(*server, &vtrim_post);
+    httpd_register_uri_handler(*server, &vtrim_get);
     httpd_register_uri_handler(*server, &charset_post);
     httpd_register_uri_handler(*server, &charset_get);
-    // httpd_register_uri_handler(*server, &revolutions_get);
     httpd_register_uri_handler(*server, &dimensions_get);
     httpd_register_uri_handler(*server, &version_get);
     httpd_register_uri_handler(*server, &message_post);
     httpd_register_uri_handler(*server, &message_get);
     httpd_register_uri_handler(*server, &wifi_ap_post);
     httpd_register_uri_handler(*server, &wifi_sta_post);
-    httpd_register_uri_handler(*server, &statistics_get);
 }

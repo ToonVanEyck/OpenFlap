@@ -1,6 +1,10 @@
 OpenFlap
 ========
 
+**DISCLAIMER:**
+
+**This is still a work in progress. Using the the code and files in this repository to create your own display is not recommended at the moment!**
+
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 
 ![OpenFlap Module][module_gif]

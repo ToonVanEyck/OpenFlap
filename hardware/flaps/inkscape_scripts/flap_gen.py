@@ -15,8 +15,8 @@ class FlapGen(inkex.EffectExtension):
         pars.add_argument("-r", "--ratio", type=float, default=2.3, help="Flap To Font Scale Factor")
         pars.add_argument("-t", "--bot_spacing", type=float, default=6, help="Char Bot Spacing")
         pars.add_argument("-m", "--mid_cutout", type=float, default=0.5, help="Clearance between upper and lower flap.")
-        pars.add_argument("-o", "--charset_offset", type=int, default=0, help="Flap Set Offset")
-        pars.add_argument("-s", "--charset", type=str, default=' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789€$!?.,:/@#&')
+        pars.add_argument("-o", "--characterMap_offset", type=int, default=0, help="Flap Set Offset")
+        pars.add_argument("-s", "--characterMap", type=str, default=' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789€$!?.,:/@#&')
 
     def create_char(self,proto_flap,i,char,layer):  
 
@@ -64,26 +64,26 @@ class FlapGen(inkex.EffectExtension):
         proto_flap = self.svg.xpath("//svg:path[@flap='True']")[0]
         proto_flap.set('mid_cutout',str(self.options.mid_cutout))
 
-        self.options.charset+= self.options.charset[0]
+        self.options.characterMap+= self.options.characterMap[0]
 
-        tmp_layer = self.svg.getElementById("layer_gen_charset")
+        tmp_layer = self.svg.getElementById("layer_gen_characterMap")
         
         # Clear layers
-        for e in self.svg.xpath("//svg:g[@id='layer_gen_charset']/*"):
+        for e in self.svg.xpath("//svg:g[@id='layer_gen_characterMap']/*"):
             tmp_layer.remove(e)
 
         if(tmp_layer is None):  
             tmp_layer_atr={}
-            tmp_layer_atr['id'] = 'layer_gen_charset'
+            tmp_layer_atr['id'] = 'layer_gen_characterMap'
             tmp_layer_atr["{http://www.inkscape.org/namespaces/inkscape}groupmode"] = "layer"
             tmp_layer_atr["{http://www.inkscape.org/namespaces/inkscape}label"] = "gen_flapset"
             tmp_layer = etree.SubElement(self.svg, inkex.addNS('g','svg'), tmp_layer_atr )
 
-        for i in range(0,len(self.options.charset)-1,1):
+        for i in range(0,len(self.options.characterMap)-1,1):
             layer1 = self.svg.getElementById("layer1")
-            inkex.utils.debug("{}: [{}]".format(i,self.options.charset[i]))
+            inkex.utils.debug("{}: [{}]".format(i,self.options.characterMap[i]))
 
-            self.create_char(proto_flap,i+1,self.options.charset[i],tmp_layer)
+            self.create_char(proto_flap,i+1,self.options.characterMap[i],tmp_layer)
         return
 
 if __name__ == '__main__':

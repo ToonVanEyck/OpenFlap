@@ -11,6 +11,8 @@
 #include "esp_log.h"
 #include "flap_uart.h"
 
+#include "Model.h"
+
 void flap_verify_controller_firmware();
 void flap_controller_firmware_update(char *data,size_t data_len,size_t data_offset,size_t total_data_len);
 void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,size_t total_data_len);

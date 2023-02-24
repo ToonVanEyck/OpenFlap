@@ -14,8 +14,8 @@ class FlapGen(inkex.EffectExtension):
         pars.add_argument("-r", "--ratio", type=float, default=2.1, help="Flap To Font Scale Factor")
         pars.add_argument("-t", "--top_spacing", type=float, default=3.0, help="Char Top Spacing")
         pars.add_argument("-m", "--mid_cutout", type=float, default=1.0, help="Clearance between upper and lower flap.")
-        pars.add_argument("-o", "--charset_offset", type=int, default=0, help="Flap Set Offset")
-        pars.add_argument("-s", "--charset", type=str, default=' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789€$!?.,:/&@#')
+        pars.add_argument("-o", "--characterMap_offset", type=int, default=0, help="Flap Set Offset")
+        pars.add_argument("-s", "--characterMap", type=str, default=' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789€$!?.,:/&@#')
         pars.add_argument("-e", "--export", type=bool, default=True)
         pars.add_argument("-p", "--output_path", type=str)
         pars.add_argument("-n", "--file_name", type=str, default='Split_flap_UV')
@@ -32,15 +32,15 @@ class FlapGen(inkex.EffectExtension):
         # Create Chars 
         top_char = etree.SubElement(self.svg.getElementById("layer_ss_top"), inkex.addNS('text','svg'), char_style )
         top_tspan = etree.SubElement(top_char, inkex.addNS('text','svg'))
-        top_tspan.text = self.options.charset[::-1][self.options.charset_offset+1] 
+        top_tspan.text = self.options.characterMap[::-1][self.options.characterMap_offset+1] 
         top_char_id = top_char.get_id()
-        top_char_is_visible = self.options.charset[::-1][self.options.charset_offset+1] != " "
+        top_char_is_visible = self.options.characterMap[::-1][self.options.characterMap_offset+1] != " "
 
         bot_char = etree.SubElement(self.svg.getElementById("layer_ss_bot"), inkex.addNS('text','svg'), char_style )
         bot_tspan = etree.SubElement(bot_char, inkex.addNS('text','svg'))
-        bot_tspan.text = self.options.charset[::-1][self.options.charset_offset]
+        bot_tspan.text = self.options.characterMap[::-1][self.options.characterMap_offset]
         bot_char_id = bot_char.get_id()
-        bot_char_is_visible = self.options.charset[::-1][self.options.charset_offset] != " "
+        bot_char_is_visible = self.options.characterMap[::-1][self.options.characterMap_offset] != " "
 
         # Convert chars to path
         self.document = inkex.load_svg(inkex.command.inkscape_command(
@@ -126,7 +126,7 @@ class FlapGen(inkex.EffectExtension):
 
         for id in flap_ids:
             self.create_char(id)
-            self.options.charset_offset += 1
+            self.options.characterMap_offset += 1
 
         if self.options.color:
             for top in self.svg.xpath("//svg:g[@id='layer_ss_top']/*"):

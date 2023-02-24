@@ -24,7 +24,7 @@ class FlapSplit(inkex.EffectExtension):
         mid_cutout = float(proto_flap.get('mid_cutout'))
 
         flap_char_ids = ""
-        number_of_flaps = len(self.svg.xpath("//svg:g[@id='layer_gen_charset']/*"))
+        number_of_flaps = len(self.svg.xpath("//svg:g[@id='layer_gen_characterMap']/*"))
         for i in range(number_of_flaps):
             flap_char_ids+= "flap_char_{},".format(i+1)
 
@@ -36,7 +36,7 @@ class FlapSplit(inkex.EffectExtension):
         selected_ids = self.options.ids
 
         i=1
-        for flap_group in self.svg.xpath("//svg:g[@id='layer_gen_charset']/*"):
+        for flap_group in self.svg.xpath("//svg:g[@id='layer_gen_characterMap']/*"):
             if(len(flap_group) == 3):
                 flap_group[-1].set_id("top_char_{}".format(i))
                 # copy char

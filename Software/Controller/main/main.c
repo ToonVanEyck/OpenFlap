@@ -6,6 +6,8 @@
 #include "flap_mdns.h"
 #include "flap_firmware.h"
 #include "flap_uart.h"
+#include "Model.h"
+
 
 static const char *TAG = "[MAIN]";
 
@@ -14,7 +16,6 @@ void app_main(void)
     // The enable pin controls the relay to power the modules.
     gpio_set_direction(FLAP_ENABLE, GPIO_MODE_OUTPUT);
     gpio_set_level(FLAP_ENABLE, 0);
-    
     // initialize components 
     flap_verify_controller_firmware();
     ESP_ERROR_CHECK(esp_netif_init());
@@ -31,9 +32,6 @@ void app_main(void)
     if(!AP_ssid) asprintf(&AP_ssid,"OpenFlap");
     flap_nvs_get_string("AP_pwd",&AP_pwd);
     if(!AP_pwd) asprintf(&AP_pwd,"myOpenFlap");
-
-    // ESP_LOGI(TAG,"%s %s",STA_ssid,STA_pwd);
-    // ESP_LOGI(TAG,"%s %s",AP_ssid,AP_pwd);
     // Set local hostname 
     flap_mdns_init("openflap");
     // Start Wi-Fi
@@ -42,4 +40,10 @@ void app_main(void)
     flap_init_socket_server();
     // init uart 
     flap_uart_init();
+    flap_model_init();
+    ESP_LOGI(TAG,"OpenFlap Controller started!");
+
+    gpio_set_level(FLAP_ENABLE, 1);
+
+    esp_log_level_set("[MODEL]",ESP_LOG_DEBUG);
 }

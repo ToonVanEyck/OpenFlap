@@ -2,113 +2,252 @@
 
 static const char *TAG = "[UART]";
 
-// static QueueHandle_t uart_rx_queue;
-static QueueHandle_t uart_tx_queue;
-static TaskHandle_t flap_uart_taskHandle;
+static TaskHandle_t task;
 
-// static bool enable = true;
+static chainCommMessage_t msg;
 
-typedef struct{
-    int data_len;
-    char data[512];
-}uart_tx_data_t;
+static uart_modulePropertyHandler_t uart_modulePropertyHandlers[MAX_PROPERTIES] = {0};
+
+void msg_init(){
+    memset(&msg,0,sizeof(chainCommMessage_t));
+}
+
+void msg_newReadAll(moduleProperty_t property){
+    msg_init();
+    msg_addHeader(property_readAll,property);
+    msg_addData(0); // add module indexer
+    msg_addData(0); // add module indexer
+}
+
+void msg_newWriteSequential(moduleProperty_t property){
+    msg_init();
+    msg_addHeader(property_writeSequential,property);
+}
+
+void msg_newWriteAll(moduleProperty_t property){
+    msg_init();
+    msg_addHeader(property_writeAll,property);
+}
+
+void msg_addHeader(moduleAction_t action, moduleProperty_t property){
+    if(msg.size > 0){
+        ESP_LOGE(TAG,"Message is not empty");
+        return;
+    }
+    msg.structured.header.field.action = action;
+    msg.structured.header.field.property = property;
+    msg.size++;
+}
+
+void msg_addData(uint8_t byte){
+    if(msg.size >= CHAIN_COM_MAX_LEN){
+        ESP_LOGE(TAG,"Message buffer is full");
+        return;
+    }
+    msg.raw[msg.size++] = byte;
+}
+
+void msg_sendDoNothing(const unsigned commandPeriod){
+    msg_init();
+    msg_addHeader(do_nothing,no_property);
+    msg_send(commandPeriod);
+}
+
+void msg_send(const unsigned commandPeriod){
+    static TickType_t xLastWakeTime = 0;
+    if(!msg.size || msg.size >= CHAIN_COM_MAX_LEN){
+        ESP_LOGE(TAG,"Message size (%d) is invalid",msg.size);
+        return;
+    }
+    if(commandPeriod){
+        xTaskDelayUntil( &xLastWakeTime, commandPeriod / portTICK_RATE_MS );
+    }
+    char *buf = calloc(1,msg.size*5*sizeof(char)+1);
+    for(int i = 0;i<msg.size;i++){
+        sprintf(buf+5*i,"0x%02x ",msg.raw[i]);
+    }
+    ESP_LOGI(TAG,"TX --> %s",buf);
+    free(buf);
+
+    xTaskNotify(uartTask(), msg.structured.header.raw, eSetValueWithoutOverwrite);
+    for(int i=0; i<msg.size;){
+        i+= uart_write_bytes(UART_NUM,msg.raw+i, 1);
+        esp_rom_delay_us(200);
+    }
+    xLastWakeTime = xTaskGetTickCount();
+}
+
+void uart_addModulePropertyHandler(moduleProperty_t property, uart_modulePropertyCallback_t deserialize, uart_modulePropertyCallback_t serialize){
+    if(property <= no_property && property >= end_of_properties){
+        ESP_LOGE(TAG,"Cannot add invalid property %d",property);
+        return;
+    }
+    uart_modulePropertyHandlers[property].deserialize = deserialize;
+    uart_modulePropertyHandlers[property].serialize = serialize;
+}
+
+bool uart_propertyReadAll(moduleProperty_t property){
+    if((property <= no_property && property >= end_of_properties) || 
+        !uart_modulePropertyHandlers[property].deserialize){
+        ESP_LOGE(TAG,"No deserialization defined for property %d",property);
+        return false;
+    }
+    msg_newReadAll(property);
+    msg_send(MAX_COMMAND_PERIOD_MS);
+    ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
+    return true;
+}
+
+bool uart_propertyWriteAll(moduleProperty_t property){
+    if((property <= no_property && property >= end_of_properties) || 
+        !uart_modulePropertyHandlers[property].serialize || !display_getSize()){
+        ESP_LOGE(TAG,"No serialization defined for property %d",property);
+        return false;
+    }
+    for(int i = 0;i<display_getSize();i++){
+        module_t *module = display_getModule(i);
+        module->updatableProperties &= ~(1<<property);
+    }
+    msg_newWriteAll(property);
+    uart_modulePropertyHandlers[property].serialize(&msg.raw[msg.size],display_getModule(0));
+    msg.size += propertySizes[property];
+    msg_addData(ACK);
+    msg_send(MAX_COMMAND_PERIOD_MS);
+    ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
+    return true;
+}
+
+bool uart_propertyWriteSequential(moduleProperty_t property){
+    if((property <= no_property && property >= end_of_properties) || 
+        !uart_modulePropertyHandlers[property].serialize){
+        ESP_LOGE(TAG,"No serialization defined for property %d",property);
+        return false;
+    }
+    for(int i = 0;i<display_getSize();i++){
+        module_t *module = display_getModule(i);
+        if(module->updatableProperties & (1<<property)){
+            module->updatableProperties &= ~(1<<property);
+            msg_newWriteSequential(property);
+            uart_modulePropertyHandlers[property].serialize(&msg.raw[msg.size],module);
+            msg.size += propertySizes[property];
+            msg_send(0);
+        }else{
+            msg_newWriteSequential(no_property);
+            msg_send(0);
+        }
+    }
+    msg_sendAcknowledge();
+    ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
+    return true;
+}
+
+bool uart_moduleSerializedPropertiesAreEqual(moduleProperty_t property)
+{
+    if(display_getSize() < 2 && uart_modulePropertyHandlers[property].serialize){
+        return true;
+    }
+    char bufA[CHAIN_COM_MAX_LEN] = {0};
+    uart_modulePropertyHandlers[property].serialize(bufA,display_getModule(0));
+    char bufB[CHAIN_COM_MAX_LEN] = {0};
+    for(int i = 1;i<display_getSize();i++){
+        module_t *module = display_getModule(i);
+        uart_modulePropertyHandlers[property].serialize(bufB,display_getModule(i));
+        for(int j = 0; j<propertySizes[property]; j++){
+            if(bufA[j] != bufB[j]){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+uint32_t uart_receive(char *buf, uint32_t length, TickType_t ticks_to_wait){
+    uint32_t len = uart_read_bytes(UART_NUM, buf, length, ticks_to_wait);
+    if(len > 0 && len <= length){
+        char *print_buf = calloc(len*5+1,1);
+        for(int i = 0;i<len;i++){
+            sprintf(print_buf+5*i,"0x%02x ",buf[i]);
+        }
+        ESP_LOGI(TAG,"RX <-- %s",print_buf);
+        free(print_buf);
+    }
+    return len;
+}
 
 static void flap_uart_task(void *arg)
 {
-    controller_queue_data_t *controller_comm = calloc(1,sizeof(controller_queue_data_t));
-    uart_tx_data_t *tx_data = NULL;
-    while (1){
-        if (xQueueReceive(uart_tx_queue, (void *)&tx_data, 50 / portTICK_RATE_MS)){
-            char *buf = calloc(1,tx_data->data_len*5*sizeof(char)+1);
-            for(int i = 0;i<tx_data->data_len;i++){
-                sprintf(buf+5*i,"0x%02x ",tx_data->data[i]);
-            }
-            ESP_LOGI(TAG,"sending uart: %s",buf);
-            free(buf);
-            for(int i=0; i<tx_data->data_len;){
-                i+= uart_write_bytes(UART_NUM, tx_data->data+i, 1);
-                esp_rom_delay_us(200);
-                // vTaskDelay(2 / portTICK_RATE_MS);
-            }
-            if(tx_data->data[0] & 0x80){
-                if((tx_data->data[0] & 0x7F) != module_read_data){  // NOT A READ COMMAND
-                    ESP_LOGI(TAG,"Expecting %d returning bytes",tx_data->data_len);
-                    int rx_len = 0, cnt = 0;
-                    while(rx_len < tx_data->data_len && cnt++ < 5){
-                        rx_len += uart_read_bytes(UART_NUM, controller_comm->data+rx_len, tx_data->data_len, 50 / portTICK_RATE_MS);
-                        if(rx_len < tx_data->data_len) ESP_LOGW(TAG,"partial data: %d",rx_len);
-                    }
-                    for(int i=0;i<tx_data->data_len;i++){
-                        if(tx_data->data[i] != controller_comm->data[i]) ESP_LOGE(TAG,"Received data does not match transmitted data 0x%02x >> 0x%02x",tx_data->data[i], controller_comm->data[i]);
-                    }
+    uint32_t len = 0;
+    uint16_t module_total = 0, module_index = 0;
+    bool waitingForWriteSequentialAck = false;
+    char buf[CHAIN_COM_MAX_LEN] = {0};
 
-
-                    ESP_LOGI(TAG,"Got %d returning bytes",rx_len);
-                    char *buf = calloc(1,rx_len*5*sizeof(char)+1);
-                    for(int i = 0;i<rx_len;i++){
-                        sprintf(buf+5*i,"0x%02x ",controller_comm->data[i]);
-                    }ESP_LOGI(TAG,"got %s",buf);free(buf);
-                }else{  // READ COMMAND
-                    if(tx_data->data_len == 4){
-                        ESP_LOGI(TAG,"Expecting 4 returning bytes");
-                        int rx_len = 0, cnt = 0;
-                        while(rx_len < tx_data->data_len && cnt++ < 5){
-                            rx_len += uart_read_bytes(UART_NUM, controller_comm->data+rx_len, tx_data->data_len, 50 / portTICK_RATE_MS);
-                        }
-                        char *buf = calloc(1,rx_len*5*sizeof(char)+1);
-                        for(int i = 0;i<rx_len;i++){
-                            sprintf(buf+5*i,"0x%02x ",controller_comm->data[i]);
-                        }ESP_LOGI(TAG,"got %s",buf);free(buf);
-                        int cnt_modules = (controller_comm->data[2] << 8) + controller_comm->data[1];
-                        int cnt_data = controller_comm->data[3];
-                        ESP_LOGI(TAG,"Expecting %d bytes from %d modules returning data",cnt_data,cnt_modules);
-                        controller_comm->total_data_len = cnt_modules * cnt_data;
-                        controller_comm->data_len = cnt_data;
-                        controller_comm->data_offset = 0;
-                        for(int i = 0; i < cnt_modules;i++){
-                            int rx_len = 0, timeout_cnt = 0;
-                            while(rx_len < cnt_data && timeout_cnt++ < 17){
-                                rx_len += uart_read_bytes(UART_NUM, controller_comm->data+rx_len, cnt_data-rx_len, 50 / portTICK_RATE_MS);
-                            }
-                            if(rx_len){
-                                char *buf = calloc(1,rx_len*5*sizeof(char)+1);
-                                for(int i = 0;i<rx_len;i++){
-                                    sprintf(buf+5*i,"0x%02x ",controller_comm->data[i]);
-                                }ESP_LOGI(TAG,"got %s",buf);free(buf);
-                                controller_respons_enqueue(controller_comm);
-                                controller_comm->data_offset += cnt_data;
-                            }
-                        }
-                    }else{
-                        ESP_LOGI(TAG,"Unexpected data lenght of %d for read command",tx_data->data_len);
-                    }
+    chainCommHeader_t header;
+    while(1){
+        header.raw = (uint8_t)ulTaskNotifyTake(true, 250 / portTICK_RATE_MS);
+        switch(header.field.action){
+            case property_writeAll:
+                len = uart_receive(buf, propertySizes[header.field.property] + WRITE_HEADER_LEN + 1, 250 / portTICK_RATE_MS);
+                if(len != propertySizes[header.field.property] + WRITE_HEADER_LEN + 1){
+                    ESP_LOGE(TAG,"Received %d bytes but expected %d bytes for this \"writeAll\" command.",len,propertySizes[header.field.property] + WRITE_HEADER_LEN + 1);
+                    break;
                 }
-            }
-            free(tx_data);
-        }
-            int rx_len = uart_read_bytes(UART_NUM, controller_comm->data, 120, 10 / portTICK_RATE_MS);
-            if(rx_len){
-                ESP_LOGI(TAG,"Received %d bytes of unexpected uart data",rx_len);
-                char *buf = calloc(1,rx_len*5*sizeof(char)+1);
-                for(int i = 0;i<rx_len;i++){
-                    sprintf(buf+5*i,"0x%02x ",controller_comm->data[i]);
-                }ESP_LOGI(TAG,"got %s",buf);free(buf);
-            }
-    }
-}
+                xTaskAbortDelay(modelTask()); // allow the uart port to be used again without delay.
+                xTaskNotify(modelTask(), fromUart, eSetValueWithoutOverwrite);
+                break;
+            case property_readAll:
+                len = uart_receive(buf, READ_HEADER_LEN, 250 / portTICK_RATE_MS);
 
-void flap_uart_send_data(char* data, int data_len)
-{
-    uart_tx_data_t *tx_data = malloc(sizeof(uart_tx_data_t));
-    memcpy(tx_data->data,data,data_len);
-    tx_data->data_len = data_len;
-    xQueueSend(uart_tx_queue,&tx_data,(portTickType)portMAX_DELAY);
+                if(len != READ_HEADER_LEN){
+                    ESP_LOGE(TAG,"Received %d bytes but expected a %d byte \"readAll\" header.",len,READ_HEADER_LEN);
+                    break;
+                }
+                module_total = buf[1] + buf[2] * 0xff;
+                display_setSize(module_total);
+                
+                ESP_LOGI(TAG,"Expecting %d bytes from %d modules",propertySizes[header.field.property], module_total);         
+                for(module_index = 0; module_index < module_total; module_index++){
+                    len = uart_receive(buf, propertySizes[header.field.property], 250 / portTICK_RATE_MS);
+                    if(len != propertySizes[header.field.property]){
+                        ESP_LOGE(TAG,"Received %d bytes but expected %d bytes from this property",len,propertySizes[header.field.property]);
+                        break;
+                    }
+                    module_t* module = display_getModule(module_index);
+                    if(uart_modulePropertyHandlers[header.field.property].deserialize && module){
+                        uart_modulePropertyHandlers[header.field.property].deserialize(buf, module);
+                    }
+                    module->updatableProperties = 0; // don't update the modules again.
+                }
+                xTaskAbortDelay(modelTask()); // allow the uart port to be used again without delay.
+                xTaskNotify(modelTask(), fromUart, eSetValueWithoutOverwrite);
+                break;
+            case property_writeSequential:
+                waitingForWriteSequentialAck = true;
+                break;
+            default:
+                if(waitingForWriteSequentialAck){
+                    waitingForWriteSequentialAck = 0;
+                    len = uart_receive(buf, 1, 250 / portTICK_RATE_MS);
+                    if(len != 1){
+                        ESP_LOGE(TAG,"Received %d bytes but expected %d bytes for this \"writeSequential\" command.",len, 1);
+                        break;
+                    }
+                    xTaskAbortDelay(modelTask()); // allow the uart port to be used again without delay.
+                    xTaskNotify(modelTask(), fromUart, eSetValueWithoutOverwrite);
+                    break;
+                }
+                len = uart_receive(buf, CMD_BUFF_SIZE, 0);
+                if(len){
+                    ESP_LOGW(TAG,"Received %d unexpected bytes",len); 
+                }
+                break;
+        }
+    }
 }
 
 void flap_uart_init(void)
 {
     uart_config_t uart_config = {
-        .baud_rate = /*9600,/*/115200,
+        .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -119,8 +258,11 @@ void flap_uart_init(void)
     ESP_ERROR_CHECK(uart_param_config(UART_NUM, &uart_config));
     ESP_ERROR_CHECK(uart_set_pin(UART_NUM, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
-    uart_tx_queue = xQueueCreate(1, sizeof(uart_tx_data_t*));
-	configASSERT(uart_tx_queue);
-
-    xTaskCreate(flap_uart_task, "flap_uart_task", 6000, NULL, 10, &flap_uart_taskHandle);
+    xTaskCreate(flap_uart_task, "flap_uart_task", 6000, NULL, 10, &task);
+    uart_api_init();
 }
+
+TaskHandle_t uartTask(){
+    return task;
+}
+

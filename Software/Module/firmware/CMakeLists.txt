@@ -5,6 +5,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O2")
 file(GLOB_RECURSE MICROCHIP_MDB /opt/microchip/mplabx/*/mplab_platform/bin/mdb.sh )
 
 include_directories("include")
+include_directories("${CMAKE_SOURCE_DIR}/../common/include")
 
 add_executable(split_flap_bootloader "btl_main.c" "hardware_configuration.c" "chain_comm.c" "flash.c")
 set_target_properties(split_flap_bootloader PROPERTIES LINK_FLAGS "--fill=0x3FFF -mrom=0-07FF")
@@ -18,7 +19,7 @@ if(EXISTS "${HEXMATE}")
 endif()
 
 add_custom_target(split_flap_complete ALL
-    COMMAND ${HEXMATE} -MASK=3F@3F3F-3F40 ${CMAKE_CURRENT_BINARY_DIR}/split_flap_bootloader.hex ${CMAKE_CURRENT_BINARY_DIR}/split_flap_firmware.hex  ${CMAKE_SOURCE_DIR}/default_charset.hex > ${CMAKE_CURRENT_BINARY_DIR}/split_flap_complete.hex
+    COMMAND ${HEXMATE} -MASK=3F@3F3F-3F40 ${CMAKE_CURRENT_BINARY_DIR}/split_flap_bootloader.hex ${CMAKE_CURRENT_BINARY_DIR}/split_flap_firmware.hex  ${CMAKE_SOURCE_DIR}/default_characterMap.hex > ${CMAKE_CURRENT_BINARY_DIR}/split_flap_complete.hex
     DEPENDS split_flap_bootloader split_flap_firmware)
 
 add_custom_target(update

@@ -12,7 +12,7 @@
 
 uint8_t /*watch_tx,*/ char_index, do_a_loop, offset, vtrim;
 
-char charset[4*NUM_CHARS] = {0};
+char characterMap[4*NUM_CHARS] = {0};
 const uint16_t speed[NUM_CHARS] = {       // distance to pwm conversion map
       0,  185,  185,  195,  195,  195,   \
     220,  220,  230,  230,  240,  240,   \
@@ -24,8 +24,8 @@ const uint16_t speed[NUM_CHARS] = {       // distance to pwm conversion map
     410,  410,  420,  420,  430,  430,   \
 };
 
-void set_default_charset(void){
-    memset(charset,0,4*NUM_CHARS);
+void set_default_characterMap(void){
+    memset(characterMap,0,4*NUM_CHARS);
 
     NVMCON1bits.NVMREGS = 0;
     NVMADR = CHARSET_BASE_ADDR;
@@ -33,8 +33,8 @@ void set_default_charset(void){
     offset = ((uint8_t)(NVMDAT)) & 0x3F;
     vtrim = ((uint8_t)(NVMDAT >> 6)) & 0x3F;
 
-    // combine 14-bit words to form charset
-    for(uint16_t n=1,c=0,r=0,b=1;n/32 < 2 && c<sizeof(charset);){
+    // combine 14-bit words to form characterMap
+    for(uint16_t n=1,c=0,r=0,b=1;n/32 < 2 && c<sizeof(characterMap);){
         NVMCON1bits.NVMREGS = 0;
         uint16_t data = 0;
         NVMADR = n + CHARSET_BASE_ADDR;
@@ -45,13 +45,13 @@ void set_default_charset(void){
         NVMADR = n + CHARSET_BASE_ADDR;
         NVMCON1bits.RD = 1;
         data += NVMDAT >> (14 - r);
-        for(int i = 0; i<(r?2:1) && c<sizeof(charset);i++){
-            charset[c] = (data >> (i?0:8)) & 0xFF;
-            if(c%4 == 0 && charset[c]  == 0xFF) charset[c] = 0x20;
-            if(c%4 == 0 && charset[c] == 'c'){charset[c] = 'C';b++;}
-            if(c%4 == 0 && (charset[c] & 0xC0) == 0xC0) b++;
-            if(c%4 == 0 && (charset[c] & 0xE0) == 0xE0) b++;
-            if(c%4 == 0 && (charset[c] & 0xF0) == 0xF0) b++;
+        for(int i = 0; i<(r?2:1) && c<sizeof(characterMap);i++){
+            characterMap[c] = (data >> (i?0:8)) & 0xFF;
+            if(c%4 == 0 && characterMap[c]  == 0xFF) characterMap[c] = 0x20;
+            if(c%4 == 0 && characterMap[c] == 'c'){characterMap[c] = 'C';b++;}
+            if(c%4 == 0 && (characterMap[c] & 0xC0) == 0xC0) b++;
+            if(c%4 == 0 && (characterMap[c] & 0xE0) == 0xE0) b++;
+            if(c%4 == 0 && (characterMap[c] & 0xF0) == 0xF0) b++;
             if(c%4 + 1 == b){
                 c+=(4-b);
                 b = 1;
@@ -127,13 +127,13 @@ void store_config(void)
         }
         uint16_t data = 0;
         if(c < 4*NUM_CHARS){
-            if(r) data = ((uint16_t)charset[c-1] << (14-r)) & 0x3FFF;
-            while(!(uint16_t)charset[c]){c++;}
-            data += ((uint16_t)charset[c++] << (14 - r - 8));
+            if(r) data = ((uint16_t)characterMap[c-1] << (14-r)) & 0x3FFF;
+            while(!(uint16_t)characterMap[c]){c++;}
+            data += ((uint16_t)characterMap[c++] << (14 - r - 8));
             r = (r + 2) & 0x07;
             if(r){
-                while(!(uint16_t)charset[c]){c++;}
-                data += (uint16_t)charset[c++] >> r;
+                while(!(uint16_t)characterMap[c]){c++;}
+                data += (uint16_t)characterMap[c++] >> r;
             }
         }else{
             data = 0x3FFF;
@@ -162,187 +162,93 @@ __at(0x0808) void app__isr()// "real" isr routine is located in bootloader, that
 
 }
 
-void do_nothing(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void do_command(uint8_t* data)
 {
-    if(cmd_info == NULL){
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_do_nothing;
-        cmd_info->cmd_callback = do_nothing;
+    switch(data[0]){
+        case(reboot_command):
+            RESET();     
+        break;
+        default:
+            //no action
+        break;
     }
 }
 
-void goto_btl(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_columnEnd(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        RESET();
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_goto_btl;
-        cmd_info->cmd_callback = goto_btl;
-    }
+    data[0] = COL_END;     
 }
 
-void get_config(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_version(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        tx_data[0] = COL_END;
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_config;
-        cmd_info->cmd_callback = get_config;
-    }
+        data[0] = git_version_major;
+        data[1] = git_version_minor;
+        data[2] = git_version_patch;
+        data[3] = git_version_tweak;
+        memcpy((char*)data+4, git_version_hash, 7);
+        data[11] = git_version_is_dirty;   
 }
 
-void get_fw_version(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void set_character(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        tx_data[0] = git_version_major;
-        tx_data[1] = git_version_minor;
-        tx_data[2] = git_version_patch;
-        tx_data[3] = git_version_commits_after_tag;
-        memcpy((char*)tx_data+4, git_version_hash, 7);
-        tx_data[11] = git_version_is_dirty;
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_fw_version;
-        cmd_info->cmd_callback = get_fw_version;
-    }
+        // if(!strncmp("\0\0\0\n", (char *)data, 4)){ // do a full revolution
+        //     do_a_loop = 1;
+        // }
+        // for(uint8_t i = 0; i < NUM_CHARS; i++){
+        //     if(!strncmp(characterMap + i*4,(char*)data,4)){
+        //         char_index = i;
+        //         return;
+        //     }
+        // }
+        char_index = data[0];  
 }
 
-void set_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_character(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        if(!strncmp("\0\0\0\n", (char *)rx_data, 4)){ // do a full revolution
-            do_a_loop = 1;
-        }
-        for(uint8_t i = 0; i < NUM_CHARS; i++){
-            if(!strncmp(charset + i*4,(char*)rx_data,4)){
-                char_index = i;
-                return;
-            }
-        }
-        char_index = 0;
-    }else{
-        // command info
-        cmd_info->rx_data_len = 4;
-        cmd_info->cmd = module_set_char;
-        cmd_info->cmd_callback = set_char;
-    }
+    // strncpy((char*)data, characterMap + read_encoder(1)*4, 4);
+    data[0] = read_encoder(1);
 }
 
-void get_char(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_characterMapSize(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        strncpy((char*)tx_data, charset + read_encoder(1)*4, 4);
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_char;
-        cmd_info->cmd_callback = get_char;
-    }
+    data[0] = NUM_CHARS;
 }
 
-void set_charset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void set_characterMap(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        memcpy(charset, (char*)rx_data, 4*NUM_CHARS);
-        store_config();
-    }else{
-        // command info
-        cmd_info->rx_data_len = 4*NUM_CHARS;
-        cmd_info->cmd = module_set_charset;
-        cmd_info->cmd_callback = set_charset;
-    }
+    memcpy(characterMap, (char*)data, 4*NUM_CHARS);
+    store_config();
 }
 
-void get_charset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_characterMap(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        memcpy((char*)tx_data, charset, 4*NUM_CHARS);
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_charset;
-        cmd_info->cmd_callback = get_charset;
-    }
+    memcpy((char*)data, characterMap, 4*NUM_CHARS);
 }
 
-void set_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void set_offset(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        if(SET_CMD_VALUE(rx_data[0]) >= 0 && SET_CMD_VALUE(rx_data[0]) < NUM_CHARS){
-            if(SET_CMD_IS_ABS(rx_data[0])){
-                offset = SET_CMD_VALUE(rx_data[0]);
-            }else if(SET_CMD_IS_INC(rx_data[0])){
-                offset += SET_CMD_VALUE(rx_data[0]);
-                if(offset >= NUM_CHARS) offset -= NUM_CHARS;
-            }else if(SET_CMD_IS_DEC(rx_data[0])){
-                if(offset < SET_CMD_VALUE(rx_data[0])) offset += NUM_CHARS;
-                offset -= SET_CMD_VALUE(rx_data[0]);
-            }  
-        }
-        store_config();
-    }else{
-        // command info
-        cmd_info->rx_data_len = 1;
-        cmd_info->cmd = module_set_offset;
-        cmd_info->cmd_callback = set_offset;
+    if(data[0] >= 0 && data[0] < NUM_CHARS){
+        offset = data[0]; 
     }
+    store_config();
 }
 
-void get_offset(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_offset(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        tx_data[0] = offset;
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_offset;
-        cmd_info->cmd_callback = get_offset;
-    }
+    data[0] = offset;
 }
 
-
-void set_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void set_vtrim(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        if(SET_CMD_VALUE(rx_data[0]) >= 0 && SET_CMD_VALUE(rx_data[0]) < 64){
-            if(SET_CMD_IS_ABS(rx_data[0])){
-                vtrim = SET_CMD_VALUE(rx_data[0]);
-            }else if(SET_CMD_IS_INC(rx_data[0])){
-                vtrim += SET_CMD_VALUE(rx_data[0]);
-                if(vtrim >= 64) vtrim -= 64;
-            }else if(SET_CMD_IS_DEC(rx_data[0])){
-                if(vtrim < SET_CMD_VALUE(rx_data[0])) vtrim += 64;
-                vtrim -= SET_CMD_VALUE(rx_data[0]);
-            }  
-        }
-        store_config();
-    }else{
-        // command info
-        cmd_info->rx_data_len = 1;
-        cmd_info->cmd = module_set_vtrim;
-        cmd_info->cmd_callback = set_vtrim;
-    }
+    vtrim = data[0]; 
+    store_config();
 }
 
-void get_vtrim(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void get_vtrim(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        tx_data[0] = vtrim;
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_get_vtrim;
-        cmd_info->cmd_callback = get_vtrim;
-    }
+    data[0] = vtrim;
 }
-// Delay the new pwm value with a certain delay. 
+
 uint16_t virtual_trim(uint16_t pwm_i)
 {
     static uint16_t pwm_o = 0xFFFF;
@@ -391,28 +297,27 @@ void main(void)
     // enable interrupts
     // INTCONbits.GIE = 1;
     // INTCONbits.PEIE = 1;
-    // load default charset from NVM
-    set_default_charset();
+    // load default characterMap from NVM
+    set_default_characterMap();
     // install callbacks for uart chain-comm commands
-    install_command(do_nothing);
-    install_command(goto_btl);
-    install_command(get_config);
-    install_command(get_fw_version);
-    install_command(set_char);
-    install_command(get_char);
-    install_command(set_charset);
-    install_command(get_charset);
-    install_command(set_offset);
-    install_command(get_offset);
-    install_command(set_vtrim);
-    install_command(get_vtrim);
+    addPropertyHandler(firmware_property,get_version,NULL);
+    addPropertyHandler(command_property,NULL,do_command);
+    addPropertyHandler(columnEnd_property,get_columnEnd,NULL);
+    addPropertyHandler(character_property,get_character,set_character);
+    addPropertyHandler(characterMapSize_property,get_characterMapSize,NULL);
+    addPropertyHandler(characterMap_property,get_characterMap,set_characterMap);
+    addPropertyHandler(offset_property,get_offset,set_offset);
+    addPropertyHandler(vtrim_property,get_vtrim,set_vtrim);
 
     uint32_t idle_timer = 0; // timeout counter
     int distance_to_rotate = 0;
+
+    TX_BYTE(0x00); //send ack to indicate successful boot 
+    TX_WAIT_DONE;
     // main loop
     while(1){
         CLRWDT();
-        chain_comm_loop(&idle_timer);
+        chainCommRun(&idle_timer);
         if(idle_timer >= 10000 || distance_to_rotate) idle_timer = 0; // 1 seconds 
         if(idle_timer < 2500){  // 250ms -> Not idle
             distance_to_rotate = motor_control();

@@ -51,7 +51,7 @@ void flap_controller_firmware_update(char *data,size_t data_len,size_t data_offs
             ESP_LOGE(TAG, "firmware update failed");
         }else{
             ESP_LOGI(TAG, "firmware update successful");
-            esp_restart();
+            // esp_restart();
         }
     }
 }
@@ -76,10 +76,8 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
     static uint8_t hex_data_len = 0;
     static uint16_t addr = 0;
     static uint8_t cmd = 0;
-    // static uint8_t cs = 0;
     static char buf[45] = {0};
     static size_t buf_offset = 0;
-    // static uint8_t is_new_data = 0;
 
     if(!data_offset){
         flash_data_cnt = 0;
@@ -92,10 +90,11 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
 
         gpio_set_level(FLAP_ENABLE, 1);
         vTaskDelay(50 / portTICK_PERIOD_MS);
-        char cmd_uart_buf[1]={0};
-        cmd_uart_buf[0] = EXTEND + module_goto_btl;
-        flap_uart_send_data(cmd_uart_buf,1);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        msg_newWriteAll(command_property);
+        msg_addData(reboot_command);
+        msg_addData(ACK);
+        msg_send(200);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
     }
 
     char* token = strtok(data, "\n");
@@ -125,13 +124,14 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
                         }
                     }
                     if(flash_data_cnt == 64 ){
-                        char cmd_uart_buf[67]={0};
-                        // int len = module_write_page_msg(cmd_uart_buf,1,addr,flash_data);
-                        cmd_uart_buf[0] = EXTEND + module_write_page;
-                        cmd_uart_buf[1] = (addr>>8) & 0xff;
-                        cmd_uart_buf[2] = (addr>>0) & 0xff;
-                        memcpy(cmd_uart_buf+3,flash_data,64);
-                        flap_uart_send_data(cmd_uart_buf,67);
+                        msg_newWriteAll(firmware_property);
+                        msg_addData((addr>>8) & 0xff);
+                        msg_addData((addr>>0) & 0xff);
+                        for(int i = 0; i<64;i++){
+                            msg_addData(flash_data[i]); 
+                        }
+                        msg_addData(ACK);
+                        msg_send(60);
                         flash_data_cnt = 0;
                         // cs = 0;
                         cmd = 0;
@@ -146,12 +146,5 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
             }
         }
         token = strtok(NULL, "\n");
-    }
-
-    if(data_len + data_offset >= total_data_len){
-        char cmd_uart_buf[1]={0};
-        cmd_uart_buf[0] = EXTEND + module_goto_app;
-        flap_uart_send_data(cmd_uart_buf,1);
-        vTaskDelay(250 / portTICK_PERIOD_MS);
     }
 }

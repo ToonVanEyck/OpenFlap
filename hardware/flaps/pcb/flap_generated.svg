@@ -47,7 +47,7 @@
      inkscape:window-x="2391"
      inkscape:window-y="-9"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer_gen_charset"
+     inkscape:current-layer="layer_gen_characterMap"
      inkscape:document-rotation="0"
      inkscape:snap-object-midpoints="true"
      inkscape:object-nodes="true"
@@ -83,7 +83,7 @@
        mid_cutout="0.5" />
   </g>
   <g
-     id="layer_gen_charset"
+     id="layer_gen_characterMap"
      inkscape:groupmode="layer"
      inkscape:label="gen_flapset">
     <g

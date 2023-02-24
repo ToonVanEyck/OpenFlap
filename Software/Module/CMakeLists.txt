@@ -10,22 +10,22 @@ project(SplitFlap   VERSION     1.0
                     DESCRIPTION "Firmware for a SplitFlap display module")
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-include_directories("${CMAKE_SOURCE_DIR}/../chain_comm_abi")
+include_directories("${CMAKE_SOURCE_DIR}/../common")
 
-include(GetGitRevisionDescription)
-git_describe(VERSION --tags --dirty=*)
-#parse the version information into pieces.
-
-string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\1" GIT_VERSION_MAJOR "${VERSION}")
-string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\2" GIT_VERSION_MINOR "${VERSION}")
-string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\3" GIT_VERSION_PATCH "${VERSION}")
-string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\4" GIT_VERSION_COMMITS_AFTER_TAG  "${VERSION}")
-string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\5" GIT_VERSION_HASH  "${VERSION}")
-string(REGEX REPLACE "^[vV]([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]?)-?g?([a-z0-9]*)(\\*?)" "\\6" GIT_VERSION_IS_DIRTY  "${VERSION}")
+find_package(Git REQUIRED)
+execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --match "V*" OUTPUT_VARIABLE GIT_VERSION_STRING OUTPUT_STRIP_TRAILING_WHITESPACE)
+string(REGEX MATCH "^V([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]*)-?g?([a-z0-9]*)-?(dirty)?" MATCH_DUMMY "${GIT_VERSION_STRING}")
+set(CMAKE_PROJECT_VERSION_MAJOR ${CMAKE_MATCH_1})
+set(CMAKE_PROJECT_VERSION_MINOR ${CMAKE_MATCH_2})
+set(CMAKE_PROJECT_VERSION_PATCH ${CMAKE_MATCH_3})
+set(CMAKE_PROJECT_VERSION_TWEAK ${CMAKE_MATCH_4}) # Number of commits after release-tag
+set(GIT_VERSION_HASH  ${CMAKE_MATCH_5}) # Hash of current commit
+set(GIT_VERSION_IS_DIRTY ${CMAKE_MATCH_6})
+set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}.${CMAKE_PROJECT_VERSION_TWEAK}")
 
 if("${GIT_VERSION_IS_DIRTY}" STREQUAL "")
     set(GIT_VERSION_IS_DIRTY 0)
@@ -37,7 +37,7 @@ if("${GIT_VERSION_COMMITS_AFTER_TAG}" STREQUAL "")
     set(GIT_VERSION_COMMITS_AFTER_TAG 0)
 endif()
 
-message(STATUS "${GIT_VERSION_MAJOR} ${GIT_VERSION_MINOR} ${GIT_VERSION_PATCH} ${GIT_VERSION_COMMITS_AFTER_TAG} ${GIT_VERSION_HASH} ${GIT_VERSION_IS_DIRTY}")
+message(STATUS "${CMAKE_PROJECT_VERSION_MAJOR} ${CMAKE_PROJECT_VERSION_MINOR} ${CMAKE_PROJECT_VERSION_PATCH} ${CMAKE_PROJECT_VERSION_TWEAK} ${GIT_VERSION_HASH} ${GIT_VERSION_IS_DIRTY}")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/firmware/version.c.in ${CMAKE_CURRENT_BINARY_DIR}/firmware/version.c)
 

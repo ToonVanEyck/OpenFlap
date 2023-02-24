@@ -34,54 +34,65 @@
     #define CLOCK_GUARD while(!PIR0bits.TMR0IF);PIR0bits.TMR0IF = 0
 #endif
 
-#define CMD_EXTEND 0x80
-#define CMD_CMD 0x0F
-
 #ifdef IS_BTL
     #define CMD_SIZE (module_goto_app +1)
 #else
     #define CMD_SIZE (end_of_command +1)
 #endif
 
-typedef enum{
-    comm_state_command = 0,
-    comm_state_data,
-    comm_state_passthrough,
-    comm_state_transmit,
-}comm_state_t;
-
-typedef enum{
-    comm_rx_data,
-    comm_tx_data,
-    comm_timeout,
-}new_comm_data_t;
-
-typedef struct cmd_info_t{
-    uint8_t rx_data_len;
-    module_command_t cmd;
-    void (*cmd_callback)(uint8_t*,uint8_t*,struct cmd_info_t*);
-}cmd_info_t;
-
-#pragma pack(1)
-typedef struct{
-    comm_state_t state;
-    uint8_t rx_data_cnt;
-    uint8_t tx_data_cnt;
-    uint16_t tx_node_cnt;
-    uint8_t carry;
-    uint8_t command; // 1 extend cmd bit  3 reserved bits 4 cmd bits
-    uint8_t rx_data[256];
-    uint8_t tx_data[256];
-}comm_ctx_t;
 
 extern uint8_t watch_tx;
 
 /* This function checks if the communication protocol needs or received an update.
 Increments the idle_timeout or resets it if communication occurs. */
-void chain_comm_loop(uint32_t *idle_timeout); 
+// void chain_comm_loop(uint32_t *idle_timeout); 
 /* Adds callback functions to the protocol */
-void install_command(void (*cmd_callback)(uint8_t*,uint8_t*,cmd_info_t*));
+// void install_command(void (*cmd_callback)(uint8_t*,uint8_t*,cmd_info_t*));
 /* This function handles the communication protocol and call appropriate callback functions. */
-void chain_comm(uint8_t new_comm_data);
+// void chain_comm(uint8_t new_comm_data);
+
+// new shit
+
+#pragma pack(1)
+
+typedef enum{
+    dataAvailable,
+    transmitComplete,
+    communicationTimeout,
+}chainCommEvent_t;
+
+typedef enum{
+    receiveHeader = 0,
+    indexModules,
+    receiveData,
+    passthrough,
+    transmitData,
+    receiveAcknowledge,
+    errorIgnoreData,
+    waitForAcknowledge,
+}chainCommState_t;
+
+typedef struct{
+    chainCommState_t state;
+    uint16_t index;
+    chainCommHeader_t header;
+    uint8_t cnt;
+    uint8_t data[CHAIN_COM_MAX_LEN];
+}chainCommCtx_t;
+
+typedef void (*property_callback)(uint8_t* buf);
+
+typedef struct{
+    property_callback get;
+    property_callback set;
+}propertyHandler_t;
+
+static propertyHandler_t propertyHandlers[end_of_properties] = {0};
+
+void addPropertyHandler(moduleProperty_t property, property_callback get, property_callback set);
+void chainCommRun(uint32_t *idle_timeout); 
+void chainComm(chainCommEvent_t event);
+
+
 
 #endif

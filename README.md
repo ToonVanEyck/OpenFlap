@@ -117,8 +117,8 @@ Value | Definition            | Data Bytes
 0x08  | module_get_rev_cnt    | 0          
 0x09  | module_set_char       | 4          
 0x0A  | module_get_char       | 0          
-0x0B  | module_set_charset    | 192          
-0x0C  | module_get_charset    | 0         
+0x0B  | module_set_characterMap    | 192          
+0x0C  | module_get_characterMap    | 0         
 0x0D  | module_set_offset     | 1  
 0x0E  | module_set_vtrim      | 1          
 
@@ -130,7 +130,7 @@ Endpoints:
 - /api/v1/enable
 - /api/v1/reboot
 - /api/v1/offset
-- /api/v1/charset
+- /api/v1/characterMap
 - /api/v1/dimensions
 - /api/v1/version
 - /api/v1/message
@@ -215,11 +215,11 @@ The vtrim value adds a slight time delay between between when the encoder detect
 The flap_id must be given for each object in the array. The default mode is ABS. The default vtrim value is 0. The vtrim must be in the inclusive range from 0 to 63.
 
 
-### charset (R/W)
+### characterMap (R/W)
 ```
 {
     "flap_id":0,
-    "charset":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]
+    "characterMap":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]
 }
 ``` 
 

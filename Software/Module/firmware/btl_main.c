@@ -12,27 +12,23 @@ __interrupt() void isr(void)
     app__isr();
 }
 
-void write_page(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void writeFlashPage(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        clearAndWriteFlash(((uint16_t)rx_data[0]<< 8) | rx_data[1], rx_data+2);
-    }else{
-        // command info
-        cmd_info->rx_data_len = 66;
-        cmd_info->cmd = module_write_page;
-        cmd_info->cmd_callback = write_page;
-    }
+    clearAndWriteFlash(((uint16_t)data[0]<< 8) | data[1], data+2);
 }
 
-void goto_app(uint8_t* rx_data,uint8_t* tx_data,cmd_info_t* cmd_info)
+void command(uint8_t* data)
 {
-    if(cmd_info == NULL){
-        if(validateCheckSum()) app_start();
-    }else{
-        // command info
-        cmd_info->rx_data_len = 0;
-        cmd_info->cmd = module_goto_app;
-        cmd_info->cmd_callback = goto_app;
+    switch(data[0]){
+        case(runApp_command):
+            if(validateCheckSum()){
+                app_start(); 
+            }else{
+            }
+        break;
+        default:
+            //no action
+        break;
     }
 }
 
@@ -40,12 +36,16 @@ void main(void)
 {
     // INTCONbits.GIE = 0;
     init_hardware();
-    install_command(write_page);
-    install_command(goto_app);
+    addPropertyHandler(firmware_property,NULL,writeFlashPage);
+    addPropertyHandler(command_property,NULL,command);
+
+    TX_BYTE(0x00); //send ack to indicate successful boot 
+    TX_WAIT_DONE;
+    
     uint32_t idle_timer = 0; // timeout counter
     while(1){
         CLRWDT();
-        chain_comm_loop(&idle_timer); 
+        chainCommRun(&idle_timer); 
         idle_timer = 0; // not used in bootloader
     }
 }

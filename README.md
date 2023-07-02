@@ -18,17 +18,17 @@ Proof Of Concept Videos
 [![Watch the video](https://img.youtube.com/vi/TG83y_r1YUk/default.jpg)](https://www.youtube.com/watch?v=TG83y_r1YUk)
 [![Watch the video](https://img.youtube.com/vi/qD5cp83qmLA/default.jpg)](https://www.youtube.com/watch?v=qD5cp83qmLA)
 
-Features
---------
+Design Goals
+------------
 
 - 48 characters per module
-- Low cost (depending on how much money you own...)
-- No configuration required
-- customizable character sets
-- No calibration rotation required
+- Low cost
+- Minimal configuration required
+- Customizable character sets
+- No homing required
 - Minimal wiring
 - Web interface and api
-- Firmware updates through web page.
+- Firmware updates through web page
 
 Automatic data routing
 ----------------------
@@ -51,7 +51,7 @@ The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts.
 ![OpenFlap Module Explode][module_explode]
 
 ### Power
-Each _module_ requires 5V for the microcontroller and other low voltage components and 12V to power the motor. Typically a stepper motor is used for this kind of application, this project however, uses a DC motor as they are cheaper and require less external components.
+Each _module_ requires 5V for the micro controller and other low voltage components and 12V to power the motor. Typically a stepper motor is used for this kind of application, this project however, uses a DC motor as they are cheaper and require less external components.
 
 #### Signals
 Besides power, there are 4 other signals on the top or bottom connecter of the _module_. 
@@ -85,197 +85,83 @@ The _top-con_ board features a 12V to 5V buck convertor and automatic data routi
 UART Communication Protocol
 ---------------------------
 
-The OpenFlap _modules_ communicate over uart at a baud rate of 115200 bps. The _modules_ are daisy chained, meaning that the TX of the previous _module_ is connected to the RX of the next _module_. There are 3 different types of commands:
+The OpenFlap _modules_ communicate over uart at a baud rate of 115200 bps. The _modules_ are daisy chained, meaning that the TX of the previous _module_ is connected to the RX of the next _module_. There are 4 different types of commands:
 
-- Regular command
-- Extended command 
-- Read Command
+- No opperation
+- Read property from all modules
+- Write property to single module
+- Write property to all modules
 
-The structure of the command and the data that follows depends on the type. But the LSB nibble first byte in the command always denotes the meaning of the command itself. The number of data bytes following the command depends on the command.
 
-If the MSB of the command byte is set, the command is seen as an extended command. This means that the _module_ will execute the command and send the command and it's data to the next _module_. This type of command is useful for writing a firmware update to all  _modules_.
-
-If the MSB is not set, it is seen as a regular command. In this case the _module_ will remember the command for later execution. After the command is received, the module will go into passthrough mode. This means that all subsequent commands and data will be send to the next module. When no data has been received for 250ms, the _module_ will exit passthrough mode and execute the command. This type of command is useful for setting a different character to each _module_.
-
-**get_** Commands usually don't require data bytes, while **set_** commands do require data bytes (the data to be set). When executing a **get_** command, the wanted data is stored in a buffer on the _module_. The contents of this buffer can be retreived by executing the **module_read_data** command. The **module_read_data** command will automatically be converted to an extended command, regardless of the MSB bit value. The **module_read_data** command requires 3 data bytes, the first 2 must be zero when send by the controller. These bytes act as a 16 bit counter, each _module_ that forwards the read command will increment its value. The 3th data byte contains the number of bytes that will be send from the buffer. So when the command has passed through all _modules_ and has returned to the _controller_ it will contain the following bytes:
-
-- byte 0: 0x81 (indicating it is a read command)
-- byte 1 - 2 : a 16 bit counter indicating the number of _modules_ in the  display. (**module_cnt**)
-- byte 3: The amount of data retrieved from the _modules_. (**data_len**)
-- byte 4-(n+4): The data, where n is equal to **module_cnt** x **data_len**
-
-Value | Definition            | Data Bytes
------ | --------------------- | -----------
-0x00  | module_do_nothing     | 0          
-0x01  | module_read_data      | 3          
-0x02  | module_write_page     | 66          
-0x03  | module_goto_app       | 0          
-0x04  | module_goto_btl       | 0          
-0x05  | module_get_config     | 0          
-0x06  | module_get_fw_version | 0              
-0x07  | module_get_hw_id      | 0          
-0x08  | module_get_rev_cnt    | 0          
-0x09  | module_set_char       | 4          
-0x0A  | module_get_char       | 0          
-0x0B  | module_set_characterMap    | 192          
-0x0C  | module_get_characterMap    | 0         
-0x0D  | module_set_offset     | 1  
-0x0E  | module_set_vtrim      | 1          
+Value | Definition                | Data Bytes
+----- | ------------------------- | -----------
+0x01  | firmware_property         | 66
+0x02  | command_property          | 1
+0x03  | columnEnd_property        | 1
+0x04  | characterMapSize_property | 1
+0x05  | characterMap_property     | 200
+0x06  | offset_property           | 1
+0x07  | vtrim_property            | 1
+0x08  | character_property        | 1
 
 Controller API
 --------------
 
 Endpoints:
 
-- /api/v1/enable
-- /api/v1/reboot
-- /api/v1/offset
-- /api/v1/characterMap
-- /api/v1/dimensions
-- /api/v1/version
-- /api/v1/message
-- /api/v1/wifi_ap
-- /api/v1/wifi_sta
+- /api/modules
+- /api/wifi
+- /firmware
 
-### enable (R/W)
-```
-{
-    "enable": true
-}
-```
-
-### reboot (W)
-```
-{
-    "reboot": true
-}
-```
-
-### offset (R/W)
-```
-{
-    "dimensions":{
-        "width":5,
-        "height":1
-    },
-    "offset": [26,9,6,13,40]
-}
-```
+### modules
+A http GET request on the `/api/modules` endpoint returns a JSON array containing all module properties. 
 
 ```
 [
     {
-        "flap_id":0,
-        "mode":"ABS", //default
-        "offset":4
+        "module":	0,
+        "columnEnd":	true,
+        "characterMapSize":	48,
+        "characterMap":	[" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"],
+        "offset":	0,
+        "vtrim":	0,
+        "character":	"L"
     },{
-        "flap_id":1,
-        "mode":"INC",
-        "offset":1
-    },{
-        "flap_id":1,
-        "mode":"DEC",
-        "offset":1
-    },
-    ...
+        ...
+    }
 ]
 ```
-The flap_id must be given for each object in the array. The default mode is ABS. The default offset value is 0. The offset must be in the inclusive range from 0 to 63.
 
-### vtrim (R/W)
-The vtrim value adds a slight time delay between between when the encoder detects the corret position and when the motor stops. This allows the display to turn a fraction more to ensure thr flap turns over.
+Try it with curl: `curl -X GET http://openflap.local/api/modules`
+
+To write data to the modules, a http POST request can be used. The body of the request should be formatted in the same way as the response from a GET request. You only need to add `module` index and the properties which you want to update.
+
+Try it with curl: `curl -X POST http://openflap.local/api/modules -H 'Content-Type: application/json' -d '[{"module":0,"character":"O"}]'`
+
+### wifi
+
+To change the used wifi credentials, a http POST request must be made to the `/api/wifi` endpoint.
+
+Use these credentials for the hosted access point.
 ```
 {
-    "dimensions":{
-        "width":5,
-        "height":1
-    },
-    "vtrim": [26,9,6,13,40]
+"host":{
+        "ssid": "my_ssid",
+        "password": "my_password",
+    }
 }
 ```
-
-```
-[
-    {
-        "flap_id":0,
-        "mode":"ABS", //default
-        "vtrim":4
-    },{
-        "flap_id":1,
-        "mode":"INC",
-        "vtrim":1
-    },{
-        "flap_id":1,
-        "mode":"DEC",
-        "vtrim":1
-    },
-    ...
-]
-```
-The flap_id must be given for each object in the array. The default mode is ABS. The default vtrim value is 0. The vtrim must be in the inclusive range from 0 to 63.
-
-
-### characterMap (R/W)
+Use these credentials to connect to an existing an access point.
 ```
 {
-    "flap_id":0,
-    "characterMap":[" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9","€","$","!","?",".",",",":","/","@","#","&"]
-}
-``` 
-
-### dimensions (R)
-```
-{
-    "dimensions":{
-        "width":5,
-        "height":1
+"join":{
+        "ssid": "my_ssid",
+        "password": "my_password",
     }
 }
 ```
 
-### version (R)
-```
-{
-    "controller_firmware_version":"v0.0.0-1-g6fed817*",
-    "module_firmware":
-    [
-        {"flap_id":0, "version":"v0.0.0-1-g6fed817*"},
-        {"flap_id":1, "version":"v0.0.0-1-g6fed817*"},
-        {"flap_id":2, "version":"v0.0.0-1-g6fed817*"},
-        {"flap_id":3, "version":"v0.0.0-1-g6fed817*"},
-        {"flap_id":4, "version":"v0.0.0-1-g6fed817*"}
-    ]
-}
-```
-
-### message (R/W)
-```
-{
-    "dimensions":{
-        "width":5,
-        "height":2
-    },
-    "message": "HELLOWORLD"
-}
-```
-
-### wifi_ap (W)
-Use these credentials to create a new access point.
-```
-{
-    "ssid": "my_ssid",
-    "password": "my_password",
-}
-```
-
-### wifi_sta (W)
-Use these credentials to connect to an existing an access point.
-```
-{
-    "ssid": "my_ssid",
-    "password": "my_password",
-}
-```
+A reboot is requeued for these changes to take effect.
 
 [module_explode]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module_explode.gif "OpenFlap Module Explode"
 [module_gif]: https://github.com/ToonVanEyck/OpenFlap/blob/master/docs/images/module.gif "OpenFlap Module"

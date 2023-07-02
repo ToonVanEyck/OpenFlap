@@ -10,6 +10,7 @@ async function moduleGetAll(){
         method:"GET",
         headers:{"Content-Type": "application/json"}
     });
+
     return await response.json();
 }
 
@@ -50,7 +51,7 @@ function createModuleTable(){
         let characterMap = moduleCharaterMap.appendChild(elNew("div",{className: "contentWrapper"})).appendChild(elNew("div",{className:"characterMap"}));
         for(let j = 0; j<module.characterMap.length; j++){
             characterMap.appendChild(elNew("input",{id: "characterMapMember_"+i+"_"+j,className:"characterMapMember characterInput", pattern:"^ $", type:"text",maxLength:"1",defaultValue:module.characterMap[j]}));
-            characterMap.lastChild.onchange = function() {module.characterMap[j] = this.value.toUpperCase();};
+            characterMap.onbeforeinput = inputChanged;
             characterMap.lastChild.onclick = function() {this.select();};
         }
     }
@@ -67,8 +68,8 @@ function calculateDisplayDimensions(){
     dimensions.height = height;
     dimensions.width = width
     let root = document.querySelector(':root');
-    root.style.setProperty('--dispWidth', width);
-    root.style.setProperty('--dispHeight', height);
+    root.style.setProperty('--dispWidth', dimensions.width);
+    root.style.setProperty('--dispHeight', dimensions.height);
 }
 
 function createDisplay(){
@@ -78,8 +79,8 @@ function createDisplay(){
         let column = display.appendChild(elNew("div",{className: "displayColumn"}));
         for (let y = 0; y < dimensions.height; y++) {
             const module = moduleObjects[x*dimensions.height + y];
-            let displayElement = column.appendChild(elNew("input",{className: "displayCharacter characterInput",type:"text",maxLength:"1", pattern:"^ $" ,defaultValue:module.character}));
-            displayElement.onchange = function(){module.character = this.value.toUpperCase();}
+            let displayElement = column.appendChild(elNew("input",{className: "displayCharacter characterInput",type:"text",maxLength:"1",pattern:"^ $",defaultValue:module.character}));
+            displayElement.onbeforeinput = inputChanged;
             displayElement.onclick = function() {this.select();};
         }
     }
@@ -96,6 +97,7 @@ function trySetLetter(index,letter){
     letter = letter.toUpperCase();
     let displayElement = displayCharacterAt(index);
     let propertyElement = propertyCharacterAt(index);
+    console.log(letter +" in module "+ index +" : "+moduleObjects[index].characterMap.includes(letter));
     if(letter.length == 1 && moduleObjects[index].characterMap.includes(letter)){
         moduleObjects[index].character = letter;
         displayElement.value = letter;
@@ -110,6 +112,36 @@ function trySetLetter(index,letter){
     displayElement.animate([{color:"#eb3464"},{color:""}], 500);
     propertyElement.animate([{color:"#eb3464"},{color:""}], 500);
     return false;
+}
+
+function inputChanged(e){
+    e.preventDefault()
+    switch(e.inputType){
+        case "deleteContentBackward":
+        case "deleteWordBackward":
+            trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1,' ');
+            displayCharacterAt(modulePrev(activeDisplayIndex())).select();
+            break;
+        case "deleteContentForward":
+        case "deleteWordForward":
+            trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1,' ');
+            displayCharacterAt(moduleNext(activeDisplayIndex())).select();
+            break;
+        case "insertText":
+        case "insertCompositionText":
+        case "insertFromPaste":
+            let index = activeAnyIndex();
+            for(let i = 0; i < e.data.length; i++){
+                if(trySetLetter(index, e.data[i]) || e.data.length>1){
+                    index = moduleNext(index);
+                }
+            };
+            displayCharacterAt(index).select();
+            break;
+        case "insertLineBreak":
+            displayCharacterAt(moduleNext(moduleRowEnd(activeDisplayIndex()))).select();
+
+    }
 }
 
 function moduleAbove(index){
@@ -129,9 +161,8 @@ function moduleLeft(index){
     return index-dimensions.height;
 }
 function moduleNext(index){
-    index = moduleRight(index);
     if(Math.floor(index/dimensions.height)+1 == dimensions.width) index = moduleBelow(index);
-    return index;
+    return moduleRight(index);
 }
 function modulePrev(index){
     if(Math.floor(index/dimensions.height) == 0) index = moduleAbove(index);
@@ -150,89 +181,69 @@ function moduleRowEnd(index){
     return moduleLeft(moduleRowStart(index))
 }
 
-window.addEventListener("keydown", function (event) {
+function keydownHandler(event) {
+    const preventDefaultActionKeys =  ["Tab","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","PageUp","PageDown","Home","End","Alt"];
     if (event.defaultPrevented) {
         return; 
     }
-
-        if(activeDisplayIndex() + activePropertyIndex() + 1 >= 0){
-            event.preventDefault();
-        }
-        switch (event.key) {
-            case "Tab":
-                if(activeDisplayIndex() < 0) break;
-                if(event.shiftKey)  displayCharacterAt(modulePrev(activeDisplayIndex())).select();
-                else                displayCharacterAt(moduleNext(activeDisplayIndex())).select();
+    if(activeDisplayIndex() + activePropertyIndex() + 1 >= 0 && preventDefaultActionKeys.includes(event.key)){
+        event.preventDefault();
+    }
+    switch (event.key) {
+        case "Tab":
+            if(activeDisplayIndex() < 0) break;
+            if(event.shiftKey)  displayCharacterAt(modulePrev(activeDisplayIndex())).select();
+            else                displayCharacterAt(moduleNext(activeDisplayIndex())).select();
+        break;
+        case "ArrowUp":
+            if(activeDisplayIndex() < 0) break;
+            if(event.ctrlKey)   displayCharacterAt(moduleColStart(activeDisplayIndex())).select();
+            else                displayCharacterAt(moduleAbove(activeDisplayIndex())).select();
             break;
-            case "ArrowUp":
-                if(activeDisplayIndex() < 0) break;
-                if(event.ctrlKey)   displayCharacterAt(moduleColStart(activeDisplayIndex())).select();
-                else                displayCharacterAt(moduleAbove(activeDisplayIndex())).select();
-                break;
-            case "ArrowDown":
-                if(activeDisplayIndex() < 0) break;
-                if(event.ctrlKey)   displayCharacterAt(moduleColEnd(activeDisplayIndex())).select();
-                else                displayCharacterAt(moduleBelow(activeDisplayIndex())).select();
-                break;
-            case "ArrowLeft":
-                if(activeDisplayIndex() < 0) break;
-                if(event.ctrlKey)   displayCharacterAt(moduleRowStart(activeDisplayIndex())).select();
-                else                displayCharacterAt(moduleLeft(activeDisplayIndex())).select();
-                break;
-            case "ArrowRight":
-                if(activeDisplayIndex() < 0) break;
-                if(event.ctrlKey)   displayCharacterAt(moduleRowEnd(activeDisplayIndex())).select();
-                else                displayCharacterAt(moduleRight(activeDisplayIndex())).select();
-                break;
-            case "PageUp":
-                if(activeDisplayIndex() < 0) break;
-                displayCharacterAt(moduleColStart(activeDisplayIndex())).select();
-                break;
-            case "PageDown":
-                if(activeDisplayIndex() < 0) break;
-                displayCharacterAt(moduleColEnd(activeDisplayIndex())).select();
-                break;
-            case "Home":
-                if(activeDisplayIndex() < 0) break;
-                displayCharacterAt(moduleRowStart(activeDisplayIndex())).select();
-                break;
-            case "End":
-                if(activeDisplayIndex() < 0) break;
-                displayCharacterAt(moduleRowEnd(activeDisplayIndex())).select();
-                break;
-            case "Backspace":
-                trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1,' ');
-                displayCharacterAt(modulePrev(activeDisplayIndex())).select();
-                break;
-            case "Delete":
-                if(activeAnyIndex >= 0){
-                    trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1,' ');
-                    displayCharacterAt(moduleNext(activeDisplayIndex())).select();
-                }else{
-                    for(let i = 0; i < moduleObjects.length; trySetLetter(i++,' '));
-                };
-                break;
-            case "Enter":
-                if(activeDisplayIndex() >= 0){
-                    modulesSetProperties(["character"])();
-                    document.activeElement.blur();
-                }
-                break;
-            case "Alt":
-                event.preventDefault();
-                if(activeDisplayIndex() >= 0){
-                    document.activeElement.blur();
-                }else{
-                    displayCharacterAt(0).select();         
-                }
-                break;
-            default:  
-                if(event.key.length>1) break;
-                if(trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1,event.key) && activeDisplayIndex() >= 0) displayCharacterAt(moduleNext(activeDisplayIndex())).select();
-                break;
-            return;
-        }
-}, true);
+        case "ArrowDown":
+            if(activeDisplayIndex() < 0) break;
+            if(event.ctrlKey)   displayCharacterAt(moduleColEnd(activeDisplayIndex())).select();
+            else                displayCharacterAt(moduleBelow(activeDisplayIndex())).select();
+            break;
+        case "ArrowLeft":
+            if(activeDisplayIndex() < 0) break;
+            if(event.ctrlKey)   displayCharacterAt(moduleRowStart(activeDisplayIndex())).select();
+            else                displayCharacterAt(moduleLeft(activeDisplayIndex())).select();
+            break;
+        case "ArrowRight":
+            if(activeDisplayIndex() < 0) break;
+            if(event.ctrlKey)   displayCharacterAt(moduleRowEnd(activeDisplayIndex())).select();
+            else                displayCharacterAt(moduleRight(activeDisplayIndex())).select();
+            break;
+        case "PageUp":
+            if(activeDisplayIndex() < 0) break;
+            displayCharacterAt(moduleColStart(activeDisplayIndex())).select();
+            break;
+        case "PageDown":
+            if(activeDisplayIndex() < 0) break;
+            displayCharacterAt(moduleColEnd(activeDisplayIndex())).select();
+            break;
+        case "Home":
+            if(activeDisplayIndex() < 0) break;
+            displayCharacterAt(moduleRowStart(activeDisplayIndex())).select();
+            break;
+        case "End":
+            if(activeDisplayIndex() < 0) break;
+            displayCharacterAt(moduleRowEnd(activeDisplayIndex())).select();
+            break;
+        case "Alt":
+            event.preventDefault();
+            if(activeDisplayIndex() >= 0){
+                document.activeElement.blur();
+            }else{
+                displayCharacterAt(0).select();         
+            }
+            break;
+        default:  
+            break;
+        return;
+    }
+}
 
 function filterModuleProperties(properties){
     allProperties = Object.keys(moduleObjects[0]);
@@ -289,3 +300,5 @@ async function setAccessPoint(type){
 function showCards(cards){
     [...document.querySelectorAll(".card")].forEach(n => n.style.display = cards.includes(n.id)?"":"none")
 }
+
+window.addEventListener("keydown",keydownHandler,true);

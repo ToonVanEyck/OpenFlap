@@ -256,7 +256,6 @@ esp_err_t api_get_http_modulePropertyHandlers(httpd_req_t *req)
 esp_err_t api_set_http_modulePropertyHandlers(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "POST request on %s",req->uri);
-    // ApiCtx_t *ctx = req->user_ctx;
     ulTaskNotifyTake(true,0);
     char buf[MAX_HTTP_BODY_SIZE]={0};
     size_t to_parse_size = 0;

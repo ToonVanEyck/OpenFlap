@@ -1,0 +1,9 @@
+#include "version.h"
+
+const unsigned char git_version_major = @CMAKE_PROJECT_VERSION_MAJOR@;
+const unsigned char git_version_minor = @CMAKE_PROJECT_VERSION_MINOR@;
+const unsigned char git_version_patch = @CMAKE_PROJECT_VERSION_PATCH@;
+
+const unsigned char git_version_tweak = @CMAKE_PROJECT_VERSION_TWEAK@;
+const char* git_version_hash = "@GIT_VERSION_HASH@";
+const unsigned char git_version_is_dirty = @GIT_VERSION_IS_DIRTY@;

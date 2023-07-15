@@ -1,0 +1,314 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@300;400;600;700;800;900&display=swap');
+
+:root{
+}
+
+body {
+    --bg-color: #101010;
+    --fg-color: #ffffff;
+    --accent-color: #00D0FF;
+    background-color: var(--bg-color);
+    color: var(--fg-color);
+    font-family: "Red Hat Mono", monospace;
+    display:flex;
+    flex-direction: column;
+    margin: 0px;
+}
+
+.header {
+    background: var(--fg-color);
+    color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+}
+
+.headerTitle {
+    font-size: calc(3.5vw);
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+}
+
+.cardTitle{
+    border-bottom: var(--fg-color) solid 2px;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    justify-content:  space-between;
+    align-items: flex-end;
+    padding: 8px;
+}
+
+.moduleConfig{
+    flex-wrap: wrap;
+}
+
+.moduleConfigTitle{
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    justify-content: space-between;
+    padding: 4px 0px 10px;
+}
+
+.moduleConfig{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.moduleCharacter{
+    max-width: 220px;
+    flex: 1 140px;
+    padding: 8px;
+}
+
+.propertyCharacter{
+    border-radius: 13%;
+    font-size: 92px;
+    width: 80px;
+    height: 105px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.propertyInput{
+    padding-left: 5px;
+    min-width: 30%;
+}
+
+.noclick{
+    pointer-events:none;
+}
+
+.characterInput{
+    caret-color: transparent;
+}
+
+.characterInput:focus{
+    color: var(--accent-color);
+    text-underline-offset: -0.02em;
+}
+
+.characterInput:valid:focus{
+    text-decoration: underline;
+}
+
+.characterInput:focus-visible{
+    outline: none;
+}
+
+.characterInput::selection {
+    background: transparent;
+}
+
+.moduleProperties{
+    max-width: 260px;
+    flex: 4 250px;
+    padding: 8px;
+}
+
+.moduleProperties__list{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+}
+
+.moduleProperties__entry{
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between
+}
+
+.moduleCharacterMap{
+    flex: 8 400px;
+    padding: 8px;
+}
+
+.characterMap{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: 100%;
+    padding-top: 4px;
+    justify-content: center;
+}
+
+.characterMapMember{
+    height: 32px;
+    width: 25px;
+    background-color: var(--bg-color);
+    color: var(--fg-color);
+    border: solid 1px var(--fg-color);
+    border-radius: 5px;
+    font-weight: 500;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 17px;
+}
+
+.contentWrapper{
+    display: flex;
+    justify-content: space-around;
+}
+
+tr:nth-of-type(even) td{
+    background-color: #55555555;
+    border-radius: 8px;
+}
+
+.display{
+    margin: 8px 0px;
+    display: flex;
+    flex-direction: row;
+    align-self: center;
+    justify-content: center;
+    gap: calc(0.05 * min(calc((100vw - 106px)/var(--dispWidth)),calc((500px/var(--dispHeight))/(4/3))));
+    width: min(calc((500px / var(--dispHeight)) / (4/3) * var(--dispWidth)), calc(100vw - 106px));
+    height: min(calc(((100vw - 106px) / var(--dispWidth)) * (4/3) * var(--dispHeight)), 500px);
+}
+
+.displayColumn{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: calc(0.05 * min(calc((100vw - 106px)/var(--dispWidth)),calc((500px/var(--dispHeight))/(4/3))));
+}
+
+.displayCharacter{
+    display: flex;
+    background-color: var(--bg-color);
+    color: var(--fg-color);
+    border: solid calc(0.02 * min(calc((100vw - 106px)/var(--dispWidth)),calc((500px/var(--dispHeight))/(4/3)))) var(--fg-color);
+    border-radius: calc(0.16 * min(calc((100vw - 106px)/var(--dispWidth)),calc((500px/var(--dispHeight))/(4/3))));
+    text-align: center;
+    text-transform: uppercase;
+    flex-grow: 1;
+    width: calc(100% - 8px);
+    font-size: calc(1.3 * min(calc((100vw - 106px)/var(--dispWidth)),calc((500px/var(--dispHeight))/(4/3))));
+    overflow: hidden;
+    /* font-family: inherit; */
+    font-weight: 600;
+}
+
+.characterRaised{
+    text-shadow: 0px -0.114em 0px var(--fg-color);
+    color: transparent !important;
+}
+
+.characterRaised:focus{
+    text-shadow: 0px -0.114em 0px var(--bg-color);
+    color: transparent !important;
+}
+
+.button{
+    display: flex;
+    flex: 1 200px;
+    max-width: 200px;
+    justify-content: center;
+    margin: 2px;
+    padding: 1px;
+    height: 30px;
+}
+
+.button:hover{
+    background-color: var(--accent-color);
+    border-color: var(--accent-color); 
+    color: var(--bg-color);
+}
+
+.button:active{
+    filter: brightness(75%);
+}
+
+.cardButtonRow{
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    max-width: 1000px;
+    padding: 8px;
+}
+
+.checkBox{
+    accent-color: var(--accent-color);
+}
+
+.cardButtonRowTitle{
+    width: 260px;
+}
+
+.firmwareSelectButton{
+    background-color: var(--bg-color);
+    border: solid 2px var(--fg-color);
+    color: var(--fg-color);
+    border-radius: 5px;
+    display: flex;
+    flex: 1 200px;
+    max-width: 400px;
+    justify-content: center;
+    height: 26px;
+    margin: 2px;
+}
+
+input{
+    font-family: "Red Hat Mono", monospace;
+    background-color: var(--bg-color);
+    border: solid 2px var(--fg-color);
+    color: var(--fg-color);
+    border-radius: 5px;
+}
+
+input::file-selector-button {
+    background-color: var(--bg-color);
+    border: none;
+    color: var(--fg-color);
+    /* border-radius: 5px; */
+    border-right: solid 2px var(--fg-color);
+    flex: 1 200px;
+    max-width: 200px;
+    justify-content: center;
+    padding: 1px 8px;
+    height: 26px; 
+    font-family: inherit;
+}
+
+input::file-selector-button:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color); 
+    color: var(--bg-color);
+}
+
+input::file-selector-button:active {
+    filter: brightness(75%);
+
+}
+
+.menu{
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: baseline;
+    padding: 8px;
+}
+
+.menuItem{
+    border:none;
+    border-radius:0px;
+}
+.menuItem:hover{
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}

@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+    openflap:
+        build:
+            context: ..
+            dockerfile: .devcontainer/Dockerfile
+        volumes:
+            - ..:/workspace
+        device_cgroup_rules:
+            - "c 188:* rmw"
+        user: vscode
+        command: sleep infinity

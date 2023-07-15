@@ -1,0 +1,19 @@
+{
+    "name": "OpenFlap",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "openflap",
+    "workspaceFolder": "/workspace/",
+    "settings": {
+        "idf.showOnboardingOnInit": false,
+        "idf.toolsPath": "/opt/esp",
+        "idf.espIdfPath": "/opt/esp/idf",
+        // "idf.pythonBinPath": "/opt/esp/python_env/idf4.2_py3.6_env/bin/python",
+        // "idf.port": "/dev/ttyUSB0",
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "extensions": [
+        "espressif.esp-idf-extension",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools"
+    ]
+}

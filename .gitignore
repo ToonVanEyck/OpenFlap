@@ -2,5 +2,6 @@
 build/*
 software/module/external/*
 software/*/build
+software/controller/managed_components/*
 hardware/flaps/pcb/scr_files/*
 hardware/flaps/pcb/tmp/*

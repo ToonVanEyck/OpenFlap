@@ -5,4 +5,4 @@ During the prototyping stage of the project, it was more economic to order empty
 
 The files in this directory can be used to UV print the default characters on the flaps.
 
-There is an inkscape script in ```hardware/flaps/inkscape_scripts/``` to proceduraly generate an ```.svg``` file for UV printing.
+There is an inkscape script in ```hardware/flaps/inkscape_scripts/``` to procedurally generate an ```.svg``` file for UV printing.

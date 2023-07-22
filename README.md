@@ -32,6 +32,7 @@ In this document I will layout the steps required to build an exemplary 5 wide, 
 ## Building an OpenFlap Display
 
 ### Module
+![OpenFlap Module][module]
 
 The modules consist of multiple 3D printed parts, sandwiched between two PCB's. Only one of those PCB's should be populated with components. 
 

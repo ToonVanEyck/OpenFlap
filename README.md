@@ -1,5 +1,4 @@
-OpenFlap
-========
+# OpenFlap
 
 **DISCLAIMER:**
 
@@ -8,6 +7,13 @@ OpenFlap
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 
 ![OpenFlap Module][module_gif]
+
+## Chapers:
+1. Building instructions
+2. Development instruction
+3. 
+
+
 
 The OpenFlap ecosystem consists of 3 different hardware components: the display _modules_, the _controller_ and the _top-con_ board. 
 

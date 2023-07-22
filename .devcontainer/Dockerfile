@@ -31,6 +31,7 @@ RUN : \
     zip \
     figlet \
     netcat \
+    cmake \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/* \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 10 \
@@ -115,3 +116,17 @@ RUN echo "source /opt/esp/idf/export.sh" >> /etc/bash.bashrc
 
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf && \
     echo "figlet -f 3d.flf Open Flap" >> /etc/bash.bashrc
+
+# install microchip XC8
+RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/xc8-v2.41-full-install-linux-x64-installer.run && \
+    chmod +x xc8-v2.41-full-install-linux-x64-installer.run && \
+    ./xc8-v2.41-full-install-linux-x64-installer.run --mode unattended --netservername localhost --LicenseType FreeMode && \
+    rm xc8*
+
+# install mplb x for flash tool
+RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/MPLABX-v6.10-linux-installer.tar && \
+    tar -xf MPLABX-v6.10-linux-installer.tar && \ 
+    sudo ./MPLABX-v6.10-linux-installer.sh -- --mode unattended  --ide 1 --ipe 0 --8bitmcu 0 --16bitmcu 0 --32bitmcu 0 --othermcu 0 \
+    --exepermission no --disableProxy yes --collectInfo 0 --collectMyMicrochipInfo 0 && \
+    rm MPLABX* && \
+    sh /opt/microchip/mplabx/v6.10/mplab_platform/bin/packmanagercli.sh --install-pack-for-device PIC16F15225

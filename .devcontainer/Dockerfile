@@ -122,11 +122,3 @@ RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductD
     chmod +x xc8-v2.41-full-install-linux-x64-installer.run && \
     ./xc8-v2.41-full-install-linux-x64-installer.run --mode unattended --netservername localhost --LicenseType FreeMode && \
     rm xc8*
-
-# install mplb x for flash tool
-RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/MPLABX-v6.10-linux-installer.tar && \
-    tar -xf MPLABX-v6.10-linux-installer.tar && \ 
-    sudo ./MPLABX-v6.10-linux-installer.sh -- --mode unattended  --ide 1 --ipe 0 --8bitmcu 0 --16bitmcu 0 --32bitmcu 0 --othermcu 0 \
-    --exepermission no --disableProxy yes --collectInfo 0 --collectMyMicrochipInfo 0 && \
-    rm MPLABX* && \
-    sh /opt/microchip/mplabx/v6.10/mplab_platform/bin/packmanagercli.sh --install-pack-for-device PIC16F15225

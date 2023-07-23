@@ -5,7 +5,7 @@
 [tutorial](https://code.visualstudio.com/docs/devcontainers/tutorial)
 
 - Open this directory in vscode.
-- Make sure the `Dev Containers` extention is installed.
+- Make sure the `Dev Containers` extension is installed.
 - Open the command pallet with `F1` of `Ctrl+Shif+P` and select `Dev Containers: Open Workspace In Container`.
 - The devcointainer will build.
 
@@ -25,4 +25,4 @@ sudo cp .devcontainer/utils/docker_tty.sh /usr/local/bin/docker_tty.sh
 
 ## Using git in your container
 
-Vscode shoud automatically forward your git & ssh credentials if your ssh-agent is running. Otherwise [check this](https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials).
+Vscode should automatically forward your git & ssh credentials if your ssh-agent is running. Otherwise [check this](https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials).

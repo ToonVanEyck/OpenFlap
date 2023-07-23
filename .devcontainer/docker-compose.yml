@@ -7,9 +7,8 @@ services:
             dockerfile: .devcontainer/Dockerfile
         volumes:
             - ..:/workspace
-            - /dev/bus/usb:/dev/bus/usb
+            - /dev:/dev
         device_cgroup_rules:
             - "c 188:* rmw"
-            - 'c 189:* rmw'
         user: vscode
         command: sleep infinity

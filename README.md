@@ -59,17 +59,17 @@ When ordering these parts form JLCPCB, their webpage might report errors on the 
 - [The small bearing](/3d/module_small_bearing.stl)
 
 
-1) Assemble the `flaps` and the `core` in between the two `encoder wheels`. The printed side of the encode wheels must face outside. Make sure the orientation of the flaps in regard to the core is correct. The motor should be able to fit in the left side when the letters are facing you. Also note that the outer holes and the inner holes of the encoder wheels do not align in each position, make sure they do when you fasten them.
+1) Assemble the *flaps* and the *core* in between the two *encoder wheels*. The printed side of the encode wheels must face outside. Make sure the orientation of the flaps in regard to the core is correct. The motor should be able to fit in the left side when the letters are facing you. Also note that the outer holes and the inner holes of the encoder wheels do not align in each position, make sure they do when you fasten them.
 
 ![Flap Assembler][flap_assembler]
 
 2) Slide the motor through the large bearing and attach the shaft coupler.
 
-3) Solder the motor onto the populated side of the `side panel` in such away that the '+' symbol on the motor matches the '+' symbol on the backside of the PCB. Apply solder to the solder bridges marked with the white stripes. If the motor where to turn with an incorrect direction, the solder bridges should be swapped to. Use 4 screws to attach the large bearing to the side panel.
+3) Solder the motor onto the populated side of the *side panel* in such away that the '+' symbol on the motor matches the '+' symbol on the backside of the PCB. Apply solder to the solder bridges marked with the white stripes. If the motor where to turn with an incorrect direction, the solder bridges should be swapped to. Use 4 screws to attach the large bearing to the side panel.
 
 4) Use 4 screws to attach the small bearing to the unpopulated side panel.
 
-5) Insert the `core` into the `shell` and sandwich in between the two `side panels`.
+5) Insert the *core* into the *shell* and sandwich in between the two *side panels*.
 
 ### Controller
 ![OpenFlap Controller][controller]
@@ -102,16 +102,31 @@ Traditional split-flap displays use stepper motors and a homing sensor to know i
 
 The _modules_ and _top_con_ boards feature a smart switching mechanism that automatically routes the uart data signal. This reduces the amount of wiring required.
 
-![OpenFlap Wiring][uart_wiring]
+![OpenFlap Signalpath][uart_signalpath]
 
-Each _module_ and _top-con_ board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in orange. 
+Each _module_ and _top-con_ board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in red (interruped signal path) and green (not interrupted signal path). 
 
 ### Construction
 
 The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts. Only one of the PCB's is populated. The characters and encoder wheels are also PCB's but they only have solder mask and silkscreen layers and no copper layers.
 
 ### Power
-Each _module_ requires 5V for the micro controller and other low voltage components and 12V to power the motor. The `top connector` boards contain a 12V to 5V buck convertor to power each column. In this way, the modules don't need their own power circuit.
+
+Each _module_ requires 5V for the micro controller and other low voltage components and 12V to power the motor. The *top connector* boards contain a 12V to 5V buck convertor to power each column. In this way, the modules don't need their own power circuit.
+
+### Local Webpage
+
+![OpenFlap UI][webpage]
+
+![OpenFlap UI][webpage_modules]
+
+## Development Environment 
+
+A VS Code devcontainer is provided in this repository.
+
+To flash the *controller* form inside the devcontainer you will need to forward your serial cable, see the [README.md](/.devcontainer/hardware/README.md).
+
+I was unable to work with the PICkit 4 from inside the devcontainer. You can compile the hex files and flash the from your host machine using MPLABX IPE.
 
 ## Uart Interface Controller <--> Module
 
@@ -199,5 +214,6 @@ A reboot is requeued for these changes to take effect.
 [top_con]: docs/images/top_con.png "OpenFlap Top-Con"
 [controller]: docs/images/flap_controller.png "OpenFlap Controller"
 [webpage]: docs/images/webpage.png "OpenFlap Webpage"
-[uart_wiring]: docs/images/OpenFlap_wiring.png "OpenFlap Wiring"
+[webpage_modules]: docs/images/webpage_modules.png "OpenFlap Webpage"
+[uart_signalpath]: docs/images/signalpath.png "OpenFlap Signalath"
 [flap_assembler]: docs/images/flap_assembler.png "Assembly tool"

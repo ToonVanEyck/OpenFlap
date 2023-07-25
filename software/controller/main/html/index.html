@@ -1,96 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta characterMap="UTF-8">
-        <title>Flap Controller</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="style.css">
-        <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
-    </head>
-    <body>
-        <div class="header">
-            <h1 class="headerTitle">Open Flap Controller</h1>
+
+<head>
+    <meta characterMap="UTF-8">
+    <title>Flap Controller</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+</head>
+
+<body>
+    <div class="header">
+        <h1 class="headerTitle">Open Flap Controller</h1>
+    </div>
+    <div class="menu">
+        <input type="button" class="menuItem" value="-display-" onclick="showCards(['display_card'])" />
+        <input type="button" class="menuItem" value="-calibration-"
+            onclick="showCards(['display_card','calibration_card'])" />
+        <input type="button" class="menuItem" value="-modules-" onclick="showCards(['modules_card'])" />
+        <input type="button" class="menuItem" value="-update-" onclick="showCards(['update_card'])" />
+        <input type="button" class="menuItem" value="-wifi-" onclick="showCards(['wifi_card'])" />
+    </div>
+    <div class="content">
+        <div class="card" id="display_card">
+            <div class="cardTitle">Display
+                <input type="button" class="button" value="Write Flaps" onclick="modulesSetProperties(['character'])" />
+            </div>
+            <div class="display" id="display">
+                <svg id="loader_loading" class="loader_icon__load" xmlns:svg="http://www.w3.org/2000/svg"
+                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0"
+                    width="100px" height="100px" viewBox="0 0 128 128" xml:space="preserve"
+                    style="fill:white; padding-top:200px">
+                    <g>
+                        <path
+                            d="M109.25 55.5h-36l12-12a29.54 29.54 0 0 0-49.53 12H18.75A46.04 46.04 0 0 1 96.9 31.84l12.35-12.34v36zm-90.5 17h36l-12 12a29.54 29.54 0 0 0 49.53-12h16.97A46.04 46.04 0 0 1 31.1 96.16L18.74 108.5v-36z" />
+                        <animateTransform attributeName="transform" type="rotate" from="0 64 64" to="360 64 64"
+                            dur="2500ms" repeatCount="indefinite"></animateTransform>
+                    </g>
+                </svg>
+            </div>
         </div>
-        <div class="menu">
-            <input type="button" class="menuItem" value="-display-" onclick="showCards(['display_card'])"/>
-            <input type="button" class="menuItem" value="-calibration-" onclick="showCards(['display_card','calibration_card'])"/>
-            <input type="button" class="menuItem" value="-modules-" onclick="showCards(['modules_card'])"/>
-            <input type="button" class="menuItem" value="-update-" onclick="showCards(['update_card'])"/>
-            <input type="button" class="menuItem" value="-wifi-" onclick="showCards(['wifi_card'])"/>
+        <div class="card" style="display:none" id="modules_card">
+            <div class="cardTitle">Module Configuration</div>
+            <table id="moduleTable">
+                <tbody>
+                </tbody>
+            </table>
+            <div class="cardButtonRow">
+                <div class="cardButtonRowTitle">
+                    Update Properties:
+                </div>
+                <input type="button" class="button" value="offset & vtrim"
+                    onclick="modulesSetProperties(['offset', 'vtrim']);" />
+                <input type="button" class="button" value="supported characters"
+                    onclick="modulesSetProperties(['characterMap']);" />
+            </div>
         </div>
-        <div class="content">
-            <div class="card" id="display_card">
-                <div class="cardTitle">Display
-                    <input type="button" class="button" value="Write Flaps" onclick="modulesSetProperties(['character'])"/>
+        <div class="card" style="display:none" id="calibration_card">
+            <div class="cardTitle">Calibration Wizard</div>
+            <div class="cardButtonRow">
+                <div class="cardButtonRowTitle">
+                    Calibrate offset:
                 </div>
-                <div class="display" id="display">
-                    <svg id="loader_loading" class="loader_icon__load" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" width="100px" height="100px" viewBox="0 0 128 128" xml:space="preserve" style="fill:white; padding-top:200px"><g><path d="M109.25 55.5h-36l12-12a29.54 29.54 0 0 0-49.53 12H18.75A46.04 46.04 0 0 1 96.9 31.84l12.35-12.34v36zm-90.5 17h36l-12 12a29.54 29.54 0 0 0 49.53-12h16.97A46.04 46.04 0 0 1 31.1 96.16L18.74 108.5v-36z"/><animateTransform attributeName="transform" type="rotate" from="0 64 64" to="360 64 64" dur="2500ms" repeatCount="indefinite"></animateTransform></g></svg>
-                </div>
+                <input type="button" class="button" value="Start Calibration" onclick="startCalibration()" />
+                <input type="button" class="button" value="Calculate New Offsets" onclick="doCalibration()" />
             </div>
-            <div class="card" style="display:none" id="modules_card">
-                <div class="cardTitle">Module Configuration</div>
-                <table id="moduleTable">
-                    <tbody>
-                    </tbody>
-                </table>
-                <div class="cardButtonRow">
-                    <div class="cardButtonRowTitle">
-                        Update Properties:
-                    </div>
-                    <input type="button" class="button" value="offset & vtrim" onclick="modulesSetProperties(['offset', 'vtrim']);"/>
-                    <input type="button" class="button" value="supported character" onclick="modulesSetProperties(['characterMap']);"/>
+        </div>
+        <div class="card" style="display:none" id="update_card">
+            <div class="cardTitle">Update Firmware</div>
+            <form class="cardButtonRow" action="/firmware" enctype="multipart/form-data" method="post">
+                <div class="cardButtonRowTitle">
+                    Update Controller Firmware:
                 </div>
-            </div>
-            <div class="card" style="display:none" id="calibration_card">
-                <div class="cardTitle">Calibration Wizard</div>
-                <div class="cardButtonRow">
-                    <div class="cardButtonRowTitle">
-                        Calibrate offset:
-                    </div>
-                    <input type="button" class="button" value="Start Calibration" onclick="startCalibration()"/>
-                    <input type="button" class="button" value="Calculate New Offsets" onclick="doCalibration()"/>
+                <input class="firmwareSelectButton" name="controller_controller_firmware" type="file" accept=".bin"
+                    id="updateController" />
+                <input class="button" type="submit" value="Update Controller">
+            </form>
+            <form class="cardButtonRow" action="/firmware" enctype="multipart/form-data" method="post">
+                <div class="cardButtonRowTitle">
+                    Update Module Firmware:
                 </div>
-            </div>
-            <div class="card" style="display:none" id="update_card">
-                <div class="cardTitle">Update Firmware</div>
-                <form class="cardButtonRow" action="/firmware" enctype="multipart/form-data" method="post">
-                    <div class="cardButtonRowTitle">
-                        Update Controller Firmware:
-                    </div>
-                    <input class="firmwareSelectButton" name="controller_controller_firmware" type="file" accept=".bin" id="updateController"/>
-                    <input class="button" type="submit" value="Update Controller" >
-                </form>
-                <form class="cardButtonRow" action="/firmware" enctype="multipart/form-data" method="post">
-                    <div class="cardButtonRowTitle">
-                        Update Module Firmware:
-                    </div>
-                    <input class="firmwareSelectButton" name="controller_controller_firmware" type="file" accept=".bin" id="updateController"/>
-                    <input class="button" type="submit" value="Update Modules" >
-                </form>
-            </div>
-            <div class="card" style="display:none" id="wifi_card">
-                <div class="cardTitle">Wi-Fi Settings</div>
-                <div class="cardButtonRow">
-                    <div class="cardButtonRowTitle">
-                        Join Access Point:
-                    </div>
-                    <input class="" id="join_ssid" placeholder="Wi-Fi SSID"/>
-                    <input class="" id="join_pwd" placeholder="Wi-Fi Password" type="password"/>
-                    <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('join')">
+                <input class="firmwareSelectButton" name="controller_controller_firmware" type="file" accept=".bin"
+                    id="updateController" />
+                <input class="button" type="submit" value="Update Modules">
+            </form>
+        </div>
+        <div class="card" style="display:none" id="wifi_card">
+            <div class="cardTitle">Wi-Fi Settings</div>
+            <div class="cardButtonRow">
+                <div class="cardButtonRowTitle">
+                    Join Access Point:
                 </div>
-                <div class="cardButtonRow">
-                    <div class="cardButtonRowTitle">
-                        Host Access Point:
-                    </div>
-                    <input class="" id="host_ssid" placeholder="Wi-Fi SSID"/>
-                    <input class="" id="host_pwd" placeholder="Wi-Fi Password" type="password"/>
-                    <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('host')">
-                </div>
+                <input class="" id="join_ssid" placeholder="Wi-Fi SSID" />
+                <input class="" id="join_pwd" placeholder="Wi-Fi Password" type="password" />
+                <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('join')">
             </div>
-        </div>    
-        <script src="script.js"></script>
-        <script>
-            initialize();
-        </script>
-    </body>
+            <div class="cardButtonRow">
+                <div class="cardButtonRowTitle">
+                    Host Access Point:
+                </div>
+                <input class="" id="host_ssid" placeholder="Wi-Fi SSID" />
+                <input class="" id="host_pwd" placeholder="Wi-Fi Password" type="password" />
+                <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('host')">
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        initialize();
+    </script>
+</body>
+
 </html>

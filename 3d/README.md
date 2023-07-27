@@ -1,6 +1,11 @@
-3D files
-========
+# 3D printing
 
-The _modules_ consist of 4 3D-printed parts. All pats can be printed without use of supports.
+## Additional 3D printing instructions:
 
-[Link to fusion 360 design of module](https://a360.co/36Rwg4Q)
+I own a Prusa Mk3 and use PrusaSlicer. Additional instruction provided below apply to this combination but may not be applicable to your 3D printer/slicer.
+
+![Bearing Slicer][bearing_slicer_settigns]
+
+### Bearings
+
+[bearing_slicer_settigns]: ../docs/images/bearing_slicer_settings.png  "Bearing Slicer"

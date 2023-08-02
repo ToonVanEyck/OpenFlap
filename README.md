@@ -20,6 +20,7 @@ In this document I will layout the steps required to build an exemplary 5 wide, 
 - idc crimp tool
 - [PICkit 4](https://www.microchip.com/en-us/development-tool/pg164140) for flashing the display modules
 - [3.3V serial cable](https://www.adafruit.com/product/954) for flashing an ESP32
+- optional [6704ZZ bearings] (https://www.aliexpress.com/item/1259680980.html) 
 
 ### Components
 
@@ -54,9 +55,9 @@ When ordering these parts form JLCPCB, their webpage might report errors on the 
 
 3D print these parts, this should be possible without supports:
 - [The shell](/3d/module_shell.stl)
-- [The core](/3d/module_core.stl)
-- [The large bearing](/3d/module_large_bearing.stl)
-- [The small bearing](/3d/module_small_bearing.stl)
+- [The core](/3d/module_core.stl) OR [The core for use with bearings](/3d/flap_core_for_bearings.stl)
+- [The long hub](/3d/flap_hub_long.stl)
+- [The short hub](/3d/flap_hub_short.stl)
 
 
 1) Assemble the *flaps* and the *core* in between the two *encoder wheels*. The printed side of the encode wheels must face outside. Make sure the orientation of the flaps in regard to the core is correct. The motor should be able to fit in the left side when the letters are facing you. Also note that the outer holes and the inner holes of the encoder wheels do not align in each position, make sure they do when you fasten them.

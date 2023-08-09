@@ -20,7 +20,7 @@ In this document I will layout the steps required to build an exemplary 5 wide, 
 - idc crimp tool
 - [PICkit 4](https://www.microchip.com/en-us/development-tool/pg164140) for flashing the display modules
 - [3.3V serial cable](https://www.adafruit.com/product/954) for flashing an ESP32
-- optional [6704ZZ bearings] (https://www.aliexpress.com/item/1259680980.html) 
+- ( optional [6704ZZ bearings](https://www.aliexpress.com/item/1259680980.html) )
 
 ### Components
 

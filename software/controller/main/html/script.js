@@ -1,6 +1,6 @@
 
-//const moduleEndpoint = "/api/modules"
-const moduleEndpoint = "http://openflap.local/api/modules" // enable this line for local development
+const moduleEndpoint = "/api/modules"
+// const moduleEndpoint = "http://openflap.local/api/modules" // enable this line for local development
 
 var moduleObjects = [];
 var dimensions = { width: 0, height: 0 };
@@ -21,6 +21,8 @@ var displayCharacterAt = (index) => [...document.querySelectorAll(".displayChara
 var activePropertyIndex = () => [...document.querySelectorAll(".propertyCharacter")].indexOf(document.activeElement)
 var propertyCharacterAt = (index) => [...document.querySelectorAll(".propertyCharacter")][index]
 var activeAnyIndex = () => activeDisplayIndex() + activePropertyIndex() + 1;
+var activeCharacterMapEntry = () => document.activeElement.id.split('_').map(Number).slice(1, 3);
+var characterMapEntryAt = (m_index, c_index) => document.getElementById("characterMapMember_" + m_index + "_" + c_index);
 
 function createModuleTable() {
     let table = document.getElementById("moduleTable");
@@ -131,12 +133,22 @@ function inputChanged(e) {
         case "insertCompositionText":
         case "insertFromPaste":
             let index = activeAnyIndex();
-            for (let i = 0; i < e.data.length; i++) {
-                if (trySetLetter(index, e.data[i]) || e.data.length > 1) {
-                    index = moduleNext(index);
+            if (index >= 0) {
+                for (let i = 0; i < e.data.length; i++) {
+                    if (trySetLetter(index, e.data[i]) || e.data.length > 1) {
+                        index = moduleNext(index);
+                    }
+                };
+                displayCharacterAt(index).select();
+            } else {
+                let acme = activeCharacterMapEntry();
+                moduleObjects[acme[0]].characterMap[acme[1]] = e.data[0].toUpperCase();
+                characterMapEntryAt(acme[0], acme[1]).value = moduleObjects[acme[0]].characterMap[acme[1]];
+                let nextEntry = characterMapEntryAt(acme[0], acme[1] + 1);
+                if (nextEntry) {
+                    nextEntry.focus();
                 }
-            };
-            displayCharacterAt(index).select();
+            }
             break;
         case "insertLineBreak":
             displayCharacterAt(moduleNext(moduleRowEnd(activeDisplayIndex()))).select();

@@ -8,6 +8,7 @@ set(srcs
     "${COMPONENT_DIR}/flap_firmware.c"
     "${COMPONENT_DIR}/flap_socket_server.c"
     "${COMPONENT_DIR}/flap_uart.c"
+    "${COMPONENT_DIR}/board_io.c"
     "${COMPONENT_DIR}/HttpApi/HttpApi.c"
     "${COMPONENT_DIR}/UartApi/UartApi.c"
     "${COMPONENT_DIR}/OpenFlapModel/Model.c"

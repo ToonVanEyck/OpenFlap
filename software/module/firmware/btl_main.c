@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "chain_comm.h"
+#include "btl_properties.h"
+#include "flash.h"
 
 uint8_t app_valid = 0;
 
@@ -12,23 +13,23 @@ __interrupt() void isr(void)
     app__isr();
 }
 
-void writeFlashPage(uint8_t* data)
+void writeFlashPage(uint8_t *data)
 {
-    clearAndWriteFlash(((uint16_t)data[0]<< 8) | data[1], data+2);
+    clearAndWriteFlash(((uint16_t)data[0] << 8) | data[1], data + 2);
 }
 
-void command(uint8_t* data)
+void do_command(uint8_t *data)
 {
-    switch(data[0]){
-        case(runApp_command):
-            if(validateCheckSum()){
-                app_start(); 
-            }else{
+    switch (data[0]) {
+        case (runApp_command):
+            if (validateCheckSum()) {
+                app_start();
+            } else {
             }
-        break;
+            break;
         default:
-            //no action
-        break;
+            // no action
+            break;
     }
 }
 
@@ -36,16 +37,14 @@ void main(void)
 {
     // INTCONbits.GIE = 0;
     init_hardware();
-    addPropertyHandler(firmware_property,NULL,writeFlashPage);
-    addPropertyHandler(command_property,NULL,command);
 
-    TX_BYTE(0x00); //send ack to indicate successful boot 
+    TX_BYTE(0x00); // send ack to indicate successful boot
     TX_WAIT_DONE;
-    
+
     uint32_t idle_timer = 0; // timeout counter
-    while(1){
+    while (1) {
         CLRWDT();
-        chainCommRun(&idle_timer); 
+        chainCommRun(&idle_timer);
         idle_timer = 0; // not used in bootloader
     }
 }

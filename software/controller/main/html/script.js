@@ -47,6 +47,9 @@ function createModuleTable() {
         propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "offset_" + i, innerHTML: "offset" }), elNew("input", { id: "offset_" + i, className: "propertyInput", type: "number", min: "0", max: module.characterMap.length - 1, name: "offset", defaultValue: module.offset }));
         propertyList.lastChild.lastChild.onchange = function () { module.offset = parseInt(this.value) };
         propertyList.lastChild.lastChild.onclick = function () { this.select(); };
+        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "baseSpeed_" + i, innerHTML: "baseSpeed" }), elNew("input", { id: "baseSpeed_" + i, className: "propertyInput", type: "number", min: "0", max: module.characterMap.length - 1, name: "baseSpeed", defaultValue: module.baseSpeed }));
+        propertyList.lastChild.lastChild.onchange = function () { module.baseSpeed = parseInt(this.value) };
+        propertyList.lastChild.lastChild.onclick = function () { this.select(); };
         // module characterMap
         let moduleCharaterMap = row.appendChild(elNew("div", { className: "moduleCharacterMap" }));
         moduleCharaterMap.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Supported Characters:" }));

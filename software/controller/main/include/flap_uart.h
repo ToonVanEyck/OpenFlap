@@ -6,7 +6,6 @@
 #include "freertos/queue.h"
 #include "driver/uart.h"
 #include "esp_log.h"
-#include "driver/gpio.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

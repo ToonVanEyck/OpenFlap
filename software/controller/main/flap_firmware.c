@@ -88,7 +88,7 @@ void flap_module_firmware_update(char *data,size_t data_len,size_t data_offset,s
         bzero(buf,45);
         buf_offset = 0;
 
-        gpio_set_level(FLAP_ENABLE, 1);
+        gpio_set_level(FLAP_ENABLE_PIN, 1);
         vTaskDelay(50 / portTICK_PERIOD_MS);
         msg_newWriteAll(command_property);
         msg_addData(reboot_command);

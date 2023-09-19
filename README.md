@@ -149,6 +149,7 @@ Value | Definition                | Data Bytes
 0x06  | offset_property           | 1
 0x07  | vtrim_property            | 1
 0x08  | character_property        | 1
+0x09  | baseSpeed_property        | 1
 
 ## Controller HTTP API
 

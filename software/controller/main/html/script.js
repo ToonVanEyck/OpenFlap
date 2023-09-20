@@ -10,7 +10,7 @@ async function moduleGetAll() {
         method: "GET",
         headers: { "Content-Type": "application/json" }
     });
-
+    console.log(response);
     return await response.json();
 }
 
@@ -314,6 +314,10 @@ async function setAccessPoint(type) {
 
 function showCards(cards) {
     [...document.querySelectorAll(".card")].forEach(n => n.style.display = cards.includes(n.id) ? "" : "none")
+}
+
+function setDefaultCharacterMap() {
+    moduleObjects.forEach(module => module.characterMap = [" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"]);
 }
 
 window.addEventListener("keydown", keydownHandler, true);

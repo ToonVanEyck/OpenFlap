@@ -1,3 +1,5 @@
+
+#define DO_GENERATE_PROPERTY_NAMES
 #include "Model.h"
 #include "flap_http_server.h"
 #include "flap_uart.h"

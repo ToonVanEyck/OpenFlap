@@ -1,3 +1,4 @@
+#define DO_GENERATE_PROPERTY_NAMES
 #include "Model.h"
 #include "board_io.h"
 #include "flap_firmware.h"

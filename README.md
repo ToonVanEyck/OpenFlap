@@ -4,6 +4,8 @@
 
 **This is still a work in progress. Using the the code and files in this repository to create your own display is not recommended at the moment!**
 
+**I'm not activly working on this project any more at the moment.**
+
 ![OpenFlap Module][module_gif]
 
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.

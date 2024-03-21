@@ -87,7 +87,8 @@ uint8_t read_encoder(uint8_t is_idle)
     static uint8_t enc_res = 0xff;
     static uint8_t enc_buffer[3] = {0};
     if (++pulse_cnt >= IR_OFF_TICKS) {
-        PORTAbits.RA0 = 1; // Enable IR LEDs
+        // PORTAbits.RA0 = 1; // Enable IR LEDs
+        CCPR2 = 1000;
         if (pulse_cnt >= IR_OFF_TICKS + IR_ON_TICKS) {
             pulse_cnt = 0;
             uint8_t enc_g = 0x3F;
@@ -98,7 +99,8 @@ uint8_t read_encoder(uint8_t is_idle)
             enc_g ^= PORTCbits.RC1 << 2;
             enc_g ^= PORTCbits.RC5 << 1;
             enc_g ^= PORTCbits.RC0 << 0;
-            PORTAbits.RA0 = 0; // Disable IR LEDs
+            // PORTAbits.RA0 = 0; // Disable IR LEDs
+            CCPR2 = 0;
             // convert gray code to decimal
             for (enc_d = 0; enc_g; enc_g = enc_g >> 1)
                 enc_d ^= enc_g;
@@ -277,12 +279,13 @@ void main(void)
     while (1) {
         CLRWDT();
         chainCommRun(&idle_timer);
-        if (idle_timer >= 10000 || distance_to_rotate)
+        if (idle_timer >= 2500 || distance_to_rotate)
             idle_timer = 0;      // 1 seconds
         if (idle_timer < 2500) { // 250ms -> Not idle
             distance_to_rotate = motor_control();
-        } else {               // Idle
-            PORTAbits.RA0 = 0; // disable IR led when idle
+        } else { // Idle
+            // PORTAbits.RA0 = 0; // disable IR led when idle
+            CCPR2 = 0;
         }
     }
 }

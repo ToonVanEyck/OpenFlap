@@ -103,10 +103,10 @@ void chainComm(chainCommEvent_t event)
                     if (ctx.header.field.action == property_writeAll) {
                         TX_BYTE(data);
                         if (ctx.cnt == propertySizes[ctx.header.field.property]) {
+                            TX_WAIT_DONE;
                             if (propertyHandlers[ctx.header.field.property].set) {
                                 propertyHandlers[ctx.header.field.property].set(ctx.data);
                             }
-                            // TX_WAIT_DONE;
                             // TX_BYTE(0x00);
                         }
                     }

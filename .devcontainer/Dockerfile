@@ -118,7 +118,47 @@ RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-f
     echo "figlet -f 3d.flf Open Flap" >> /etc/bash.bashrc
 
 # install microchip XC8
-RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/xc8-v2.41-full-install-linux-x64-installer.run && \
-    chmod +x xc8-v2.41-full-install-linux-x64-installer.run && \
-    ./xc8-v2.41-full-install-linux-x64-installer.run --mode unattended --netservername localhost --LicenseType FreeMode && \
-    rm xc8*
+# RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/xc8-v2.41-full-install-linux-x64-installer.run && \
+#     chmod +x xc8-v2.41-full-install-linux-x64-installer.run && \
+#     ./xc8-v2.41-full-install-linux-x64-installer.run --mode unattended --netservername localhost --LicenseType FreeMode && \
+#     rm xc8*
+
+WORKDIR /tmp
+
+# install all required packages
+RUN apt update && export DEBIAN_FRONTEND=noninteractive && \
+    apt -y install --no-install-recommends wget figlet clang-format cppcheck hwdata sudo bash-completion ssh gdb-multiarch udev usbutils
+
+# Create symlink to new gdb
+RUN ln -s /usr/bin/gdb-multiarch /usr/bin/arm-none-eabi-gdb
+
+# Add user to dialout group to enable rootless tty acces for serial monitor eextention
+RUN adduser vscode dialout
+RUN adduser vscode plugdev
+
+# install pyocd
+RUN apt -y install python3 python3-pip netcat && \
+    python3 -mpip install -U pyocd && \
+    wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz && \
+    tar xzf Python-3.8.12.tgz && \
+    cd Python-3.8.12 && \
+    ./configure --enable-optimizations && \
+    make altinstall
+
+# install arm toolchain
+RUN mkdir -p /opt/gcc-arm/ && \
+    wget https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi.tar.xz && \
+    tar xvf arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi.tar.xz -C /opt/gcc-arm/ && \
+    cd /opt/gcc-arm/ && \
+    chown -R root:root arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/
+
+# install ncurses dependency
+RUN apt -y install libncurses5 && ln -s /usr/lib/x86_64-linux-gnu/libncursesw.so.6 /usr/lib/x86_64-linux-gnu/libncursesw.so.5
+
+# add a git lgb alias
+RUN git config --global alias.lgb "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --branches"
+
+# cleanup tmp
+RUN rm -rf /tmp/*
+# pyocd gdbserver -u remote:172.20.206.105:5555 --config Misc/pyocd.yaml --target py32f003x8 
+# https://stackoverflow.com/questions/42938992/usbip-in-docker

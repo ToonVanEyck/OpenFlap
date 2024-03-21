@@ -12,6 +12,18 @@
     "extensions": [
         "espressif.esp-idf-extension",
         "ms-vscode.cmake-tools",
-        "ms-vscode.cpptools"
-    ]
+        "ms-vscode.cpptools",
+        "ms-vscode.vscode-serial-monitor",
+        "streetsidesoftware.code-spell-checker",
+        "xaver.clang-format",
+        "marus25.cortex-debug",
+        "jkearins.action-buttons-ext"
+    ],
+    "mounts": [
+        "source=/dev,target=/dev,type=bind,consistency=cached",
+        "source=/run/udev,target=/run/udev,type=bind,consistency=cached",
+        "source=/etc/udev/rules.d,target=/etc/udev/rules.d,type=bind,consistency=cached",
+    ],
+    "userEnvProbe": "loginInteractiveShell",
+    "privileged": true
 }

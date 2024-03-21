@@ -97,7 +97,6 @@ typedef struct {
 
 extern const propertyHandler_t propertyHandlers[end_of_properties];
 
-void addPropertyHandler(moduleProperty_t property, property_callback get, property_callback set);
 void chainCommRun(uint32_t *idle_timeout);
 void chainComm(chainCommEvent_t event);
 

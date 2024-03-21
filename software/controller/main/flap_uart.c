@@ -222,9 +222,11 @@ static void flap_uart_task(void *arg)
 
                 ESP_LOGI(TAG, "Expecting %d bytes from %d modules", propertySizes[header.field.property], module_total);
                 for (module_index = 0; module_index < module_total; module_index++) {
-                    len = uart_receive(buf, propertySizes[header.field.property], 250 / portTICK_RATE_MS);
+                    // len = uart_receive(buf, propertySizes[header.field.property], 250 / portTICK_RATE_MS);
+                    // this is to slow because of the printing.
+                    len = uart_read_bytes(UART_NUM, buf, propertySizes[header.field.property], 250 / portTICK_RATE_MS);
                     if (len != propertySizes[header.field.property]) {
-                        ESP_LOGE(TAG, "Received %ld bytes but expected %d bytes from this property", len,
+                        ESP_LOGE(TAG, "1 Received %ld bytes but expected %d bytes from this property", len,
                                  propertySizes[header.field.property]);
                         break;
                     }

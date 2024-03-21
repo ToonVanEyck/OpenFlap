@@ -12,3 +12,5 @@ services:
             - "c 188:* rmw"
         user: vscode
         command: sleep infinity
+        extra_hosts:
+            - "host.docker.internal:host-gateway"

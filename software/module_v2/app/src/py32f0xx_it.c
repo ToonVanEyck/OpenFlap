@@ -34,6 +34,7 @@
 /* External variables --------------------------------------------------------*/
 extern ADC_HandleTypeDef AdcHandle;
 extern TIM_HandleTypeDef Tim1Handle;
+extern TIM_HandleTypeDef Tim14Handle;
 extern UART_HandleTypeDef UartHandle;
 
 /******************************************************************************/
@@ -92,6 +93,11 @@ void ADC_COMP_IRQHandler(void)
 void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
 {
     HAL_TIM_IRQHandler(&Tim1Handle);
+}
+
+void TIM14_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&Tim14Handle);
 }
 
 void DMA1_Channel1_IRQHandler(void)

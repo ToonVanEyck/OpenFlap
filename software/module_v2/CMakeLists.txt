@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.16.3 FATAL_ERROR)
 
 project(OpenFlapModule  LANGUAGES  C CXX)
+set (CMAKE_C_STANDARD 11)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Debug")
@@ -17,10 +18,12 @@ FetchContent_Declare(
     GIT_TAG main
 )
 FetchContent_MakeAvailable(jlink_rtt)
+target_include_directories(jlink_rtt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
 
 # Include Puya BSP
 add_subdirectory(puya_libs)
 target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
+target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 
 # Set executable sources
 add_executable(${PROJECT_NAME} 
@@ -29,6 +32,7 @@ add_executable(${PROJECT_NAME}
     app/src/main.c 
     app/src/config.c 
     app/src/flash.c 
+    app/src/chain_comm.c
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC jlink_rtt)

@@ -85,27 +85,28 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef *hadc)
 
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
 {
-    __HAL_RCC_TIM1_CLK_ENABLE(); /* Enable TIM clock */
-    __HAL_RCC_TIM3_CLK_ENABLE(); /* Enable TIM clock */
-
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    if (htim->Instance == TIM1) {
+        __HAL_RCC_TIM1_CLK_ENABLE(); /* Enable TIM clock */
+        HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0, 0);
+        HAL_NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    }
+    if (htim->Instance == TIM14) {
+        __HAL_RCC_TIM14_CLK_ENABLE(); /* Enable TIM clock */
+        HAL_NVIC_SetPriority(TIM14_IRQn, 0, 0);
+        HAL_NVIC_EnableIRQ(TIM14_IRQn);
+    }
 }
 
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim)
 {
-    __HAL_RCC_TIM1_FORCE_RESET();
-    __HAL_RCC_TIM1_RELEASE_RESET();
-    __HAL_RCC_TIM3_FORCE_RESET();
-    __HAL_RCC_TIM3_RELEASE_RESET();
+    if (htim->Instance == TIM1) {
+        __HAL_RCC_TIM1_FORCE_RESET();
+        __HAL_RCC_TIM1_RELEASE_RESET();
+    }
+    if (htim->Instance == TIM14) {
+        __HAL_RCC_TIM14_FORCE_RESET();
+        __HAL_RCC_TIM14_RELEASE_RESET();
+    }
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef *huart)
@@ -131,4 +132,26 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6 | GPIO_PIN_7);
 }
 
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
+{
+    __HAL_RCC_TIM3_CLK_ENABLE(); /* Enable TIM clock */
+
+    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0); //Not using PWM interrupt
+    // HAL_NVIC_EnableIRQ(TIM3_IRQn);
+}
+
+void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef *htim)
+{
+    __HAL_RCC_TIM3_FORCE_RESET();
+    __HAL_RCC_TIM3_RELEASE_RESET();
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);
+}
 /************************ (C) COPYRIGHT Puya *****END OF FILE******************/

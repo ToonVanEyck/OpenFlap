@@ -1,10 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
-#include <stdint.h>
-
-#include "SEGGER_RTT.h"
-// #include "py32f0xx_bsp_printf.h"
-#include "py32f0xx_hal.h"
-
+#include "chain_comm.h"
 #include "config.h"
 #include "openflap.h"
 
@@ -19,9 +14,11 @@ ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
 uint32_t aADCxConvertedData[6];
 
-TIM_HandleTypeDef Tim1Handle;
+TIM_HandleTypeDef Tim1Handle; // ADC/IR timer
 
-TIM_HandleTypeDef Tim3Handle;
+TIM_HandleTypeDef Tim3Handle; // PWM
+
+TIM_HandleTypeDef Tim14Handle; // Oneshot - comms
 
 UART_HandleTypeDef UartHandle;
 
@@ -29,7 +26,17 @@ static openflap_config_t openflap_config;
 static openflap_ctx_t openflap_ctx;
 
 uint8_t uart_rx_buf[1];
-uint8_t uart_tx_buf[1];
+
+static ring_buf_t rx_rb = {.r_cnt = 0, .w_cnt = 0};
+
+static chainCommCtx_v2_t chain_comm_ctx = {
+    .state = rxHeader,
+    .index = 0,
+    .rx_cnt = 0,
+    .tx_cnt = 0,
+};
+
+bool chain_comm_timeout = false;
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -38,42 +45,57 @@ void APP_ErrorHandler(void);
 static void APP_GpioConfig(void);
 static void APP_TimerInit(void);
 static void APP_PwmInit(void);
+static void APP_OneshotInit(void);
 static void APP_AdcConfig(void);
 static void APP_DmaInit(void);
 static void APP_UartInit(void);
 
 int main(void)
 {
+    SEGGER_RTT_Init();
     HAL_Init();
-
     APP_GpioConfig();
-
+    APP_AdcConfig();
+    APP_DmaInit();
+    APP_UartInit();
+    APP_PwmInit();
+    APP_OneshotInit();
     APP_TimerInit();
 
-    APP_PwmInit();
-
-    APP_AdcConfig();
-
-    APP_DmaInit();
-
-    APP_UartInit();
     HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
 
     configLoad(&openflap_config);
 
-    SEGGER_RTT_WriteString(0, "OpenFlap module has started!\r\n");
+    // SEGGER_RTT_WriteString(0, "OpenFlap module has started!\r\n");
     uint8_t new_position = 0xff;
     int rtt_key;
     while (1) {
+        /* Receive commands from RTT. */
         rtt_key = SEGGER_RTT_GetKey();
         if (rtt_key > 0) {
             SEGGER_RTT_printf(0, "\breceived command:  %c\r\n", (char)rtt_key);
-            uart_tx_buf[0] = (char)rtt_key;
             TIM3->CCR1 += 10;
         }
-        if (uart_tx_buf[0]) {
-            HAL_UART_Transmit_IT(&UartHandle, uart_tx_buf, 1);
+
+        /* Run chain comm. */
+        if (rb_data_available(&rx_rb)) {
+            uint8_t data = rb_data_read(&rx_rb);
+            __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
+            HAL_TIM_Base_Start_IT(&Tim14Handle);
+            if (chain_comm(&chain_comm_ctx, &data, rx_event)) {
+                do {
+                    HAL_UART_Transmit(&UartHandle, &data, 1, 100);
+                } while (chain_comm(&chain_comm_ctx, &data, tx_event));
+            }
         }
+        if (chain_comm_timeout) {
+            uint8_t data = 0x00;
+            chain_comm_timeout = false;
+            SEGGER_RTT_printf(0, "Timeout!\r\n");
+            chain_comm(&chain_comm_ctx, &data, timeout_event);
+        }
+
+        /* Print position. */
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
             SEGGER_RTT_printf(0, "encoder:  %d\r\n", new_position);
@@ -201,6 +223,26 @@ static void APP_PwmInit(void)
     // HAL_TIM_MspPostInit(&htim4);
 }
 
+static void APP_OneshotInit(void)
+{
+    /* (8000 * 250) / 8Mhz = 250ms */
+    Tim14Handle.Instance = TIM14;
+    Tim14Handle.Init.Period = 250 - 1;
+    Tim14Handle.Init.Prescaler = 8000 - 1;
+    Tim14Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    Tim14Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+    Tim14Handle.Init.RepetitionCounter = 0;
+    Tim14Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&Tim14Handle) != HAL_OK) {
+        APP_ErrorHandler();
+    }
+    TIM_MasterConfigTypeDef sMasterConfig;
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&Tim14Handle, &sMasterConfig);
+    __HAL_TIM_CLEAR_IT(&Tim14Handle, TIM_IT_UPDATE);
+}
+
 static void APP_DmaInit(void)
 {
     // __HAL_RCC_DMA_CLK_ENABLE();
@@ -274,22 +316,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
         }
     }
+    if (htim->Instance == TIM14) {
+        chain_comm_timeout = true;
+        HAL_TIM_Base_Stop_IT(&Tim14Handle);
+    }
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        uart_tx_buf[0] = uart_rx_buf[0];
-        SEGGER_RTT_printf(0, "uart RX:  %c\r\n", uart_rx_buf[0]);
+        rx_rb.buf[rx_rb.w_cnt++] = uart_rx_buf[0];
+        rx_rb.w_cnt &= 0x0F;
         HAL_UART_Receive_IT(huart, uart_rx_buf, 1);
+        // SEGGER_RTT_printf(0, "uart RX:  %c\r\n", uart_rx_buf[0]);
+        // if (chain_comm(&chain_comm_ctx, uart_rx_buf, rx_event)) {
+        //     uart_tx_buf[0] = uart_rx_buf[0];
+        //     HAL_UART_Transmit_IT(huart, uart_tx_buf, 1);
+        // } else {
+        //     HAL_UART_Receive_IT(huart, uart_rx_buf, 1);
+        // }
     }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        SEGGER_RTT_printf(0, "uart TX:  %c\r\n", uart_tx_buf[0]);
-        uart_tx_buf[0] = 0;
+        // if (rb_data_available(&tx_rb)) {
+        //     uint8_t data = rb_data_read(&tx_rb);
+        // }
     }
 }
 

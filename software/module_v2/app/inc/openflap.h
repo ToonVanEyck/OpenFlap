@@ -1,9 +1,6 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
-#include "py32f0xx_hal.h"
+#include "platform.h"
 
 /** The number of flaps in the split flap module. */
 #define SYMBOL_CNT (48)
@@ -46,3 +43,27 @@ typedef struct openflap_ctx_tag {
     uint8_t flap_position; /**< The current position of flap wheel. */
     uint8_t flap_setpoint; /**< The desired position of flap wheel. */
 } openflap_ctx_t;
+
+typedef struct ring_buff_tag {
+    uint8_t r_cnt;
+    uint8_t w_cnt;
+    uint16_t buf[16];
+} ring_buf_t;
+
+inline bool rb_data_available(ring_buf_t *rb)
+{
+    return (rb->r_cnt != rb->w_cnt);
+}
+
+inline void rb_data_write(ring_buf_t *rb, uint8_t data)
+{
+    rb->buf[rb->w_cnt++] = data;
+    rb->w_cnt &= 0x0F;
+}
+
+inline uint8_t rb_data_read(ring_buf_t *rb)
+{
+    uint8_t data = rb->buf[rb->r_cnt++];
+    rb->r_cnt &= 0x0F;
+    return data;
+}

@@ -46,11 +46,14 @@
     GENERATOR(readAll_rxData, "readAll_rxData")                                                                        \
     GENERATOR(readAll_txData, "readAll_txData")                                                                        \
     GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
-    GENERATOR(writeAll_exec, "writeAll_exec")                                                                          \
-    GENERATOR(passthrough, "passthrough")
+    GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
+    GENERATOR(writeSeq_rxToTx, "writeSeq_rxToTx")
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chainCommState_v2_t;
+
+#ifdef DO_GENERATE_STATE_NAMES
 static const char *chainCommStateNames[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
+#endif
 
 typedef void (*property_callback)(uint8_t *buf);
 

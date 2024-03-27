@@ -80,10 +80,10 @@ int main(void)
         /* Run chain comm. */
         if (rb_data_available(&rx_rb)) {
             uint8_t data = rb_data_read(&rx_rb);
-            __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
-            HAL_TIM_Base_Start_IT(&Tim14Handle);
             if (chain_comm(&chain_comm_ctx, &data, rx_event)) {
                 do {
+                    __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
+                    HAL_TIM_Base_Start_IT(&Tim14Handle);
                     HAL_UART_Transmit(&UartHandle, &data, 1, 100);
                 } while (chain_comm(&chain_comm_ctx, &data, tx_event));
             }

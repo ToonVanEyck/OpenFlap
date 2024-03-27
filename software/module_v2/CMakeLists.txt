@@ -35,6 +35,11 @@ add_executable(${PROJECT_NAME}
     app/src/chain_comm.c
 )
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    DO_GENERATE_PROPERTY_NAMES
+    DO_GENERATE_STATE_NAMES
+)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC jlink_rtt)
 target_link_libraries(${PROJECT_NAME} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
 target_include_directories(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)

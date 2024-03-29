@@ -38,7 +38,7 @@ typedef enum __attribute__((__packed__)) {
     PROPERTY(characterMap_property, "characterMap", 200)                                                               \
     PROPERTY(offset_property, "offset", 1)                                                                             \
     PROPERTY(vtrim_property, "vtrim", 1)                                                                               \
-    PROPERTY(character_property, "character", 1)                                                                       \
+    PROPERTY(character_property, "character", 4)                                                                       \
     PROPERTY(baseSpeed_property, "baseSpeed", 1)                                                                       \
     PROPERTY(end_of_properties, NULL, 0)
 

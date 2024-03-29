@@ -1,5 +1,4 @@
-#ifndef CHAIN_COMM_H
-#define CHAIN_COMM_H
+#pragma once
 
 #include "chain_comm_abi.h"
 #include "platform.h"
@@ -9,33 +8,6 @@
 #else
 #define CMD_SIZE (end_of_command + 1)
 #endif
-
-// typedef enum {
-//     dataAvailable,
-//     transmitComplete,
-//     communicationTimeout,
-// } chainCommEvent_t;
-
-// typedef enum {
-//     receiveHeader = 0,
-//     indexModules,
-//     receiveData,
-//     passthrough,
-//     transmitData,
-//     receiveAcknowledge,
-//     errorIgnoreData,
-//     waitForAcknowledge,
-// } chainCommState_t;
-
-// typedef struct {
-//     chainCommState_t state;
-//     uint16_t index;
-//     chainCommHeader_t header;
-//     uint8_t cnt;
-//     uint8_t data[CHAIN_COM_MAX_LEN];
-// } chainCommCtx_t;
-
-// extern const propertyHandler_t propertyHandlers[end_of_properties];
 
 #define GENERATE_STATE_ENUM(ENUM, NAME) ENUM,
 #define GENERATE_STATE_NAME(ENUM, NAME) NAME,
@@ -49,10 +21,10 @@
     GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
     GENERATOR(writeSeq_rxToTx, "writeSeq_rxToTx")
 
-typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chainCommState_v2_t;
+typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chain_comm_state_t;
 
 #ifdef DO_GENERATE_STATE_NAMES
-static const char *chainCommStateNames[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
+static const char *chain_comm_state_names[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
 #endif
 
 typedef void (*property_callback)(uint8_t *buf);
@@ -60,27 +32,35 @@ typedef void (*property_callback)(uint8_t *buf);
 typedef struct {
     property_callback get;
     property_callback set;
-} propertyHandler_t;
+} property_handler_t;
 
 typedef enum {
     rx_event,
     tx_event,
     timeout_event,
-} chainCommEvent_t;
+} chain_comm_event_t;
 
 typedef struct {
-    chainCommState_v2_t state;
+    chain_comm_state_t state;
     chainCommHeader_t header;
     uint8_t rx_cnt;
     uint8_t tx_cnt;
     uint16_t index;
     uint8_t property_data[CHAIN_COM_MAX_LEN];
-    propertyHandler_t property_handler[end_of_properties];
-} chainCommCtx_v2_t;
+    property_handler_t property_handler[end_of_properties];
+} chain_comm_ctx_t;
 
-// void chainCommRun(uint32_t *idle_timeout);
-// void chainComm(chainCommEvent_t event);
-
-bool chain_comm(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event);
-
-#endif
+/**
+ * \brief Executes the chain communication based on the provided context.
+ *
+ * This function handles the execution of chain communication based on the provided context.
+ * It checks the state of the context and calls the corresponding state handler. Additionally, it increments the rx or
+ * tx counter.
+ *
+ * \param[inout] ctx Pointer to the #chain_comm_ctx_t structure containing the context information.
+ * \param[in] data Pointer to the data received.
+ * \param[in] event The event type.
+ *
+ * \return True if data needs to be transmitted, false otherwise.
+ */
+bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);

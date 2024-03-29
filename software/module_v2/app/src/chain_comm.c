@@ -1,17 +1,56 @@
 #include "chain_comm.h"
 
+void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state);
+void chain_comm_exec(chain_comm_ctx_t *ctx);
+
+/* Chain comm FSM state implementations. */
+bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+
+bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+{
+    if (event == rx_event) {
+        ctx->rx_cnt++;
+    } else if (event == tx_event) {
+        ctx->tx_cnt++;
+    }
+    switch (ctx->state) {
+        case rxHeader:
+            return chain_comm_state_rxHeader(ctx, data, event);
+        case readAll_rxCnt:
+            return chain_comm_state_readAll_rxCnt(ctx, data, event);
+        case readAll_rxData:
+            return chain_comm_state_readAll_rxData(ctx, data, event);
+        case readAll_txData:
+            return chain_comm_state_readAll_txData(ctx, data, event);
+        case writeAll_rxData:
+            return chain_comm_state_writeAll_rxData(ctx, data, event);
+        case writeSeq_rxData:
+            return chain_comm_state_writeSeq_rxData(ctx, data, event);
+        case writeSeq_rxToTx:
+            return chain_comm_state_writeSeq_rxToTx(ctx, data, event);
+        default:
+            return false;
+    }
+}
+
 /**
  * \brief Changes the state of the chain communication FSM.
  *
  * This function changes the state of the chain communication FSM to the provided state.
  * It also resets the rx and tx counters of the context.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] state The new state of the chain communication FSM.
  */
-void chain_comm_state_change(chainCommCtx_v2_t *ctx, chainCommState_v2_t state)
+void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
 {
-    SEGGER_RTT_printf(0, "State: %s -> %s\n", chainCommStateNames[ctx->state], chainCommStateNames[state]);
+    SEGGER_RTT_printf(0, "State: %s -> %s\n", chain_comm_state_names[ctx->state], chain_comm_state_names[state]);
     ctx->state = state;
     ctx->rx_cnt = 0;
     ctx->tx_cnt = 0;
@@ -23,9 +62,9 @@ void chain_comm_state_change(chainCommCtx_v2_t *ctx, chainCommState_v2_t state)
  * This function handles the execution of chain communication based on the provided context.
  * It checks the action field of the context header and performs the corresponding action.
  *
- * \param[in] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[in] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */
-void chain_comm_exec(chainCommCtx_v2_t *ctx)
+void chain_comm_exec(chain_comm_ctx_t *ctx)
 {
     if (ctx->header.field.action == property_readAll) {
         if (ctx->property_handler[ctx->header.field.property].get) {
@@ -49,13 +88,13 @@ void chain_comm_exec(chainCommCtx_v2_t *ctx)
  *
  * This state receives a header byte and changes the state based on the action field of the header.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_rxHeader(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -93,13 +132,13 @@ bool chain_comm_state_rxHeader(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommE
  * This state receives 2 count bytes which the modules increment, this allows each successive module to know how many
  * modules are in the chain before this one.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_readAll_rxCnt(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -135,13 +174,13 @@ bool chain_comm_state_readAll_rxCnt(chainCommCtx_v2_t *ctx, uint8_t *data, chain
  * to the next modules. Once all data of the previous modules has been forwarded, the module will execute the readAll
  * command for the property and change the state to readAll_txData.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_readAll_rxData(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -171,13 +210,13 @@ bool chain_comm_state_readAll_rxData(chainCommCtx_v2_t *ctx, uint8_t *data, chai
  * This state sends the data bytes of the readAll operation to the next module. Once all data has been sent, the state
  * will change to rxHeader.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_readAll_txData(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -206,13 +245,13 @@ bool chain_comm_state_readAll_txData(chainCommCtx_v2_t *ctx, uint8_t *data, chai
  * the next module. Once all data has been received, the module will execute the writeAll command for the property and
  * change the state to rxHeader.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeAll_rxData(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -240,13 +279,13 @@ bool chain_comm_state_writeAll_rxData(chainCommCtx_v2_t *ctx, uint8_t *data, cha
  * to sequential modules. Once the data required for the writeSequential operation has been received, the state will
  * change to writeSeq_rxToTx.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeSeq_rxData(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -272,13 +311,13 @@ bool chain_comm_state_writeSeq_rxData(chainCommCtx_v2_t *ctx, uint8_t *data, cha
  * the timeout has occurred, the module will execute the writeSequential command for the property and change the state
  * to rxHeader.
  *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  * \param[in] data Pointer to the data received.
  * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeSeq_rxToTx(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
+bool chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     bool txData = false;
     switch (event) {
@@ -293,44 +332,4 @@ bool chain_comm_state_writeSeq_rxToTx(chainCommCtx_v2_t *ctx, uint8_t *data, cha
             break;
     }
     return txData;
-}
-
-/**
- * \brief Executes the chain communication based on the provided context.
- *
- * This function handles the execution of chain communication based on the provided context.
- * It checks the state of the context and calls the corresponding state handler. Additionally, it increments the rx or
- * tx counter.
- *
- * \param[inout] ctx Pointer to the chainCommCtx_v2_t structure containing the context information.
- * \param[in] data Pointer to the data received.
- * \param[in] event The event type.
- *
- * \return True if data needs to be transmitted, false otherwise.
- */
-bool chain_comm(chainCommCtx_v2_t *ctx, uint8_t *data, chainCommEvent_t event)
-{
-    if (event == rx_event) {
-        ctx->rx_cnt++;
-    } else if (event == tx_event) {
-        ctx->tx_cnt++;
-    }
-    switch (ctx->state) {
-        case rxHeader:
-            return chain_comm_state_rxHeader(ctx, data, event);
-        case readAll_rxCnt:
-            return chain_comm_state_readAll_rxCnt(ctx, data, event);
-        case readAll_rxData:
-            return chain_comm_state_readAll_rxData(ctx, data, event);
-        case readAll_txData:
-            return chain_comm_state_readAll_txData(ctx, data, event);
-        case writeAll_rxData:
-            return chain_comm_state_writeAll_rxData(ctx, data, event);
-        case writeSeq_rxData:
-            return chain_comm_state_writeSeq_rxData(ctx, data, event);
-        case writeSeq_rxToTx:
-            return chain_comm_state_writeSeq_rxToTx(ctx, data, event);
-        default:
-            return false;
-    }
 }

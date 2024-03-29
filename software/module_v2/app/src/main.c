@@ -2,12 +2,9 @@
 #include "chain_comm.h"
 #include "config.h"
 #include "openflap.h"
+#include "property_handlers.h"
 
 /* Private define ------------------------------------------------------------*/
-#define GPIO_PIN_LED GPIO_PIN_7
-#define GPIO_PORT_LED GPIOA
-#define GPIO_PIN_MOTOR GPIO_PIN_6
-#define GPIO_PORT_MOTOR GPIOA
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
@@ -22,19 +19,11 @@ TIM_HandleTypeDef Tim14Handle; // Oneshot - comms
 
 UART_HandleTypeDef UartHandle;
 
-static openflap_config_t openflap_config;
 static openflap_ctx_t openflap_ctx;
 
 uint8_t uart_rx_buf[1];
 
 static ring_buf_t rx_rb = {.r_cnt = 0, .w_cnt = 0};
-
-static chainCommCtx_v2_t chain_comm_ctx = {
-    .state = rxHeader,
-    .index = 0,
-    .rx_cnt = 0,
-    .tx_cnt = 0,
-};
 
 bool chain_comm_timeout = false;
 
@@ -64,35 +53,37 @@ int main(void)
 
     HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
 
-    configLoad(&openflap_config);
+    configLoad(&openflap_ctx.config);
+    propertyHandlersInit(&openflap_ctx);
 
-    // SEGGER_RTT_WriteString(0, "OpenFlap module has started!\r\n");
-    uint8_t new_position = 0xff;
+    SEGGER_RTT_WriteString(0, "OpenFlap module has started!\r\n");
+    uint8_t new_position = 0;
     int rtt_key;
     while (1) {
         /* Receive commands from RTT. */
         rtt_key = SEGGER_RTT_GetKey();
         if (rtt_key > 0) {
-            SEGGER_RTT_printf(0, "\breceived command:  %c\r\n", (char)rtt_key);
+            // SEGGER_RTT_printf(0, "\breceived command:  %c\r\n", (char)rtt_key);
             TIM3->CCR1 += 10;
+            configPrint(&openflap_ctx.config);
         }
 
         /* Run chain comm. */
         if (rb_data_available(&rx_rb)) {
             uint8_t data = rb_data_read(&rx_rb);
-            if (chain_comm(&chain_comm_ctx, &data, rx_event)) {
+            if (chain_comm(&openflap_ctx.chain_ctx, &data, rx_event)) {
                 do {
                     __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
                     HAL_TIM_Base_Start_IT(&Tim14Handle);
                     HAL_UART_Transmit(&UartHandle, &data, 1, 100);
-                } while (chain_comm(&chain_comm_ctx, &data, tx_event));
+                } while (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event));
             }
         }
         if (chain_comm_timeout) {
             uint8_t data = 0x00;
             chain_comm_timeout = false;
             SEGGER_RTT_printf(0, "Timeout!\r\n");
-            chain_comm(&chain_comm_ctx, &data, timeout_event);
+            chain_comm(&openflap_ctx.chain_ctx, &data, timeout_event);
         }
 
         /* Print position. */
@@ -117,6 +108,12 @@ static void APP_GpioConfig(void)
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIO_PORT_LED, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_COLEND;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIO_PORT_COLEND, &GPIO_InitStruct);
 }
 
 static void APP_AdcConfig(void)
@@ -274,9 +271,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
     /* Convert ADC result into grey code. */
     for (uint8_t i = 0; i < 6; i++) {
-        if (aADCxConvertedData[IR_MAP[i]] > openflap_config.ir_limits[i].ir_high) {
+        if (aADCxConvertedData[IR_MAP[i]] > openflap_ctx.config.ir_limits[i].ir_high) {
             encoder_graycode &= ~(1 << i);
-        } else if (aADCxConvertedData[IR_MAP[i]] < openflap_config.ir_limits[i].ir_low) {
+        } else if (aADCxConvertedData[IR_MAP[i]] < openflap_ctx.config.ir_limits[i].ir_low) {
             encoder_graycode |= (1 << i);
         }
     }
@@ -328,22 +325,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         rx_rb.buf[rx_rb.w_cnt++] = uart_rx_buf[0];
         rx_rb.w_cnt &= 0x0F;
         HAL_UART_Receive_IT(huart, uart_rx_buf, 1);
-        // SEGGER_RTT_printf(0, "uart RX:  %c\r\n", uart_rx_buf[0]);
-        // if (chain_comm(&chain_comm_ctx, uart_rx_buf, rx_event)) {
-        //     uart_tx_buf[0] = uart_rx_buf[0];
-        //     HAL_UART_Transmit_IT(huart, uart_tx_buf, 1);
-        // } else {
-        //     HAL_UART_Receive_IT(huart, uart_rx_buf, 1);
-        // }
     }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        // if (rb_data_available(&tx_rb)) {
-        //     uint8_t data = rb_data_read(&tx_rb);
-        // }
     }
 }
 

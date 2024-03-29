@@ -33,6 +33,7 @@ add_executable(${PROJECT_NAME}
     app/src/config.c 
     app/src/flash.c 
     app/src/chain_comm.c
+    app/src/property_handlers.c
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
@@ -48,7 +49,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INT
 add_custom_target(flash
     COMMENT "Flashing software on Puya board"
     COMMAND pyocd load 
-            --probe `pyocd list | grep -Po '[0-9a-z]{48}'`
+            --probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
             --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
             --target ${PUYA_CHIP} 
             ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.elf
@@ -59,7 +60,7 @@ add_dependencies(flash ${PROJECT_NAME})
 add_custom_target(rtt
     COMMENT "Starting rtt listener"
     COMMAND pyocd rtt 
-            --probe `pyocd list | grep -Po '[0-9a-z]{48}'`
+            --probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
             --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
             --target ${PUYA_CHIP} 
             -a `grep -Po '.*(0x[0-9a-f]{8}).*_SEGGER_RTT' ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.map | grep -Po '0x[0-9a-f]{8}'`

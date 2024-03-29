@@ -30,7 +30,8 @@ _Min_Stack_Size = 0x400;  /* required amount of stack: 1024 bytes */
 MEMORY
 {
   RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 4K
-  FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 32K
+  FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 28K
+  NVS (rx)       : ORIGIN = 0x08007000, LENGTH = 4K  /* Flash sector used to store OpenFlap configuration. */
 }
 
 /* Define output sections */

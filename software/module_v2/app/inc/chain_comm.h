@@ -20,6 +20,7 @@
     GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
     GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
     GENERATOR(writeSeq_rxToTx, "writeSeq_rxToTx")
+// GENERATOR(writeAll_rxAck, "writeAll_rxAck")
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chain_comm_state_t;
 

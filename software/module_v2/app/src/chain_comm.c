@@ -9,6 +9,7 @@ bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_
 bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+// bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 
@@ -30,6 +31,8 @@ bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
             return chain_comm_state_readAll_txData(ctx, data, event);
         case writeAll_rxData:
             return chain_comm_state_writeAll_rxData(ctx, data, event);
+        // case writeAll_rxAck:
+        //     return chain_comm_state_writeAll_rxAck(ctx, data, event);
         case writeSeq_rxData:
             return chain_comm_state_writeSeq_rxData(ctx, data, event);
         case writeSeq_rxToTx:
@@ -114,7 +117,10 @@ bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_
                 case property_writeSequential:
                     chain_comm_state_change(ctx, writeSeq_rxData);
                     break;
-                default:
+                case do_nothing:
+                    if (ctx->header.field.property == no_property) {
+                        txData = true; // Acknowledge
+                    }
                     chain_comm_state_change(ctx, rxHeader);
                     break;
             }

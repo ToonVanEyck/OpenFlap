@@ -64,7 +64,6 @@ int main(void)
         rtt_key = SEGGER_RTT_GetKey();
         if (rtt_key > 0) {
             // SEGGER_RTT_printf(0, "\breceived command:  %c\r\n", (char)rtt_key);
-            TIM3->CCR1 += 10;
             configPrint(&openflap_ctx.config);
         }
 
@@ -91,7 +90,12 @@ int main(void)
             new_position = openflap_ctx.flap_position;
             SEGGER_RTT_printf(0, "encoder:  %d\r\n", new_position);
         }
-        HAL_Delay(100);
+
+        if (openflap_ctx.flap_setpoint != openflap_ctx.flap_position) {
+            __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, 25);
+        } else {
+            __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, 0);
+        }
     }
 }
 
@@ -291,6 +295,10 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     }
     uint8_t new_position = (uint8_t)SYMBOL_CNT - encoder_decimal - 1;
     if (new_position < SYMBOL_CNT) {
+        new_position += openflap_ctx.config.encoder_offset;
+        if (new_position >= SYMBOL_CNT) {
+            new_position -= SYMBOL_CNT;
+        }
         openflap_ctx.flap_position = new_position;
     }
 }

@@ -52,18 +52,12 @@ void vtrim_property_get(uint8_t *buf)
 
 void character_property_set(uint8_t *buf)
 {
-    uint32_t symbol = *(uint32_t *)buf;
-    for (int i = 0; i < SYMBOL_CNT; i++) {
-        if (openflap_ctx->config.symbol_set[i] == symbol) {
-            openflap_ctx->flap_setpoint = i;
-            break;
-        }
-    }
+    openflap_ctx->flap_setpoint = buf[0];
 }
 
 void character_property_get(uint8_t *buf)
 {
-    memcpy(buf, &openflap_ctx->config.symbol_set[openflap_ctx->flap_position], 4);
+    buf[0] = openflap_ctx->flap_position;
 }
 
 void baseSpeed_property_set(uint8_t *buf)

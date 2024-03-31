@@ -127,6 +127,7 @@ bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_
         case tx_event:
             break;
         case timeout_event:
+            chain_comm_state_change(ctx, rxHeader);
             break;
     }
     return txData;

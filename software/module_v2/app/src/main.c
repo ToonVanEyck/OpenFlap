@@ -41,6 +41,7 @@ static void APP_UartInit(void);
 
 int main(void)
 {
+    openflap_ctx.flap_position = SYMBOL_CNT;
     SEGGER_RTT_Init();
     HAL_Init();
     APP_GpioConfig();
@@ -57,6 +58,13 @@ int main(void)
     propertyHandlersInit(&openflap_ctx);
 
     SEGGER_RTT_WriteString(0, "OpenFlap module has started!\r\n");
+
+    /* Set setpoint equal to position to prevent instant rotation. */
+    while (openflap_ctx.flap_position == SYMBOL_CNT) {
+        HAL_Delay(10);
+    }
+    openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
+
     uint8_t new_position = 0;
     int rtt_key;
     while (1) {
@@ -91,10 +99,25 @@ int main(void)
             SEGGER_RTT_printf(0, "encoder:  %d\r\n", new_position);
         }
 
-        if (openflap_ctx.flap_setpoint != openflap_ctx.flap_position) {
-            __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, 25);
+        /* Set PWM duty cycle. */
+        uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
+        __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
+
+        /* Idle logic */
+        if (distance == 0) {
+            if (!openflap_ctx.is_idle) {
+                openflap_ctx.is_idle = true;
+                openflap_ctx.idle_start_ms = HAL_GetTick();
+            } else {
+                /* Store config if requested and idle for 500ms. */
+                if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500 && openflap_ctx.store_config) {
+                    openflap_ctx.store_config = false;
+                    // configStore(&openflap_ctx.config);
+                    SEGGER_RTT_printf(0, "Config stored!\n");
+                }
+            }
         } else {
-            __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, 0);
+            openflap_ctx.is_idle = false;
         }
     }
 }
@@ -271,6 +294,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     // SEGGER_RTT_printf(0, "ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\r\n", aADCxConvertedData[IR_MAP[0]],
     //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
     //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
+    static uint8_t old_position = 0;
     uint8_t encoder_graycode = 0;
 
     /* Convert ADC result into grey code. */
@@ -293,13 +317,17 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     for (encoder_decimal = 0; encoder_graycode; encoder_graycode = encoder_graycode >> 1) {
         encoder_decimal ^= encoder_graycode;
     }
+    /* Reverse encoder direction. */
     uint8_t new_position = (uint8_t)SYMBOL_CNT - encoder_decimal - 1;
+
+    /* Ignore erroneous reading. */
     if (new_position < SYMBOL_CNT) {
-        new_position += openflap_ctx.config.encoder_offset;
-        if (new_position >= SYMBOL_CNT) {
-            new_position -= SYMBOL_CNT;
+        new_position = flapIndexWrapCalc(new_position + openflap_ctx.config.encoder_offset);
+        /* Ignore sensor backspin. */
+        if (flapIndexWrapCalc(new_position + 1) != old_position) {
+            old_position = new_position;
+            openflap_ctx.flap_position = new_position;
         }
-        openflap_ctx.flap_position = new_position;
     }
 }
 

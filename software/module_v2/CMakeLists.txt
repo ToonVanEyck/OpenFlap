@@ -34,6 +34,7 @@ add_executable(${PROJECT_NAME}
     app/src/flash.c 
     app/src/chain_comm.c
     app/src/property_handlers.c
+    app/src/openflap.c
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC

@@ -26,6 +26,7 @@ void characterMapSize_property_get(uint8_t *buf)
 void characterMap_property_set(uint8_t *buf)
 {
     memcpy(openflap_ctx->config.symbol_set, buf, 4 * SYMBOL_CNT);
+    openflap_ctx->store_config = true;
 }
 void characterMap_property_get(uint8_t *buf)
 {
@@ -35,6 +36,7 @@ void characterMap_property_get(uint8_t *buf)
 void offset_property_set(uint8_t *buf)
 {
     openflap_ctx->config.encoder_offset = buf[0];
+    openflap_ctx->store_config = true;
 }
 void offset_property_get(uint8_t *buf)
 {
@@ -44,6 +46,7 @@ void offset_property_get(uint8_t *buf)
 void vtrim_property_set(uint8_t *buf)
 {
     openflap_ctx->config.vtrim = buf[0];
+    openflap_ctx->store_config = true;
 }
 void vtrim_property_get(uint8_t *buf)
 {
@@ -63,6 +66,7 @@ void character_property_get(uint8_t *buf)
 void baseSpeed_property_set(uint8_t *buf)
 {
     openflap_ctx->config.base_speed = buf[0];
+    openflap_ctx->store_config = true;
 }
 
 void baseSpeed_property_get(uint8_t *buf)

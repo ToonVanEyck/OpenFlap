@@ -41,7 +41,5 @@ static void flashErase(void)
     // Number of sectors
     EraseInitStruct.NbSectors = 1;
     // Erase
-    if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK) {
-        APP_ErrorHandler();
-    }
+    HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
 }

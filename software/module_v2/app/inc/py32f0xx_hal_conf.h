@@ -59,8 +59,8 @@ extern "C" {
 /* ########################## Oscillator Values adaptation ####################*/
 
 #if !defined(HSI_VALUE)
-#define HSI_VALUE ((uint32_t)8000000) /*!< Value of the Internal oscillator in Hz */
-#endif                                /* HSI_VALUE */
+#define HSI_VALUE ((uint32_t)24000000) /*!< Value of the Internal oscillator in Hz */
+#endif                                 /* HSI_VALUE */
 
 /**
  * @brief Adjust the value of External High Speed oscillator (HSE) used in your application.
@@ -102,7 +102,7 @@ extern "C" {
 /**
  * @brief This is the HAL system configuration section
  */
-#define VDD_VALUE ((uint32_t)3300) /*!< Value of VDD in mv */
+#define VDD_VALUE ((uint32_t)5000) /*!< Value of VDD in mv */
 #define PRIORITY_HIGHEST 0
 #define PRIORITY_HIGH 1
 #define PRIORITY_LOW 2

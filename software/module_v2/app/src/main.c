@@ -21,9 +21,11 @@ UART_HandleTypeDef UartHandle;
 
 static openflap_ctx_t openflap_ctx;
 
-uint8_t uart_rx_buf[1];
+static uint8_t uart_rx_buf[1];
+static uint8_t uart_tx_buf[1];
 
 static ring_buf_t rx_rb = {.r_cnt = 0, .w_cnt = 0};
+static ring_buf_t tx_rb = {.r_cnt = 0, .w_cnt = 0};
 
 bool chain_comm_timeout = false;
 
@@ -41,9 +43,10 @@ static void APP_UartInit(void);
 
 int main(void)
 {
+    HAL_Init();
+    BSP_HSI_24MHzClockConfig();
     openflap_ctx.flap_position = SYMBOL_CNT;
     SEGGER_RTT_Init();
-    HAL_Init();
     APP_GpioConfig();
     APP_AdcConfig();
     APP_DmaInit();
@@ -52,12 +55,12 @@ int main(void)
     APP_OneshotInit();
     APP_TimerInit();
 
-    HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
+    // HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
 
     configLoad(&openflap_ctx.config);
     propertyHandlersInit(&openflap_ctx);
 
-    SEGGER_RTT_WriteString(0, "OpenFlap module has started!\r\n");
+    SEGGER_RTT_WriteString(0, "OpenFlap module has started!\n");
 
     /* Set setpoint equal to position to prevent instant rotation. */
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
@@ -66,37 +69,58 @@ int main(void)
     openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
 
     uint8_t new_position = 0;
+    uint8_t last_tx_rb_used = 0;
     int rtt_key;
     while (1) {
+
         /* Receive commands from RTT. */
         rtt_key = SEGGER_RTT_GetKey();
         if (rtt_key > 0) {
-            // SEGGER_RTT_printf(0, "\breceived command:  %c\r\n", (char)rtt_key);
-            configPrint(&openflap_ctx.config);
+            // SEGGER_RTT_printf(0, "\breceived command:  %c\n", (char)rtt_key);
+            if (rtt_key == '\n') {
+                configPrint(&openflap_ctx.config);
+            }
         }
 
         /* Run chain comm. */
-        if (rb_data_available(&rx_rb)) {
-            uint8_t data = rb_data_read(&rx_rb);
+        /* Chain Comm. RX event. */
+        if (rb_data_available(&rx_rb) && rb_space_available(&tx_rb)) {
+            uint8_t data = rb_data_dequeue(&rx_rb);
             if (chain_comm(&openflap_ctx.chain_ctx, &data, rx_event)) {
-                do {
-                    __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
-                    HAL_TIM_Base_Start_IT(&Tim14Handle);
-                    HAL_UART_Transmit(&UartHandle, &data, 1, 100);
-                } while (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event));
+                // do {
+                rb_data_enqueue(&tx_rb, data);
+                last_tx_rb_used = rb_capacity_used(&tx_rb);
+                // } while (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event));
             }
         }
+        /* Chain Comm. TX event. */
+        if (last_tx_rb_used != rb_capacity_used(&tx_rb)) {
+            uint8_t data;
+            if (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event)) {
+                rb_data_enqueue(&tx_rb, data);
+                last_tx_rb_used = rb_capacity_used(&tx_rb);
+            }
+        }
+        /* Chain Comm. timeout event. */
         if (chain_comm_timeout) {
             uint8_t data = 0x00;
             chain_comm_timeout = false;
-            SEGGER_RTT_printf(0, "Timeout!\r\n");
+            SEGGER_RTT_printf(0, "Timeout!\n");
             chain_comm(&openflap_ctx.chain_ctx, &data, timeout_event);
+        }
+
+        /* Restart Uart RX & TX data if needed. */
+        HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
+        if (rb_data_available(&tx_rb)) {
+            uart_tx_buf[0] = rb_data_peek(&tx_rb);
+            HAL_UART_Transmit_IT(&UartHandle, uart_tx_buf, 1);
         }
 
         /* Print position. */
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
-            SEGGER_RTT_printf(0, "encoder:  %d\r\n", new_position);
+            SEGGER_RTT_printf(0, "Position: %d  %s\n", openflap_ctx.flap_position,
+                              &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
         }
 
         /* Set PWM duty cycle. */
@@ -104,20 +128,22 @@ int main(void)
         __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
 
         /* Idle logic */
-        if (distance == 0) {
+        if (distance == 0 && !rb_data_available(&rx_rb) && !rb_data_available(&tx_rb)) {
             if (!openflap_ctx.is_idle) {
                 openflap_ctx.is_idle = true;
+                SEGGER_RTT_printf(0, "Idle!\n");
                 openflap_ctx.idle_start_ms = HAL_GetTick();
             } else {
                 /* Store config if requested and idle for 500ms. */
                 if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500 && openflap_ctx.store_config) {
                     openflap_ctx.store_config = false;
-                    // configStore(&openflap_ctx.config);
+                    configStore(&openflap_ctx.config);
                     SEGGER_RTT_printf(0, "Config stored!\n");
                 }
             }
-        } else {
+        } else if (openflap_ctx.is_idle) {
             openflap_ctx.is_idle = false;
+            SEGGER_RTT_printf(0, "Active!\n");
         }
     }
 }
@@ -154,18 +180,18 @@ static void APP_AdcConfig(void)
         APP_ErrorHandler();
     }
     AdcHandle.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1; /* ADC clock no division */
-    AdcHandle.Init.Resolution = ADC_RESOLUTION_12B;           /* 12bit */
+    AdcHandle.Init.Resolution = ADC_RESOLUTION_10B;           /* 12bit */
     AdcHandle.Init.DataAlign = ADC_DATAALIGN_RIGHT;           /* Right alignment */
-    AdcHandle.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD; /* Backward */
+    AdcHandle.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD; /* Forward */
     AdcHandle.Init.EOCSelection = ADC_EOC_SEQ_CONV;           /* End flag */
     AdcHandle.Init.LowPowerAutoWait = ENABLE;
     AdcHandle.Init.ContinuousConvMode = DISABLE;
     AdcHandle.Init.DiscontinuousConvMode = DISABLE;
-    AdcHandle.Init.ExternalTrigConv = ADC1_2_EXTERNALTRIG_T1_TRGO;                /* External trigger: TIM1_TRGO */
-    AdcHandle.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISINGFALLING; /* Triggered by both edges */
-    AdcHandle.Init.DMAContinuousRequests = ENABLE;                                /* No DMA */
+    AdcHandle.Init.ExternalTrigConv = ADC1_2_EXTERNALTRIG_T1_TRGO; /* External trigger: TIM1_TRGO */
+    AdcHandle.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    AdcHandle.Init.DMAContinuousRequests = ENABLE; /* DMA */
     AdcHandle.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
-    AdcHandle.Init.SamplingTimeCommon = ADC_SAMPLETIME_239CYCLES_5;
+    AdcHandle.Init.SamplingTimeCommon = ADC_SAMPLETIME_41CYCLES_5;
     if (HAL_ADC_Init(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
@@ -199,10 +225,10 @@ static void APP_AdcConfig(void)
 
 static void APP_TimerInit(void)
 {
-    /* (800 * 10) / 8Mhz = 1ms */
+    /* 240 * 10) / 24Mhz = 100us */
     Tim1Handle.Instance = TIM1;
     Tim1Handle.Init.Period = 10 - 1;
-    Tim1Handle.Init.Prescaler = 800 - 1;
+    Tim1Handle.Init.Prescaler = 240 - 1;
     Tim1Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     Tim1Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
     Tim1Handle.Init.RepetitionCounter = 0;
@@ -222,10 +248,10 @@ static void APP_TimerInit(void)
 
 static void APP_PwmInit(void)
 {
-    /* (250 * 1) / 8Mhz = 32kHz */
+    /* (250 * 3) / 8Mhz = 32kHz */
     Tim3Handle.Instance = TIM3;
     Tim3Handle.Init.Period = 255 - 1;
-    Tim3Handle.Init.Prescaler = 0;
+    Tim3Handle.Init.Prescaler = 3;
     Tim3Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     Tim3Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
     if (HAL_TIM_PWM_Init(&Tim3Handle) != HAL_OK) {
@@ -249,10 +275,10 @@ static void APP_PwmInit(void)
 
 static void APP_OneshotInit(void)
 {
-    /* (8000 * 250) / 8Mhz = 250ms */
+    /* (24000 * 250) / 24Mhz = 250ms */
     Tim14Handle.Instance = TIM14;
     Tim14Handle.Init.Period = 250 - 1;
-    Tim14Handle.Init.Prescaler = 8000 - 1;
+    Tim14Handle.Init.Prescaler = 24000 - 1;
     Tim14Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     Tim14Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
     Tim14Handle.Init.RepetitionCounter = 0;
@@ -291,11 +317,15 @@ static void APP_UartInit(void)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    // SEGGER_RTT_printf(0, "ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\r\n", aADCxConvertedData[IR_MAP[0]],
+    static uint8_t old_position = SYMBOL_CNT;
+    uint8_t encoder_graycode = 0;
+
+    /* Disable IR led. */
+    HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
+
+    // SEGGER_RTT_printf(0, "ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
     //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
     //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
-    static uint8_t old_position = 0;
-    uint8_t encoder_graycode = 0;
 
     /* Convert ADC result into grey code. */
     for (uint8_t i = 0; i < 6; i++) {
@@ -306,8 +336,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         }
     }
 
-    /* Disable IR led's and stop ADC. */
-    HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
+    /* Stop ADC. */
     if (HAL_ADC_Stop_DMA(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
@@ -337,14 +366,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if (htim->Instance == TIM1) {
         period_step_cnt++;
-        /* Start ADC when IR led's have been on for 2ms. */
+        /* Start ADC when IR led's have been on for 200us. */
         if (period_step_cnt == 2) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, 6) != HAL_OK) {
                 APP_ErrorHandler();
             }
 
-            /* Power IR led's every 10ms. */
-        } else if (period_step_cnt >= 10) {
+            /* Power IR led's every 50ms. */
+        } else if (period_step_cnt >= (openflap_ctx.is_idle ? 10000 : 500)) {
             period_step_cnt = 0;
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
         }
@@ -358,15 +387,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        rx_rb.buf[rx_rb.w_cnt++] = uart_rx_buf[0];
-        rx_rb.w_cnt &= 0x0F;
-        HAL_UART_Receive_IT(huart, uart_rx_buf, 1);
+        rb_data_enqueue(&rx_rb, uart_rx_buf[0]);
+        HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
+        __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
+        HAL_TIM_Base_Start_IT(&Tim14Handle);
     }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
+        rb_data_dequeue(&tx_rb);
     }
 }
 

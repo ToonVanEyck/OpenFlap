@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "SEGGER_RTT.h"
+#include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_hal.h"
 
 /** The number of flaps in the split flap module. */
@@ -34,8 +35,16 @@
 typedef struct ring_buff_tag {
     uint8_t r_cnt;
     uint8_t w_cnt;
-    uint16_t buf[16];
+    uint8_t buf[16];
 } ring_buf_t;
+
+/**
+ * \brief Check if how space of the ring buffer is used.
+ */
+inline bool rb_capacity_used(ring_buf_t *rb)
+{
+    return ((rb->w_cnt + sizeof(rb->buf)) - rb->r_cnt) & 0x0F;
+}
 
 /**
  * \brief Check if data is available in ring buffer.
@@ -46,9 +55,17 @@ inline bool rb_data_available(ring_buf_t *rb)
 }
 
 /**
+ * \brief Check if space is available in ring buffer.
+ */
+inline bool rb_space_available(ring_buf_t *rb)
+{
+    return ((rb->w_cnt + 1) & 0x0F) != rb->r_cnt;
+}
+
+/**
  * \brief Write data to ring buffer.
  */
-inline void rb_data_write(ring_buf_t *rb, uint8_t data)
+inline void rb_data_enqueue(ring_buf_t *rb, uint8_t data)
 {
     rb->buf[rb->w_cnt++] = data;
     rb->w_cnt &= 0x0F;
@@ -57,9 +74,18 @@ inline void rb_data_write(ring_buf_t *rb, uint8_t data)
 /**
  * \brief Read data from ring buffer.
  */
-inline uint8_t rb_data_read(ring_buf_t *rb)
+inline uint8_t rb_data_dequeue(ring_buf_t *rb)
 {
     uint8_t data = rb->buf[rb->r_cnt++];
     rb->r_cnt &= 0x0F;
+    return data;
+}
+
+/**
+ * \brief Read data from ring buffer.
+ */
+inline uint8_t rb_data_peek(ring_buf_t *rb)
+{
+    uint8_t data = rb->buf[rb->r_cnt];
     return data;
 }

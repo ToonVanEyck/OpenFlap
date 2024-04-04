@@ -152,7 +152,7 @@ bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_
         case rx_event:
             if (ctx->rx_cnt == 1) {
                 ctx->index += ((uint16_t)*data) + 1;
-                (*data)++;
+                *data = (ctx->index >> 0) & 0xff;
             } else {
                 ctx->index += (*data << 8);
                 *data = (ctx->index >> 8) & 0xff;

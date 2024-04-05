@@ -6,6 +6,18 @@
 
 /* Private define ------------------------------------------------------------*/
 
+/** Convert a miliseconds value into a counter value for the IR/Encoder timer. */
+#define IR_TIMER_TICKS_FROM_MS(ms) ((ms) * 10)
+/** Convert a microsecond value into a counter value for the IR/Encoder timer. */
+#define IR_TIMER_TICKS_FROM_US(us) ((us) / 100)
+
+/** The period of the encoder readings when the system is active. */
+#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
+/** The period of the encoder readings when the system is idle. */
+#define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
+/** The IR sensor will iluminate the encoder wheel for this time in microseconds before starting the conversion */
+#define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
+
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
@@ -48,8 +60,8 @@ int main(void)
     openflap_ctx.flap_position = SYMBOL_CNT;
     SEGGER_RTT_Init();
     APP_GpioConfig();
-    APP_AdcConfig();
     APP_DmaInit();
+    APP_AdcConfig();
     APP_UartInit();
     APP_PwmInit();
     APP_OneshotInit();
@@ -225,7 +237,7 @@ static void APP_AdcConfig(void)
 
 static void APP_TimerInit(void)
 {
-    /* 240 * 10) / 24Mhz = 100us */
+    /* (240 * 10) / 24Mhz = 100us */
     Tim1Handle.Instance = TIM1;
     Tim1Handle.Init.Period = 10 - 1;
     Tim1Handle.Init.Prescaler = 240 - 1;
@@ -362,18 +374,18 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    static uint16_t period_step_cnt = 0;
+    static uint16_t period_step_cnt = 0xFFFF - 1;
 
     if (htim->Instance == TIM1) {
         period_step_cnt++;
         /* Start ADC when IR led's have been on for 200us. */
-        if (period_step_cnt == 2) {
+        if (period_step_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, 6) != HAL_OK) {
                 APP_ErrorHandler();
             }
 
             /* Power IR led's every 50ms. */
-        } else if (period_step_cnt >= (openflap_ctx.is_idle ? 10000 : 500)) {
+        } else if (period_step_cnt >= (openflap_ctx.is_idle ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS)) {
             period_step_cnt = 0;
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
         }

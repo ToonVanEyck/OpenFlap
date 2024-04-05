@@ -35,11 +35,13 @@ add_executable(${PROJECT_NAME}
     app/src/chain_comm.c
     app/src/property_handlers.c
     app/src/openflap.c
+    app/src/default_config.c
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     DO_GENERATE_PROPERTY_NAMES
     DO_GENERATE_STATE_NAMES
+    SET_DEFAULT_CONFIG
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC jlink_rtt)

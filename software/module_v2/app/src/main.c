@@ -341,9 +341,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
     /* Convert ADC result into grey code. */
     for (uint8_t i = 0; i < 6; i++) {
-        if (aADCxConvertedData[IR_MAP[i]] > openflap_ctx.config.ir_limits[i].ir_high) {
+        if (aADCxConvertedData[IR_MAP[i]] > openflap_ctx.config.ir_limits[i]) {
             encoder_graycode &= ~(1 << i);
-        } else if (aADCxConvertedData[IR_MAP[i]] < openflap_ctx.config.ir_limits[i].ir_low) {
+        } else if (aADCxConvertedData[IR_MAP[i]] < openflap_ctx.config.ir_limits[i]) {
             encoder_graycode |= (1 << i);
         }
     }

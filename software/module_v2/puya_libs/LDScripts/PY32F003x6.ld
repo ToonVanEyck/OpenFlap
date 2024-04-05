@@ -105,6 +105,12 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
+  .config :
+  {
+    . = ALIGN(4);
+    KEEP(*(.config))       /* Non-volatile memory */
+  } >NVS
+
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 

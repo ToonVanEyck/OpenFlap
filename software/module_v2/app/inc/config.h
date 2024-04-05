@@ -1,20 +1,14 @@
 #pragma once
 
-#include "flash.h"
-
-/** Sensor threshold values. */
-typedef struct ir_sens_threshold_tag {
-    uint16_t ir_low;
-    uint16_t ir_high;
-} ir_sens_threshold_t;
+#include "platform.h"
 
 /** Configuration data for NVM storage. */
 typedef struct openflap_config_tag {
-    uint8_t encoder_offset;                  /**< Offset of the encoder compared to the actual symbol index. */
-    ir_sens_threshold_t ir_limits[SENS_CNT]; /**< Sensor thresholds for each IR sensor. */
-    uint8_t vtrim;                           /**< Virtual trim setting. */
-    uint8_t base_speed;                      /**< Base speed of the flap wheel. */
-    uint32_t symbol_set[SYMBOL_CNT];         /**< An array of all supported symbols. */
+    uint8_t encoder_offset;          /**< Offset of the encoder compared to the actual symbol index. */
+    uint16_t ir_limits[SENS_CNT];    /**< Sensor thresholds for each IR sensor. */
+    uint8_t vtrim;                   /**< Virtual trim setting. */
+    uint8_t base_speed;              /**< Base speed of the flap wheel. */
+    uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
 } openflap_config_t;
 
 /** Load the config form NVM. */

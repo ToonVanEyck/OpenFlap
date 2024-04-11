@@ -8,7 +8,8 @@ set(TOOLCHAIN_PREFIX arm-none-eabi-)
 set(ARM_TOOLCHAIN_DIR /opt/gcc-arm/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/bin)
 set(CMAKE_FIND_ROOT_PATH  ${ARM_TOOLCHAIN_DIR})
 
-set(CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -specs=nosys.specs -static -lc -lm -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--gc-sections -Wl,--print-memory-usage -Wl,--no-warn-rwx-segments -T ${CMAKE_SOURCE_DIR}/puya_libs/LDScripts/${PUYA_CHIP}.ld" CACHE INTERNAL "Linker options")
+set(CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -specs=nosys.specs -static -lc -lm -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--gc-sections -Wl,--print-memory-usage -Wl,--no-warn-rwx-segments" CACHE INTERNAL "Linker options")
+# set(CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -specs=nosys.specs -static -lc -lm -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--gc-sections -Wl,--print-memory-usage -Wl,--no-warn-rwx-segments -T ${CMAKE_SOURCE_DIR}/puya_libs/LDScripts/${PUYA_CHIP}.ld" CACHE INTERNAL "Linker options")
 # set(CMAKE_EXE_LINKER_FLAGS "-u _printf_float ${CMAKE_EXE_LINKER_FLAGS}" CACHE INTERNAL "Linker options") # Enable float support for printf
 
 set(CMAKE_C_COMPILER ${ARM_TOOLCHAIN_DIR}/${TOOLCHAIN_PREFIX}gcc)

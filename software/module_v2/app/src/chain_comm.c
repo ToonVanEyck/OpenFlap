@@ -53,7 +53,7 @@ bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
  */
 void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
 {
-    SEGGER_RTT_printf(0, "State: %s -> %s\n", chain_comm_state_names[ctx->state], chain_comm_state_names[state]);
+    debug_io_log_debug("State: %s -> %s\n", chain_comm_state_names[ctx->state], chain_comm_state_names[state]);
     ctx->state = state;
     ctx->rx_cnt = 0;
     ctx->tx_cnt = 0;
@@ -72,16 +72,16 @@ void chain_comm_exec(chain_comm_ctx_t *ctx)
     if (ctx->header.field.action == property_readAll) {
         if (ctx->property_handler[ctx->header.field.property].get) {
             ctx->property_handler[ctx->header.field.property].get(ctx->property_data);
-            SEGGER_RTT_printf(0, "Read %s property\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Read %s property\n", propertyNames[ctx->header.field.property]);
         } else {
-            SEGGER_RTT_printf(0, "Read %s property not supported\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Read %s property not supported\n", propertyNames[ctx->header.field.property]);
         }
     } else if (ctx->header.field.action == property_writeAll || ctx->header.field.action == property_writeSequential) {
         if (ctx->property_handler[ctx->header.field.property].set) {
             ctx->property_handler[ctx->header.field.property].set(ctx->property_data);
-            SEGGER_RTT_printf(0, "Write %s property\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Write %s property\n", propertyNames[ctx->header.field.property]);
         } else {
-            SEGGER_RTT_printf(0, "Write %s property not supported\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Write %s property not supported\n", propertyNames[ctx->header.field.property]);
         }
     }
 }

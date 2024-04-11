@@ -1,5 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
-#include "chain_comm.h"
+// #include "chain_comm.h"
 #include "config.h"
 #include "openflap.h"
 #include "property_handlers.h"
@@ -58,7 +58,7 @@ int main(void)
     HAL_Init();
     BSP_HSI_24MHzClockConfig();
     openflap_ctx.flap_position = SYMBOL_CNT;
-    SEGGER_RTT_Init();
+    debug_io_init();
     APP_GpioConfig();
     APP_DmaInit();
     APP_AdcConfig();
@@ -72,7 +72,7 @@ int main(void)
     configLoad(&openflap_ctx.config);
     propertyHandlersInit(&openflap_ctx);
 
-    SEGGER_RTT_WriteString(0, "OpenFlap module has started!\n");
+    debug_io_log_info("OpenFlap module has started!\n");
 
     /* Set setpoint equal to position to prevent instant rotation. */
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
@@ -85,10 +85,10 @@ int main(void)
     int rtt_key;
     while (1) {
 
-        /* Receive commands from RTT. */
-        rtt_key = SEGGER_RTT_GetKey();
+        /* Receive commands from debug_io. */
+        rtt_key = debug_io_get();
         if (rtt_key > 0) {
-            // SEGGER_RTT_printf(0, "\breceived command:  %c\n", (char)rtt_key);
+            debug_io_log_debug("received command:  %c\n", (char)rtt_key);
             if (rtt_key == '\n') {
                 configPrint(&openflap_ctx.config);
             }
@@ -117,7 +117,7 @@ int main(void)
         if (chain_comm_timeout) {
             uint8_t data = 0x00;
             chain_comm_timeout = false;
-            SEGGER_RTT_printf(0, "Timeout!\n");
+            debug_io_log_debug("Timeout!\n");
             chain_comm(&openflap_ctx.chain_ctx, &data, timeout_event);
         }
 
@@ -131,7 +131,7 @@ int main(void)
         /* Print position. */
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
-            SEGGER_RTT_printf(0, "Position: %d  %s\n", openflap_ctx.flap_position,
+            debug_io_log_info("Position: %d  %s\n", openflap_ctx.flap_position,
                               &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
         }
 
@@ -143,19 +143,19 @@ int main(void)
         if (distance == 0 && !rb_data_available(&rx_rb) && !rb_data_available(&tx_rb)) {
             if (!openflap_ctx.is_idle) {
                 openflap_ctx.is_idle = true;
-                SEGGER_RTT_printf(0, "Idle!\n");
+                debug_io_log_debug("Idle!\n");
                 openflap_ctx.idle_start_ms = HAL_GetTick();
             } else {
                 /* Store config if requested and idle for 500ms. */
                 if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500 && openflap_ctx.store_config) {
                     openflap_ctx.store_config = false;
                     configStore(&openflap_ctx.config);
-                    SEGGER_RTT_printf(0, "Config stored!\n");
+                    debug_io_log_info(0, "Config stored!\n");
                 }
             }
         } else if (openflap_ctx.is_idle) {
             openflap_ctx.is_idle = false;
-            SEGGER_RTT_printf(0, "Active!\n");
+            debug_io_log_debug(0, "Active!\n");
         }
     }
 }
@@ -335,7 +335,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     /* Disable IR led. */
     HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
 
-    // SEGGER_RTT_printf(0, "ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
+    // debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
     //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
     //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
 

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "SEGGER_RTT.h"
+#include "debug_io.h"
 #include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_hal.h"
 

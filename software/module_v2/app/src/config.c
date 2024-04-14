@@ -1,14 +1,17 @@
 #include "config.h"
 #include "flash.h"
 
+/* Use last flash sector for NVM config. */
+#define FLASH_NVM_START_ADDR ((FLASH_END + 1) - (1 * FLASH_SECTOR_SIZE))
+
 void configLoad(openflap_config_t *config)
 {
-    flashRead((flashPage_t *)config, 1 + (sizeof(openflap_config_t) / sizeof(flashPage_t)));
+    flashRead(FLASH_NVM_START_ADDR, (flashPage_t *)config, 1 + (sizeof(openflap_config_t) / sizeof(flashPage_t)));
 }
 
 void configStore(openflap_config_t *config)
 {
-    flashWrite((flashPage_t *)config, 1 + (sizeof(openflap_config_t) / sizeof(flashPage_t)));
+    flashWrite(FLASH_NVM_START_ADDR, (flashPage_t *)config, 1 + (sizeof(openflap_config_t) / sizeof(flashPage_t)));
 }
 
 void configPrint(openflap_config_t *config)

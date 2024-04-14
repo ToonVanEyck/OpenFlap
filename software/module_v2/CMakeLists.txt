@@ -12,18 +12,13 @@ set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 
 set(DEBUG_IO_RTT_BACKEND 1 CACHE BOOL "Use RTT as debug input output backend")
 
-set(LIB_NAME "${PROJECT_NAME}Lib")
 add_subdirectory(lib)
 
 # Include Puya BSP
 target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
 target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 
-set(APP_NAME "${PROJECT_NAME}App")
 add_subdirectory(app)
-
-# set(APP_NAME "${PROJECT_NAME}_BTL")
-# add_subdirectory(boot)
 
 # Configure custom "flash" target
 add_custom_target(flash
@@ -32,9 +27,9 @@ add_custom_target(flash
             --probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
             --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
             --target ${PUYA_CHIP} 
-            ${CMAKE_BINARY_DIR}/app/${APP_NAME}.elf
+            ${CMAKE_BINARY_DIR}/app/${PROJECT_NAME}.elf
     )
-add_dependencies(flash ${APP_NAME})
+add_dependencies(flash ${PROJECT_NAME})
 
 # Configure custom "rtt" target
 add_custom_target(rtt
@@ -45,4 +40,4 @@ add_custom_target(rtt
             --target ${PUYA_CHIP} 
             -a `grep -Po '.*(0x[0-9a-f]{8}).*_SEGGER_RTT' ${CMAKE_BINARY_DIR}/app/${PROJECT_NAME}.map | grep -Po '0x[0-9a-f]{8}'`
     )
-add_dependencies(rtt ${APP_NAME})
+add_dependencies(rtt ${PROJECT_NAME})

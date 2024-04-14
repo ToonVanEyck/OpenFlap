@@ -3,7 +3,7 @@
 #include "platform.h"
 
 typedef struct flashPage_t {
-    uint32_t x[FLASH_PAGE_SIZE / 4];
+    uint32_t b32[FLASH_PAGE_SIZE / 4];
 } flashPage_t;
 
 /** Read from flash memory. */

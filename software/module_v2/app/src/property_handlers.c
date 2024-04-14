@@ -1,11 +1,14 @@
 #include "property_handlers.h"
 #include "config.h"
+#include "flash.h"
 
 static openflap_ctx_t *openflap_ctx = NULL;
 
 void firmware_property_set(uint8_t *buf)
 {
     // TODO
+    uint32_t address = FLASH_BASE + ((uint32_t)buf[0] << 8 + buf[1]);
+    flashWrite(address, (flashPage_t *)(buf + 2), 1);
 }
 
 void command_property_set(uint8_t *buf)

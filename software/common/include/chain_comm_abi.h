@@ -31,7 +31,7 @@ typedef enum __attribute__((__packed__)) {
 
 #define MODULE_PROPERTY(PROPERTY)                                                                                      \
     PROPERTY(no_property, NULL, 0)                                                                                     \
-    PROPERTY(firmware_property, "firmware", 66)                                                                        \
+    PROPERTY(firmware_property, "firmware", 130)                                                                       \
     PROPERTY(command_property, "command", 1)                                                                           \
     PROPERTY(columnEnd_property, "columnEnd", 1)                                                                       \
     PROPERTY(characterMapSize_property, "characterMapSize", 1)                                                         \

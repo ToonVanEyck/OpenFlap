@@ -12,13 +12,12 @@ set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 
 set(DEBUG_IO_RTT_BACKEND 1 CACHE BOOL "Use RTT as debug input output backend")
 
-# Include Puya BSP
-add_subdirectory(puya_libs)
-target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
-target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
-
 set(LIB_NAME "${PROJECT_NAME}Lib")
 add_subdirectory(lib)
+
+# Include Puya BSP
+target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
+target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
 
 set(APP_NAME "${PROJECT_NAME}App")
 add_subdirectory(app)

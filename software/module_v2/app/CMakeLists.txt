@@ -18,8 +18,9 @@ target_compile_definitions(${APP_NAME} PUBLIC
     SET_DEFAULT_CONFIG # provide a default configuration in the binary
 )
 
+target_link_libraries(${APP_NAME} PUBLIC debug_io)
 target_link_libraries(${APP_NAME} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
-target_link_libraries(${APP_NAME} PUBLIC ${LIB_NAME})
+
 target_include_directories(${APP_NAME} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_CURRENT_SOURCE_DIR}/LinkerScript.ld" CACHE INTERNAL "Linker options")

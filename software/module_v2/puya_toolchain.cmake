@@ -2,7 +2,7 @@
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR ARM)
 
-set(PUYA_CHIP "PY32F003x6")
+set(PUYA_CHIP "PY32F003x8")
 
 set(TOOLCHAIN_PREFIX arm-none-eabi-)
 set(ARM_TOOLCHAIN_DIR /opt/gcc-arm/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/bin)

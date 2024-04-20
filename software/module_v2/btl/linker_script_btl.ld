@@ -27,19 +27,7 @@ _Min_Heap_Size = 0x200;   /* required amount of heap: 512 bytes */
 _Min_Stack_Size = 0x400;  /* required amount of stack: 1024 bytes */
 
 /* Specify the memory areas */
-/* MEMORY
-{
-  RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 8K
-  FLASH (rx)     : ORIGIN = 0x08001000, LENGTH = 28K /* [ 64K (total) - 4K (nvs) -4K (bootloader)] / 2 (2 partitions) = 28K  / 
-  NVS (rx)       : ORIGIN = 0x0800F000, LENGTH = 4K  /* Flash sector used to store OpenFlap configuration. /
-} */
-MEMORY
-{
-  RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 4K  /* TODO: CHANGE TO 8K RAM */
-  FLASH_APP (rx) : ORIGIN = 0x08000000, LENGTH = 28K - 4 /* [ 32K (total) - 4K (nvs) = 28K  */ 
-  FLASH_CS(r)    : ORIGIN = 0x08006FFC, LENGTH = 4  /* Checksum sector */
-  FLASH_NVS (rx) : ORIGIN = 0x08007000, LENGTH = 4K  /* Flash sector used to store OpenFlap configuration. */
-}
+INCLUDE memory_map.ld
 
 /* Define output sections */
 SECTIONS
@@ -56,7 +44,7 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-  } >FLASH_APP
+  } >FLASH_BTL
 
   /* The program code and other data goes into FLASH */
   .text :
@@ -73,7 +61,7 @@ SECTIONS
 
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
-  } >FLASH_APP
+  } >FLASH_BTL
 
   /* Constant data goes into FLASH */
   .rodata :
@@ -82,35 +70,35 @@ SECTIONS
     *(.rodata)         /* .rodata sections (constants, strings, etc.) */
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
-  } >FLASH_APP
+  } >FLASH_BTL
 
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH_APP
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH_BTL
   .ARM : {
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
-  } >FLASH_APP
+  } >FLASH_BTL
 
   .preinit_array     :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >FLASH_APP
+  } >FLASH_BTL
   .init_array :
   {
     PROVIDE_HIDDEN (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } >FLASH_APP
+  } >FLASH_BTL
   .fini_array :
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
     KEEP (*(SORT(.fini_array.*)))
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } >FLASH_APP
+  } >FLASH_BTL
 
   .checksum :
   {
@@ -137,7 +125,7 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >RAM AT> FLASH_NVS
+  } >RAM AT> FLASH_BTL
 
   
   /* Uninitialized data section */

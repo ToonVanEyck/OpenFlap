@@ -1,16 +1,5 @@
 #pragma once
 
-// #if defined(RTT_BACKEND)
-// #include "debug_io_rtt.h"
-// // #elif defined(UART_BACKEND)
-
-// #else /* No backend defined */
-// #define LOG_DEBUG(fmt, ...)
-// #define LOG_INFO(fmt, ...)
-// #define LOG_WARN(fmt, ...)
-// #define LOG_ERROR(fmt, ...)
-// #endif
-
 /**
  * \brief Initialize the debug IO.
  */

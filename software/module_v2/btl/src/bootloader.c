@@ -4,24 +4,26 @@
 #include "py32f0xx_hal.h"
 #include <stdint.h>
 
-static __attribute__((naked)) void start_app(uint32_t pc, uint32_t sp)
+typedef struct vector_table_tag {
+    uint32_t initial_stack_pointer;
+    void (*reset_handler)(void);
+} vector_table_t;
+
+void jump_to_app(void)
 {
-    __asm("           \n\
-          msr msp, r1 /* load r1 into MSP */\n\
-          bx r0       /* branch to the address at r0 */\n\
-    ");
+    vector_table_t *app_vector_table = (vector_table_t *)&__FLASH_APP_START__;
+    __disable_irq();
+    __set_CONTROL(0);
+    __set_MSP(app_vector_table->initial_stack_pointer);
+    SCB->VTOR = app_vector_table->initial_stack_pointer;
+    app_vector_table->reset_handler();
 }
 
 int main(void)
 {
     debug_io_init();
     debug_io_log_info("OpenFlap Bootloader!\n");
-    uint32_t *app_code = (uint32_t *)__FLASH_APP_START__;
-    uint32_t app_sp = app_code[0];
-    uint32_t app_start = app_code[1];
-    start_app(app_start, app_sp);
-    // SCB->VTOR = SRAM_BASE;
-    /* Not Reached */
+    jump_to_app();
     while (1) {
     }
 }

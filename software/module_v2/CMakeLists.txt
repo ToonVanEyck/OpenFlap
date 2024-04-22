@@ -29,7 +29,7 @@ add_custom_command(OUTPUT ${PROJECT_NAME}.hex
     COMMAND srec_cat 
             app/${App}.hex -Intel 
             btl/${Btl}.hex -Intel 
-            -o ${PROJECT_NAME}.hex -Intel -address-length=4
+            -o ${PROJECT_NAME}.hex -Intel -line-length=44
     DEPENDS ${App} ${Btl}
     )
 

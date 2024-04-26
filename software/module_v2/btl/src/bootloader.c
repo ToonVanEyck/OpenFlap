@@ -6,9 +6,10 @@
 #define CRC_VALID (0)
 #define APP_INDEX_SIZE (2)
 
+#define APP_SIZE (((uint32_t) & __FLASH_APP_SIZE__) / 4 + ((uint32_t) & __FLASH_CS_SIZE__) / 4)
+#define APP_START ((uint32_t *)&__FLASH_APP_START__)
+
 static openflap_config_t config;
-static uint32_t app_size;
-static uint32_t *app_start;
 
 typedef struct vector_table_tag {
     uint32_t initial_stack_pointer;
@@ -17,7 +18,7 @@ typedef struct vector_table_tag {
 
 void jump_to_app(uint8_t app_index)
 {
-    vector_table_t *app_vector_table = (vector_table_t *)(app_start + (app_index * app_size));
+    vector_table_t *app_vector_table = (vector_table_t *)(APP_START + (app_index * APP_SIZE));
     __disable_irq();
     __set_CONTROL(0);
     __set_MSP(app_vector_table->initial_stack_pointer);
@@ -31,11 +32,6 @@ int main(void)
 {
     HAL_Init();
 
-    /* Set App size */
-    app_size = ((uint32_t)&__FLASH_APP_SIZE__) / 4 + ((uint32_t)&__FLASH_CS_SIZE__) / 4;
-    /* Set App memory */
-    app_start = (uint32_t *)&__FLASH_APP_START__;
-
     /* Load config */
     configLoad(&config);
 
@@ -47,7 +43,7 @@ int main(void)
     /* Calculate checksums of apps. */
     uint32_t app_crc[APP_INDEX_SIZE] = {0xFFFFFFFF};
     for (uint8_t i = 0; i < APP_INDEX_SIZE; i++) {
-        app_crc[i] = HAL_CRC_Calculate(&CrcHandle, app_start + (i * app_size), app_size);
+        app_crc[i] = HAL_CRC_Calculate(&CrcHandle, APP_START + (i * APP_SIZE), APP_SIZE);
     }
 
     uint8_t valid_app = APP_INDEX_SIZE;

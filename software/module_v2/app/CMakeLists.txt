@@ -3,8 +3,8 @@ add_executable(${App}
     src/py32f0xx_it.c 
     src/py32f0xx_hal_msp.c 
     src/main.c 
-    src/config.c 
-    src/flash.c 
+    # src/config.c 
+    # src/flash.c 
     src/chain_comm.c
     src/property_handlers.c
     src/openflap.c
@@ -13,12 +13,12 @@ add_executable(${App}
 )
 
 target_compile_definitions(${App} PUBLIC
-    DO_GENERATE_PROPERTY_NAMES # Generate property names for chain comm properties
-    DO_GENERATE_STATE_NAMES # Generate state names for chain comm fsm
-    SET_DEFAULT_CONFIG # provide a default configuration in the binary
+    DO_GENERATE_PROPERTY_NAMES  # Generate property names for chain comm properties
+    DO_GENERATE_STATE_NAMES     # Generate state names for chain comm fsm
+    SET_DEFAULT_CONFIG          # provide a default configuration in the binary
 )
 
-target_link_libraries(${App} PUBLIC debug_io)
+target_link_libraries(${App} PUBLIC debug_io config flash config)
 target_link_libraries(${App} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
 target_include_directories(${App} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 
@@ -28,5 +28,29 @@ add_custom_command(TARGET ${App}
     POST_BUILD
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating hex file"
-    COMMAND ${CMAKE_OBJCOPY} ARGS -O ihex ${App}.elf ${App}.hex
+    COMMAND ${CMAKE_OBJCOPY} ARGS 
+        -O ihex ${App}.elf temp.hex
+)
+
+add_custom_command(TARGET ${App}
+    POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Calculating and inserting CRC into hex file"
+    COMMAND srec_cat ARGS 
+        temp.hex -Intel 
+        -crop 0x08001000 0x08007FFC 
+        -fill 0xFF 0x08001000 0x08007FFC
+        -STM32 0x08007FFC
+        # -line-length=44
+        -o ${CMAKE_BINARY_DIR}/bin/${App}.hex -Intel
+)
+
+add_custom_command(TARGET ${App}
+    POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Extracting config from hex file"
+    COMMAND srec_cat ARGS 
+        temp.hex -Intel 
+        -crop 0x0800F000 0x0800FFFF 
+        -o ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_Cfg.hex -Intel
 )

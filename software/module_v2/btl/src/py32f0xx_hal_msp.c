@@ -154,4 +154,15 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef *htim)
     __HAL_RCC_TIM3_RELEASE_RESET();
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);
 }
+
+void HAL_CRC_MspInit(CRC_HandleTypeDef *hcrc)
+{
+    __HAL_RCC_CRC_CLK_ENABLE(); /* Enable CRC clock */
+}
+
+void HAL_CRC_MspDeInit(CRC_HandleTypeDef *hcrc)
+{
+    __HAL_RCC_CRC_FORCE_RESET();
+    __HAL_RCC_CRC_RELEASE_RESET();
+}
 /************************ (C) COPYRIGHT Puya *****END OF FILE******************/

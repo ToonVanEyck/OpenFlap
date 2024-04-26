@@ -1,4 +1,5 @@
 #include "config.h"
+#include "debug_io.h"
 #include "flash.h"
 
 /* Use last flash sector for NVM config. */

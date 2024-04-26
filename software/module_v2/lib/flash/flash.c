@@ -1,4 +1,5 @@
 #include "flash.h"
+#include <string.h>
 
 static void flashErase(uint32_t address);
 

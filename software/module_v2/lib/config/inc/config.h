@@ -1,6 +1,11 @@
 #pragma once
+#include <stdint.h>
 
-#include "platform.h"
+/** The number of flaps in the split flap module. */
+#define SYMBOL_CNT (48)
+
+/** The number of IR sensors. */
+#define SENS_CNT (6)
 
 /** Configuration data for NVM storage. */
 typedef struct openflap_config_tag {
@@ -9,6 +14,7 @@ typedef struct openflap_config_tag {
     uint8_t vtrim;                   /**< Virtual trim setting. */
     uint8_t base_speed;              /**< Base speed of the flap wheel. */
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
+    uint8_t active_app_index;        /**< Index of the active app which the bootloader must load. */
 } openflap_config_t;
 
 /** Load the config form NVM. */

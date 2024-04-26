@@ -8,12 +8,6 @@
 #include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_hal.h"
 
-/** The number of flaps in the split flap module. */
-#define SYMBOL_CNT (48)
-
-/** The number of IR sensors. */
-#define SENS_CNT (6)
-
 /** Map sensor adc channel to bit in encoder byte:
  *  - Bit 0 <-- ADC channel 2
  *  - Bit 1 <-- ADC channel 3

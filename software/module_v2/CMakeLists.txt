@@ -68,6 +68,6 @@ add_custom_target(rtt
             #--probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
             --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
             --target ${PUYA_CHIP} 
-            #-a `grep -Po '.*(0x[0-9a-f]{8}).*_SEGGER_RTT' ${CMAKE_BINARY_DIR}/app/${PROJECT_NAME}.map | grep -Po '0x[0-9a-f]{8}'`
+            -a `grep -Po '.*(0x[0-9a-f]{8}).*_SEGGER_RTT' ${CMAKE_BINARY_DIR}/app/${PROJECT_NAME}.map | grep -Po '0x[0-9a-f]{8}'`
     )
 # add_dependencies(rtt ${App})

@@ -2,6 +2,7 @@
 #include "memory_map.h"
 #include "py32f0xx_hal.h"
 #include <stdint.h>
+#include <string.h>
 
 #define CRC_VALID (0)
 #define APP_INDEX_SIZE (2)
@@ -19,10 +20,13 @@ typedef struct vector_table_tag {
 void jump_to_app(uint8_t app_index)
 {
     vector_table_t *app_vector_table = (vector_table_t *)(APP_START + (app_index * APP_SIZE));
-    __disable_irq();
-    __set_CONTROL(0);
+    /* Set stack pointer */
     __set_MSP(app_vector_table->initial_stack_pointer);
-    SCB->VTOR = app_vector_table->initial_stack_pointer;
+    /* Don't set vector table offset, vectors are copied to RAM. */
+    // SCB->VTOR = (uint32_t)app_vector_table;
+    memset((uint32_t *)NVIC->ICER, 0xFF, sizeof(NVIC->ICER));
+    memset((uint32_t *)NVIC->ICPR, 0xFF, sizeof(NVIC->ICPR));
+    /* Jump to reset handler */
     app_vector_table->reset_handler();
 }
 

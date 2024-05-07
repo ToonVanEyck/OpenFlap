@@ -3,8 +3,6 @@ add_executable(${App}
     src/py32f0xx_it.c 
     src/py32f0xx_hal_msp.c 
     src/main.c 
-    # src/config.c 
-    # src/flash.c 
     src/chain_comm.c
     src/property_handlers.c
     src/openflap.c

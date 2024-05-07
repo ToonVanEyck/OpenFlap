@@ -8,7 +8,7 @@ static bool format_ended_in_newline = true;
 
 static inline bool format_end_in_newline(const char *fmt)
 {
-    return fmt[strlen(fmt) - 1] == '\n';
+    return (fmt[0] != 0) && (fmt[strlen(fmt) - 1] == '\n');
 }
 
 void debug_io_init(void)

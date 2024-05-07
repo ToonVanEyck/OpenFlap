@@ -61,6 +61,17 @@ add_custom_target(flash_target
     )
 add_dependencies(flash_target BtlAppCfg_hex)
 
+# Configure custom "flash" target
+add_custom_target(flash_app
+    COMMENT "Flashing bootloader + App on Puya board"
+    COMMAND pyocd load 
+            --probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
+            --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
+            --target ${PUYA_CHIP} 
+            ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_AppApp.hex
+    )
+add_dependencies(flash_target AppApp_hex)
+
 # Configure custom "rtt" target
 add_custom_target(rtt
     COMMENT "Starting rtt listener"

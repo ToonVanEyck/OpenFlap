@@ -8,7 +8,7 @@ typedef struct flashPage_t {
 } flashPage_t;
 
 /** Read from flash memory. */
-void flashRead(uint32_t address, flashPage_t *data, uint8_t page_cnt);
+void flashRead(uint32_t address, uint8_t *data, uint32_t size);
 
 /** Write to flash memory. */
-void flashWrite(uint32_t address, flashPage_t *data, uint8_t page_cnt);
+void flashWrite(uint32_t address, uint8_t *data, uint32_t size);

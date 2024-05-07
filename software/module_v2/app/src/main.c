@@ -11,10 +11,10 @@
 /** Convert a microsecond value into a counter value for the IR/Encoder timer. */
 #define IR_TIMER_TICKS_FROM_US(us) ((us) / 100)
 
-/** The period of the encoder readings when the system is active. */
-#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
 /** The period of the encoder readings when the system is idle. */
-#define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
+#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50) // 1000)
+/** The period of the encoder readings when the system is active. */
+#define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
 /** The IR sensor will iluminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
 
@@ -31,7 +31,7 @@ TIM_HandleTypeDef Tim14Handle; // Oneshot - comms
 
 UART_HandleTypeDef UartHandle;
 
-static openflap_ctx_t openflap_ctx;
+static openflap_ctx_t openflap_ctx = {0};
 
 static uint8_t uart_rx_buf[1];
 static uint8_t uart_tx_buf[1];
@@ -385,7 +385,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
 
             /* Power IR led's every 50ms. */
-        } else if (period_step_cnt >= (openflap_ctx.is_idle ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS)) {
+        } else if (period_step_cnt >= (openflap_ctx.is_idle ? IR_IDLE_PERIOD_MS : IR_ACTIVE_PERIOD_MS)) {
             period_step_cnt = 0;
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
         }

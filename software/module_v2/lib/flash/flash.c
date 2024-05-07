@@ -3,26 +3,31 @@
 
 static void flashErase(uint32_t address);
 
-void flashRead(uint32_t address, flashPage_t *data, uint8_t page_cnt)
+void flashRead(uint32_t address, uint8_t *data, uint32_t size)
 {
-    memcpy(data, (void *)address, page_cnt * sizeof(flashPage_t));
+    memcpy(data, (void *)address, size);
 }
 
-void flashWrite(uint32_t address, flashPage_t *data, uint8_t page_cnt)
+void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
 {
     HAL_FLASH_Unlock();
     if (!(address % FLASH_SECTOR_SIZE)) {
         flashErase(address);
     }
-    uint32_t flash_program_start = address;
-    uint32_t flash_program_end = (address + page_cnt * FLASH_PAGE_SIZE);
+    uint32_t flash_addr = address;
+    uint32_t flash_end = (address + size);
     flashPage_t *src = (flashPage_t *)data;
 
-    while (flash_program_start < flash_program_end) {
+    while (flash_addr < flash_end) {
+        // Create temporary page to pad the page with 0xFF bytes.
+        uint32_t size_remaining = flash_end - flash_addr;
+        flashPage_t data_page;
+        memset(&data_page, UINT32_MAX, sizeof(flashPage_t));
+        memcpy(&data_page, src, size_remaining < FLASH_PAGE_SIZE ? size_remaining : FLASH_PAGE_SIZE);
         // Write to flash
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, flash_program_start, (uint32_t *)src) == HAL_OK) {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, flash_addr, (uint32_t *)&data_page) == HAL_OK) {
             // Move flash point to next page
-            flash_program_start += FLASH_PAGE_SIZE;
+            flash_addr += FLASH_PAGE_SIZE;
             // Move data point
             src++;
         }

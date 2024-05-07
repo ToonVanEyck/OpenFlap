@@ -1,6 +1,0 @@
-set system.yestoalldialog true
-device PIC16F15225
-hwtool pickit4 -p
-upload
-dump -pc split_flap_dump.hex
-quit

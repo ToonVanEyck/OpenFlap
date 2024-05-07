@@ -1,5 +1,0 @@
-set system.yestoalldialog true
-device PIC16F15225
-hwtool pickit4 -p
-program split_flap_bootloader.hex
-quit

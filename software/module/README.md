@@ -1,30 +1,34 @@
-Open Flap Module
-================
+# Puya Playground
 
-The open flap modules are controlled by a PIC16F15225. This micro controller can be programmed using the (PICkit 4)[https://www.microchip.com/en-us/development-tool/PG164140]. The firmware should be compiled using the microchip (XC8 compiler)[https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers].
+This is a VS-Code devcontainer based development environment for the Puya PY32 family of ARM Cortex M0 microcontrollers. It's based on [IOsetting's work](https://github.com/IOsetting/py32f0-template) but it has been wrapped in a devcontainer and I changed the build system to CMake.
 
-Build instructions
-------------------
+I have tested this setup with [this devkit from aliexpress](https://nl.aliexpress.com/item/1005004959178538.html).
 
-Note: make sure all git submodules are cloned!
+## Getting Started
+
+Connect the devkit as shown in the image below.
+
+![devkit](./docs/puya_devkit.jpg)
+
+Start the development container
+
+In the development container verify that the debug probe is connected:
 ```
-cd software/module/
+vscode ➜ /workspace/build $ pyocd list
+  #   Probe/Board             Unique ID                                          Target         
+------------------------------------------------------------------------------------------------
+  0   ARM DAPLink CMSIS-DAP   070000003233d72f083932363836374da5a5a5a597969908   ✖︎ stm32f103rb  
+      NUCLEO-F103RB
+```
+
+## Building
+```
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_TOOLCHAIN_FILE=puya_toolchain.cmake ..
 make
-```
-
-Flashing with the PICkit 4
---------------------------
-
-```
 make flash
 ```
 
-Preforming an over-the-air update
----------------------------------
-
-```
-make update
-```
+## Debugging
+A `launch.json` file is configured to use the debug capabilities of VS-Code 

@@ -1,44 +1,84 @@
-# set up the Microchip cross toolchain
-set(CMAKE_TOOLCHAIN_FILE external/cmake-microchip/toolchain.cmake)
-# set the default MCU model
-set(MICROCHIP_MCU PIC16F15225)
+cmake_minimum_required (VERSION 3.16.3 FATAL_ERROR)
 
-cmake_minimum_required(VERSION 3.14)
+project(OpenFlap_Module  LANGUAGES  C CXX)
+set (CMAKE_C_STANDARD 11)
 
-project(SplitFlap   VERSION     1.0
-                    LANGUAGES   C
-                    DESCRIPTION "Firmware for a SplitFlap display module")
-
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-
-include_directories("${CMAKE_SOURCE_DIR}/../common")
-
-find_package(Git REQUIRED)
-execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --match "V*" OUTPUT_VARIABLE GIT_VERSION_STRING OUTPUT_STRIP_TRAILING_WHITESPACE)
-string(REGEX MATCH "^V([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([0-9]*)-?g?([a-z0-9]*)-?(dirty)?" MATCH_DUMMY "${GIT_VERSION_STRING}")
-set(CMAKE_PROJECT_VERSION_MAJOR ${CMAKE_MATCH_1})
-set(CMAKE_PROJECT_VERSION_MINOR ${CMAKE_MATCH_2})
-set(CMAKE_PROJECT_VERSION_PATCH ${CMAKE_MATCH_3})
-set(CMAKE_PROJECT_VERSION_TWEAK ${CMAKE_MATCH_4}) # Number of commits after release-tag
-set(GIT_VERSION_HASH  ${CMAKE_MATCH_5}) # Hash of current commit
-set(GIT_VERSION_IS_DIRTY ${CMAKE_MATCH_6})
-set(CMAKE_PROJECT_VERSION "${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH}.${CMAKE_PROJECT_VERSION_TWEAK}")
-
-if("${GIT_VERSION_IS_DIRTY}" STREQUAL "")
-    set(GIT_VERSION_IS_DIRTY 0)
-else()
-    set(GIT_VERSION_IS_DIRTY 1)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-if("${GIT_VERSION_COMMITS_AFTER_TAG}" STREQUAL "")
-    set(GIT_VERSION_COMMITS_AFTER_TAG 0)
-endif()
+add_compile_definitions(${PUYA_CHIP})
+set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 
-message(STATUS "${CMAKE_PROJECT_VERSION_MAJOR} ${CMAKE_PROJECT_VERSION_MINOR} ${CMAKE_PROJECT_VERSION_PATCH} ${CMAKE_PROJECT_VERSION_TWEAK} ${GIT_VERSION_HASH} ${GIT_VERSION_IS_DIRTY}")
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/firmware/version.c.in ${CMAKE_CURRENT_BINARY_DIR}/firmware/version.c)
+set(DEBUG_IO_RTT_BACKEND 1 CACHE BOOL "Use RTT as debug input output backend")
 
-add_subdirectory(firmware)
+add_subdirectory(lib)
+
+# Include Puya BSP
+target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
+target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/btl/inc)
+target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../common/include)
+
+set(App ${PROJECT_NAME}_App)
+set(Btl ${PROJECT_NAME}_Btl)
+add_subdirectory(app)
+add_subdirectory(btl)
+
+add_custom_command(OUTPUT ${PROJECT_NAME}_BtlAppCfg.hex
+    COMMENT "Merging Bootloader, Application and Configuration"
+    COMMAND srec_cat 
+            bin/${PROJECT_NAME}_App.hex -Intel 
+            bin/${PROJECT_NAME}_Cfg.hex -Intel 
+            btl/${Btl}.hex -Intel 
+            -o bin/${PROJECT_NAME}_BtlAppCfg.hex -Intel -line-length=44
+    DEPENDS ${App} ${Btl}
+    )
+add_custom_target(BtlAppCfg_hex ALL DEPENDS ${PROJECT_NAME}_BtlAppCfg.hex)
+
+add_custom_command(OUTPUT ${PROJECT_NAME}_AppApp.hex
+    COMMENT "Duplicating Application with offset"
+    COMMAND srec_cat 
+            bin/${PROJECT_NAME}_App.hex -Intel 
+            -offset 0x7000
+            bin/${PROJECT_NAME}_App.hex -Intel 
+            -o bin/${PROJECT_NAME}_AppApp.hex -Intel -line-length=44
+    DEPENDS ${App} ${Btl}
+    )
+add_custom_target(AppApp_hex ALL DEPENDS ${PROJECT_NAME}_AppApp.hex)
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L ${CMAKE_SOURCE_DIR}" CACHE INTERNAL "Linker options")
+
+# Configure custom "flash" target
+add_custom_target(flash_target
+    COMMENT "Flashing bootloader + App on Puya board"
+    COMMAND pyocd load 
+            --probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
+            --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
+            --target ${PUYA_CHIP} 
+            ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_BtlAppCfg.hex
+    )
+add_dependencies(flash_target BtlAppCfg_hex)
+
+# Configure custom "flash" target
+add_custom_target(flash_app
+    COMMENT "Flashing bootloader + App on Puya board"
+    COMMAND pyocd load 
+            --probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
+            --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
+            --target ${PUYA_CHIP} 
+            ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_AppApp.hex
+    )
+add_dependencies(flash_target AppApp_hex)
+
+# Configure custom "rtt" target
+add_custom_target(rtt
+    COMMENT "Starting rtt listener"
+    COMMAND pyocd rtt 
+            #--probe `pyocd list | grep -Po '[0-9a-z]{48}|LU_2022_8888'`
+            --pack ${CMAKE_SOURCE_DIR}/Puya.PY32F0xx_DFP.1.1.7.pack 
+            --target ${PUYA_CHIP} 
+            -a `grep -Po '.*(0x[0-9a-f]{8}).*_SEGGER_RTT' ${CMAKE_BINARY_DIR}/app/${PROJECT_NAME}.map | grep -Po '0x[0-9a-f]{8}'`
+    )
+# add_dependencies(rtt ${App})

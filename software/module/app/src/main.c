@@ -18,6 +18,10 @@
 /** The IR sensor will iluminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
 
+#ifndef VERSION
+#define VERSION "not found"
+#endif
+
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
@@ -73,6 +77,7 @@ int main(void)
     propertyHandlersInit(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
+    debug_io_log_debug("App %d active. Version: %s\n", openflap_ctx.config.active_app_index, VERSION);
 
     /* Set setpoint equal to position to prevent instant rotation. */
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
@@ -140,22 +145,22 @@ int main(void)
         __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
 
         /* Idle logic */
-        if (distance == 0 && !rb_data_available(&rx_rb) && !rb_data_available(&tx_rb)) {
-            if (!openflap_ctx.is_idle) {
-                openflap_ctx.is_idle = true;
-                debug_io_log_debug("Idle!\n");
+        if (openflap_ctx.is_idle) {
+            if (distance) { /* Become active if distance is non-zero. */
+                openflap_ctx.is_idle = false;
                 openflap_ctx.idle_start_ms = HAL_GetTick();
-            } else {
-                /* Store config if requested and idle for 500ms. */
-                if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500 && openflap_ctx.store_config) {
-                    openflap_ctx.store_config = false;
-                    configStore(&openflap_ctx.config);
-                    debug_io_log_info(0, "Config stored!\n");
-                }
+                debug_io_log_info("Active!\n");
             }
-        } else if (openflap_ctx.is_idle) {
-            openflap_ctx.is_idle = false;
-            debug_io_log_debug(0, "Active!\n");
+            /* Store config if requested and idle for 500ms. */
+            if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500 && openflap_ctx.store_config) {
+                openflap_ctx.store_config = false;
+                configStore(&openflap_ctx.config);
+                debug_io_log_info(0, "Config stored!\n");
+            }
+        } else if (!distance && !rb_data_available(&rx_rb) && !rb_data_available(&tx_rb)) {
+            openflap_ctx.is_idle = true;
+            debug_io_log_info("Idle!\n");
+            openflap_ctx.idle_start_ms = HAL_GetTick();
         }
     }
 }

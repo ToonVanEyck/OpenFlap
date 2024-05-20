@@ -41,11 +41,11 @@ static esp_err_t index_page_get_handler(httpd_req_t *req)
 static const httpd_uri_t index_page = {
     .uri = "/", .method = HTTP_GET, .handler = index_page_get_handler, .user_ctx = NULL};
 
-typedef enum { update_module, update_controller } update_firmware_t;
+typedef enum { update_none, update_module, update_controller } update_firmware_t;
 
 static esp_err_t firmware_handler(httpd_req_t *req)
 {
-    static update_firmware_t update;
+    static update_firmware_t update = update_none;
     controller_queue_data_t *controller_comm = calloc(1, sizeof(controller_queue_data_t));
     int read_cnt = 0;
     int boundry_length = 0;
@@ -66,7 +66,7 @@ static esp_err_t firmware_handler(httpd_req_t *req)
     regmatch_t groupArray[5];
     b.re_magic = 0;
     int reti;
-    reti = regcomp(&b, "name=\"controller_([a-z_]*)\"", REG_EXTENDED);
+    reti = regcomp(&b, "name=\"([a-z_]*)\"", REG_EXTENDED);
     if (reti) {
         printf("Can't compile re\r\n");
     } else {
@@ -77,11 +77,15 @@ static esp_err_t firmware_handler(httpd_req_t *req)
                     break; // No more groups
                 controller_comm->data[groupArray[g].rm_eo] = 0;
                 if (g == 1) {
-                    if (!strcmp(controller_comm->data + groupArray[g].rm_so, "controller_firmware"))
+                    if (!strcmp(controller_comm->data + groupArray[g].rm_so, "controller_firmware")) {
                         update = update_controller;
-                    else if (!strcmp(controller_comm->data + groupArray[g].rm_so, "module_firmware"))
+                        ESP_LOGI(TAG, "command: update_controller");
+                    } else if (!strcmp(controller_comm->data + groupArray[g].rm_so, "module_firmware")) {
                         update = update_module;
-                    ESP_LOGI(TAG, "command: %s,", controller_comm->data + groupArray[g].rm_so);
+                        ESP_LOGI(TAG, "command: update_module");
+                    } else {
+                        ESP_LOGI(TAG, "command: undefined");
+                    }
                 }
             }
         }
@@ -91,7 +95,7 @@ static esp_err_t firmware_handler(httpd_req_t *req)
     controller_comm->data_len = CMD_COMM_BUF_LEN;
     controller_comm->data_offset = 0;
 
-    ESP_LOGI(TAG, "total usefull data len %d, + boundry %d", controller_comm->total_data_len, req->content_len);
+    ESP_LOGI(TAG, "total useful data len %d, + boundry %d", controller_comm->total_data_len, req->content_len);
     ESP_LOGI(TAG, "already read %d, after data read %d", read_cnt, boundry_length);
 
     bzero(controller_comm->data, CMD_COMM_BUF_LEN);
@@ -102,7 +106,7 @@ static esp_err_t firmware_handler(httpd_req_t *req)
         if (update == update_controller) {
             flap_controller_firmware_update(controller_comm->data, controller_comm->data_len,
                                             controller_comm->data_offset, controller_comm->total_data_len);
-        } else {
+        } else if (update == update_module) {
             flap_module_firmware_update(controller_comm->data, controller_comm->data_len, controller_comm->data_offset,
                                         controller_comm->total_data_len);
         }
@@ -117,7 +121,7 @@ static esp_err_t firmware_handler(httpd_req_t *req)
         if (update == update_controller) {
             flap_controller_firmware_update(controller_comm->data, controller_comm->data_len,
                                             controller_comm->data_offset, controller_comm->total_data_len);
-        } else {
+        } else if (update == update_module) {
             flap_module_firmware_update(controller_comm->data, controller_comm->data_len, controller_comm->data_offset,
                                         controller_comm->total_data_len);
         }

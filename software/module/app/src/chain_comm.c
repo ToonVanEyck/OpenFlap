@@ -9,7 +9,7 @@ bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_
 bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-// bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 bool chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
 
@@ -31,8 +31,8 @@ bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
             return chain_comm_state_readAll_txData(ctx, data, event);
         case writeAll_rxData:
             return chain_comm_state_writeAll_rxData(ctx, data, event);
-        // case writeAll_rxAck:
-        //     return chain_comm_state_writeAll_rxAck(ctx, data, event);
+        case writeAll_rxAck:
+            return chain_comm_state_writeAll_rxAck(ctx, data, event);
         case writeSeq_rxData:
             return chain_comm_state_writeSeq_rxData(ctx, data, event);
         case writeSeq_rxToTx:
@@ -266,7 +266,38 @@ bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chai
             ctx->property_data[ctx->rx_cnt - 1] = *data;
             if (ctx->rx_cnt == propertySizes[ctx->header.field.property]) {
                 chain_comm_exec(ctx);
-                chain_comm_state_change(ctx, rxHeader);
+                chain_comm_state_change(ctx, writeAll_rxAck);
+            }
+            txData = true;
+            break;
+        case tx_event:
+            break;
+        case timeout_event:
+            chain_comm_state_change(ctx, rxHeader);
+            break;
+    }
+    return txData;
+}
+
+/**
+ * \brief Handles the writeAll_rxAck state of the chain communication FSM.
+ *
+ * This state waits for an acknowledgement from the previous module. Once the acknowledgement has been received, the
+ * state will change to rxHeader.
+ *
+ * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
+ * \param[in] data Pointer to the data received.
+ * \param[in] event The event type.
+ *
+ * \return True if data needs to be transmitted, false otherwise.
+ */
+bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+{
+    bool txData = false;
+    switch (event) {
+        case rx_event:
+            if (*data == 0x00) {
+                chain_comm_state_change(ctx, writeAll_rxAck);
             }
             txData = true;
             break;

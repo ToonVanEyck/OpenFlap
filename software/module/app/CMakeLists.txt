@@ -16,11 +16,14 @@ target_compile_definitions(${App} PUBLIC
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary
 )
 
+string(TIMESTAMP VERSION_STRING "\"%d/%m/%Y %H:%M:%S\"")
+
 target_link_libraries(${App} PUBLIC debug_io config flash config)
 target_link_libraries(${App} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
 target_include_directories(${App} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 
 set_target_properties(${App} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker_script_app.ld")
+target_compile_definitions(${App} PUBLIC VERSION=${VERSION_STRING})
 
 add_custom_command(TARGET ${App}
     POST_BUILD
@@ -41,6 +44,11 @@ add_custom_command(TARGET ${App}
         -STM32 0x08007FFC
         # -line-length=44
         -o ${CMAKE_BINARY_DIR}/bin/${App}.hex -Intel
+    COMMAND ${CMAKE_OBJCOPY} ARGS
+        --input-target=ihex 
+        --output-target=binary 
+        ${CMAKE_BINARY_DIR}/bin/${App}.hex
+        ${CMAKE_BINARY_DIR}/bin/${App}.bin
 )
 
 add_custom_command(TARGET ${App}

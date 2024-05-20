@@ -19,8 +19,8 @@
     GENERATOR(readAll_txData, "readAll_txData")                                                                        \
     GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
     GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
-    GENERATOR(writeSeq_rxToTx, "writeSeq_rxToTx")
-// GENERATOR(writeAll_rxAck, "writeAll_rxAck")
+    GENERATOR(writeSeq_rxToTx, "writeSeq_rxToTx")                                                                      \
+    GENERATOR(writeAll_rxAck, "writeAll_rxAck")
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chain_comm_state_t;
 
@@ -39,6 +39,7 @@ typedef enum {
     rx_event,
     tx_event,
     timeout_event,
+    actionCompletion_event,
 } chain_comm_event_t;
 
 typedef struct {
@@ -49,6 +50,7 @@ typedef struct {
     uint16_t index;
     uint8_t property_data[CHAIN_COM_MAX_LEN];
     property_handler_t property_handler[end_of_properties];
+    bool ack;
 } chain_comm_ctx_t;
 
 /**

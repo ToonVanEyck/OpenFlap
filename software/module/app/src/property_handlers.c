@@ -1,14 +1,22 @@
 #include "property_handlers.h"
 #include "config.h"
+#include "debug_io.h"
 #include "flash.h"
+#include "memory_map.h"
 
 static openflap_ctx_t *openflap_ctx = NULL;
 
 void firmware_property_set(uint8_t *buf)
 {
-    // TODO
-    uint32_t address = FLASH_BASE + ((uint32_t)buf[0] << 8 + buf[1]);
-    flashWrite(address, (flashPage_t *)(buf + 2), 1);
+    uint8_t app_index = (openflap_ctx->config.active_app_index + 1) % 2;
+    uint32_t addr_base = APP_START_PTR + (app_index * APP_SIZE / 4);
+    uint32_t addr_offset = ((uint32_t)buf[0] << 8 | buf[1]) * FLASH_PAGE_SIZE;
+    uint32_t addr = addr_base + addr_offset;
+    flashWrite(addr, (buf + 2), FLASH_PAGE_SIZE);
+    if (addr_offset + FLASH_PAGE_SIZE == APP_SIZE) {
+        openflap_ctx->config.active_app_index = app_index;
+        openflap_ctx->store_config = true;
+    }
 }
 
 void command_property_set(uint8_t *buf)

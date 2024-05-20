@@ -2,6 +2,7 @@
 
 #include "chain_comm.h"
 #include "config.h"
+#include "flash.h"
 #include "platform.h"
 
 /** Struct with helper variables. */
@@ -13,6 +14,11 @@ typedef struct openflap_ctx_tag {
     bool store_config;          /**< Flag to store the configuration. */
     bool is_idle;               /**< Flag to indicate if the flap wheel is idle. */
     uint32_t idle_start_ms;     /**< The time when the flap wheel started idling. */
+    // struct {
+    //     uint32_t addr;           /**< The address to witch the flash page must be written. */
+    //     flash_page_t flash_page; /**< The flash page. */
+    //     bool write_page /**< Indicates that a flash page must be written. */;
+    // } fw_update;
 } openflap_ctx_t;
 
 /**

@@ -8,9 +8,11 @@ static openflap_ctx_t *openflap_ctx = NULL;
 
 void firmware_property_set(uint8_t *buf)
 {
+    // ToDo Deinitialize the interrupts or something, the vector table is still pointing to the old interrupts after OTA
+    // update.
     uint8_t app_index = (openflap_ctx->config.active_app_index + 1) % 2;
     uint32_t addr_base = APP_START_PTR + (app_index * APP_SIZE / 4);
-    uint32_t addr_offset = ((uint32_t)buf[0] << 8 | buf[1]) * FLASH_PAGE_SIZE;
+    uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
     uint32_t addr = addr_base + addr_offset;
     flashWrite(addr, (buf + 2), FLASH_PAGE_SIZE);
     if (addr_offset + FLASH_PAGE_SIZE == APP_SIZE) {
@@ -21,7 +23,14 @@ void firmware_property_set(uint8_t *buf)
 
 void command_property_set(uint8_t *buf)
 {
-    // TODO
+    switch (buf[0]) {
+        case reboot_command:
+            /* Reboot is handled later to allow graceful end of communication. */
+            openflap_ctx->reboot = true;
+            break;
+        default:
+            break;
+    }
 }
 
 void columnEnd_property_get(uint8_t *buf)

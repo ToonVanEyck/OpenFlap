@@ -97,18 +97,22 @@ void flap_module_firmware_update(char *data, size_t data_len, size_t data_offset
             msg_newWriteAll(firmware_property);
             msg_addData((flash_page_index >> 8) & 0xff);
             msg_addData((flash_page_index >> 0) & 0xff);
-            msg_addData(0x00);
             for (int i = 0; i < MODULE_FLASH_PAGE_SIZE; i++) {
                 msg_addData(flash_page[i]);
             }
-            msg_send(250);
-            vTaskDelay(50 / portTICK_RATE_MS);
+            msg_addData(ACK);
+            msg_send(200);
             flash_page_index++;
         }
     }
 
     if (data_offset + data_len == total_data_len) {
         ESP_LOGI(TAG, "Module firmware update complete!");
+        ESP_LOGI(TAG, "Sending reboot command to modules ...");
+        msg_newWriteAll(command_property);
+        msg_addData(reboot_command);
+        msg_addData(ACK);
+        msg_send(200);
     }
 }
 

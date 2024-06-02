@@ -10,33 +10,36 @@ add_executable(${App}
     src/checksum.c
 )
 
+# Add custom command to touch main.c to force recompilation to update date and time
+add_custom_target(compile_time 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Updateing Compile Time"
+    COMMAND ${CMAKE_COMMAND} -E touch_nocreate src/main.c
+)
+
+add_dependencies(${App} compile_time)
+
 target_compile_definitions(${App} PUBLIC
     DO_GENERATE_PROPERTY_NAMES  # Generate property names for chain comm properties
     DO_GENERATE_STATE_NAMES     # Generate state names for chain comm fsm
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary
 )
 
-string(TIMESTAMP VERSION_STRING "\"%d/%m/%Y %H:%M:%S\"")
-
 target_link_libraries(${App} PUBLIC debug_io config flash config)
 target_link_libraries(${App} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
 target_include_directories(${App} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 
 set_target_properties(${App} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker_script_app.ld")
-target_compile_definitions(${App} PUBLIC VERSION=${VERSION_STRING})
 
+# Generate hex and bin files
 add_custom_command(TARGET ${App}
     POST_BUILD
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating hex file"
+    COMMENT "Generating binaries"
+    # Create temporary hex file
     COMMAND ${CMAKE_OBJCOPY} ARGS 
         -O ihex ${App}.elf temp.hex
-)
-
-add_custom_command(TARGET ${App}
-    POST_BUILD
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Calculating and inserting CRC into hex file"
+    # Insert the checksum in the hex file
     COMMAND srec_cat ARGS 
         temp.hex -Intel 
         -crop 0x08001000 0x08007FFC 
@@ -44,17 +47,13 @@ add_custom_command(TARGET ${App}
         -STM32 0x08007FFC
         # -line-length=44
         -o ${CMAKE_BINARY_DIR}/bin/${App}.hex -Intel
+    # Create binary file
     COMMAND ${CMAKE_OBJCOPY} ARGS
         --input-target=ihex 
         --output-target=binary 
         ${CMAKE_BINARY_DIR}/bin/${App}.hex
         ${CMAKE_BINARY_DIR}/bin/${App}.bin
-)
-
-add_custom_command(TARGET ${App}
-    POST_BUILD
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Extracting config from hex file"
+    # Extracting config from hex file
     COMMAND srec_cat ARGS 
         temp.hex -Intel 
         -crop 0x0800F000 0x0800FFFF 

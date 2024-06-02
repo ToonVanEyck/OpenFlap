@@ -18,8 +18,8 @@ void msg_newReadAll(moduleProperty_t property)
 {
     msg_init();
     msg_addHeader(property_readAll, property);
-    msg_addData(0); // add module indexer
-    msg_addData(0); // add module indexer
+    msg_addData(0); // add module index bytes
+    msg_addData(0); // add module index bytes
 }
 
 void msg_newWriteSequential(moduleProperty_t property)
@@ -191,17 +191,18 @@ static void flap_uart_task(void *arg)
     uint16_t module_total = 0, module_index = 0;
     bool waitingForWriteSequentialAck = false;
     char buf[CHAIN_COM_MAX_LEN] = {0};
+    uint32_t expected_rx_len = 0;
 
     chainCommHeader_t header;
     while (1) {
         header.raw = (uint8_t)ulTaskNotifyTake(true, 250 / portTICK_RATE_MS);
         switch (header.field.action) {
             case property_writeAll:
-                len =
-                    uart_receive(buf, propertySizes[header.field.property] + WRITE_HEADER_LEN, 250 / portTICK_RATE_MS);
-                if (len != propertySizes[header.field.property] + WRITE_HEADER_LEN + 1) {
-                    ESP_LOGE(TAG, "Received %ld bytes but expected %d bytes for this \"writeAll\" command.", len,
-                             propertySizes[header.field.property] + WRITE_HEADER_LEN + 1);
+                expected_rx_len = propertySizes[header.field.property] + WRITE_HEADER_LEN + ACKNOWLEDGE_LEN;
+                len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
+                if (len != expected_rx_len) {
+                    ESP_LOGE(TAG, "Received %ld bytes but expected %ld bytes for this \"writeAll\" command.", len,
+                             expected_rx_len);
                     break;
                 }
                 uart_flush_input(UART_NUM);
@@ -213,24 +214,26 @@ static void flap_uart_task(void *arg)
                 }
                 break;
             case property_readAll:
-                len = uart_receive(buf, READ_HEADER_LEN, 250 / portTICK_RATE_MS);
+                expected_rx_len = READ_HEADER_LEN;
+                len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
 
-                if (len != READ_HEADER_LEN) {
-                    ESP_LOGE(TAG, "Received %ld bytes but expected a %d byte \"readAll\" header.", len,
-                             READ_HEADER_LEN);
+                if (len != expected_rx_len) {
+                    ESP_LOGE(TAG, "Received %ld bytes but expected a %ld byte \"readAll\" header.", len,
+                             expected_rx_len);
                     break;
                 }
                 module_total = buf[1] + buf[2] * 0xff;
                 display_setSize(module_total);
 
-                ESP_LOGI(TAG, "Expecting %d bytes from %d modules", propertySizes[header.field.property], module_total);
+                expected_rx_len = propertySizes[header.field.property];
+                ESP_LOGI(TAG, "Expecting %ld bytes from %d modules", expected_rx_len, module_total);
                 for (module_index = 0; module_index < module_total; module_index++) {
-                    // len = uart_receive(buf, propertySizes[header.field.property], 250 / portTICK_RATE_MS);
+                    // len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
                     // this is to slow because of the printing.
-                    len = uart_read_bytes(UART_NUM, buf, propertySizes[header.field.property], 250 / portTICK_RATE_MS);
-                    if (len != propertySizes[header.field.property]) {
-                        ESP_LOGE(TAG, "1 Received %ld bytes but expected %d bytes from this property", len,
-                                 propertySizes[header.field.property]);
+                    len = uart_read_bytes(UART_NUM, buf, expected_rx_len, 250 / portTICK_RATE_MS);
+                    if (len != expected_rx_len) {
+                        ESP_LOGE(TAG, "1 Received %ld bytes but expected %ld bytes from this property", len,
+                                 expected_rx_len);
                         break;
                     }
                     module_t *module = display_getModule(module_index);

@@ -13,14 +13,14 @@ static void OpenFlapModelTask(void *arg)
     while (1) {
         if (ulTaskNotifyTake(true, 250 / portTICK_RATE_MS) == fromHttp) {
 
-            if (ctx.controller->display.requestedProperties) {
-                // send command to switch from bootloader to application
-                msg_newWriteAll(command_property);
-                msg_addData(runApp_command);
-                msg_addData(no_property);
-                msg_send(MAX_COMMAND_PERIOD_MS);
-                ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
-            }
+            // if (ctx.controller->display.requestedProperties) {
+            //     // send command to switch from bootloader to application
+            //     msg_newWriteAll(command_property);
+            //     msg_addData(runApp_command);
+            //     msg_addData(no_property);
+            //     msg_send(MAX_COMMAND_PERIOD_MS);
+            //     ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
+            // }
 
             ESP_LOGI(TAG, "Requested properties: 0x%08llx", ctx.controller->display.requestedProperties);
             for (moduleProperty_t property = no_property + 1; property < end_of_properties; property++) {

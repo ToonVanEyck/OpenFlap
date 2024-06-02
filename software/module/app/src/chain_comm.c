@@ -127,7 +127,7 @@ bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_
         case tx_event:
             break;
         case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
+            // chain_comm_state_change(ctx, rxHeader);
             break;
     }
     return txData;
@@ -297,7 +297,7 @@ bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain
     switch (event) {
         case rx_event:
             if (*data == 0x00) {
-                chain_comm_state_change(ctx, writeAll_rxAck);
+                chain_comm_state_change(ctx, rxHeader);
             }
             txData = true;
             break;

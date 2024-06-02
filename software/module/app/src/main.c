@@ -77,7 +77,7 @@ int main(void)
     propertyHandlersInit(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
-    debug_io_log_debug("App %d active. Version: %s\n", openflap_ctx.config.active_app_index, VERSION);
+    debug_io_log_debug("App %d active. Version: %s %s\n", openflap_ctx.config.active_app_index, __DATE__, __TIME__);
 
     /* Set setpoint equal to position to prevent instant rotation. */
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
@@ -152,10 +152,16 @@ int main(void)
                 debug_io_log_info("Active!\n");
             }
             /* Store config if requested and idle for 500ms. */
-            if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500 && openflap_ctx.store_config) {
-                openflap_ctx.store_config = false;
-                configStore(&openflap_ctx.config);
-                debug_io_log_info(0, "Config stored!\n");
+            if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500) {
+                if (openflap_ctx.store_config) {
+                    openflap_ctx.store_config = false;
+                    configStore(&openflap_ctx.config);
+                    debug_io_log_info(0, "Config stored!\n");
+                }
+                if (openflap_ctx.reboot) {
+                    debug_io_log_info(0, "Rebooting module!\n");
+                    NVIC_SystemReset();
+                }
             }
         } else if (!distance && !rb_data_available(&rx_rb) && !rb_data_available(&tx_rb)) {
             openflap_ctx.is_idle = true;

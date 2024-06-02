@@ -71,8 +71,7 @@ typedef struct {
 
 typedef enum {
     no_command,
-    runApp_command, // exit the bootloader and run the application
-    reboot_command, // reboot, this will enter the bootloader
+    reboot_command, // reboot the modules
 } moduleCommand_t;
 
 #endif

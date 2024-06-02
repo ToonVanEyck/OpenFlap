@@ -39,7 +39,6 @@ typedef enum {
     rx_event,
     tx_event,
     timeout_event,
-    actionCompletion_event,
 } chain_comm_event_t;
 
 typedef struct {

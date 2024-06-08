@@ -12,7 +12,7 @@
 #define IR_TIMER_TICKS_FROM_US(us) ((us) / 100)
 
 /** The period of the encoder readings when the system is idle. */
-#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50) // 1000)
+#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
 /** The period of the encoder readings when the system is active. */
 #define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
 /** The IR sensor will iluminate the encoder wheel for this time in microseconds before starting the conversion */
@@ -71,15 +71,13 @@ int main(void)
     APP_OneshotInit();
     APP_TimerInit();
 
-    // HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
-
     configLoad(&openflap_ctx.config);
     propertyHandlersInit(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
     debug_io_log_debug("Compilation Date: %s %s\n", __DATE__, __TIME__);
 
-    /* Set setpoint equal to position to prevent instant rotation. */
+    // Set setpoint equal to position to prevent instant rotation.
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
         HAL_Delay(10);
     }
@@ -90,7 +88,7 @@ int main(void)
     int rtt_key;
     while (1) {
 
-        /* Receive commands from debug_io. */
+        // Receive commands from debug_io.
         rtt_key = debug_io_get();
         if (rtt_key > 0) {
             debug_io_log_debug("received command:  %c\n", (char)rtt_key);
@@ -99,18 +97,16 @@ int main(void)
             }
         }
 
-        /* Run chain comm. */
-        /* Chain Comm. RX event. */
+        // Run chain comm.
+        // Chain Comm. RX event.
         if (rb_data_available(&rx_rb) && rb_space_available(&tx_rb)) {
             uint8_t data = rb_data_dequeue(&rx_rb);
             if (chain_comm(&openflap_ctx.chain_ctx, &data, rx_event)) {
-                // do {
                 rb_data_enqueue(&tx_rb, data);
                 last_tx_rb_used = rb_capacity_used(&tx_rb);
-                // } while (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event));
             }
         }
-        /* Chain Comm. TX event. */
+        // Chain Comm. TX event.
         if (last_tx_rb_used != rb_capacity_used(&tx_rb)) {
             uint8_t data;
             if (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event)) {
@@ -118,7 +114,7 @@ int main(void)
                 last_tx_rb_used = rb_capacity_used(&tx_rb);
             }
         }
-        /* Chain Comm. timeout event. */
+        // Chain Comm. timeout event.
         if (chain_comm_timeout) {
             uint8_t data = 0x00;
             chain_comm_timeout = false;
@@ -126,32 +122,33 @@ int main(void)
             chain_comm(&openflap_ctx.chain_ctx, &data, timeout_event);
         }
 
-        /* Restart Uart RX & TX data if needed. */
+        // Restart Uart RX & TX data if needed.
         HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
         if (rb_data_available(&tx_rb)) {
             uart_tx_buf[0] = rb_data_peek(&tx_rb);
             HAL_UART_Transmit_IT(&UartHandle, uart_tx_buf, 1);
         }
 
-        /* Print position. */
+        // Print position.
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
             debug_io_log_info("Position: %d  %s\n", openflap_ctx.flap_position,
                               &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
         }
 
-        /* Set PWM duty cycle. */
+        // Set PWM duty cycle.
         uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
         __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
 
-        /* Idle logic */
+        // Idle logic.
         if (openflap_ctx.is_idle) {
-            if (distance) { /* Become active if distance is non-zero. */
+            // Become active if distance is non-zero or there is communication.
+            if (distance || rb_data_available(&rx_rb) || rb_data_available(&tx_rb)) {
                 openflap_ctx.is_idle = false;
                 openflap_ctx.idle_start_ms = HAL_GetTick();
                 debug_io_log_info("Active!\n");
             }
-            /* Store config if requested and idle for 500ms. */
+            // Store config if requested and idle for 500ms.
             if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500) {
                 if (openflap_ctx.store_config) {
                     openflap_ctx.store_config = false;
@@ -195,24 +192,24 @@ static void APP_GpioConfig(void)
 static void APP_AdcConfig(void)
 {
     __HAL_RCC_ADC_FORCE_RESET();
-    __HAL_RCC_ADC_RELEASE_RESET(); /* Reset ADC */
-    __HAL_RCC_ADC_CLK_ENABLE();    /* Enable ADC clock */
+    __HAL_RCC_ADC_RELEASE_RESET(); // Reset ADC
+    __HAL_RCC_ADC_CLK_ENABLE();    // Enable ADC clock
 
     AdcHandle.Instance = ADC1;
     if (HAL_ADCEx_Calibration_Start(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
-    AdcHandle.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1; /* ADC clock no division */
-    AdcHandle.Init.Resolution = ADC_RESOLUTION_10B;           /* 12bit */
-    AdcHandle.Init.DataAlign = ADC_DATAALIGN_RIGHT;           /* Right alignment */
-    AdcHandle.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD; /* Forward */
-    AdcHandle.Init.EOCSelection = ADC_EOC_SEQ_CONV;           /* End flag */
+    AdcHandle.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1; // ADC clock no division
+    AdcHandle.Init.Resolution = ADC_RESOLUTION_10B;           // 12bit
+    AdcHandle.Init.DataAlign = ADC_DATAALIGN_RIGHT;           // Right alignment
+    AdcHandle.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD; // Forward
+    AdcHandle.Init.EOCSelection = ADC_EOC_SEQ_CONV;           // End flag
     AdcHandle.Init.LowPowerAutoWait = ENABLE;
     AdcHandle.Init.ContinuousConvMode = DISABLE;
     AdcHandle.Init.DiscontinuousConvMode = DISABLE;
-    AdcHandle.Init.ExternalTrigConv = ADC1_2_EXTERNALTRIG_T1_TRGO; /* External trigger: TIM1_TRGO */
+    AdcHandle.Init.ExternalTrigConv = ADC1_2_EXTERNALTRIG_T1_TRGO; // External trigger: TIM1_TRGO
     AdcHandle.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-    AdcHandle.Init.DMAContinuousRequests = ENABLE; /* DMA */
+    AdcHandle.Init.DMAContinuousRequests = ENABLE; // DMA
     AdcHandle.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
     AdcHandle.Init.SamplingTimeCommon = ADC_SAMPLETIME_41CYCLES_5;
     if (HAL_ADC_Init(&AdcHandle) != HAL_OK) {
@@ -248,7 +245,7 @@ static void APP_AdcConfig(void)
 
 static void APP_TimerInit(void)
 {
-    /* (240 * 10) / 24Mhz = 100us */
+    // (240 * 10) / 24Mhz = 100us
     Tim1Handle.Instance = TIM1;
     Tim1Handle.Init.Period = 10 - 1;
     Tim1Handle.Init.Prescaler = 240 - 1;
@@ -271,7 +268,7 @@ static void APP_TimerInit(void)
 
 static void APP_PwmInit(void)
 {
-    /* (250 * 3) / 8Mhz = 32kHz */
+    // (250 * 3) / 8Mhz = 32kHz
     Tim3Handle.Instance = TIM3;
     Tim3Handle.Init.Period = 255 - 1;
     Tim3Handle.Init.Prescaler = 3;
@@ -293,12 +290,11 @@ static void APP_PwmInit(void)
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
     HAL_TIM_PWM_ConfigChannel(&Tim3Handle, &sConfigOC, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&Tim3Handle, TIM_CHANNEL_1);
-    // HAL_TIM_MspPostInit(&htim4);
 }
 
 static void APP_OneshotInit(void)
 {
-    /* (24000 * 250) / 24Mhz = 250ms */
+    // (24000 * 250) / 24Mhz = 250ms
     Tim14Handle.Instance = TIM14;
     Tim14Handle.Init.Period = 250 - 1;
     Tim14Handle.Init.Prescaler = 24000 - 1;
@@ -318,7 +314,6 @@ static void APP_OneshotInit(void)
 
 static void APP_DmaInit(void)
 {
-    // __HAL_RCC_DMA_CLK_ENABLE();
     HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
@@ -343,14 +338,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     static uint8_t old_position = SYMBOL_CNT;
     uint8_t encoder_graycode = 0;
 
-    /* Disable IR led. */
+    // Disable IR led.
     HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
 
     // debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
     //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
     //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
 
-    /* Convert ADC result into grey code. */
+    // Convert ADC result into grey code.
     for (uint8_t i = 0; i < 6; i++) {
         if (aADCxConvertedData[IR_MAP[i]] > openflap_ctx.config.ir_limits[i]) {
             encoder_graycode &= ~(1 << i);
@@ -359,23 +354,23 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         }
     }
 
-    /* Stop ADC. */
+    // Stop ADC.
     if (HAL_ADC_Stop_DMA(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
 
-    /* Convert grey code into decimal. */
+    // Convert grey code into decimal.
     uint8_t encoder_decimal = 0;
     for (encoder_decimal = 0; encoder_graycode; encoder_graycode = encoder_graycode >> 1) {
         encoder_decimal ^= encoder_graycode;
     }
-    /* Reverse encoder direction. */
+    // Reverse encoder direction.
     uint8_t new_position = (uint8_t)SYMBOL_CNT - encoder_decimal - 1;
 
-    /* Ignore erroneous reading. */
+    // Ignore erroneous reading.
     if (new_position < SYMBOL_CNT) {
         new_position = flapIndexWrapCalc(new_position + openflap_ctx.config.encoder_offset);
-        /* Ignore sensor backspin. */
+        // Ignore sensor backspin.
         if (flapIndexWrapCalc(new_position + 1) != old_position) {
             old_position = new_position;
             openflap_ctx.flap_position = new_position;
@@ -389,13 +384,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if (htim->Instance == TIM1) {
         period_step_cnt++;
-        /* Start ADC when IR led's have been on for 200us. */
+        // Start ADC when IR led's have been on for 200us.
         if (period_step_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, 6) != HAL_OK) {
                 APP_ErrorHandler();
             }
 
-            /* Power IR led's every 50ms. */
+            // Power IR led's every 50ms.
         } else if (period_step_cnt >= (openflap_ctx.is_idle ? IR_IDLE_PERIOD_MS : IR_ACTIVE_PERIOD_MS)) {
             period_step_cnt = 0;
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
@@ -412,6 +407,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART1) {
         rb_data_enqueue(&rx_rb, uart_rx_buf[0]);
         HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
+        // Restart chain comm timeout timer.
         __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
         HAL_TIM_Base_Start_IT(&Tim14Handle);
     }

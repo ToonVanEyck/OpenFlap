@@ -1,6 +1,7 @@
 #include "config.h"
 #include "memory_map.h"
 #include "py32f0xx_hal.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -13,58 +14,60 @@ typedef struct vector_table_tag {
     void (*reset_handler)(void);
 } vector_table_t;
 
-void jump_to_app(uint8_t app_index)
+/**
+ * \brief Jump to the main app.
+ */
+void jump_to_app(void)
 {
-    vector_table_t *app_vector_table = (vector_table_t *)(APP_START_PTR + (app_index * APP_SIZE / 4));
-    /* Set stack pointer */
+    vector_table_t *app_vector_table = (vector_table_t *)APP_N_START_PTR(MAIN_APP);
+    // Set stack pointer.
     __set_MSP(app_vector_table->initial_stack_pointer);
-    /* Don't set vector table offset, vectors are copied to RAM. */
-    // SCB->VTOR = (uint32_t)app_vector_table;
+    // Disable all interrupts.
     memset((uint32_t *)NVIC->ICER, 0xFF, sizeof(NVIC->ICER));
     memset((uint32_t *)NVIC->ICPR, 0xFF, sizeof(NVIC->ICPR));
-    /* Jump to reset handler */
+    // Jump to reset handler.
     app_vector_table->reset_handler();
 }
 
 CRC_HandleTypeDef CrcHandle;
 
+/**
+ * The bootloader checks if a new app has been written in the flash memory. If there is, and it's CRC is valid, it is
+ * copied to the main app partition. The main app is then checked for validity and if it is valid, the bootloader jumps
+ * to the main app.
+ */
 int main(void)
 {
     HAL_Init();
 
-    /* Load config */
+    bool main_app_valid = false;
+    bool new_app_valid = false;
+
+    // Load config.
     configLoad(&config);
 
-    /* Init CRC peripheral */
+    // Init CRC peripheral.
     CrcHandle.Instance = CRC;
     if (HAL_CRC_Init(&CrcHandle) != HAL_OK) {
     }
 
-    /* Calculate checksums of apps. */
-    uint32_t app_crc[APP_INDEX_SIZE] = {0xFFFFFFFF};
-    for (uint8_t i = 0; i < APP_INDEX_SIZE; i++) {
-        app_crc[i] = HAL_CRC_Calculate(&CrcHandle, APP_START_PTR + (i * APP_SIZE / 4), APP_SIZE / 4);
-    }
-
-    uint8_t valid_app = APP_INDEX_SIZE;
-    if (app_crc[config.active_app_index] == CRC_VALID) {
-        /* Active app is valid */
-        valid_app = config.active_app_index;
-    } else {
-        /* Active app is not valid. Rollback to a valid app. */
-        for (uint8_t i = 0; i < APP_INDEX_SIZE; i++) {
-            if (app_crc[i] == CRC_VALID) {
-                valid_app = i;
-            }
+    if (config.ota_completed) {
+        new_app_valid = (CRC_VALID == HAL_CRC_Calculate(&CrcHandle, APP_N_START_PTR(NEW_APP), APP_SIZE / 4));
+        // Copy new app to main app.
+        if (new_app_valid) {
+            flashWrite(APP_N_START_PTR(MAIN_APP), APP_N_START_PTR(NEW_APP), APP_SIZE);
         }
+        config.ota_completed = false;
+        configStore(&config);
     }
 
-    /* Jump to app */
-    if (valid_app < APP_INDEX_SIZE) {
-        jump_to_app(valid_app);
+    main_app_valid = (CRC_VALID == HAL_CRC_Calculate(&CrcHandle, APP_N_START_PTR(MAIN_APP), APP_SIZE / 4));
+    // Jump to app.
+    if (main_app_valid) {
+        jump_to_app();
     }
 
-    /* Should never reach this loop. */
+    // Should never reach this loop.
     while (1) {
     }
 }

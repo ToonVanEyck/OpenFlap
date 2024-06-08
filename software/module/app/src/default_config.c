@@ -19,6 +19,6 @@ const openflap_config_t __attribute__((section(".config"))) config = {
             (uint32_t)'8', (uint32_t)'9', SYMBOL_€,      (uint32_t)'$', (uint32_t)'!', (uint32_t)'?', (uint32_t)'.',
             (uint32_t)',', (uint32_t)':', (uint32_t)'/', (uint32_t)'@', (uint32_t)'#', (uint32_t)'&',
         },
-    .active_app_index = 0,
+    .ota_completed = false,
 };
 #endif

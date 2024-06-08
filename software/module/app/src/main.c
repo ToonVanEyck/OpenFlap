@@ -77,7 +77,7 @@ int main(void)
     propertyHandlersInit(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
-    debug_io_log_debug("App %d active. Version: %s %s\n", openflap_ctx.config.active_app_index, __DATE__, __TIME__);
+    debug_io_log_debug("Compilation Date: %s %s\n", __DATE__, __TIME__);
 
     /* Set setpoint equal to position to prevent instant rotation. */
     while (openflap_ctx.flap_position == SYMBOL_CNT) {

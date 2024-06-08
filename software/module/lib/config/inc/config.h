@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 
 /** The number of flaps in the split flap module. */
@@ -14,7 +15,7 @@ typedef struct openflap_config_tag {
     uint8_t vtrim;                   /**< Virtual trim setting. */
     uint8_t base_speed;              /**< Base speed of the flap wheel. */
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
-    uint8_t active_app_index;        /**< Index of the active app which the bootloader must load. */
+    bool ota_completed;              /**< Flag to indicate that the OTA process is completed. */
 } openflap_config_t;
 
 /** Load the config form NVM. */

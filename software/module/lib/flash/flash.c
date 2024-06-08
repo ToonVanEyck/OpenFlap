@@ -10,24 +10,27 @@ void flashRead(uint32_t address, uint8_t *data, uint32_t size)
 
 void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
 {
-    HAL_FLASH_Unlock();
-    if (!(address % FLASH_SECTOR_SIZE)) {
-        flashErase(address);
-    }
     uint32_t flash_addr = address;
     uint32_t flash_end = (address + size);
+    uint32_t size_remaining = flash_end - flash_addr;
     flashPage_t *src = (flashPage_t *)data;
+    flashPage_t data_page;
 
-    while (flash_addr < flash_end) {
+    HAL_FLASH_Unlock();
+    while (size_remaining) {
+        // Erase when starting a new flashg sector
+        if (!(flash_addr % FLASH_SECTOR_SIZE)) {
+            flashErase(flash_addr);
+        }
         // Create temporary page to pad the page with 0xFF bytes.
-        uint32_t size_remaining = flash_end - flash_addr;
-        flashPage_t data_page;
+        uint8_t write_size = (size_remaining < FLASH_PAGE_SIZE) ? size_remaining : FLASH_PAGE_SIZE;
         memset(&data_page, UINT32_MAX, sizeof(flashPage_t));
-        memcpy(&data_page, src, size_remaining < FLASH_PAGE_SIZE ? size_remaining : FLASH_PAGE_SIZE);
+        memcpy(&data_page, src, write_size);
         // Write to flash
         if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, flash_addr, (uint32_t *)&data_page) == HAL_OK) {
             // Move flash point to next page
-            flash_addr += FLASH_PAGE_SIZE;
+            flash_addr += write_size;
+            size_remaining -= write_size;
             // Move data point
             src++;
         }

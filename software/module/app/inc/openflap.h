@@ -7,15 +7,16 @@
 
 /** Struct with helper variables. */
 typedef struct openflap_ctx_tag {
-    uint8_t flap_position;      /**< The current position of flap wheel. */
-    uint8_t flap_setpoint;      /**< The desired position of flap wheel. */
-    openflap_config_t config;   /**< The configuration data. */
-    chain_comm_ctx_t chain_ctx; /**< The chain communication context. */
-    bool store_config;          /**< Flag to store the configuration. */
-    bool reboot;                /**< Flag to indicate the module must preform a system reboot. */
-    bool is_idle;               /**< Flag to indicate if the flap wheel is idle. */
-    uint32_t idle_start_ms;     /**< The time when the flap wheel started idling. */
-
+    uint8_t flap_position;         /**< The current position of flap wheel. */
+    uint8_t flap_setpoint;         /**< The desired position of flap wheel. */
+    openflap_config_t config;      /**< The configuration data. */
+    chain_comm_ctx_t chain_ctx;    /**< The chain communication context. */
+    bool store_config;             /**< Flag to store the configuration. */
+    bool reboot;                   /**< Flag to indicate the module must preform a system reboot. */
+    bool is_idle;                  /**< Flag to indicate if the flap wheel is idle. */
+    uint32_t idle_start_ms;        /**< The time when the flap wheel started idling. */
+    bool calibration_active;       /**< Flag to indicate if the calibration process is active. */
+    uint32_t calibration_start_ms; /**< The time when the calibration process started. */
 } openflap_ctx_t;
 
 /**

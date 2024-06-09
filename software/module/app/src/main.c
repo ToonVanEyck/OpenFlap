@@ -15,7 +15,7 @@
 #define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
 /** The period of the encoder readings when the system is active. */
 #define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
-/** The IR sensor will iluminate the encoder wheel for this time in microseconds before starting the conversion */
+/** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
 
 #ifndef VERSION
@@ -92,8 +92,14 @@ int main(void)
         rtt_key = debug_io_get();
         if (rtt_key > 0) {
             debug_io_log_debug("received command:  %c\n", (char)rtt_key);
-            if (rtt_key == '\n') {
-                configPrint(&openflap_ctx.config);
+            switch (rtt_key) {
+                case 'c':
+                    openflap_ctx.calibration_active = true;
+                    openflap_ctx.calibration_start_ms = HAL_GetTick();
+                    break;
+                case '\n':
+                    configPrint(&openflap_ctx.config);
+                    break;
             }
         }
 
@@ -132,12 +138,21 @@ int main(void)
         // Print position.
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
-            debug_io_log_info("Position: %d  %s\n", openflap_ctx.flap_position,
-                              &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
+            if (!openflap_ctx.calibration_active) {
+                debug_io_log_info("Position: %d  %s\n", openflap_ctx.flap_position,
+                                  &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
+            }
         }
 
         // Set PWM duty cycle.
         uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
+        if (openflap_ctx.calibration_active) {
+            // Set fake distance to start the flaps rotating and prevent idle.
+            distance = 1;
+            if (HAL_GetTick() - openflap_ctx.calibration_start_ms > 10000) {
+                openflap_ctx.calibration_active = false;
+            }
+        }
         __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
 
         // Idle logic.
@@ -341,9 +356,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     // Disable IR led.
     HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
 
-    // debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
-    //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
-    //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
+    // Print values for calibration.
+    if (openflap_ctx.calibration_active) {
+        debug_io_log_debug("\b\b%04ld;%04ld;%04ld;%04ld;%04ld;%04ld\n", aADCxConvertedData[IR_MAP[0]],
+                           aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
+                           aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
+    }
 
     // Convert ADC result into grey code.
     for (uint8_t i = 0; i < 6; i++) {

@@ -90,11 +90,6 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
         HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0, 0);
         HAL_NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
     }
-    if (htim->Instance == TIM14) {
-        __HAL_RCC_TIM14_CLK_ENABLE(); /* Enable TIM clock */
-        HAL_NVIC_SetPriority(TIM14_IRQn, 0, 0);
-        HAL_NVIC_EnableIRQ(TIM14_IRQn);
-    }
 }
 
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim)
@@ -102,10 +97,6 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim)
     if (htim->Instance == TIM1) {
         __HAL_RCC_TIM1_FORCE_RESET();
         __HAL_RCC_TIM1_RELEASE_RESET();
-    }
-    if (htim->Instance == TIM14) {
-        __HAL_RCC_TIM14_FORCE_RESET();
-        __HAL_RCC_TIM14_RELEASE_RESET();
     }
 }
 

@@ -16,6 +16,7 @@ typedef struct openflap_config_tag {
     uint8_t base_speed;              /**< Base speed of the flap wheel. */
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
     bool ota_completed;              /**< Flag to indicate that the OTA process is completed. */
+    uint8_t random_seed;             /**< Random seed for the random number generator. */
 } openflap_config_t;
 
 /** Load the config form NVM. */

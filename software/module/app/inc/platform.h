@@ -8,6 +8,9 @@
 #include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_hal.h"
 
+/** Number of tracks on the encoder. */
+#define ENCODER_RESOLUTION (6)
+
 /** Map sensor adc channel to bit in encoder byte:
  *  - Bit 0 <-- ADC channel 2
  *  - Bit 1 <-- ADC channel 3
@@ -16,7 +19,7 @@
  *  - Bit 4 <-- ADC channel 0
  *  - Bit 5 <-- ADC channel 5
  */
-#define IR_MAP ((uint8_t[]){2, 3, 1, 4, 0, 5})
+#define IR_MAP ((uint8_t[ENCODER_RESOLUTION]){2, 3, 1, 4, 0, 5})
 
 #define GPIO_PIN_LED GPIO_PIN_7
 #define GPIO_PORT_LED GPIOA
@@ -35,7 +38,7 @@ typedef struct ring_buff_tag {
 /**
  * \brief Check if how space of the ring buffer is used.
  */
-inline bool rb_capacity_used(ring_buf_t *rb)
+inline uint8_t rb_capacity_used(ring_buf_t *rb)
 {
     return ((rb->w_cnt + sizeof(rb->buf)) - rb->r_cnt) & 0x0F;
 }

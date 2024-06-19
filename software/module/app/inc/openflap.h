@@ -15,7 +15,8 @@ typedef struct openflap_ctx_tag {
     bool reboot;                /**< Flag to indicate the module must preform a system reboot. */
     bool is_idle;               /**< Flag to indicate if the flap wheel is idle. */
     uint32_t idle_start_ms;     /**< The time when the flap wheel started idling. */
-
+    uint16_t ir_tick_cnt;       /**< Counter for determining IR sensor state. */
+    uint32_t timeout_tick_cnt;  /**< Counter for determining timeout. */
 } openflap_ctx_t;
 
 /**
@@ -36,3 +37,20 @@ inline uint8_t flapIndexWrapCalc(int8_t index)
 {
     return (((index % SYMBOL_CNT) + SYMBOL_CNT) % SYMBOL_CNT);
 }
+
+/**
+ * \brief Calculate the encoder position based on the ADC data. The updated position is stored in the context.
+ *
+ * \param[in] ctx A pointer to the openflap context.
+ * \param[in] adc_data The ADC data of the IR sensors.
+ */
+void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data);
+
+/**
+ * \brief Generate a random seed based on the ADC data.
+ *
+ * \param[in] adc_data The ADC data of the IR sensors.
+ *
+ * \return The generated random seed.
+ */
+uint8_t getAdcBasedRandSeed(uint32_t *adc_data);

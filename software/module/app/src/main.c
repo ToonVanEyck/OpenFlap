@@ -25,13 +25,11 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
-uint32_t aADCxConvertedData[6];
+uint32_t aADCxConvertedData[ENCODER_RESOLUTION] = {0};
 
 TIM_HandleTypeDef Tim1Handle; // ADC/IR timer
 
 TIM_HandleTypeDef Tim3Handle; // PWM
-
-TIM_HandleTypeDef Tim14Handle; // Oneshot - comms
 
 UART_HandleTypeDef UartHandle;
 
@@ -43,8 +41,6 @@ static uint8_t uart_tx_buf[1];
 static ring_buf_t rx_rb = {.r_cnt = 0, .w_cnt = 0};
 static ring_buf_t tx_rb = {.r_cnt = 0, .w_cnt = 0};
 
-bool chain_comm_timeout = false;
-
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
@@ -52,7 +48,6 @@ void APP_ErrorHandler(void);
 static void APP_GpioConfig(void);
 static void APP_TimerInit(void);
 static void APP_PwmInit(void);
-static void APP_OneshotInit(void);
 static void APP_AdcConfig(void);
 static void APP_DmaInit(void);
 static void APP_UartInit(void);
@@ -61,21 +56,28 @@ int main(void)
 {
     HAL_Init();
     BSP_HSI_24MHzClockConfig();
+
+    configLoad(&openflap_ctx.config);
     openflap_ctx.flap_position = SYMBOL_CNT;
+    // apply the random offset to the IR Encoder tick count to prevent all sensors from drawing current at the same
+    // time.
+    openflap_ctx.ir_tick_cnt = IR_ILLUMINATE_TIME_US + 1 +
+                               (openflap_ctx.config.random_seed * 4 % (IR_ACTIVE_PERIOD_MS - IR_ILLUMINATE_TIME_US));
+    openflap_ctx.ir_tick_cnt = UINT16_MAX - 1;
+
     debug_io_init();
     APP_GpioConfig();
     APP_DmaInit();
     APP_AdcConfig();
     APP_UartInit();
     APP_PwmInit();
-    APP_OneshotInit();
     APP_TimerInit();
 
-    configLoad(&openflap_ctx.config);
     propertyHandlersInit(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
     debug_io_log_debug("Compilation Date: %s %s\n", __DATE__, __TIME__);
+    debug_io_log_debug("Random seed: %d\n", openflap_ctx.config.random_seed);
 
     // Set setpoint equal to position to prevent instant rotation.
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
@@ -83,11 +85,19 @@ int main(void)
     }
     openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
 
+    // Get the random seed from the ADC data.
+    // If the seed was zero, we will store the new seed immediately.
+    if (!openflap_ctx.config.random_seed) {
+        openflap_ctx.store_config = true;
+        // openflap_ctx.reboot = true;
+    }
+    openflap_ctx.config.random_seed = getAdcBasedRandSeed(aADCxConvertedData);
+
     uint8_t new_position = 0;
-    uint8_t last_tx_rb_used = 0;
+    // uint8_t last_tx_rb_used = 0;
+    bool do_tx = false;
     int rtt_key;
     while (1) {
-
         // Receive commands from debug_io.
         rtt_key = debug_io_get();
         if (rtt_key > 0) {
@@ -101,23 +111,24 @@ int main(void)
         // Chain Comm. RX event.
         if (rb_data_available(&rx_rb) && rb_space_available(&tx_rb)) {
             uint8_t data = rb_data_dequeue(&rx_rb);
-            if (chain_comm(&openflap_ctx.chain_ctx, &data, rx_event)) {
+            do_tx = chain_comm(&openflap_ctx.chain_ctx, &data, rx_event);
+            if (do_tx) {
                 rb_data_enqueue(&tx_rb, data);
-                last_tx_rb_used = rb_capacity_used(&tx_rb);
             }
+            openflap_ctx.timeout_tick_cnt = HAL_GetTick();
         }
         // Chain Comm. TX event.
-        if (last_tx_rb_used != rb_capacity_used(&tx_rb)) {
+        if (do_tx && rb_space_available(&tx_rb)) {
             uint8_t data;
-            if (chain_comm(&openflap_ctx.chain_ctx, &data, tx_event)) {
+            do_tx = chain_comm(&openflap_ctx.chain_ctx, &data, tx_event);
+            if (do_tx) {
                 rb_data_enqueue(&tx_rb, data);
-                last_tx_rb_used = rb_capacity_used(&tx_rb);
             }
         }
         // Chain Comm. timeout event.
-        if (chain_comm_timeout) {
+        if (openflap_ctx.timeout_tick_cnt && HAL_GetTick() - openflap_ctx.timeout_tick_cnt > 250) {
+            openflap_ctx.timeout_tick_cnt = 0; // Disable timeout detection.
             uint8_t data = 0x00;
-            chain_comm_timeout = false;
             debug_io_log_debug("Timeout!\n");
             chain_comm(&openflap_ctx.chain_ctx, &data, timeout_event);
         }
@@ -145,7 +156,6 @@ int main(void)
             // Become active if distance is non-zero or there is communication.
             if (distance || rb_data_available(&rx_rb) || rb_data_available(&tx_rb)) {
                 openflap_ctx.is_idle = false;
-                openflap_ctx.idle_start_ms = HAL_GetTick();
                 debug_io_log_info("Active!\n");
             }
             // Store config if requested and idle for 500ms.
@@ -292,26 +302,6 @@ static void APP_PwmInit(void)
     HAL_TIM_PWM_Start(&Tim3Handle, TIM_CHANNEL_1);
 }
 
-static void APP_OneshotInit(void)
-{
-    // (24000 * 250) / 24Mhz = 250ms
-    Tim14Handle.Instance = TIM14;
-    Tim14Handle.Init.Period = 250 - 1;
-    Tim14Handle.Init.Prescaler = 24000 - 1;
-    Tim14Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    Tim14Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
-    Tim14Handle.Init.RepetitionCounter = 0;
-    Tim14Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-    if (HAL_TIM_Base_Init(&Tim14Handle) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-    TIM_MasterConfigTypeDef sMasterConfig;
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-    HAL_TIMEx_MasterConfigSynchronization(&Tim14Handle, &sMasterConfig);
-    __HAL_TIM_CLEAR_IT(&Tim14Handle, TIM_IT_UPDATE);
-}
-
 static void APP_DmaInit(void)
 {
     HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
@@ -335,9 +325,6 @@ static void APP_UartInit(void)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    static uint8_t old_position = SYMBOL_CNT;
-    uint8_t encoder_graycode = 0;
-
     // Disable IR led.
     HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
 
@@ -345,60 +332,25 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
     //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
 
-    // Convert ADC result into grey code.
-    for (uint8_t i = 0; i < 6; i++) {
-        if (aADCxConvertedData[IR_MAP[i]] > openflap_ctx.config.ir_limits[i]) {
-            encoder_graycode &= ~(1 << i);
-        } else if (aADCxConvertedData[IR_MAP[i]] < openflap_ctx.config.ir_limits[i]) {
-            encoder_graycode |= (1 << i);
-        }
-    }
-
-    // Stop ADC.
-    if (HAL_ADC_Stop_DMA(&AdcHandle) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-
-    // Convert grey code into decimal.
-    uint8_t encoder_decimal = 0;
-    for (encoder_decimal = 0; encoder_graycode; encoder_graycode = encoder_graycode >> 1) {
-        encoder_decimal ^= encoder_graycode;
-    }
-    // Reverse encoder direction.
-    uint8_t new_position = (uint8_t)SYMBOL_CNT - encoder_decimal - 1;
-
-    // Ignore erroneous reading.
-    if (new_position < SYMBOL_CNT) {
-        new_position = flapIndexWrapCalc(new_position + openflap_ctx.config.encoder_offset);
-        // Ignore sensor backspin.
-        if (flapIndexWrapCalc(new_position + 1) != old_position) {
-            old_position = new_position;
-            openflap_ctx.flap_position = new_position;
-        }
-    }
+    // Update encoder position.
+    encoderPositionUpdate(&openflap_ctx, aADCxConvertedData);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    static uint16_t period_step_cnt = 0xFFFF - 1;
-
     if (htim->Instance == TIM1) {
-        period_step_cnt++;
+        openflap_ctx.ir_tick_cnt++;
         // Start ADC when IR led's have been on for 200us.
-        if (period_step_cnt == IR_ILLUMINATE_TIME_US) {
-            if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, 6) != HAL_OK) {
+        if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
+            if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_RESOLUTION) != HAL_OK) {
                 APP_ErrorHandler();
             }
 
             // Power IR led's every 50ms.
-        } else if (period_step_cnt >= (openflap_ctx.is_idle ? IR_IDLE_PERIOD_MS : IR_ACTIVE_PERIOD_MS)) {
-            period_step_cnt = 0;
+        } else if (openflap_ctx.ir_tick_cnt >= (openflap_ctx.is_idle ? IR_IDLE_PERIOD_MS : IR_ACTIVE_PERIOD_MS)) {
+            openflap_ctx.ir_tick_cnt = 0;
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
         }
-    }
-    if (htim->Instance == TIM14) {
-        chain_comm_timeout = true;
-        HAL_TIM_Base_Stop_IT(&Tim14Handle);
     }
 }
 
@@ -407,9 +359,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART1) {
         rb_data_enqueue(&rx_rb, uart_rx_buf[0]);
         HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
-        // Restart chain comm timeout timer.
-        __HAL_TIM_SET_COUNTER(&Tim14Handle, 0);
-        HAL_TIM_Base_Start_IT(&Tim14Handle);
     }
 }
 

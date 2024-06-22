@@ -1,5 +1,16 @@
 #include "chain_comm.h"
 
+#ifndef GENERATE_STATE_NAMES
+#define GENERATE_STATE_NAMES false
+#endif
+
+/*
+ * Set to true to enable UART RTT trace this will slow down the execution and might cause issues with the chain
+ * communication.
+ */
+#define TRACE_CHAIN_COMM_UART false
+
+const char *get_state_name(uint8_t state);
 void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state);
 void chain_comm_exec(chain_comm_ctx_t *ctx);
 
@@ -17,6 +28,9 @@ bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
 {
     if (event == rx_event) {
         ctx->rx_cnt++;
+#if TRACE_CHAIN_COMM_UART
+        debug_io_log_debug("--> %02x\n", *data);
+#endif
     } else if (event == tx_event) {
         ctx->tx_cnt++;
     }
@@ -50,7 +64,28 @@ bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
             do_tx = false;
             break;
     }
+#if TRACE_CHAIN_COMM_UART
+    if (do_tx) {
+        debug_io_log_debug("<-- %02x\n", *data);
+    }
+#endif
     return do_tx;
+}
+
+/**
+ * \brief Get the state name for a FSM state.
+ *
+ * \return the state name.
+ */
+const char *get_state_name(uint8_t state)
+{
+#if GENERATE_STATE_NAMES
+    static const char *chain_comm_state_names[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
+    if (state < sizeof(chain_comm_state_names) / sizeof(chain_comm_state_names[0])) {
+        return chain_comm_state_names[state];
+    }
+#endif
+    return "undefined";
 }
 
 /**
@@ -64,7 +99,9 @@ bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
  */
 void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
 {
-    debug_io_log_debug("State: %s -> %s\n", chain_comm_state_names[ctx->state], chain_comm_state_names[state]);
+#if GENERATE_STATE_NAMES
+    debug_io_log_debug("State: %s -> %s\n", get_state_name(ctx->state), get_state_name(state));
+#endif
     ctx->state = state;
     ctx->rx_cnt = 0;
     ctx->tx_cnt = 0;
@@ -80,19 +117,20 @@ void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
  */
 void chain_comm_exec(chain_comm_ctx_t *ctx)
 {
+    const char *property_name = get_property_name(ctx->header.field.property);
     if (ctx->header.field.action == property_readAll) {
         if (ctx->property_handler[ctx->header.field.property].get) {
             ctx->property_handler[ctx->header.field.property].get(ctx->property_data);
-            debug_io_log_debug("Read %s property\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Read %s property\n", property_name);
         } else {
-            debug_io_log_debug("Read %s property not supported\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Read %s property not supported\n", property_name);
         }
     } else if (ctx->header.field.action == property_writeAll || ctx->header.field.action == property_writeSequential) {
         if (ctx->property_handler[ctx->header.field.property].set) {
             ctx->property_handler[ctx->header.field.property].set(ctx->property_data);
-            debug_io_log_debug("Write %s property\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Write %s property\n", property_name);
         } else {
-            debug_io_log_debug("Write %s property not supported\n", propertyNames[ctx->header.field.property]);
+            debug_io_log_debug("Write %s property not supported\n", property_name);
         }
     }
 }
@@ -128,14 +166,12 @@ bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_
                     chain_comm_state_change(ctx, writeSeq_rxData);
                     break;
                 case do_nothing:
-                    if (ctx->header.field.property == no_property) {
-                        do_tx = true; // Acknowledge
-                    }
                     chain_comm_state_change(ctx, rxHeader);
                     break;
             }
+            break;
         case tx_event:
-            if (ctx->header.field.action == property_writeAll) {
+            if (ctx->rx_cnt == 1 && ctx->header.field.action == property_writeAll) {
                 chain_comm_state_change(ctx, writeAll_rxData);
             }
             break;
@@ -205,7 +241,7 @@ bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain
     bool do_tx = false;
     switch (event) {
         case rx_event:
-            if (ctx->rx_cnt == propertySizes[ctx->header.field.property]) {
+            if (ctx->rx_cnt == get_property_size(ctx->header.field.property)) {
                 if (--ctx->index) {
                     chain_comm_state_change(ctx, readAll_rxData);
                 } else {
@@ -243,7 +279,7 @@ bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain
             break;
         case tx_event:
             *data = ctx->property_data[ctx->tx_cnt - 1];
-            if (ctx->tx_cnt == propertySizes[ctx->header.field.property]) {
+            if (ctx->tx_cnt == get_property_size(ctx->header.field.property)) {
                 chain_comm_state_change(ctx, rxHeader);
             }
             do_tx = true;
@@ -277,7 +313,7 @@ bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chai
             do_tx = true;
             break;
         case tx_event:
-            if (ctx->tx_cnt == ctx->rx_cnt) {
+            if (ctx->tx_cnt == get_property_size(ctx->header.field.property)) {
                 chain_comm_exec(ctx);
                 chain_comm_state_change(ctx, writeAll_rxAck);
             }
@@ -337,7 +373,7 @@ bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chai
     switch (event) {
         case rx_event:
             ctx->property_data[ctx->rx_cnt - 1] = *data;
-            if (ctx->rx_cnt == propertySizes[ctx->header.field.property]) {
+            if (ctx->rx_cnt == get_property_size(ctx->header.field.property)) {
                 chain_comm_state_change(ctx, writeSeq_rxToTx);
             }
             break;

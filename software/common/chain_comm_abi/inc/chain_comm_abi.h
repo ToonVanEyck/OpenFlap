@@ -44,11 +44,8 @@ typedef enum __attribute__((__packed__)) {
 
 typedef enum __attribute__((__packed__)) { MODULE_PROPERTY(GENERATE_PROPERTY_ENUM) } moduleProperty_t;
 
-#ifdef DO_GENERATE_PROPERTY_NAMES
-static const char *propertyNames[] = {MODULE_PROPERTY(GENERATE_PROPERTY_NAME)};
-#endif
-
-static const uint8_t propertySizes[] = {MODULE_PROPERTY(GENERATE_PROPERTY_SIZE)};
+const char *get_property_name(moduleProperty_t property);
+const uint8_t get_property_size(moduleProperty_t property);
 
 typedef union __attribute__((__packed__)) {
     uint8_t raw;

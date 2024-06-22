@@ -1,4 +1,5 @@
 #include "config.h"
+#include "flash.h"
 #include "memory_map.h"
 #include "py32f0xx_hal.h"
 #include <stdbool.h>
@@ -55,7 +56,7 @@ int main(void)
         new_app_valid = (CRC_VALID == HAL_CRC_Calculate(&CrcHandle, APP_N_START_PTR(NEW_APP), APP_SIZE / 4));
         // Copy new app to main app.
         if (new_app_valid) {
-            flashWrite(APP_N_START_PTR(MAIN_APP), APP_N_START_PTR(NEW_APP), APP_SIZE);
+            flashWrite((uint32_t)APP_N_START_PTR(MAIN_APP), (uint8_t *)APP_N_START_PTR(NEW_APP), APP_SIZE);
         }
         config.ota_completed = false;
         configStore(&config);

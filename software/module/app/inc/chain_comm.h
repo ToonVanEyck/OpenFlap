@@ -24,10 +24,6 @@
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chain_comm_state_t;
 
-#ifdef DO_GENERATE_STATE_NAMES
-static const char *chain_comm_state_names[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
-#endif
-
 typedef void (*property_callback)(uint8_t *buf);
 
 typedef struct {

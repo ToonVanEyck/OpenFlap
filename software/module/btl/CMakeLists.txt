@@ -5,7 +5,7 @@ add_executable(${Btl}
     src/bootloader.c
 )
 
-target_link_libraries(${Btl} PUBLIC config)
+target_link_libraries(${Btl} PUBLIC config flash)
 target_link_libraries(${Btl} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
 target_include_directories(${Btl} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 

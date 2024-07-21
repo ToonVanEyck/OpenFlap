@@ -2,6 +2,7 @@
 
 #include "chain_comm_abi.h"
 #include "platform.h"
+#include "uart_driver.h"
 
 #ifdef IS_BTL
 #define CMD_SIZE (module_goto_app + 1)
@@ -31,34 +32,49 @@ typedef struct {
     property_callback set;
 } property_handler_t;
 
-typedef enum {
-    rx_event,
-    tx_event,
-    timeout_event,
-} chain_comm_event_t;
-
+/**
+ * \brief Chain-comm context object.
+ */
 typedef struct {
-    chain_comm_state_t state;
-    chainCommHeader_t header;
-    uint8_t rx_cnt;
-    uint8_t tx_cnt;
-    uint16_t index;
-    uint8_t property_data[CHAIN_COM_MAX_LEN];
-    property_handler_t property_handler[end_of_properties];
-    bool ack;
+    uart_driver_ctx_t *uart;                  /**< Uart driver to be used by the protocol. */
+    chain_comm_state_t state;                 /**< The current state of the FSM managing the protocol. */
+    chainCommHeader_t header;                 /**< The header of the current message. */
+    uint8_t data_cnt;                         /**< The number of bytes handled in the current state. */
+    uint16_t index;                           /**< The index counter of the module in the display. */
+    uint8_t property_data[CHAIN_COM_MAX_LEN]; /**< The data of the current property to be written or read. */
+    property_handler_t property_handler[end_of_properties]; /**< The property handlers. */
+    bool ack;                  /**< Flag indicating if the current message is waiting for an acknowledgment.  */
+    uint32_t timeout_tick_cnt; /**< Counter for determining timeout. */
 } chain_comm_ctx_t;
+
+/**
+ * \brief Initializes the chain communication context.
+ *
+ * This function initializes the chain communication context based on the provided UART driver.
+ *
+ * \param[inout] ctx Pointer to the #chain_comm_ctx_t structure containing the context information.
+ * \param[in] uart Pointer to the UART driver.
+ */
+void chain_comm_init(chain_comm_ctx_t *ctx, uart_driver_ctx_t *uart);
 
 /**
  * \brief Executes the chain communication based on the provided context.
  *
  * This function handles the execution of chain communication based on the provided context.
- * It checks the state of the context and calls the corresponding state handler. Additionally, it increments the rx or
- * tx counter.
+ * It checks the state of the context and calls the corresponding state handler.
  *
  * \param[inout] ctx Pointer to the #chain_comm_ctx_t structure containing the context information.
- * \param[in] data Pointer to the data received.
- * \param[in] event The event type.
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+bool chain_comm(chain_comm_ctx_t *ctx);
+
+/**
+ * \brief Checks if the chain communication is busy.
+ * The chain communication is considered busy if the state is not #rxHeader or the uart driver is busy.
+ *
+ * \param[inout] ctx Pointer to the #chain_comm_ctx_t structure containing the context information.
+ *
+ * \return True if the chain communication is busy, otherwise false.
+ */
+bool chain_comm_is_busy(chain_comm_ctx_t *ctx);

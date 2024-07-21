@@ -1,4 +1,5 @@
 #include "chain_comm.h"
+#include "property_handlers.h"
 
 #ifndef GENERATE_STATE_NAMES
 #define GENERATE_STATE_NAMES false
@@ -10,66 +11,66 @@
  */
 #define TRACE_CHAIN_COMM_UART false
 
+#define CHAIN_COMM_TIMEOUT_MS 250
+
 const char *get_state_name(uint8_t state);
 void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state);
 void chain_comm_exec(chain_comm_ctx_t *ctx);
 
-/* Chain comm FSM state implementations. */
-bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
-bool chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event);
+/* Chain comm timer functions. */
+void chain_comm_timer_start(chain_comm_ctx_t *ctx);
+bool chain_comm_timer_elapsed(chain_comm_ctx_t *ctx);
 
-bool chain_comm(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+/* Chain comm FSM state implementations. */
+void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx);
+void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx);
+void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx);
+void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx);
+void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx);
+void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx);
+void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx);
+void chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx);
+
+void chain_comm_init(chain_comm_ctx_t *ctx, uart_driver_ctx_t *uart)
 {
-    if (event == rx_event) {
-        ctx->rx_cnt++;
-#if TRACE_CHAIN_COMM_UART
-        debug_io_log_debug("--> %02x\n", *data);
-#endif
-    } else if (event == tx_event) {
-        ctx->tx_cnt++;
-    }
-    bool do_tx;
+    ctx->uart = uart;
+    ctx->state = rxHeader;
+    ctx->data_cnt = 0;
+    ctx->index = 0;
+    ctx->ack = false;
+}
+
+bool chain_comm(chain_comm_ctx_t *ctx)
+{
     switch (ctx->state) {
         case rxHeader:
-            do_tx = chain_comm_state_rxHeader(ctx, data, event);
+            chain_comm_state_rxHeader(ctx);
             break;
         case readAll_rxCnt:
-            do_tx = chain_comm_state_readAll_rxCnt(ctx, data, event);
+            chain_comm_state_readAll_rxCnt(ctx);
             break;
         case readAll_rxData:
-            do_tx = chain_comm_state_readAll_rxData(ctx, data, event);
+            chain_comm_state_readAll_rxData(ctx);
             break;
         case readAll_txData:
-            do_tx = chain_comm_state_readAll_txData(ctx, data, event);
+            chain_comm_state_readAll_txData(ctx);
             break;
         case writeAll_rxData:
-            do_tx = chain_comm_state_writeAll_rxData(ctx, data, event);
+            chain_comm_state_writeAll_rxData(ctx);
             break;
         case writeAll_rxAck:
-            do_tx = chain_comm_state_writeAll_rxAck(ctx, data, event);
+            chain_comm_state_writeAll_rxAck(ctx);
             break;
         case writeSeq_rxData:
-            do_tx = chain_comm_state_writeSeq_rxData(ctx, data, event);
+            chain_comm_state_writeSeq_rxData(ctx);
             break;
         case writeSeq_rxToTx:
-            do_tx = chain_comm_state_writeSeq_rxToTx(ctx, data, event);
+            chain_comm_state_writeSeq_rxToTx(ctx);
             break;
         default:
-            do_tx = false;
             break;
     }
-#if TRACE_CHAIN_COMM_UART
-    if (do_tx) {
-        debug_io_log_debug("<-- %02x\n", *data);
-    }
-#endif
-    return do_tx;
+    return true;
 }
 
 /**
@@ -88,6 +89,21 @@ const char *get_state_name(uint8_t state)
     return "undefined";
 }
 
+void chain_comm_timer_start(chain_comm_ctx_t *ctx)
+{
+    ctx->timeout_tick_cnt = HAL_GetTick() + CHAIN_COMM_TIMEOUT_MS;
+}
+
+bool chain_comm_timer_elapsed(chain_comm_ctx_t *ctx)
+{
+    return HAL_GetTick() > ctx->timeout_tick_cnt;
+}
+
+bool chain_comm_is_busy(chain_comm_ctx_t *ctx)
+{
+    return (ctx->state != rxHeader) || uart_driver_is_busy(ctx->uart);
+}
+
 /**
  * \brief Changes the state of the chain communication FSM.
  *
@@ -102,9 +118,11 @@ void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
 #if GENERATE_STATE_NAMES
     debug_io_log_debug("State: %s -> %s\n", get_state_name(ctx->state), get_state_name(state));
 #endif
+    if (state != rxHeader) {
+        chain_comm_timer_start(ctx);
+    }
     ctx->state = state;
-    ctx->rx_cnt = 0;
-    ctx->tx_cnt = 0;
+    ctx->data_cnt = 0;
 }
 
 /**
@@ -146,39 +164,28 @@ void chain_comm_exec(chain_comm_ctx_t *ctx)
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            memset(ctx->property_data, 0, sizeof(ctx->property_data));
-            ctx->index = 0;
-            ctx->header.raw = *data;
-            switch (ctx->header.field.action) {
-                case property_readAll:
-                    chain_comm_state_change(ctx, readAll_rxCnt);
-                    do_tx = true;
-                    break;
-                case property_writeAll:
-                    do_tx = true;
-                    break;
-                case property_writeSequential:
-                    chain_comm_state_change(ctx, writeSeq_rxData);
-                    break;
-                case do_nothing:
-                    chain_comm_state_change(ctx, rxHeader);
-                    break;
-            }
-            break;
-        case tx_event:
-            if (ctx->rx_cnt == 1 && ctx->header.field.action == property_writeAll) {
+    uint8_t data;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
+        ctx->header.raw = data;
+        switch (ctx->header.field.action) {
+            case property_readAll:
+                chain_comm_state_change(ctx, readAll_rxCnt);
+                uart_driver_write(ctx->uart, &data, 1);
+                break;
+            case property_writeAll:
                 chain_comm_state_change(ctx, writeAll_rxData);
-            }
-            break;
-        case timeout_event:
-            break;
+                uart_driver_write(ctx->uart, &data, 1);
+                break;
+            case property_writeSequential:
+                chain_comm_state_change(ctx, writeSeq_rxData);
+                break;
+            case do_nothing:
+                chain_comm_state_change(ctx, rxHeader);
+                break;
+        }
     }
-    return do_tx;
 }
 
 /**
@@ -194,33 +201,28 @@ bool chain_comm_state_rxHeader(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            if (ctx->rx_cnt == 1) {
-                ctx->index += ((uint16_t)*data) + 1;
-                *data = (ctx->index >> 0) & 0xff;
+    uint8_t data;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
+        ctx->data_cnt++;
+        if (ctx->data_cnt == 1) {
+            ctx->index += ((uint16_t)data) + 1;
+            data = (ctx->index >> 0) & 0xff;
+        } else {
+            ctx->index += (data << 8);
+            data = (ctx->index >> 8) & 0xff;
+            chain_comm_exec(ctx);
+            if (--ctx->index) {
+                chain_comm_state_change(ctx, readAll_rxData);
             } else {
-                ctx->index += (*data << 8);
-                *data = (ctx->index >> 8) & 0xff;
-                chain_comm_exec(ctx);
-                if (--ctx->index) {
-                    chain_comm_state_change(ctx, readAll_rxData);
-                } else {
-                    chain_comm_state_change(ctx, readAll_txData);
-                }
+                chain_comm_state_change(ctx, readAll_txData);
             }
-            do_tx = true;
-            break;
-        case tx_event:
-            break;
-        case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+        }
+        uart_driver_write(ctx->uart, &data, 1);
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_state_change(ctx, rxHeader);
     }
-    return do_tx;
 }
 
 /**
@@ -236,27 +238,23 @@ bool chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx, uint8_t *data, chain_
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            if (ctx->rx_cnt == get_property_size(ctx->header.field.property)) {
-                if (--ctx->index) {
-                    chain_comm_state_change(ctx, readAll_rxData);
-                } else {
-                    chain_comm_state_change(ctx, readAll_txData);
-                }
-            }
-            do_tx = true;
-            break;
-        case tx_event:
-            break;
-        case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+    uint8_t data;
+    while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < get_property_size(ctx->header.field.property) &&
+           uart_driver_read(ctx->uart, &data, 1)) {
+        ctx->data_cnt++;
+        uart_driver_write(ctx->uart, &data, 1);
     }
-    return do_tx;
+    if (ctx->data_cnt == get_property_size(ctx->header.field.property)) {
+        if (--ctx->index) {
+            chain_comm_state_change(ctx, readAll_rxData);
+        } else {
+            chain_comm_state_change(ctx, readAll_txData);
+        }
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_state_change(ctx, rxHeader);
+    }
 }
 
 /**
@@ -271,24 +269,16 @@ bool chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            break;
-        case tx_event:
-            *data = ctx->property_data[ctx->tx_cnt - 1];
-            if (ctx->tx_cnt == get_property_size(ctx->header.field.property)) {
-                chain_comm_state_change(ctx, rxHeader);
-            }
-            do_tx = true;
-            break;
-        case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+    uint8_t data_cnt = uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt],
+                                         get_property_size(ctx->header.field.property) - ctx->data_cnt);
+    ctx->data_cnt += data_cnt;
+    if (ctx->data_cnt == get_property_size(ctx->header.field.property)) {
+        chain_comm_state_change(ctx, rxHeader);
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_state_change(ctx, rxHeader);
     }
-    return do_tx;
 }
 
 /**
@@ -304,27 +294,22 @@ bool chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx, uint8_t *data, chain
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            ctx->property_data[ctx->rx_cnt - 1] = *data;
-            do_tx = true;
-            break;
-        case tx_event:
-            if (ctx->tx_cnt == get_property_size(ctx->header.field.property)) {
-                chain_comm_exec(ctx);
-                chain_comm_state_change(ctx, writeAll_rxAck);
-            }
-            break;
-        case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+    if (ctx->data_cnt < get_property_size(ctx->header.field.property)) {
+        if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
+            uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1);
+            ctx->data_cnt++;
+        }
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_state_change(ctx, rxHeader);
+    } else {
+        if (uart_driver_cnt_written(ctx->uart) == 0) { // All bytes have been transmitted.
+            chain_comm_exec(ctx);
+            chain_comm_state_change(ctx, writeAll_rxAck);
+        }
     }
-    return do_tx;
 }
-
 /**
  * \brief Handles the writeAll_rxAck state of the chain communication FSM.
  *
@@ -337,21 +322,17 @@ bool chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chai
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            do_tx = (*data == 0x00);
+    uint8_t data;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
+        if (data == 0x00) {
+            uart_driver_write(ctx->uart, &data, 1);
             chain_comm_state_change(ctx, rxHeader);
-            break;
-        case tx_event:
-            break;
-        case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+        }
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_state_change(ctx, rxHeader);
     }
-    return do_tx;
 }
 
 /**
@@ -367,23 +348,16 @@ bool chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx, uint8_t *data, chain
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            ctx->property_data[ctx->rx_cnt - 1] = *data;
-            if (ctx->rx_cnt == get_property_size(ctx->header.field.property)) {
-                chain_comm_state_change(ctx, writeSeq_rxToTx);
-            }
-            break;
-        case tx_event:
-            break;
-        case timeout_event:
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
+        uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1);
+        if (++ctx->data_cnt == get_property_size(ctx->header.field.property)) {
+            chain_comm_state_change(ctx, writeSeq_rxToTx);
+        }
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_state_change(ctx, rxHeader);
     }
-    return do_tx;
 }
 
 /**
@@ -399,19 +373,14 @@ bool chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx, uint8_t *data, chai
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx, uint8_t *data, chain_comm_event_t event)
+void chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx)
 {
-    bool do_tx = false;
-    switch (event) {
-        case rx_event:
-            do_tx = true;
-            break;
-        case tx_event:
-            break;
-        case timeout_event:
-            chain_comm_exec(ctx);
-            chain_comm_state_change(ctx, rxHeader);
-            break;
+    uint8_t data;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
+        uart_driver_write(ctx->uart, &data, 1);
+        chain_comm_timer_start(ctx);
+    } else if (chain_comm_timer_elapsed(ctx)) {
+        chain_comm_exec(ctx);
+        chain_comm_state_change(ctx, rxHeader);
     }
-    return do_tx;
 }

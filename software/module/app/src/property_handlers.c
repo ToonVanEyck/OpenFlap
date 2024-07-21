@@ -8,14 +8,14 @@ static openflap_ctx_t *openflap_ctx = NULL;
 
 void firmware_property_set(uint8_t *buf)
 {
-    // uint32_t addr_base = (uint32_t)(APP_START_PTR + (NEW_APP * APP_SIZE / 4));
-    // uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
-    // uint32_t addr = addr_base + addr_offset;
-    // flashWrite(addr, (buf + 2), FLASH_PAGE_SIZE);
-    // if (addr_offset + FLASH_PAGE_SIZE == APP_SIZE) {
-    //     openflap_ctx->config.ota_completed = true;
-    //     openflap_ctx->store_config = true;
-    // }
+    uint32_t addr_base = (uint32_t)(APP_START_PTR + (NEW_APP * APP_SIZE / 4));
+    uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
+    uint32_t addr = addr_base + addr_offset;
+    flashWrite(addr, (buf + 2), FLASH_PAGE_SIZE);
+    if (addr_offset + FLASH_PAGE_SIZE == APP_SIZE) {
+        openflap_ctx->config.ota_completed = true;
+        openflap_ctx->store_config = true;
+    }
 }
 
 void command_property_set(uint8_t *buf)
@@ -103,7 +103,7 @@ void baseSpeed_property_get(uint8_t *buf)
     buf[0] = openflap_ctx->config.base_speed;
 }
 
-void propertyHandlersInit(openflap_ctx_t *ctx)
+void property_handlers_init(openflap_ctx_t *ctx)
 {
     openflap_ctx = ctx;
 

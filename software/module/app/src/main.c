@@ -3,6 +3,7 @@
 #include "config.h"
 #include "openflap.h"
 #include "property_handlers.h"
+#include "uart_driver.h"
 
 /* Private define ------------------------------------------------------------*/
 
@@ -35,11 +36,10 @@ UART_HandleTypeDef UartHandle;
 
 static openflap_ctx_t openflap_ctx = {0};
 
-static uint8_t uart_rx_buf[1];
-static uint8_t uart_tx_buf[1];
-
-static ring_buf_t rx_rb = {.r_cnt = 0, .w_cnt = 0};
-static ring_buf_t tx_rb = {.r_cnt = 0, .w_cnt = 0};
+#define RB_BUFF_SIZE 128
+static uint8_t uart_rx_rb_buff[RB_BUFF_SIZE];
+static uint8_t uart_tx_rb_buff[RB_BUFF_SIZE];
+static uart_driver_ctx_t uart_driver;
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -73,7 +73,10 @@ int main(void)
     APP_PwmInit();
     APP_TimerInit();
 
-    propertyHandlersInit(&openflap_ctx);
+    uart_driver_init(&uart_driver, &UartHandle, uart_rx_rb_buff, RB_BUFF_SIZE, uart_tx_rb_buff, RB_BUFF_SIZE);
+
+    chain_comm_init(&openflap_ctx.chain_ctx, &uart_driver);
+    property_handlers_init(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
     debug_io_log_debug("Compilation Date: %s %s\n", __DATE__, __TIME__);
@@ -95,9 +98,9 @@ int main(void)
 
     uint8_t new_position = 0;
     // uint8_t last_tx_rb_used = 0;
-    bool do_tx = false;
     int rtt_key;
     while (1) {
+
         // Receive commands from debug_io.
         rtt_key = debug_io_get();
         if (rtt_key > 0) {
@@ -108,37 +111,7 @@ int main(void)
         }
 
         // Run chain comm.
-        // Chain Comm. RX event.
-        if (rb_data_available(&rx_rb) && rb_space_available(&tx_rb)) {
-            uint8_t data = rb_data_dequeue(&rx_rb);
-            do_tx = chain_comm(&openflap_ctx.chain_ctx, &data, rx_event);
-            if (do_tx) {
-                rb_data_enqueue(&tx_rb, data);
-            }
-            openflap_ctx.timeout_tick_cnt = HAL_GetTick();
-        }
-        // Chain Comm. TX event.
-        if (do_tx && rb_space_available(&tx_rb)) {
-            uint8_t data;
-            do_tx = chain_comm(&openflap_ctx.chain_ctx, &data, tx_event);
-            if (do_tx) {
-                rb_data_enqueue(&tx_rb, data);
-            }
-        }
-        // Chain Comm. timeout event.
-        if (openflap_ctx.timeout_tick_cnt && HAL_GetTick() - openflap_ctx.timeout_tick_cnt > 250) {
-            openflap_ctx.timeout_tick_cnt = 0; // Disable timeout detection.
-            uint8_t data = 0x00;
-            debug_io_log_debug("Timeout!\n");
-            chain_comm(&openflap_ctx.chain_ctx, &data, timeout_event);
-        }
-
-        // Restart Uart RX & TX data if needed.
-        HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
-        if (rb_data_available(&tx_rb)) {
-            uart_tx_buf[0] = rb_data_peek(&tx_rb);
-            HAL_UART_Transmit_IT(&UartHandle, uart_tx_buf, 1);
-        }
+        chain_comm(&openflap_ctx.chain_ctx);
 
         // Print position.
         if (new_position != openflap_ctx.flap_position) {
@@ -151,29 +124,23 @@ int main(void)
         uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
         __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
 
-        // Idle logic.
-        if (openflap_ctx.is_idle) {
-            // Become active if distance is non-zero or there is communication.
-            if (distance || rb_data_available(&rx_rb) || rb_data_available(&tx_rb)) {
-                openflap_ctx.is_idle = false;
-                debug_io_log_info("Active!\n");
+        // Communication status.
+        updateCommsState(&openflap_ctx);
+
+        // Motor status.
+        updateMotorState(&openflap_ctx);
+
+        // Idle logic
+        if (!openflap_ctx.motor_active && !openflap_ctx.comms_active) {
+            if (openflap_ctx.store_config) {
+                openflap_ctx.store_config = false;
+                configStore(&openflap_ctx.config);
+                debug_io_log_info(0, "Config stored!\n");
             }
-            // Store config if requested and idle for 500ms.
-            if (HAL_GetTick() - openflap_ctx.idle_start_ms > 500) {
-                if (openflap_ctx.store_config) {
-                    openflap_ctx.store_config = false;
-                    configStore(&openflap_ctx.config);
-                    debug_io_log_info(0, "Config stored!\n");
-                }
-                if (openflap_ctx.reboot) {
-                    debug_io_log_info(0, "Rebooting module!\n");
-                    NVIC_SystemReset();
-                }
+            if (openflap_ctx.reboot) {
+                debug_io_log_info(0, "Rebooting module!\n");
+                NVIC_SystemReset();
             }
-        } else if (!distance && !rb_data_available(&rx_rb) && !rb_data_available(&tx_rb)) {
-            openflap_ctx.is_idle = true;
-            debug_io_log_info("Idle!\n");
-            openflap_ctx.idle_start_ms = HAL_GetTick();
         }
     }
 }
@@ -347,7 +314,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
 
             // Power IR led's every 50ms.
-        } else if (openflap_ctx.ir_tick_cnt >= (openflap_ctx.is_idle ? IR_IDLE_PERIOD_MS : IR_ACTIVE_PERIOD_MS)) {
+        } else if (openflap_ctx.ir_tick_cnt >= (openflap_ctx.motor_active ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS)) {
             openflap_ctx.ir_tick_cnt = 0;
             HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
         }
@@ -357,15 +324,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        rb_data_enqueue(&rx_rb, uart_rx_buf[0]);
-        HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
+        uart_driver_rx_isr(&uart_driver);
+        // rb_data_enqueue(&rx_rb, uart_rx_buf[0]);
+        // HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
     }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        rb_data_dequeue(&tx_rb);
+        uart_driver_ctx_tx_isr(&uart_driver);
+        // rb_data_dequeue(&tx_rb);
     }
 }
 

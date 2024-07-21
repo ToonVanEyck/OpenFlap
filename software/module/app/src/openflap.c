@@ -52,3 +52,29 @@ uint8_t getAdcBasedRandSeed(uint32_t *adc_data)
     }
     return rand_seed;
 }
+
+void updateMotorState(openflap_ctx_t *ctx)
+{
+    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - ctx->flap_position);
+    if (!ctx->motor_active && distance > 0) {
+        ctx->motor_active = true;
+        ctx->motor_active_timeout_tick = HAL_GetTick() + 500;
+        debug_io_log_info("Motor Active\n");
+    } else if (ctx->motor_active && distance == 0 && HAL_GetTick() > ctx->motor_active_timeout_tick) {
+        ctx->motor_active = false;
+        debug_io_log_info("Motor Idle\n");
+    }
+}
+
+void updateCommsState(openflap_ctx_t *ctx)
+{
+    if (!ctx->comms_active && chain_comm_is_busy(&ctx->chain_ctx)) {
+        ctx->comms_active = true;
+        ctx->comms_active_timeout_tick = HAL_GetTick() + 500;
+        debug_io_log_info("Comms Active\n");
+    } else if (ctx->comms_active && !chain_comm_is_busy(&ctx->chain_ctx) &&
+               HAL_GetTick() > ctx->comms_active_timeout_tick) {
+        ctx->comms_active = false;
+        debug_io_log_info("Comms Idle\n");
+    }
+}

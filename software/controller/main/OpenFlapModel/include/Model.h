@@ -14,7 +14,6 @@
 #include "esp_log.h"
 
 #include "chain_comm_abi.h"
-#include "flap_utils.h"
 
 #include "board_io.h"
 

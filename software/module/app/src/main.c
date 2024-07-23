@@ -65,7 +65,8 @@ int main(void)
                                (openflap_ctx.config.random_seed * 4 % (IR_ACTIVE_PERIOD_MS - IR_ILLUMINATE_TIME_US));
     openflap_ctx.ir_tick_cnt = UINT16_MAX - 1;
 
-    debug_io_init();
+    debug_io_init(LOG_LVL_DEBUG);
+
     APP_GpioConfig();
     APP_DmaInit();
     APP_AdcConfig();
@@ -97,7 +98,6 @@ int main(void)
     openflap_ctx.config.random_seed = getAdcBasedRandSeed(aADCxConvertedData);
 
     uint8_t new_position = 0;
-    // uint8_t last_tx_rb_used = 0;
     int rtt_key;
     while (1) {
 
@@ -271,7 +271,7 @@ static void APP_PwmInit(void)
 
 static void APP_DmaInit(void)
 {
-    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 3, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
 
@@ -324,9 +324,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
-        uart_driver_rx_isr(&uart_driver);
-        // rb_data_enqueue(&rx_rb, uart_rx_buf[0]);
-        // HAL_UART_Receive_IT(&UartHandle, uart_rx_buf, 1);
+        if (huart->ErrorCode == HAL_UART_ERROR_NONE) {
+            uart_driver_rx_isr(&uart_driver);
+        }
     }
 }
 
@@ -334,7 +334,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
         uart_driver_ctx_tx_isr(&uart_driver);
-        // rb_data_dequeue(&tx_rb);
     }
 }
 

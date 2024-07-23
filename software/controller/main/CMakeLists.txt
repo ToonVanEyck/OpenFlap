@@ -1,5 +1,4 @@
 set(srcs
-    "${COMPONENT_DIR}/../../common/flap_utils.c"
     "${COMPONENT_DIR}/main.c"
     "${COMPONENT_DIR}/flap_nvs.c"
     "${COMPONENT_DIR}/flap_wifi.c"

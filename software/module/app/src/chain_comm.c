@@ -296,18 +296,19 @@ void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
  */
 void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx)
 {
-    if (ctx->data_cnt < get_property_size(ctx->header.field.property)) {
-        if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
-            uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1);
-            ctx->data_cnt++;
-        }
+    while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < get_property_size(ctx->header.field.property) &&
+           uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
+        if (!uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
+            debug_io_log_error("Error writing data to uart\n");
+        };
+        ctx->data_cnt++;
+    }
+    if (ctx->data_cnt == get_property_size(ctx->header.field.property) &&
+        uart_driver_cnt_written(ctx->uart) == 0) { // All bytes have been transmitted.
+        chain_comm_exec(ctx);
+        chain_comm_state_change(ctx, writeAll_rxAck);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
-    } else {
-        if (uart_driver_cnt_written(ctx->uart) == 0) { // All bytes have been transmitted.
-            chain_comm_exec(ctx);
-            chain_comm_state_change(ctx, writeAll_rxAck);
-        }
     }
 }
 /**

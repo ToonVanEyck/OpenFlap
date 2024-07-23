@@ -1,5 +1,8 @@
 #include "openflap.h"
 
+#define MOTOR_IDLE_TIMEOUT 500
+#define COMMS_IDLE_TIMEOUT 75
+
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
     if (distance == 0) {
@@ -56,11 +59,13 @@ uint8_t getAdcBasedRandSeed(uint32_t *adc_data)
 void updateMotorState(openflap_ctx_t *ctx)
 {
     uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - ctx->flap_position);
-    if (!ctx->motor_active && distance > 0) {
-        ctx->motor_active = true;
-        ctx->motor_active_timeout_tick = HAL_GetTick() + 500;
-        debug_io_log_info("Motor Active\n");
-    } else if (ctx->motor_active && distance == 0 && HAL_GetTick() > ctx->motor_active_timeout_tick) {
+    if (distance > 0) {
+        ctx->motor_active_timeout_tick = HAL_GetTick() + MOTOR_IDLE_TIMEOUT;
+        if (!ctx->motor_active) {
+            ctx->motor_active = true;
+            debug_io_log_info("Motor Active\n");
+        }
+    } else if (ctx->motor_active && HAL_GetTick() > ctx->motor_active_timeout_tick) {
         ctx->motor_active = false;
         debug_io_log_info("Motor Idle\n");
     }
@@ -68,13 +73,16 @@ void updateMotorState(openflap_ctx_t *ctx)
 
 void updateCommsState(openflap_ctx_t *ctx)
 {
-    if (!ctx->comms_active && chain_comm_is_busy(&ctx->chain_ctx)) {
-        ctx->comms_active = true;
-        ctx->comms_active_timeout_tick = HAL_GetTick() + 500;
-        debug_io_log_info("Comms Active\n");
-    } else if (ctx->comms_active && !chain_comm_is_busy(&ctx->chain_ctx) &&
-               HAL_GetTick() > ctx->comms_active_timeout_tick) {
+    if (chain_comm_is_busy(&ctx->chain_ctx)) {
+        ctx->comms_active_timeout_tick = HAL_GetTick() + COMMS_IDLE_TIMEOUT;
+        if (!ctx->comms_active) {
+            ctx->comms_active = true;
+            debug_io_log_info("Comms Active\n");
+            debug_io_log_disable(); // Writing to RTT may fuck up the UART RX interrupt...
+        }
+    } else if (ctx->comms_active && HAL_GetTick() > ctx->comms_active_timeout_tick) {
         ctx->comms_active = false;
+        debug_io_log_enable();
         debug_io_log_info("Comms Idle\n");
     }
 }

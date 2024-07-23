@@ -26,7 +26,7 @@ static void OpenFlapModelTask(void *arg)
             for (moduleProperty_t property = no_property + 1; property < end_of_properties; property++) {
                 if (ctx.controller->display.requestedProperties & (1 << property)) {
                     ctx.controller->display.requestedProperties ^= (1 << property);
-                    ESP_LOGI(TAG, "read property: %d %s", property, propertyNames[property]);
+                    ESP_LOGI(TAG, "read property: %d %s", property, get_property_name(property));
                     uart_propertyReadAll(property);
                 }
             }

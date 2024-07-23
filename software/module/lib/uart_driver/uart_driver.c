@@ -20,8 +20,11 @@ void uart_driver_rx_isr(uart_driver_ctx_t *uart_driver)
 
 void uart_driver_ctx_tx_isr(uart_driver_ctx_t *uart_driver)
 {
-    if (rbuff_read(&uart_driver->tx_rbuff, &uart_driver->tx_tmp_buff, 1)) {
-        HAL_UART_Transmit_IT(uart_driver->huart, &uart_driver->tx_tmp_buff, 1);
+    if (uart_driver->huart->gState == HAL_UART_STATE_READY && uart_driver->huart->Lock == HAL_UNLOCKED &&
+        rbuff_read(&uart_driver->tx_rbuff, &uart_driver->tx_tmp_buff, 1)) {
+        if (HAL_UART_Transmit_IT(uart_driver->huart, &uart_driver->tx_tmp_buff, 1) != HAL_OK) {
+            debug_io_log_error("TX error\n");
+        }
     }
 }
 
@@ -46,9 +49,7 @@ uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t
     // for (uint8_t i = 0; i < tx_cnt; i++) {
     //     debug_io_log_debug("TX [%d] : 0x%02X\n", i, data[i]);
     // }
-    if (uart_driver->huart->gState == HAL_UART_STATE_READY) {
-        uart_driver_ctx_tx_isr(uart_driver);
-    }
+    uart_driver_ctx_tx_isr(uart_driver);
     return tx_cnt;
 }
 

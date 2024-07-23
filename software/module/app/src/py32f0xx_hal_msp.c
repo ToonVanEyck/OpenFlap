@@ -86,8 +86,8 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef *hadc)
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM1) {
-        __HAL_RCC_TIM1_CLK_ENABLE(); /* Enable TIM clock */
-        HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0, 0);
+        __HAL_RCC_TIM1_CLK_ENABLE();                          /* Enable TIM clock */
+        HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 3, 0); // Priority must be lower than UART
         HAL_NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
     }
 }

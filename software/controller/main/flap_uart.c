@@ -71,12 +71,12 @@ void msg_send(const unsigned commandPeriod)
     if (commandPeriod) {
         xTaskDelayUntil(&xLastWakeTime, commandPeriod / portTICK_RATE_MS);
     }
-    char *buf = calloc(1, msg.size * 3 * sizeof(char) + 1);
-    for (int i = 0; i < msg.size; i++) {
-        sprintf(buf + 3 * i, "%02X ", msg.raw[i]);
-    }
-    ESP_LOGI(TAG, "TX --> %s", buf);
-    free(buf);
+    // char *buf = calloc(1, msg.size * 3 * sizeof(char) + 1);
+    // for (int i = 0; i < msg.size; i++) {
+    //     sprintf(buf + 3 * i, "%02X ", msg.raw[i]);
+    // }
+    // ESP_LOGI(TAG, "TX --> %s", buf);
+    // free(buf);
 
     xTaskNotify(uartTask(), msg.structured.header.raw, eSetValueWithoutOverwrite);
     uart_write_bytes(UART_NUM, msg.raw, msg.size);
@@ -120,7 +120,7 @@ bool uart_propertyWriteAll(moduleProperty_t property)
     }
     msg_newWriteAll(property);
     uart_modulePropertyHandlers[property].serialize(&msg.raw[msg.size], display_getModule(0));
-    msg.size += propertySizes[property];
+    msg.size += get_property_size(property);
     msg_addData(ACK);
     msg_send(MAX_COMMAND_PERIOD_MS);
     ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
@@ -140,7 +140,8 @@ bool uart_propertyWriteSequential(moduleProperty_t property)
             module->updatableProperties &= ~(1 << property);
             msg_newWriteSequential(property);
             uart_modulePropertyHandlers[property].serialize(&msg.raw[msg.size], module);
-            msg.size += propertySizes[property];
+            msg.size += get_property_size(property);
+
             msg_send(0);
         } else {
             msg_newWriteSequential(no_property);
@@ -162,7 +163,7 @@ bool uart_moduleSerializedPropertiesAreEqual(moduleProperty_t property)
     char bufB[CHAIN_COM_MAX_LEN] = {0};
     for (int i = 1; i < display_getSize(); i++) {
         uart_modulePropertyHandlers[property].serialize(bufB, display_getModule(i));
-        for (int j = 0; j < propertySizes[property]; j++) {
+        for (int j = 0; j < get_property_size(property); j++) {
             if (bufA[j] != bufB[j]) {
                 return false;
             }
@@ -174,14 +175,14 @@ bool uart_moduleSerializedPropertiesAreEqual(moduleProperty_t property)
 uint32_t uart_receive(char *buf, uint32_t length, TickType_t ticks_to_wait)
 {
     uint32_t len = uart_read_bytes(UART_NUM, buf, length, ticks_to_wait);
-    if (len > 0) {
-        char *print_buf = calloc(len * 3 + 1, 1);
-        for (int i = 0; i < len; i++) {
-            sprintf(print_buf + 3 * i, "%02X ", buf[i]);
-        }
-        ESP_LOGI(TAG, "RX <-- %s", print_buf);
-        free(print_buf);
-    }
+    // if (len > 0) {
+    //     char *print_buf = calloc(len * 3 + 1, 1);
+    //     for (int i = 0; i < len; i++) {
+    //         sprintf(print_buf + 3 * i, "%02X ", buf[i]);
+    //     }
+    //     ESP_LOGI(TAG, "RX <-- %s", print_buf);
+    //     free(print_buf);
+    // }
     return len;
 }
 
@@ -198,7 +199,7 @@ static void flap_uart_task(void *arg)
         header.raw = (uint8_t)ulTaskNotifyTake(true, 250 / portTICK_RATE_MS);
         switch (header.field.action) {
             case property_writeAll:
-                expected_rx_len = propertySizes[header.field.property] + WRITE_HEADER_LEN + ACKNOWLEDGE_LEN;
+                expected_rx_len = get_property_size(header.field.property) + WRITE_HEADER_LEN + ACKNOWLEDGE_LEN;
                 len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
                 if (len != expected_rx_len) {
                     ESP_LOGE(TAG, "Received %ld bytes but expected %ld bytes for this \"writeAll\" command.", len,
@@ -225,7 +226,7 @@ static void flap_uart_task(void *arg)
                 module_total = buf[1] + buf[2] * 0xff;
                 display_setSize(module_total);
 
-                expected_rx_len = propertySizes[header.field.property];
+                expected_rx_len = get_property_size(header.field.property);
                 ESP_LOGI(TAG, "Expecting %ld bytes from %d modules", expected_rx_len, module_total);
                 for (module_index = 0; module_index < module_total; module_index++) {
                     // len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);

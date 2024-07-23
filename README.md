@@ -20,28 +20,28 @@ This repository houses all the required files to build, program and modify your 
 
 ## Design Requirements
 
-### The split-flap display should be affordable but high quality. 
+#### The split-flap display should be affordable but high quality. 
 I would rather sink in more time than money.
 
-### The split-flap display shall not require a homing sequence. 
+#### The split-flap display shall not require a homing sequence. 
 To achieve this, the OpenFlap modules contain an optical absolute encoder. This encoder allows the module to know i'ts position at any time.
 
-### The design shall consist only of printed circuit boards and 3D printable parts. 
+#### The design shall consist only of printed circuit boards and 3D printable parts. 
 
-### The amount of wiring to connect multiple modules should be minimal.
+#### The amount of wiring to connect multiple modules should be minimal.
 The modules and top connector boards feature a smart switching mechanism that automatically routes the UART data signal.
 
 ![OpenFlap Signalpath][uart_signalpath]
 
 Each module and top connector board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in red (interrupted signal path) and green (non interrupted signal path). 
 
-### The split-flap display shall only requires calibration once.
+#### The split-flap display shall only requires calibration once.
 Each module contains a micro controller capable of storing calibration values.
 
-### The split-flap display shall be able to determine it's own size and dimensions.
+#### The split-flap display shall be able to determine it's own size and dimensions.
 Each module can sense if it is there is another module connected below itself. The controller can query this information and calculate the width and height of the display based on this information. This currently does constrain the system to only support rectangular displays. 
 
-### The split-flap display must be controllable through a local webpage.
+#### The split-flap display must be controllable through a local webpage.
 ![OpenFlap UI][webpage] 
 ![OpenFlap UI][webpage_modules] 
 

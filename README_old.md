@@ -7,55 +7,32 @@ This repository houses all the required files to build, program and modify your 
 
 ![OpenFlap Module][module_gif] 
 
-## Specifications
+Currently we only support rectangular display configurations. Each display module has 48 characters. The files to produce a basic (alphanumerical) character-set are provided, as well as the resources to produce your own characters sets.
 
-- 48 Flaps per module.
-- Simple wiring.
-- Daisy chain communication.
-- Per module configuration & calibration.
-- No homing sequence.
-- HTTP API available.
-- Customizable.
-- Stackable design.
+In this document I will layout the steps required to build an exemplary 5 wide, 2 high display. 
 
-## Design Requirements
+## Requirments (E.g.: 5x2 display)
 
-### The split-flap display should be affordable but high quality. 
-I would rather sink in more time than money.
+### Tools:
+- soldering iron
+- 3D printer
+- torx T9 screwdriver
+- idc crimp tool
+- [PICkit 4](https://www.microchip.com/en-us/development-tool/pg164140) for flashing the display modules
+- [3.3V serial cable](https://www.adafruit.com/product/954) for flashing an ESP32
+- ( optional [6704ZZ bearings](https://www.aliexpress.com/item/1259680980.html) )
 
-### The split-flap display shall not require a homing sequence. 
-To achieve this, the OpenFlap modules contain an optical absolute encoder. This encoder allows the module to know i'ts position at any time.
+### Components
 
-### The design shall consist only of printed circuit boards and 3D printable parts. 
+- OpenFlap Controller (1 per display)
+- OpenFlap Top_Connector (1 per column E.g.: 5)
+- OpenFlap Module (E.g.: 5x2 = 10)
+- idc cables 6.5cm (1 per column E.g.: 5)
+- A 12V DC power supply with 5.5mm barrel jack
 
-### The amount of wiring to connect multiple modules should be minimal.
-The modules and top connector boards feature a smart switching mechanism that automatically routes the UART data signal.
+## Building an OpenFlap Display
 
-![OpenFlap Signalpath][uart_signalpath]
-
-Each module and top connector board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in red (interrupted signal path) and green (non interrupted signal path). 
-
-### The split-flap display shall only requires calibration once.
-Each module contains a micro controller capable of storing calibration values.
-
-### The split-flap display shall be able to determine it's own size and dimensions.
-Each module can sense if it is there is another module connected below itself. The controller can query this information and calculate the width and height of the display based on this information. This currently does constrain the system to only support rectangular displays. 
-
-### The split-flap display must be controllable through a local webpage.
-![OpenFlap UI][webpage] 
-![OpenFlap UI][webpage_modules] 
-
-## Architecture
-
-The OpenFlap system consists of 3 main components:
-
-1) [OpenFlap Module](#openflap-module)
-2) [OpenFlap Controller](#openflap-controller)
-3) [OpenFlap Top-Connector](#openflap-top-connector)
-
-The OpenFlap modules are designed to be stackable. Each stack of modules must be topped of with top-connector board, these top-connector boards can be connected together to chain together multiple stacks of modules. A controller board can be connected to the first (left-most) top-connector board, it will serve as the brain for the OpenFlap display.
-
-### OpenFlap Module
+### Module
 ![OpenFlap Module][module]
 
 The modules consist of multiple 3D printed parts, sandwiched between two PCB's. Only one of those PCB's should be populated with components. 
@@ -63,15 +40,16 @@ The modules consist of multiple 3D printed parts, sandwiched between two PCB's. 
 All required production files are available in [/hardware/side_panel](/hardware/side_panel), [/hardware/flaps](/hardware/flaps) and [/hardware/encoder_wheel](/hardware/encoder_wheel).
 
 To make one module, you will need:
-- 48 flaps
+- 48 flaps ()
 - 1 populated side panel
 - 1 unpopulated side panel
 - 2 encoder wheels 
 - 32x [M2.6x8mm screw](https://aliexpress.com/item/1005003094076706.html)
 - 1x [12V 60RPM MicroMotor](https://aliexpress.com/item/33022320164.html)
-- 1x [3mm motor shaft coupler](https://aliexpress.com/item/4000342135388.html)
+- 1x [motor shaft coupler](https://aliexpress.com/item/4000342135388.html)
 
-Additional PCB order info:
+When ordering these parts form JLCPCB, their webpage might report errors on the flaps and encoder wheels because they do not contain any "copper layers". You must manually provide this info in the UI:
+
 - flaps : 49mm x 35mm, **0.8mm board thickness**, Remove Order Number!
 - encoder wheel: 74mm x 74mm, **Aluminum base material**, Remove Order Number!
 
@@ -81,28 +59,27 @@ Additional PCB order info:
 - [The long hub](/3d/module_hub_long.stl)
 - [The short hub](/3d/module_hub_short.stl)
 
-#### Assembly Instructions:
 
-1) Assemble the *flaps* and the *core* in between the two *encoder wheels*. The printed side of the encode wheels must face outside. Make sure the orientation of the flaps in regard to the core is correct. The motor should be able to fit in the left side when the letters are facing you. A [3D printable tool](/3d/flap_setter_tool.stl) is provided in this repository to aid with the assembly of the flap wheels.
+1) Assemble the *flaps* and the *core* in between the two *encoder wheels*. The printed side of the encode wheels must face outside. Make sure the orientation of the flaps in regard to the core is correct. The motor should be able to fit in the left side when the letters are facing you. Also note that the outer holes and the inner holes of the encoder wheels do not align in each position, make sure they do when you fasten them.
 
 ![Flap Assembler][flap_assembler]
 
-2) Slide the motor through the *long hub* and attach the shaft coupler.
+2) Slide the motor through the large bearing and attach the shaft coupler.
 
-3) Solder the motor onto the populated side of the *side panel* in such away that the '+' symbol on the motor matches the '+' symbol on the backside of the PCB. Apply solder to the solder bridges marked with the white stripes. If the motor where to turn with an incorrect direction, the solder bridges can be swapped to reverse the motor polarity. Use 4 screws to attach the *long hub* to the side panel.
+3) Solder the motor onto the populated side of the *side panel* in such away that the '+' symbol on the motor matches the '+' symbol on the backside of the PCB. Apply solder to the solder bridges marked with the white stripes. If the motor where to turn with an incorrect direction, the solder bridges should be swapped to. Use 4 screws to attach the large bearing to the side panel.
 
-4) Use 4 screws to attach the *short hub* to the unpopulated side panel.
+4) Use 4 screws to attach the small bearing to the unpopulated side panel.
 
 5) Insert the *core* into the *shell* and sandwich in between the two *side panels*.
 
-### OpenFlap Controller
+### Controller
 ![OpenFlap Controller][controller]
 
 The controller hosts a webpage through which the display can be used. The webpage should be accessible through http://openflap.local/. The controller provides an access point on SSID: `OpenFlap` with a default password: `myOpenFlap`. Through the webpage, the controller can be configured to join your local network. (Reboot required)
 
 All required production files are available in [/hardware/controller](/hardware/controller). You might want to solder on [horizontal SMD header pins](https://aliexpress.com/item/32795058236.html) in order to connect your serial cable for programming. 
 
-### OpenFlap Top Connector
+### Top Connector
 ![OpenFlap Top-Con][top_con]
 
 You will need 1 _Top Connector_ and 1 idc cable for each column in your display. The _Top Connector_ provides power to the column of displays. in this way the displays don't all require their own power circuitry. The board also helps to rout the data through the modules and back to the controller.
@@ -117,6 +94,33 @@ All required production files are available in [/hardware/top_con](/hardware/top
 
 The notch of the connectors on the cable should point in the same direction. Either both left or both right. The cable length should be around 6.5cm or 2.5".
 
+## Design choices
+
+### Encoder + DC motor
+Traditional split-flap displays use stepper motors and a homing sensor to know it's starting position. OpenFlap uses a combination of an optical encoder and a DC motor. This allows the OpenFlap system to boot without having to do a homing rotation to know it's position. Additionally a dc motor is cheaper and simpler to drive.  
+
+### Automatic data routing
+
+The _modules_ and _top_con_ boards feature a smart switching mechanism that automatically routes the uart data signal. This reduces the amount of wiring required.
+
+![OpenFlap Signalpath][uart_signalpath]
+
+Each _module_ and _top-con_ board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in red (interruped signal path) and green (not interrupted signal path). 
+
+### Construction
+
+The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts. Only one of the PCB's is populated. The characters and encoder wheels are also PCB's but they only have solder mask and silkscreen layers and no copper layers.
+
+### Power
+
+Each _module_ requires 5V for the micro controller and other low voltage components and 12V to power the motor. The *top connector* boards contain a 12V to 5V buck convertor to power each column. In this way, the modules don't need their own power circuit.
+
+### Local Webpage
+
+![OpenFlap UI][webpage]
+
+![OpenFlap UI][webpage_modules]
+
 ## Development Environment 
 
 A VS Code devcontainer is provided in this repository.
@@ -124,6 +128,28 @@ A VS Code devcontainer is provided in this repository.
 To flash the *controller* form inside the devcontainer you will need to forward your serial cable, see the [README.md](/.devcontainer/hardware/README.md).
 
 I was unable to work with the PICkit 4 from inside the devcontainer. You can compile the hex files and flash the from your host machine using MPLABX IPE.
+
+## Uart Interface Controller <--> Module
+
+The OpenFlap _modules_ communicate over uart at a baud rate of 115200 bps. The _modules_ are daisy chained, meaning that the TX of the previous _module_ is connected to the RX of the next _module_. There are 4 different types of commands:
+
+- No operation
+- Read property from all modules
+- Write property to single module
+- Write property to all modules
+
+
+Value | Definition                | Data Bytes
+----- | ------------------------- | -----------
+0x01  | firmware_property         | 66
+0x02  | command_property          | 1
+0x03  | columnEnd_property        | 1
+0x04  | characterMapSize_property | 1
+0x05  | characterMap_property     | 200
+0x06  | offset_property           | 1
+0x07  | vtrim_property            | 1
+0x08  | character_property        | 1
+0x09  | baseSpeed_property        | 1
 
 ## Controller HTTP API
 

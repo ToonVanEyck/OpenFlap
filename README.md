@@ -76,79 +76,10 @@ All required production files are available in [/hardware/controller](/hardware/
 
 You will need 1 _Top Connector_ and 1 idc cable for each column in your display. The _Top Connector_ provides power to the column of displays. in this way the displays don't all require their own power circuitry. The board also helps to rout the data through the modules and back to the controller.
 
-## Development Environment 
-
-A VS Code devcontainer is provided in this repository.
-
-To flash the *controller* form inside the devcontainer you will need to forward your serial cable, see the [README.md](/.devcontainer/hardware/README.md).
-
-I was unable to work with the PICkit 4 from inside the devcontainer. You can compile the hex files and flash the from your host machine using MPLABX IPE.
-
-## Controller HTTP API
-
-Endpoints:
-
-- /api/modules
-- /api/wifi
-- /firmware
-
-### modules
-A http GET request on the `/api/modules` endpoint returns a JSON array containing all module properties. 
-
-```
-[
-    {
-        "module":	0,
-        "columnEnd":	true,
-        "characterMapSize":	48,
-        "characterMap":	[" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"],
-        "offset":	0,
-        "vtrim":	0,
-        "character":	"L"
-    },{
-        ...
-    }
-]
-```
-
-Try it with curl: `curl -X GET http://openflap.local/api/modules`
-
-To write data to the modules, a http POST request can be used. The body of the request should be formatted in the same way as the response from a GET request. You only need to add `module` index and the properties which you want to update.
-
-Try it with curl: `curl -X POST http://openflap.local/api/modules -H 'Content-Type: application/json' -d '[{"module":0,"character":"O"}]'`
-
-### wifi
-
-To change the used wifi credentials, a http POST request must be made to the `/api/wifi` endpoint.
-
-Use these credentials for the hosted access point.
-```
-{
-"host":{
-        "ssid": "my_ssid",
-        "password": "my_password",
-    }
-}
-```
-Use these credentials to connect to an existing an access point.
-```
-{
-"join":{
-        "ssid": "my_ssid",
-        "password": "my_password",
-    }
-}
-```
-
-A reboot is requeued for these changes to take effect.
-
-[module_explode]: docs/images/module_explode.gif "OpenFlap Module Explode"
 [module_gif]: docs/images/module.gif "OpenFlap Module"
 [module]: docs/images/module.png "OpenFlap Module"
-[module_pinout]: docs/images/module_pinout.svg "OpenFlap Module Pinout"
 [top_con]: docs/images/top_con.png "OpenFlap Top-Con"
 [controller]: docs/images/flap_controller.png "OpenFlap Controller"
 [webpage]: docs/images/webpage.png "OpenFlap Webpage"
 [webpage_modules]: docs/images/webpage_modules.png "OpenFlap Webpage"
 [uart_signalpath]: docs/images/signalpath.png "OpenFlap Signalath"
-[flap_assembler]: docs/images/flap_assembler.png "Assembly tool"

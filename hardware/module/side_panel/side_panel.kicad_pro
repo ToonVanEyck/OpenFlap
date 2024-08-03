@@ -58,9 +58,7 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [
-        "courtyards_overlap|104425001|127805001|4ff476bd-db7f-4474-98fb-1fe37e627d3f|fbdfe2d9-d9de-4f73-99c6-9390352dbbb9"
-      ],
+      "drc_exclusions": [],
       "meta": {
         "version": 2
       },
@@ -420,7 +418,7 @@
       "global_label_dangling": "warning",
       "hier_label_mismatch": "error",
       "label_dangling": "error",
-      "lib_symbol_issues": "warning",
+      "lib_symbol_issues": "ignore",
       "missing_bidi_pin": "warning",
       "missing_input_pin": "warning",
       "missing_power_pin": "error",
@@ -446,7 +444,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "top_connector.kicad_pro",
+    "filename": "side_panel.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -481,7 +479,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "../Top Connector Plot/",
+      "plot": "",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
@@ -542,41 +540,11 @@
           "label": "DNP",
           "name": "${DNP}",
           "show": true
-        },
-        {
-          "group_by": false,
-          "label": "#",
-          "name": "${ITEM_NUMBER}",
-          "show": false
-        },
-        {
-          "group_by": false,
-          "label": "LCSC",
-          "name": "LCSC",
-          "show": false
-        },
-        {
-          "group_by": false,
-          "label": "Sim.Device",
-          "name": "Sim.Device",
-          "show": false
-        },
-        {
-          "group_by": false,
-          "label": "Sim.Pins",
-          "name": "Sim.Pins",
-          "show": false
-        },
-        {
-          "group_by": false,
-          "label": "Description",
-          "name": "Description",
-          "show": false
         }
       ],
       "filter_string": "",
       "group_symbols": true,
-      "name": "",
+      "name": "Grouped By Value",
       "sort_asc": true,
       "sort_field": "Reference"
     },
@@ -621,7 +589,7 @@
   },
   "sheets": [
     [
-      "af031611-7aa5-43e1-8885-232b80813f15",
+      "36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1",
       "Root"
     ]
   ],

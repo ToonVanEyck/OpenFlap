@@ -1,0 +1,188 @@
+(footprint "GA12-N20 Motor Vertical"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 0 -6.05 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "37aae473-9d0c-4973-8684-a23154bcb002")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "GA12-N20 Motor Vertical"
+		(at 0 1 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "fd2a2bf5-1f95-48e6-89a7-9ff7c2a4bfb6")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0e2310a4-3e00-4edb-9978-2d7b62b60cee")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "8ce4ae49-04f8-44bc-bac7-d070ff4217e6")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "e116bcf0-e251-4718-b92f-29fedb254f14")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -4 -3)
+		(end -2 -3)
+		(stroke
+			(width 0.4)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "ab358b28-b1f5-4ac8-88e5-166745034202")
+	)
+	(fp_line
+		(start -3.35 -5)
+		(end 3.35 -5)
+		(stroke
+			(width 0.2)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "38f77e8f-c463-4231-8459-4cadcf30d85d")
+	)
+	(fp_line
+		(start -3.35 5)
+		(end 3.35 5)
+		(stroke
+			(width 0.2)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "6dbe96e1-e8a3-4384-bb5a-170192cf95ec")
+	)
+	(fp_line
+		(start -3 -4)
+		(end -3 -2)
+		(stroke
+			(width 0.4)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "937c37e2-0ac8-4523-824b-ff26acc94bb3")
+	)
+	(fp_arc
+		(start -3.35 5)
+		(mid -6.018513 0)
+		(end -3.35 -5)
+		(stroke
+			(width 0.2)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "b835fcb0-0c05-4ec1-8b8b-2e3a9d205e1c")
+	)
+	(fp_arc
+		(start 3.35 -5)
+		(mid 6.018513 0)
+		(end 3.35 5)
+		(stroke
+			(width 0.2)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "eeb8a0c0-040f-4a41-87ab-1465b0ff8fb8")
+	)
+	(fp_circle
+		(center 0 0)
+		(end 2.55 0)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(fill none)
+		(layer "Edge.Cuts")
+		(uuid "fa00e2ab-e655-4648-b1c2-93991b8115de")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "3a78ca48-1673-4031-9a87-a8167a168660")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole oval
+		(at -3.625 0)
+		(size 1.6 2.8)
+		(drill oval 0.7 1.8
+			(offset -0.1 0)
+		)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(thermal_bridge_angle 45)
+		(uuid "6269449f-d0f6-44ad-a60b-9468ab4f2d20")
+	)
+	(pad "2" thru_hole oval
+		(at 3.6 0)
+		(size 1.6 2.8)
+		(drill oval 0.7 1.8
+			(offset 0.1 0)
+		)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(thermal_bridge_angle 45)
+		(uuid "8eae9949-cd37-4ca3-8ee0-c534d7a93b1e")
+	)
+	(model "//wsl.localhost/Ubuntu-22.04/home/toon/openflap/hardware/resources/GA12-N20.stp"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 0 0)
+		)
+	)
+)

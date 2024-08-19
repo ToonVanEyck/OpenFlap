@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Flap Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.18/paper-full.min.js"
+        integrity="sha512-qaPSGmKTwpu5ChwJ6AD3w7ecS3yM7pFC1cS3IfnjPM67dhXoymEomk1wqiZEHUFO4dQO1bhjo8LYImVDSDfR1g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"
+        integrity="sha512-Ro+jjHMdfC0ZYcLjWhxVxZtGWFbIGsfvZbVCU3EYCr/aP4dIyzHkSeuhF3wQHb43wz2UCs0M7o16+lAC3/muYA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+        integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"
+        integrity="sha512-Qlv6VSKh1gDKGoJbnyA5RMXYcvnpIqhO++MhIM2fStMcGT9i2T//tSwYFlcyoRRDcDZ+TYHpH8azBBCyhpSeqw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:ital,wght@0,300..700;1,300..700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <script type="text/javascript" src="google_font_convertor.js"></script>
+    <script type="text/javascript" src="flap_gen.js"></script>
+    <script type="text/javascript" src="scripts.js"></script>
+    <script src="https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js"></script>
+
+    <div class="container">
+        <div class="column column-1">
+            <canvas resize="true" id="canvas-1"></canvas>
+            <button onclick="save()">Save</button>
+        </div>
+        <div class="column column-2">
+            <input id="flapTextInput" class="flapTextInput" type="text" placeholder="Character set">
+            <button id="flapGenerateButton" class="flapButton">Generate</button>
+            <input id="flapScaleInput" class="flapSpinBox" type="number" step="0.01">
+            <input id="flapThicknessInput" class="flapSpinBox" type="number" step="0.1">
+            <input id="flapPositionXInput" class="flapSpinBox" type="number" step="1">
+            <input id="flapPositionYInput" class="flapSpinBox" type="number" step="1">
+            <button id="flapExportButton" class="flapButton">Export</button>
+        </div>
+    </div>
+</body>
+
+</html>

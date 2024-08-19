@@ -1,0 +1,34 @@
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" version="1.1" width="49mm" height="35mm" viewBox="0 0 49 35">
+  <g id="g-top-paste" inkscape:label="top paste" inkscape:groupmode="layer">
+  </g>
+  <g id="g-top-silk" inkscape:label="top silk" inkscape:groupmode="layer">
+  </g>
+  <g id="g-top-mask" inkscape:label="top mask" inkscape:groupmode="layer">
+    <path d="m 49.95,34.625 h 1"></path>
+    <path d="m 2.95,34.625 h 1"></path>
+  </g>
+  <g id="g-top-copper" inkscape:label="top copper" inkscape:groupmode="layer">
+    <path d="m 49.95,34.625 h 1"></path>
+    <path d="m 2.95,34.625 h 1"></path>
+  </g>
+  <g id="g-bottom-copper" inkscape:label="bottom copper" inkscape:groupmode="layer">
+    <path d="m 49.95,34.625 h 1"></path>
+    <path d="m 2.95,34.625 h 1"></path>
+  </g>
+  <g id="g-bottom-mask" inkscape:label="bottom mask" inkscape:groupmode="layer">
+    <path d="m 49.95,34.625 h 1"></path>
+    <path d="m 2.95,34.625 h 1"></path>
+  </g>
+  <g id="g-bottom-silk" inkscape:label="bottom silk" inkscape:groupmode="layer">
+  </g>
+  <g id="g-bottom-paste" inkscape:label="bottom paste" inkscape:groupmode="layer">
+  </g>
+  <g id="g-outline" inkscape:label="outline" inkscape:groupmode="layer">
+    <path d="M 4,0 A 4,4 0 0 0 0,4 V 21.6 H 2 V 32.4 H 0 v 1 h 2 v 1.6 H 47 V 33.4 H 49 V 32.4 H 47 V 21.6 H 49 V 4 A 4,4 0 0 0 45,0 Z"/>
+  </g>
+  <g id="g-drill-plated" inkscape:label="drill plated" inkscape:groupmode="layer">
+  </g>
+  <g id="g-drill-nonplated" inkscape:label="drill nonplated" inkscape:groupmode="layer">
+  </g>
+  <g id="g-comments" inkscape:label="comments" inkscape:groupmode="layer"/>
+</svg>

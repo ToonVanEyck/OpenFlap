@@ -152,6 +152,12 @@ RUN mkdir -p /opt/gcc-arm/ && \
     cd /opt/gcc-arm/ && \
     chown -R root:root arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/
 
+# install gerbolyze
+RUN python3 -m pip install -U gerbolyze && \
+    python3 -m pip install -U --upgrade --upgrade-strategy eager gerbolyze && \
+    apt -y install cargo && \
+    cargo install usvg
+
 # install ncurses dependency
 RUN apt -y install libncurses5 && ln -s /usr/lib/x86_64-linux-gnu/libncursesw.so.6 /usr/lib/x86_64-linux-gnu/libncursesw.so.5
 

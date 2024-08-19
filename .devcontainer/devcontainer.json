@@ -17,7 +17,9 @@
         "streetsidesoftware.code-spell-checker",
         "xaver.clang-format",
         "marus25.cortex-debug",
-        "jkearins.action-buttons-ext"
+        "jkearins.action-buttons-ext",
+        "GitHub.copilot-chat",
+        "GitHub.copilot"
     ],
     "mounts": [
         "source=/dev,target=/dev,type=bind,consistency=cached",

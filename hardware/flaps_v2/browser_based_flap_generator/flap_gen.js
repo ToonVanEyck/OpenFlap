@@ -58,6 +58,15 @@ class Flap {
         this.flap_svg.onMouseDown = this.__onMouseDown.bind(this);
     }
 
+    destructor() {
+        // Clean up any resources or event listeners here
+        this.flap_svg.remove();
+        this.flap_highlight_svg.remove();
+        this.flap_upper.remove();
+        this.flap_lower.remove();
+        this.flap_glyph.remove();
+    }
+
     select() {
         this.flap_highlight_svg.strokeWidth = 0.5;
     }
@@ -250,6 +259,9 @@ class FlapGenerator {
     }
 
     async __generateFromText(text) {
+        for (let flap of this.flaps) {
+            flap.destructor();
+        }
         this.flaps = [];
         for (var i = 0; i < text.length; i++) {
             let glyph_svg = await this.font.getPath(text[i], 0, 0, this.fontsize).toSVG();

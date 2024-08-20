@@ -32,7 +32,6 @@ window.onload = async function () {
     // Add event listeners for zoom and pan
     var canvas = document.getElementById('canvas-1');
     canvas.addEventListener('wheel', function(event) {
-        // Zoom in or out
         var zoomFactor = 1.1;
         var oldZoom = paper.view.zoom;
         if (event.deltaY < 0) {
@@ -41,33 +40,21 @@ window.onload = async function () {
             paper.view.zoom /= zoomFactor;
         }
         var newZoom = paper.view.zoom;
-    
-        // Calculate the zoom point
         var mousePosition = new paper.Point(event.offsetX, event.offsetY);
         var viewPosition = paper.view.viewToProject(mousePosition);
         var zoomDelta = newZoom / oldZoom;
-    
-        // Adjust the view center
         var centerAdjust = viewPosition.subtract(paper.view.center);
         var offset = centerAdjust.multiply(zoomDelta - 1);
         paper.view.center = paper.view.center.add(offset);
-    
-        // Prevent the page from scrolling
         event.preventDefault();
     });
-
     var tool = new paper.Tool();
     var panStartPoint;
-
     tool.onMouseDown = function(event) {
-        // Store the starting point for panning
         panStartPoint = event.point;
     };
-
     tool.onMouseDrag = function(event) {
-        // Calculate the delta
         var delta = event.downPoint.subtract(event.point);
-        // Adjust the view's center
         paper.view.center = paper.view.center.add(delta);
     };
 }

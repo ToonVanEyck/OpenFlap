@@ -3,38 +3,7 @@ body {
     height: 100%;
 }
 
-/* Scale canvas with resize attribute to full size */
-canvas[resize] {
-    width: 100%;
-    height: 100%;
-}
-
-.container {
-    display: flex;
-}
-
-.column {
-    flex: 1;
-}
-
-.column-1 {
-    border-style: solid;
-    flex-basis: 75%;
-}
-
-.column-2 {
-    border-style: solid;
-    flex-basis: 25%;
-}
-
-.flapTextInput {
-    font-size: 1.5em;
-    text-align: center;
-    text-transform: uppercase;
-}
-
-.flapButton {
-    width: 100%;
-    font-size: 1.5em;
-    text-align: center;
+.flapCanvas {
+    background-size: 30px 30px;
+    background-image: radial-gradient(circle, var(--bs-border-color-translucent) 1px, rgba(0, 0, 0, 0) 1px);
 }

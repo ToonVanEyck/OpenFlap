@@ -1,5 +1,3 @@
-paper.install(window);
-
 var flapGenerator
 
 function updateFormFromActiveFlap(fg) {
@@ -11,6 +9,12 @@ function updateFormFromActiveFlap(fg) {
 }
 
 window.onload = async function () {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const myModal = new bootstrap.Modal(document.getElementById('popupWelcome'), {})
+    myModal.show()
+
     flapGenerator = new FlapGenerator(paper, "canvas-1", updateFormFromActiveFlap);
 
     var flapGenerateButton = document.getElementById("flapGenerateButton");
@@ -31,7 +35,7 @@ window.onload = async function () {
 
     // Add event listeners for zoom and pan
     var canvas = document.getElementById('canvas-1');
-    canvas.addEventListener('wheel', function(event) {
+    canvas.addEventListener('wheel', function (event) {
         var zoomFactor = 1.1;
         var oldZoom = paper.view.zoom;
         if (event.deltaY < 0) {
@@ -50,10 +54,10 @@ window.onload = async function () {
     });
     var tool = new paper.Tool();
     var panStartPoint;
-    tool.onMouseDown = function(event) {
+    tool.onMouseDown = function (event) {
         panStartPoint = event.point;
     };
-    tool.onMouseDrag = function(event) {
+    tool.onMouseDrag = function (event) {
         var delta = event.downPoint.subtract(event.point);
         paper.view.center = paper.view.center.add(delta);
     };
@@ -75,48 +79,18 @@ function exportSvgForGerbolyzation() {
     flapGenerator.exportFlapSvgs();
 }
 
-//     var rect = new Rectangle();
-//     rect.size = new Size(100, 100);
-//     var pathRect = new Path.Rectangle(rect);
-//     pathRect.strokeColor = 'black';
-//     pathRect.fillColor = 'red';
-//     rect.center = new Point(100, 100);
-//     pathRect2 = new Path.Rectangle(rect);
-//     pathRect2.strokeColor = 'black';
-//     pathRect2.fillColor = 'blue';
-
-//     result = pathRect2.subtract(pathRect);
-//     result.fillColor = 'green';
-
-//     pathRect.remove();
-//     pathRect2.remove();
-// }
-// var text;
-
-
-
-// function drawPath(opentypePathSVG) {
-//     text = paper.project.importSVG(opentypePathSVG);
-//     text.strokeColor = 'black';
-//     text.fillColor = 'red';
-
-//     result = pathRect2.subtract(text);
-//     result.fillColor = 'green';
-
-//     text.remove();
-//     pathRect2.remove();
-// }
-
-
-function save() {
-    var svg = project.exportSVG({ asString: true });
-    var blob = new Blob([svg], { type: 'image/svg+xml' });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    link.download = 'canvas.svg';
-    link.click();
-    URL.revokeObjectURL(url);
+function loadJson() {
+    flapGenerator.loadJson();
 }
 
-// GERBOLYZE: gerbolyze convert -n altium flap.svg gerber.zip
+function exportJson() {
+    flapGenerator.exportJson();
+}
+
+function resizeCanvas() {
+    var element = document.evaluate('/html/body/div/div[1]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    var size = element.getBoundingClientRect();
+    var canvas = document.getElementById('canvas-1');
+    canvas.width = size.width;
+    canvas.height = size.height;
+}

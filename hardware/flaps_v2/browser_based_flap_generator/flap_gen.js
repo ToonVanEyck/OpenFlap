@@ -47,12 +47,12 @@ class Flap {
         this.glyph_position_x = 0;
         this.glyph_position_y = 0;
 
-        let rect = new Rectangle();
+        let rect = new paper.Rectangle();
         rect.size = this.flap_svg.bounds;
         rect.center = this.flap_svg.position;
-        this.flap_highlight_svg = new Path.Rectangle(rect);
+        this.flap_highlight_svg = new paper.Path.Rectangle(rect);
         this.flap_highlight_svg.scale(1.03, 1.03)
-        this.flap_highlight_svg.strokeColor = 'red';
+        this.flap_highlight_svg.strokeColor = getComputedStyle(document.body).getPropertyValue('--bs-primary-text-emphasis');
         this.flap_highlight_svg.strokeWidth = 0;
 
         this.flap_svg.onMouseDown = this.__onMouseDown.bind(this);
@@ -225,7 +225,6 @@ class FlapGenerator {
 
         // Add glyphs to output svg
         let gerbolyzer_svg_node = this.gerbolyzer_template_node.cloneNode(true);
-        console.log(gerbolyzer_svg_node);
         gerbolyzer_svg_node.getElementById('g-top-silk').appendChild(front_glyph_intersect.exportSVG());
         gerbolyzer_svg_node.getElementById('g-bottom-silk').appendChild(back_glyph_intersect.exportSVG());
 
@@ -266,6 +265,44 @@ class FlapGenerator {
         for (var i = 0; i < text.length; i++) {
             let glyph_svg = await this.font.getPath(text[i], 0, 0, this.fontsize).toSVG();
             this.flaps.push(new Flap(this, this.flap_template_svg_path_tag, glyph_svg, i, this.gap_mm));
+        }
+    }
+
+    exportJson() {
+        let flapGen = {
+            gerbolyzer_template_b64: btoa(new XMLSerializer().serializeToString(this.gerbolyzer_template_node)),
+            gap_mm: this.gap_mm,
+            font: "Not Supported Yet",
+            fontsize: this.fontsize,
+            flaps: [],
+        };
+        for (let flap of this.flaps) {
+            flapGen.flaps.push({
+                scale: flap.glyph_scale,
+                thickness: flap.glyph_thickness,
+                position: flap.getPosition(),
+                glyph_b64: btoa(flap.glyph_svg),
+            });
+        }
+        return JSON.stringify(flapGen);
+    }
+
+    loadJson(json) {
+        let flapGen = JSON.parse(json);
+        this.gap_mm = flapGen.gap_mm;
+        this.fontsize = flapGen.fontsize;
+        this.gerbolyzer_template_node = new DOMParser().parseFromString(atob(flapGen.gerbolyzer_template_b64), 'text/xml');
+        this.flap_template_svg_path_tag = this.gerbolyzer_template_node.getElementById("g-outline").getElementsByTagName('path')[0];
+        let i = 0;
+        for (let flap of this.flaps) {
+            flap.destructor();
+        }
+        for (let flap of flapGen.flaps) {
+            let newFlap = new Flap(this, this.flap_template_svg_path_tag, atob(flap.glyph_b64), i++, this.gap_mm);
+            this.flaps.push(newFlap);
+            newFlap.setThickness(flap.thickness);
+            newFlap.setScale(flap.scale);
+            newFlap.setPosition(flap.position[0], flap.position[1]);
         }
     }
 }

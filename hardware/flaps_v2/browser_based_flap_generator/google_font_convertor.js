@@ -53,7 +53,6 @@ async function loadFont(src) {
 
     // parse font
     font = opentype.parse(buffer);
-    //console.log(font);
     return font;
 }
 

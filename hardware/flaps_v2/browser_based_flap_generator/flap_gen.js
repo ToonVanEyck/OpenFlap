@@ -1,5 +1,6 @@
 class Flap {
     template_svg;
+    character;
     glyph_svg;
     index;
     location;
@@ -9,15 +10,17 @@ class Flap {
     glyph_thickness;
     glyph_position_x;
     glyph_position_y;
+    glyph_global_offset;
 
     flap_glyph;
     flap_upper;
     flap_lower;
     flap_svg;
 
-    constructor(parent, template_svg, glyph_svg, index, gap_mm) {
+    constructor(parent, character, template_svg, glyph_svg, index, gap_mm) {
         this.parent = parent;
         this.template_svg = template_svg;
+        this.character = character
         this.glyph_svg = glyph_svg;
         this.index = index;
         this.gap_mm = gap_mm;
@@ -46,6 +49,7 @@ class Flap {
         this.glyph_thickness = 0;
         this.glyph_position_x = 0;
         this.glyph_position_y = 0;
+        this.glyph_global_offset = 0;
 
         let rect = new paper.Rectangle();
         rect.size = this.flap_svg.bounds;
@@ -108,6 +112,19 @@ class Flap {
         return [this.flap_glyph.position.x, this.flap_glyph.position.y];
     }
 
+    setGlobalOffset(y) {
+        this.flap_glyph.position.y -= y - this.glyph_global_offset;
+        this.glyph_global_offset = Number(y);
+    }
+
+    getGlobalOffset() {
+        return this.glyph_global_offset;
+    }
+
+    getCharacter() {
+        return this.character;
+    }
+
     __onMouseDown(event) {
         this.parent.__selectFlap(this.index);
     }
@@ -116,26 +133,34 @@ class Flap {
 
 class FlapGenerator {
     paper;
-    font;
     flap_template_svg_path_tag;
     gerbolyzer_template_node;
     gap_mm;
-    fontsize;
+    fontFamily;
+    fontWeight;
+    fontSize;
+    fontStyle;
     updateFormCallback;
     flaps = [];
     selected_flap = null;
 
+    bot_guide;
+    top_guide;
+    top_guide_offset;
+    bot_guide_offset;
+    show_guides;
+
     constructor(paper, canvas_id, updateFormCallback) {
         this.paper = paper;
         this.paper.setup(canvas_id);
-        this.paper.view.zoom = 4;
+        // this.paper.view.zoom = 4;
         this.gap_mm = 0.5;
-        // this.paper.view.center = new this.paper.Point(0, 0);
-        this.paper.view.center = new this.paper.Point(this.paper.view.bounds.width / 2, this.paper.view.bounds.height / 2);
+        this.bot_guide_offset = 1;
+        this.top_guide_offset = 1;
+        this.show_guides = false;
+        // this.paper.view.center = new this.paper.Point(this.paper.view.bounds.width / 2, this.paper.view.bounds.height / 2);
         this.__loadDefaultGerbolyzerTemplate();
-        // Calculate font size based on the flap height
         let flap_temp = paper.project.importSVG(this.flap_template_svg_path_tag)
-        this.fontsize = (flap_temp.bounds.height * 2 + this.gap_mm) * 1.06;
         flap_temp.remove();
         this.updateFormCallback = updateFormCallback;
     }
@@ -144,13 +169,7 @@ class FlapGenerator {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', 'gerbolyzer_template.svg', false);
         xhr.send(null);
-        const parser = new DOMParser();
-        this.gerbolyzer_template_node = parser.parseFromString(xhr.responseText, 'text/xml');
-        this.flap_template_svg_path_tag = this.gerbolyzer_template_node.getElementById("g-outline").getElementsByTagName('path')[0];
-    }
-
-    __setFont(font) {
-        this.font = font;
+        this.setGerbolyzerTemplate(xhr.responseText);
     }
 
     __selectFlap(index) {
@@ -196,6 +215,59 @@ class FlapGenerator {
         if (this.selected_flap) {
             return this.selected_flap.getPosition();
         }
+    }
+
+    setFlapGap(gap_mm) {
+        this.__clearFlaps();
+        this.gap_mm = gap_mm;
+    }
+
+    getCharacterSet() {
+        let characterSet = "";
+        for (let flap of this.flaps) {
+            characterSet += flap.getCharacter();
+        }
+        return characterSet;
+    }
+
+    async setCharacterSet(characterSet) {
+        let selectedIndex = this.flaps.findIndex(flap => flap === this.selected_flap);
+        selectedIndex = selectedIndex == -1 ? 0 : selectedIndex;
+        let propertiesMap = {}
+        for (let flap of this.flaps) {
+            propertiesMap[flap.getCharacter()] = {
+                scale: flap.getScale(),
+                thickness: flap.getThickness(),
+                position: flap.getPosition(),
+            };
+        }
+        await this.__generateFromText(characterSet);
+        for (let flap of this.flaps) {
+            if (flap.getCharacter() in propertiesMap) {
+                flap.setScale(propertiesMap[flap.getCharacter()].scale);
+                flap.setThickness(propertiesMap[flap.getCharacter()].thickness);
+                flap.setPosition(propertiesMap[flap.getCharacter()].position[0], propertiesMap[flap.getCharacter()].position[1]);
+            }
+        }
+        const totalFlaps = this.flaps.length;
+        if (totalFlaps > 0) {
+            const clippedIndex = Math.max(0, Math.min(selectedIndex, totalFlaps - 1));
+            this.__selectFlap(clippedIndex);
+        }
+        this.__centerView();
+    }
+
+    setFont(fontFamily, fontSize, fontWeight, fontStyle, ttf) {
+        this.fontFamily = fontFamily;
+        this.fontSize = fontSize;
+        this.fontWeight = fontWeight;
+        this.fontStyle = fontStyle;
+        this.font = ttf;
+        this.setCharacterSet(this.getCharacterSet());
+    }
+
+    getFont() {
+        return [this.fontFamily, this.fontSize, this.fontWeight, this.fontStyle];
     }
 
     __combineFlapFrontAndBack(frontFlap, backFlap) {
@@ -258,51 +330,100 @@ class FlapGenerator {
     }
 
     async __generateFromText(text) {
+        if (this.font === undefined) {
+            return;
+        }
+        this.__clearFlaps();
+        this.flaps = [];
+        for (var i = 0; i < text.length; i++) {
+            let glyph_svg = await this.font.getPath(text[i], 0, 0, this.fontSize).toSVG();
+            this.flaps.push(new Flap(this, text[i], this.flap_template_svg_path_tag, glyph_svg, i, this.gap_mm));
+        }
+        try {
+            this.setGuideLines(this.show_guides, this.bot_guide_offset, this.top_guide_offset);
+            this.top_guide.bringToFront();
+            this.bot_guide.bringToFront();
+        } catch (e) { }
+    }
+
+    setGerbolyzerTemplate(template_svg) {
+        this.__clearFlaps();
+        const parser = new DOMParser();
+        this.gerbolyzer_template_node = parser.parseFromString(template_svg, 'text/xml');
+        this.flap_template_svg_path_tag = this.gerbolyzer_template_node.getElementById("g-outline").getElementsByTagName('path')[0];
+    }
+
+    __clearFlaps() {
+        this.selected_flap = null;
         for (let flap of this.flaps) {
             flap.destructor();
         }
         this.flaps = [];
-        for (var i = 0; i < text.length; i++) {
-            let glyph_svg = await this.font.getPath(text[i], 0, 0, this.fontsize).toSVG();
-            this.flaps.push(new Flap(this, this.flap_template_svg_path_tag, glyph_svg, i, this.gap_mm));
+    }
+
+    setGuideLines(visible, bottomOffset, topOffset) {
+        this.show_guides = visible;
+        this.bot_guide_offset = Number(bottomOffset);
+        this.top_guide_offset = Number(topOffset);
+
+        try {
+            this.bot_guide.remove();
+            this.top_guide.remove();
+        } catch (e) { }
+
+        if (!this.show_guides) {
+            return;
+        }
+
+        let x1 = this.flaps[0].flap_lower.bounds.x
+        let x2 = this.flaps[this.flaps.length - 1].flap_lower.bounds.x + this.flaps[this.flaps.length - 1].flap_lower.bounds.width
+        let y_b = this.flaps[0].flap_lower.bounds.y + this.flaps[0].flap_lower.bounds.height - this.bot_guide_offset
+        let y_t = this.flaps[0].flap_upper.bounds.y + this.top_guide_offset
+
+        this.bot_guide = new paper.Path();
+        this.bot_guide.strokeColor = new paper.Color(0, 255, 0, 0.5);
+        this.bot_guide.strokeWidth = 0.1;
+        this.bot_guide.add(new paper.Point(x1, y_b));
+        this.bot_guide.add(new paper.Point(x2, y_b));
+
+        this.top_guide = new paper.Path();
+        this.top_guide.strokeColor = new paper.Color(0, 255, 0, 0.5);
+        this.top_guide.strokeWidth = 0.1;
+        this.top_guide.add(new paper.Point(x1, y_t));
+        this.top_guide.add(new paper.Point(x2, y_t));
+    }
+
+    getGuideLines() {
+        return [this.show_guides, this.bot_guide_offset, this.top_guide_offset];
+    }
+
+    setGlobalOffset(y) {
+        for (let flap of this.flaps) {
+            flap.setGlobalOffset(y);
         }
     }
 
-    exportJson() {
-        let flapGen = {
-            gerbolyzer_template_b64: btoa(new XMLSerializer().serializeToString(this.gerbolyzer_template_node)),
-            gap_mm: this.gap_mm,
-            font: "Not Supported Yet",
-            fontsize: this.fontsize,
-            flaps: [],
-        };
-        for (let flap of this.flaps) {
-            flapGen.flaps.push({
-                scale: flap.glyph_scale,
-                thickness: flap.glyph_thickness,
-                position: flap.getPosition(),
-                glyph_b64: btoa(flap.glyph_svg),
-            });
-        }
-        return JSON.stringify(flapGen);
+    getGlobalOffset() {
+        return this.flaps[0].getGlobalOffset();
     }
 
-    loadJson(json) {
-        let flapGen = JSON.parse(json);
-        this.gap_mm = flapGen.gap_mm;
-        this.fontsize = flapGen.fontsize;
-        this.gerbolyzer_template_node = new DOMParser().parseFromString(atob(flapGen.gerbolyzer_template_b64), 'text/xml');
-        this.flap_template_svg_path_tag = this.gerbolyzer_template_node.getElementById("g-outline").getElementsByTagName('path')[0];
-        let i = 0;
-        for (let flap of this.flaps) {
-            flap.destructor();
+    __centerView() {
+        const contentBounds = paper.project.activeLayer.bounds;
+        const viewBounds = paper.view.bounds;
+        const currentZoom = paper.view.zoom;
+        const scaleX = viewBounds.width / contentBounds.width;
+        const scaleY = viewBounds.height / contentBounds.height;
+        const scale = Math.min(scaleX, scaleY) * 0.98;
+        const newZoom = currentZoom * scale;
+        if (isFinite(newZoom)) {
+            this.paper.view.center = contentBounds.center;
+            this.paper.view.zoom = newZoom;
         }
-        for (let flap of flapGen.flaps) {
-            let newFlap = new Flap(this, this.flap_template_svg_path_tag, atob(flap.glyph_b64), i++, this.gap_mm);
-            this.flaps.push(newFlap);
-            newFlap.setThickness(flap.thickness);
-            newFlap.setScale(flap.scale);
-            newFlap.setPosition(flap.position[0], flap.position[1]);
-        }
+    }
+
+    resizeCanvas(width, height) {
+        paper.view.viewSize.width = width;
+        paper.view.viewSize.height = height;
+        __centerView();
     }
 }

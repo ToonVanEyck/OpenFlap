@@ -19,6 +19,8 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
         integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
         crossorigin="anonymous"></script>
@@ -29,28 +31,127 @@
 </head>
 
 <body>
-    <script type="text/javascript" src="google_font_convertor.js"></script>
-    <script src="https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js"></script>
     <script type="text/javascript" src="flap_gen.js"></script>
     <script type="text/javascript" src="scripts.js"></script>
 
     <div class="container-fluid vh-100 flex-column d-flex gap-3 px-4 py-3">
         <div class="row h-50">
-            <!-- <div class="row"> -->
             <div class="col-12 p-0">
                 <div class="card h-100 overflow-hidden">
-                    <!-- <div class="card-header">Configuration</div> -->
                     <div class="flapCanvas card-body p-0 ">
                         <canvas id="canvas-1" class="d-block"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row h-50 d-flex flex-row gap-3">
-            <div class="col-4 p-0">
+        <div class="row h-50 gap-3">
+            <div class="col-6 p-0">
                 <div class="card h-100">
                     <div class="card-header">Project Setup</div>
                     <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <button type="button" id="projectLoadButton"
+                                    class="btn btn-primary w-100 d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-folder2-open icon-large"></i>
+                                    <span class="ms-2">Load Project</span>
+                                </button>
+                            </div>
+                            <div class="col">
+                                <button type="button" id="projectSaveButton"
+                                    class="btn btn-primary w-100 d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-floppy icon-large"></i>
+                                    <span class="ms-2">Save Project</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- <div class="mb-3">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="projectName" value="MyCustomFlapSet">
+                                <label for="projectName">Project Name</label>
+                            </div>
+                        </div> -->
+                        <!-- <div class="mb-3">
+                            <div class="input-group">
+
+                                <div class="form-floating formGrow-3">
+                                    <input type="text" class="form-control" id="projectTemplate">
+                                    <label for="projectTemplate">Template</label>
+                                </div>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="projectFlapGap"
+                                        unit="mm" step="0.1">
+                                    <label for="projectFlapGap">Flap Gap</label>
+                                </div>
+                                <span class="input-group-text">mm</span>
+                            </div>
+                            <div id="projectTemplateHelp" class="form-text">
+                                The template file should be a <a href="https://github.com/jaseg/gerbolyze"
+                                    target="_blank" rel="noopener noreferrer">gerbolyze</a> template file containing
+                                the flap template on the outline layer. And the flap gap is the distance between the
+                                upper and lower flaps.
+                            </div>
+                        </div> -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <div class="form-floating formGrow-2">
+                                    <select class="form-select" id="projectFont">
+                                    </select>
+                                    <label for="projectFont">Font</label>
+                                </div>
+                                <div class="form-floating">
+                                    <select class="form-select" id="projectFontVariant">
+                                    </select>
+                                    <label for="projectFontVariant">Variant</label>
+                                </div>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="projectFontSize">
+                                    <label for="projectFontSize">Size</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="projectCharacterSet"></input>
+                                <label for="projectCharacterSet">Character Set</label>
+                                <div id="projectCharacterSetHelp" class="form-text">
+                                    Type the complete character set you wish to generate in here. You can later override
+                                    individual glyphs to add your own custom glyphs.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <div class="input-group-text">
+                                    <input class="form-check-input mt-0" type="checkbox" id="projectShowGuides">
+                                </div>
+                                <span class="input-group-text">Show Guide Lines</span>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="projectGuideTop" min="0">
+                                    <label for="projectGuideTop">Top Guide</label>
+                                </div>
+                                <span class="input-group-text">mm</span>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="projectGuideBot" min="0">
+                                    <label for="projectGuideBot">Bottom Guide</label>
+                                </div>
+                                <span class="input-group-text">mm</span>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="projectGlobalOffset">
+                                    <label for="projectGlobalOffset">Character Y Offset</label>
+                                </div>
+                                <span class="input-group-text">mm</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <button type="button" id="projectGenerateButton"
+                                    class="btn btn-primary w-100 d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-gear icon-large"></i>
+                                    <span class="ms-2">Generate Files</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -58,13 +159,34 @@
                 <div class="card h-100 ">
                     <div class="card-header">Flap Properties</div>
                     <div class="card-body">
-                        <input id="flapTextInput" class="" type="text" placeholder="Character set">
-                        <button id="flapGenerateButton" class="">Generate</button>
-                        <input id="flapScaleInput" class="" type="number" step="0.01">
-                        <input id="flapThicknessInput" class="" type="number" step="0.1">
-                        <input id="flapPositionXInput" class="" type="number" step="1">
-                        <input id="flapPositionYInput" class="" type="number" step="1">
-                        <button id="flapExportButton" class="">Export</button>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="flapScale" step="0.01" value="1"
+                                        min="0">
+                                    <label for="flapScale">Scale</label>
+                                </div>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="flapThickness" step="0.25" value="0"
+                                        min="0">
+                                    <label for="flapThickness">Thickness</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="flapPositionX" step="1" value="0">
+                                    <label for="flapPositionX">X Position</label>
+                                </div>
+                                <span class="input-group-text">mm</span>
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="flapPositionY" step="1" value="0">
+                                    <label for="flapPositionY">Y Position</label>
+                                </div>
+                                <span class="input-group-text">mm</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -87,6 +209,12 @@
             </div>
         </div>
     </div>
+    <form action="/template" id="uploadTemplate" method="post" enctype="multipart/form-data">
+        <input type="file" class="d-none" id="projectTemplateSelector" accept=".svg">
+    </form>
+    <form action="/project" id="uploadProject" method="post" enctype="multipart/form-data">
+        <input type="file" class="d-none" id="projectLoadSelector" accept=".json">
+    </form>
 </body>
 
 </html>

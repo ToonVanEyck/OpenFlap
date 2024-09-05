@@ -153,12 +153,10 @@ class FlapGenerator {
     constructor(paper, canvas_id, updateFormCallback) {
         this.paper = paper;
         this.paper.setup(canvas_id);
-        // this.paper.view.zoom = 4;
         this.gap_mm = 0.5;
         this.bot_guide_offset = 1;
         this.top_guide_offset = 1;
         this.show_guides = false;
-        // this.paper.view.center = new this.paper.Point(this.paper.view.bounds.width / 2, this.paper.view.bounds.height / 2);
         this.__loadDefaultGerbolyzerTemplate();
         let flap_temp = paper.project.importSVG(this.flap_template_svg_path_tag)
         flap_temp.remove();
@@ -233,6 +231,7 @@ class FlapGenerator {
     async setCharacterSet(characterSet) {
         let selectedIndex = this.flaps.findIndex(flap => flap === this.selected_flap);
         selectedIndex = selectedIndex == -1 ? 0 : selectedIndex;
+        const globalOffset = (this.flaps.length) ? this.flaps[0].getGlobalOffset() : 0;
         let propertiesMap = {}
         for (let flap of this.flaps) {
             propertiesMap[flap.getCharacter()] = {
@@ -247,6 +246,7 @@ class FlapGenerator {
                 flap.setScale(propertiesMap[flap.getCharacter()].scale);
                 flap.setThickness(propertiesMap[flap.getCharacter()].thickness);
                 flap.setPosition(propertiesMap[flap.getCharacter()].position[0], propertiesMap[flap.getCharacter()].position[1]);
+                flap.setGlobalOffset(globalOffset);
             }
         }
         const totalFlaps = this.flaps.length;
@@ -254,7 +254,6 @@ class FlapGenerator {
             const clippedIndex = Math.max(0, Math.min(selectedIndex, totalFlaps - 1));
             this.__selectFlap(clippedIndex);
         }
-        this.__centerView();
     }
 
     setFont(fontFamily, fontSize, fontWeight, fontStyle, ttf) {
@@ -272,12 +271,14 @@ class FlapGenerator {
 
     __combineFlapFrontAndBack(frontFlap, backFlap) {
         // Clone glyphs
-        let front_glyph = frontFlap.flap_glyph.clone();
-        let back_glyph = backFlap.flap_glyph.clone();
+        let front_glyph = PaperOffset.offset(frontFlap.flap_glyph, frontFlap.getThickness() / 2);
+        let back_glyph = PaperOffset.offset(backFlap.flap_glyph, backFlap.getThickness() / 2);
         // Reposition bottom glyph
         back_glyph.position = new paper.Point((frontFlap.flap_upper.bounds.width * 1.1) * (frontFlap.index + 1 / 2), frontFlap.flap_upper.bounds.height * 1.1 - frontFlap.gap_mm);
         back_glyph.position.x += backFlap.glyph_position_x;
         back_glyph.position.y -= backFlap.glyph_position_y;
+
+        frontFlap.flap_glyph.remove();
 
         // Intersect glyphs
         let front_glyph_intersect = frontFlap.flap_upper.intersect(front_glyph);
@@ -407,7 +408,7 @@ class FlapGenerator {
         return this.flaps[0].getGlobalOffset();
     }
 
-    __centerView() {
+    centerView() {
         const contentBounds = paper.project.activeLayer.bounds;
         const viewBounds = paper.view.bounds;
         const currentZoom = paper.view.zoom;
@@ -424,6 +425,6 @@ class FlapGenerator {
     resizeCanvas(width, height) {
         paper.view.viewSize.width = width;
         paper.view.viewSize.height = height;
-        __centerView();
+        centerView();
     }
-}
+} 

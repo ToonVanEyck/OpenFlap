@@ -70,27 +70,29 @@ window.onload = async function () {
     flapPositionX.addEventListener("change", updateActiveFlapPosition);
     flapPositionY.addEventListener("change", updateActiveFlapPosition);
 
-    // Set default values: Font
-    projectFont.value = "Red Hat Mono";
-    await updateFont({ target: { id: 'projectFont' } });
-    projectFontVariant.value = "600";
-    await updateFont({ target: { id: 'projectFontVariant' } });
-    projectFontSize.value = "72";
-    await updateFont({ target: { id: 'projectFontSize' } });
+    // // Set default values: Font
+    // projectFont.value = "Red Hat Mono";
+    // await updateFont({ target: { id: 'projectFont' } });
+    // projectFontVariant.value = "600";
+    // await updateFont({ target: { id: 'projectFontVariant' } });
+    // projectFontSize.value = "72";
+    // await updateFont({ target: { id: 'projectFontSize' } });
 
-    // Set default values: Character Set
-    projectCharacterSet.value = "OPE!&@#€.";
-    await updatedCharacterSet();
+    // // Set default values: Character Set
+    // projectCharacterSet.value = "OPE!&@#€.";
+    // await updatedCharacterSet();
 
-    // Set default values: Guides
-    projectShowGuides.checked = true;
-    projectGuideBot.value = 8;
-    projectGuideTop.value = 10;
-    updateGuides();
+    // // Set default values: Guides
+    // projectShowGuides.checked = true;
+    // projectGuideBot.value = 8;
+    // projectGuideTop.value = 10;
+    // updateGuides();
 
-    // Set default values: Global Offset
-    projectGlobalOffset.value = 0;
-    updateGlobalOffset();
+    // // Set default values: Global Offset
+    // projectGlobalOffset.value = 0;
+    // updateGlobalOffset();
+
+    loadDefaultJson();
 
     // Add event listeners for zoom and pan
     setupCanvasNavigation(canvas);
@@ -110,6 +112,7 @@ function updateActiveFlapPosition() {
 
 async function updatedCharacterSet() {
     await flapGenerator.setCharacterSet(projectCharacterSet.value);
+    flapGenerator.centerView();
 }
 
 function resizeCanvas() {
@@ -254,6 +257,13 @@ function exportJson() {
     link.href = url;
     link.download = 'flapGeneratorProject.json';
     link.click();
+}
+
+function loadDefaultJson() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'defaultFlapSet.json', false);
+    xhr.send(null);
+    loadJson(xhr.responseText);
 }
 
 async function loadJson(json) {

@@ -271,22 +271,20 @@ class FlapGenerator {
 
     __combineFlapFrontAndBack(frontFlap, backFlap) {
         // Clone glyphs
-        let front_glyph = PaperOffset.offset(frontFlap.flap_glyph, frontFlap.getThickness() / 2);
-        let back_glyph = PaperOffset.offset(backFlap.flap_glyph, backFlap.getThickness() / 2);
+        const front_glyph_offset = frontFlap.getThickness() / 2;
+        const back_glyph_offset = backFlap.getThickness() / 2;
+        let front_glyph = front_glyph_offset ? PaperOffset.offset(frontFlap.flap_glyph, front_glyph_offset) : frontFlap.flap_glyph.clone();
+        let back_glyph = back_glyph_offset ? PaperOffset.offset(backFlap.flap_glyph, back_glyph_offset) : backFlap.flap_glyph.clone();
         // Reposition bottom glyph
         back_glyph.position = new paper.Point((frontFlap.flap_upper.bounds.width * 1.1) * (frontFlap.index + 1 / 2), frontFlap.flap_upper.bounds.height * 1.1 - frontFlap.gap_mm);
         back_glyph.position.x += backFlap.glyph_position_x;
         back_glyph.position.y -= backFlap.glyph_position_y;
-
-        frontFlap.flap_glyph.remove();
 
         // Intersect glyphs
         let front_glyph_intersect = frontFlap.flap_upper.intersect(front_glyph);
         let back_glyph_intersect = frontFlap.flap_lower.intersect(back_glyph);
         back_glyph_intersect.scale(1, -1);
         back_glyph_intersect.position.y -= back_glyph_intersect.bounds.height + frontFlap.gap_mm;
-        front_glyph.remove();
-        back_glyph.remove();
         front_glyph.remove();
         back_glyph.remove();
 

@@ -1,5 +1,4 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy Flap Generator As Github Page
 
 on:
   # Runs on pushes targeting the default branch

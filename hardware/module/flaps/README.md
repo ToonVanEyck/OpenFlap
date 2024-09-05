@@ -6,6 +6,8 @@ The flaps of this split flap displays are 0.8mm PCB's. In this directory you wil
 
 ![Browser Based Flap Generator](../../../docs/images/browser_based_flap_generator.png)
 
+Try it out [here](https://toonvaneyck.github.io/OpenFlap/)!
+
 This is a browser based tool which allows you to quickly generate a character set for the OpenFlap display. You can select a font, size and the desired character set. Additionally you can adjust the scale, width and position of each character. The tool allows you to export and import your project file so you can continue your work at a later time.
 
 A default character set is contained within the `defaultFlapSet.json` file. This file is loaded by default within the application. The default file contains the following character set:

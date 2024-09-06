@@ -41,7 +41,7 @@ jobs:
       - name: Commit and Push changes
         run: |
           mv ${{ github.workspace }}/side_panel.pdf ${{ github.workspace }}/hardware/module/side_panel/side_panel.pdf
-          git add ${{ github.workspace }}hardware/module/side_panel/side_panel.pdf
+          git add ${{ github.workspace }}/hardware/module/side_panel/side_panel.pdf
           git commit -m "Workflow: Generate KiCad files"
           git push
         env:

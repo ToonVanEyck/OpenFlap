@@ -1,5 +1,4 @@
 name: Generate KiCad files
-description: Generate KiCad files
 
 # Runs on pushes targeting the default branch
 on:

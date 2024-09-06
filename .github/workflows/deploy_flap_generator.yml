@@ -1,5 +1,4 @@
 name: Deploy Flap Generator As Github Page
-description: Deploy the Flap Generator as a Github Page
 
 # Runs on pushes targeting the default branch
 on:

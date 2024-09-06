@@ -1,11 +1,12 @@
 name: Deploy Flap Generator As Github Page
+description: Deploy the Flap Generator as a Github Page
 
+# Runs on pushes targeting the default branch
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
 
-  # Allows you to run this workflow manually from the Actions tab
+# Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -21,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
+# Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages

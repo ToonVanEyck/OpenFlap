@@ -1,0 +1,31 @@
+name: Generate KiCad files
+description: Generate KiCad files
+
+# Runs on pushes targeting the default branch
+on:
+  push:
+    branches: ["master"]
+
+# Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup KiCad 8.0
+        uses: actions-for-kicad/setup-kicad@v1.0
+        with:
+          version: '8.0'
+      - name: Generate KiCad files
+        uses: actions-for-kicad/generate-kicad-files@v1.0
+        with:
+          file: 'hardware/module/side_panel/side_panel.kicad_sch'
+          type: 'schematic_pdf'
+      - name: Publish KiCad files
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'side_panel.pdf'
+          path: 'hardware/module/side_panel/side_panel.pdf'

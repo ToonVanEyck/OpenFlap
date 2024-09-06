@@ -4,7 +4,7 @@ kibot:
 
 globals:
   # Filters for KiBot warnings
-  filters:
+  # filters:
     # - filter: Ignore PcbDraw missing components
     #   number: 103
     # - filter: Ignore missing KiCad config, not in docker images

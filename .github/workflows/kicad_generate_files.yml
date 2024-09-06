@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Cache KiCad 8.0
         uses: actions/cache@v3
@@ -43,6 +45,6 @@ jobs:
           mv ${{ github.workspace }}/side_panel.pdf ${{ github.workspace }}/hardware/module/side_panel/side_panel.pdf
           git add ${{ github.workspace }}/hardware/module/side_panel/side_panel.pdf
           git commit -m "Workflow: Generate KiCad files"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

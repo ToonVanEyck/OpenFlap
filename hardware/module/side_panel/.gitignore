@@ -1,0 +1,9 @@
+*.bck
+*.bak
+*.dcm
+_autosave*
+*.net
+*.csv
+*-bak
+Fabrication
+kibot_error.log

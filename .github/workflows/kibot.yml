@@ -32,6 +32,7 @@ jobs:
       uses: INTI-CMNB/KiBot@v2_k8
       with:
         config: hardware/module/side_panel/side_panel.kibot.yaml
+        schema: hardware/module/side_panel/side_panel.kicad_sch
         dir: Generated
         skip: run_drc
         targets: __NONE__
@@ -54,6 +55,7 @@ jobs:
       uses: INTI-CMNB/KiBot@v2_k8
       with:
         config: hardware/module/side_panel/side_panel.kibot.yaml
+        schema: hardware/module/side_panel/side_panel.kicad_sch
         dir: Generated
         skip: run_erc
         targets: __NONE__
@@ -76,6 +78,7 @@ jobs:
     - uses: INTI-CMNB/KiBot@v2_k8
       with:
         config: hardware/module/side_panel/side_panel.kibot.yaml
+        schema: hardware/module/side_panel/side_panel.kicad_sch
         dir: default
         variant: default
         skip: run_erc,run_drc

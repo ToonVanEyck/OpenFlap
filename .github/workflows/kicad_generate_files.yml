@@ -15,7 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache KiCad 8.0
+        uses: actions/cache@v3
+        with:
+          path: /opt/kicad
+          key: kicad-8.0-ubuntu
+
       - name: Setup KiCad 8.0
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions-for-kicad/setup-kicad@v1.0
         with:
           version: '8.0'

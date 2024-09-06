@@ -19,7 +19,7 @@ on:
 
 # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   ERC:
@@ -31,6 +31,7 @@ jobs:
     - name: Run ERC
       uses: INTI-CMNB/KiBot@v2_k8
       with:
+        config: hardware/module/side_panel/side_panel.kibot.yaml
         dir: Generated
         skip: run_drc
         targets: __NONE__
@@ -52,6 +53,7 @@ jobs:
     - name: Run DRC
       uses: INTI-CMNB/KiBot@v2_k8
       with:
+        config: hardware/module/side_panel/side_panel.kibot.yaml
         dir: Generated
         skip: run_erc
         targets: __NONE__
@@ -73,6 +75,7 @@ jobs:
 
     - uses: INTI-CMNB/KiBot@v2_k8
       with:
+        config: hardware/module/side_panel/side_panel.kibot.yaml
         dir: default
         variant: default
         skip: run_erc,run_drc
@@ -82,45 +85,3 @@ jobs:
       with:
         name: default_variant
         path: default
-
-
-  USB:
-    name: "USB variant"
-    runs-on: ubuntu-latest
-    needs: [ERC, DRC]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: INTI-CMNB/KiBot@v2_k8
-      with:
-        dir: USB
-        variant: USB
-        skip: run_erc,run_drc
-
-    - name: upload results
-      uses: actions/upload-artifact@v4
-      with:
-        name: USB_variant
-        path: USB
-
-
-  XTAL:
-    name: "XTAL variant"
-    runs-on: ubuntu-latest
-    needs: [ERC, DRC]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: INTI-CMNB/KiBot@v2_k8
-      with:
-        dir: XTAL
-        variant: XTAL
-        skip: run_erc,run_drc
-
-    - name: upload results
-      uses: actions/upload-artifact@v4
-      with:
-        name: XTAL_variant
-        path: XTAL

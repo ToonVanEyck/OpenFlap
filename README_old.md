@@ -218,4 +218,5 @@ A reboot is requeued for these changes to take effect.
 [webpage]: docs/images/webpage.png "OpenFlap Webpage"
 [webpage_modules]: docs/images/webpage_modules.png "OpenFlap Webpage"
 [uart_signalpath]: docs/images/signalpath.png "OpenFlap Signalath"
-[flap_assembler]: docs/images/flap_assembler.png "Assembly tool"
+[flap_assembler]: docs/images/flap_assembler.png "Assembly tool" 
+

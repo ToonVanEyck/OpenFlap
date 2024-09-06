@@ -1,8 +1,8 @@
 name: Generate KiCad files
 
-# Runs on pushes targeting the default branch
+# Runs on pull requests targeting the default branch
 on:
-  push:
+  pull_request:
     branches: ["master"]
 
 # Allows you to run this workflow manually from the Actions tab
@@ -11,20 +11,36 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      HARDWARE_PATH: ${{ github.workspace }}/hardware
+      MODULE_PATH: $HARDWARE_PATH/module
+      SIDE_PANEL: side_panel
+      TOP_CONNECTOR: top_connector
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup KiCad 8.0
         uses: actions-for-kicad/setup-kicad@v1.0
         with:
           version: '8.0'
+
       - name: Generate KiCad files
         uses: actions-for-kicad/generate-kicad-files@v1.0
         with:
-          file: 'hardware/module/side_panel/side_panel.kicad_sch'
+          file: '$MODULE_PATH/$SIDE_PANEL/$SIDE_PANEL.kicad_sch'
           type: 'schematic_pdf'
-      - name: Publish KiCad files
-        uses: actions/upload-artifact@v3
-        with:
-          name: 'side_panel.pdf'
-          path: 'hardware/module/side_panel/side_panel.pdf'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Commit and Push changes
+        run: |
+          mv $SIDE_PANEL.pdf $MODULE_PATH/$SIDE_PANEL/$SIDE_PANEL.pdf
+          git add $MODULE_PATH/$SIDE_PANEL/$SIDE_PANEL.pdf
+          git commit -m "Workflow: Generate KiCad files"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

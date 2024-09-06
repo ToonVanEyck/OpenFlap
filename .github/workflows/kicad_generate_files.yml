@@ -1,9 +1,15 @@
 name: Generate KiCad files
 
-# Runs on pull requests targeting the default branch
+# Runs on changes to the hardware directory
 on:
+  push:
+    branches: [ master ]
+    paths: 
+      - 'hardware/**'
   pull_request:
-    branches: ["master"]
+    branches: [ master ]
+    paths:
+      - 'hardware/**'
 
 # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -17,10 +23,14 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
       - name: Cache KiCad 8.0
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: /opt/kicad
           key: kicad-8.0-ubuntu
 
       - name: Setup KiCad 8.0
@@ -29,21 +39,24 @@ jobs:
         with:
           version: '8.0'
 
-      - name: Generate KiCad files
+      - name: Generate side panel schematic pdf 
         uses: actions-for-kicad/generate-kicad-files@v1.0
         with:
           file: ${{ github.workspace }}/hardware/module/side_panel/side_panel.kicad_sch
           type: schematic_pdf
 
-      - name: Configure Git
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Generate top connector schematic pdf 
+        uses: actions-for-kicad/generate-kicad-files@v1.0
+        with:
+          file: ${{ github.workspace }}/hardware/top_connector/top_connector.kicad_sch
+          type: schematic_pdf
 
       - name: Commit and Push changes
         run: |
           mv ${{ github.workspace }}/side_panel.pdf ${{ github.workspace }}/hardware/module/side_panel/side_panel.pdf
           git add ${{ github.workspace }}/hardware/module/side_panel/side_panel.pdf
+          mv ${{ github.workspace }}/top_connector.pdf ${{ github.workspace }}/hardware/top_connector/top_connector.pdf
+          git add ${{ github.workspace }}/hardware/top_connector/top_connector.pdf
           git commit -m "Workflow: Generate KiCad files"
           git push origin HEAD:${{ github.head_ref }}
         env:

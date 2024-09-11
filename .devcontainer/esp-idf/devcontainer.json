@@ -1,0 +1,40 @@
+{
+    "name": "OpenFlap: esp-idf",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+    "workspaceFolder": "/workspaces/openflap/software/controller/",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "idf.espIdfPath": "/opt/esp/idf",
+                "idf.customExtraPaths": "",
+                "idf.pythonBinPath": "/opt/esp/python_env/idf5.4_py3.12_env/bin/python",
+                "idf.toolsPath": "/opt/esp",
+                "idf.gitPath": "/usr/bin/git"
+            },
+            "extensions": [
+                "espressif.esp-idf-extension",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools",
+                "ms-vscode.vscode-serial-monitor",
+                "streetsidesoftware.code-spell-checker",
+                "xaver.clang-format",
+                "jkearins.action-buttons-ext",
+            ]
+        }
+    },
+    "runArgs": [
+        "--privileged",
+        "--hostname=esp-idf"
+    ],
+    "mounts": [
+        "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
+        "source=/dev,target=/dev,type=bind,consistency=cached",
+        "source=/run/udev,target=/run/udev,type=bind,consistency=cached",
+        "source=/etc/udev/rules.d,target=/etc/udev/rules.d,type=bind,consistency=cached",
+    ],
+    "postStartCommand": "/workspaces/openflap/.devcontainer/bashrc_addons_add.sh"
+}

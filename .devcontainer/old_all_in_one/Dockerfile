@@ -29,7 +29,6 @@ RUN : \
     wget \
     xz-utils \
     zip \
-    figlet \
     netcat \
     cmake \
   && apt-get autoremove -y \
@@ -116,12 +115,6 @@ RUN echo "source /opt/esp/idf/export.sh" >> /etc/bash.bashrc
 
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf && \
     echo "figlet -f 3d.flf Open Flap" >> /etc/bash.bashrc
-
-# install microchip XC8
-# RUN wget https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/xc8-v2.41-full-install-linux-x64-installer.run && \
-#     chmod +x xc8-v2.41-full-install-linux-x64-installer.run && \
-#     ./xc8-v2.41-full-install-linux-x64-installer.run --mode unattended --netservername localhost --LicenseType FreeMode && \
-#     rm xc8*
 
 WORKDIR /tmp
 

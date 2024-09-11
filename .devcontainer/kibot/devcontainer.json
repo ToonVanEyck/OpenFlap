@@ -1,0 +1,16 @@
+{
+    "name": "OpenFlap: KiBot",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+    "workspaceFolder": "/workspaces/openflap/hardware/",
+    "runArgs": [
+        "--privileged",
+        "--hostname=kibot"
+    ],
+    "mounts": [
+        "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
+    ],
+    "postStartCommand": "/workspaces/openflap/.devcontainer/bashrc_addons_add.sh"
+}

@@ -1,5 +1,5 @@
 {
-    "name": "OpenFlap",
+    "name": "OpenFlap: Legacy",
     "dockerComposeFile": "docker-compose.yml",
     "service": "openflap",
     "workspaceFolder": "/workspace/",

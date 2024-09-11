@@ -1,0 +1,13 @@
+** Drc report for side_panel.kicad_pcb **
+** Created on 2024-09-11T21:51:45+0000 **
+
+** Found 1 DRC violations **
+[lib_footprint_issues]: Footprint 'GA12-N20 Motor Vertical' not found in library 'GA12-N20'.
+    ; warning
+    @(96.944 mm, 132.182204 mm): Footprint M1
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** End of Report **

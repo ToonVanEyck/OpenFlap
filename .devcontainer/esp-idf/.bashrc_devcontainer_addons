@@ -1,0 +1,4 @@
+figlet -f 3d.flf Open Flap
+echo -n "Setting up ESP-IDF environment ... "
+source /opt/esp/idf/export.sh > /dev/null 2>&1
+echo "done!"

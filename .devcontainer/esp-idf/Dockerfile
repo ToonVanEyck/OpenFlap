@@ -1,7 +1,7 @@
 FROM espressif/idf
 
 ARG DEBIAN_FRONTEND=nointeractive
-ARG CONTAINER_USER=ubuntu
+ARG ORIGINAL_USER=ubuntu
 ARG NEW_USER=openflap
 
 RUN apt-get update \
@@ -32,10 +32,9 @@ ENV PATH=/opt/qemu/bin:${PATH}
 RUN chmod -R 775 /opt/esp/python_env/
 
 # Change user name from ubutu to openflap
-RUN usermod -l ${NEW_USER} ${CONTAINER_USER} && \
-    groupmod -n ${NEW_USER} ${CONTAINER_USER} && \
+RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
+    groupmod -n ${NEW_USER} ${ORIGINAL_USER} && \
     usermod -d /home/${NEW_USER} -m ${NEW_USER}
-ARG CONTAINER_USER=${NEW_USER}
 
 # Add user to dialout and plugdev group
 RUN adduser ${NEW_USER} dialout

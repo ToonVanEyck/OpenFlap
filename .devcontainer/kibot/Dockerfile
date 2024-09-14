@@ -6,12 +6,14 @@ ARG NEW_USER=openflap
 RUN apt-get update && apt-get install -y -q \
     wget \
     figlet \
+    ssh \
     sudo
 
 # Create a non-root user with sudo rights
 RUN useradd -ms /bin/bash ${NEW_USER} && \
     usermod -aG sudo ${NEW_USER} && \
-    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER}
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER} && \
+    chmod 0440 /etc/sudoers.d/${NEW_USER}
 
 # Install figlet font
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf

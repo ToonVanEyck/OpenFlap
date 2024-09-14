@@ -1,16 +1,13 @@
 {
-    "name": "OpenFlap: Legacy",
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "openflap",
-    "workspaceFolder": "/workspace/",
-    "settings": {
-        "idf.showOnboardingOnInit": false,
-        "idf.toolsPath": "/opt/esp",
-        "idf.espIdfPath": "/opt/esp/idf",
-        "terminal.integrated.shell.linux": "/bin/bash"
+    "name": "OpenFlap: Puya",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
     },
+    "workspaceFolder": "/workspaces/openflap/software/module",
+    "remoteUser": "openflap",
+    "containerUser": "openflap",
     "extensions": [
-        "espressif.esp-idf-extension",
         "ms-vscode.cmake-tools",
         "ms-vscode.cpptools",
         "ms-vscode.vscode-serial-monitor",
@@ -18,14 +15,17 @@
         "xaver.clang-format",
         "marus25.cortex-debug",
         "jkearins.action-buttons-ext",
-        "GitHub.copilot-chat",
-        "GitHub.copilot"
+    ],
+    "runArgs": [
+        "--privileged",
+        "--hostname=puya",
+        "--name=openflap_puya"
     ],
     "mounts": [
+        "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
         "source=/dev,target=/dev,type=bind,consistency=cached",
         "source=/run/udev,target=/run/udev,type=bind,consistency=cached",
         "source=/etc/udev/rules.d,target=/etc/udev/rules.d,type=bind,consistency=cached",
     ],
-    "userEnvProbe": "loginInteractiveShell",
-    "privileged": true
+    "postStartCommand": "/workspaces/openflap/.devcontainer/bashrc_addons_add.sh"
 }

@@ -28,7 +28,8 @@
     },
     "runArgs": [
         "--privileged",
-        "--hostname=esp-idf"
+        "--hostname=esp-idf",
+        "--name=openflap_esp-idf"
     ],
     "mounts": [
         "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",

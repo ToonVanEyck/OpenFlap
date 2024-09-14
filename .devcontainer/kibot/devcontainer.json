@@ -7,7 +7,8 @@
     "workspaceFolder": "/workspaces/openflap/hardware/",
     "runArgs": [
         "--privileged",
-        "--hostname=kibot"
+        "--hostname=kibot",
+        "--name=openflap_kibot"
     ],
     "mounts": [
         "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",

@@ -31,3 +31,8 @@ fp-info-cache
 # Autorouter files (exported from Pcbnew)
 *.dsn
 *.ses
+
+# KiBot files
+*drc.html
+*erc.html
+*.lck

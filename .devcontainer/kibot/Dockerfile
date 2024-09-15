@@ -1,4 +1,4 @@
-FROM ghcr.io/inti-cmnb/kicad8_auto:1.6.5
+FROM ghcr.io/inti-cmnb/kicad8_auto:1.7.0
 
 ARG NEW_USER=openflap
 

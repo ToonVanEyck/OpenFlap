@@ -174,15 +174,4 @@
 		(thermal_bridge_angle 45)
 		(uuid "8eae9949-cd37-4ca3-8ee0-c534d7a93b1e")
 	)
-	(model "//wsl.localhost/Ubuntu-22.04/home/toon/openflap/hardware/resources/GA12-N20.stp"
-		(offset
-			(xyz 0 0 0)
-		)
-		(scale
-			(xyz 1 1 1)
-		)
-		(rotate
-			(xyz -90 0 0)
-		)
-	)
 )

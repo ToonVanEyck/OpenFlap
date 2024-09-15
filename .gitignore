@@ -6,3 +6,28 @@ software/controller/managed_components/*
 hardware/flaps/pcb/scr_files/*
 hardware/flaps/pcb/tmp/*
 **/*-backups/*
+##############################################
+##                Kicad files              ##
+##############################################
+# Temporary files
+*.000
+*.bak
+*.bck
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*-backups
+*.kicad_prl
+*.sch-bak
+*~
+_autosave-*
+*.tmp
+*-save.pro
+*-save.kicad_pcb
+fp-info-cache
+
+# Netlist files (exported from Eeschema)
+*.net
+
+# Autorouter files (exported from Pcbnew)
+*.dsn
+*.ses

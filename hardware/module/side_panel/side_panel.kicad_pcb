@@ -651,7 +651,7 @@
 		(descr "OnSemi CASE 100CY, light-direction upwards, see http://www.onsemi.com/pub/Collateral/QRE1113-D.PDF")
 		(tags "refective opto couple photo coupler")
 		(property "Reference" "U4"
-			(at 2.405 -4.445 360)
+			(at 2.405 -4.445 0)
 			(layer "F.SilkS")
 			(uuid "c9599eea-3702-41e5-bdfc-7e782e8e85a2")
 			(effects
@@ -2570,17 +2570,6 @@
 			(thermal_bridge_angle 45)
 			(uuid "29f68138-6a3c-4414-a531-0081f3e46d78")
 		)
-		(model "//wsl.localhost/Ubuntu-22.04/home/toon/openflap/hardware/resources/GA12-N20.stp"
-			(offset
-				(xyz 0 0 0)
-			)
-			(scale
-				(xyz 1 1 1)
-			)
-			(rotate
-				(xyz -90 0 0)
-			)
-		)
 	)
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(locked yes)
@@ -3251,7 +3240,7 @@
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R13"
-			(at 0 2 360)
+			(at 0 2 0)
 			(layer "F.SilkS")
 			(uuid "0e32149f-3d87-409d-9f8e-bde083a9537d")
 			(effects
@@ -3262,7 +3251,7 @@
 			)
 		)
 		(property "Value" "20K"
-			(at 0 1.65 360)
+			(at 0 1.65 0)
 			(layer "F.Fab")
 			(uuid "756754a8-8ddb-49ca-b4c6-baae9f7d17b1")
 			(effects
@@ -3417,7 +3406,7 @@
 			(uuid "1c5a7c9f-77b2-42af-9e4d-40b8ae789be6")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "316a0495-f47f-4703-aee1-ff0ff15b2fd0")
 			(effects
@@ -4517,7 +4506,7 @@
 		(descr "OnSemi CASE 100CY, light-direction upwards, see http://www.onsemi.com/pub/Collateral/QRE1113-D.PDF")
 		(tags "refective opto couple photo coupler")
 		(property "Reference" "U3"
-			(at 2.481 -4.445 360)
+			(at 2.481 -4.445 0)
 			(layer "F.SilkS")
 			(uuid "82745024-42ec-411f-aa30-98cd259cf0c8")
 			(effects
@@ -6035,7 +6024,7 @@
 		(descr "OnSemi CASE 100CY, light-direction upwards, see http://www.onsemi.com/pub/Collateral/QRE1113-D.PDF")
 		(tags "refective opto couple photo coupler")
 		(property "Reference" "U1"
-			(at 2.474 -4.191 360)
+			(at 2.474 -4.191 0)
 			(layer "F.SilkS")
 			(uuid "29bd7c44-6ae1-40ad-aa97-49ea9874db5f")
 			(effects
@@ -8998,7 +8987,7 @@
 		(descr "OnSemi CASE 100CY, light-direction upwards, see http://www.onsemi.com/pub/Collateral/QRE1113-D.PDF")
 		(tags "refective opto couple photo coupler")
 		(property "Reference" "U2"
-			(at 2.539 -4.445 360)
+			(at 2.539 -4.445 0)
 			(layer "F.SilkS")
 			(uuid "d96f86dc-fee3-4890-b71e-615a90beaf5f")
 			(effects
@@ -12030,7 +12019,7 @@
 			(at 0 0 0)
 			(layer "B.SilkS")
 			(hide yes)
-			(uuid "3218f1ba-86c5-4f62-99a5-79595938c42c")
+			(uuid "55d610de-02d6-47a5-bf1a-fc3f3360f12e")
 			(effects
 				(font
 					(size 1 1)
@@ -12043,7 +12032,7 @@
 			(at 0.75 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "3aefaf36-d24d-428a-9ea6-0a72a9738ffb")
+			(uuid "f7b5ffcb-9b49-4fa6-b548-68cc664ca6ef")
 			(effects
 				(font
 					(size 1 1)
@@ -12111,7 +12100,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "6518ebf0-92f8-40c5-b19d-a2e9c6503b3f")
+			(uuid "0b14594b-38b3-46c7-be48-5953b982b8c3")
 		)
 		(fp_poly
 			(pts
@@ -12129,7 +12118,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "dc874024-0ddc-469b-9d94-d078ec5fe2e9")
+			(uuid "dda94eb1-cb47-4ed3-af68-f889074b88d8")
 		)
 		(fp_poly
 			(pts
@@ -12150,7 +12139,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "f61527fa-8233-48d3-adc0-90a5f926d1d0")
+			(uuid "d9a64c36-4cc0-48a3-a27a-71e4eb495c08")
 		)
 		(fp_poly
 			(pts
@@ -12170,7 +12159,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "664ea12a-a9be-48ba-b7b4-592c2abec683")
+			(uuid "2c9aaf43-64bc-4078-a69a-9fca76aeb87c")
 		)
 		(fp_poly
 			(pts
@@ -12193,7 +12182,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "116c38e6-b5b0-48e2-bd8f-81c5af98d385")
+			(uuid "9299a807-c232-4521-aebc-eff4d2c89486")
 		)
 		(fp_poly
 			(pts
@@ -12215,7 +12204,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "253c2495-0c65-4f4c-8146-618f999dc7d7")
+			(uuid "ea4a95e1-57c2-4a25-a9c3-cfcc4fa6c692")
 		)
 		(fp_poly
 			(pts
@@ -12239,7 +12228,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "201dc59c-2abf-4454-9468-3d312dcef2d4")
+			(uuid "1bc9a616-e96a-4268-9840-d8eabad8de20")
 		)
 		(fp_poly
 			(pts
@@ -12263,7 +12252,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "3d728685-3065-4660-97a9-2fbe73735fac")
+			(uuid "84b63098-ff48-4544-a90d-9fa105f67456")
 		)
 		(fp_poly
 			(pts
@@ -12290,7 +12279,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "1dfbbce8-64ee-4af1-9a24-6f1c0a5605cb")
+			(uuid "6dda5c2f-ad28-48d4-9d06-c0575c2dad6b")
 		)
 		(fp_poly
 			(pts
@@ -12317,7 +12306,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "f09c0682-8202-4c3a-8c3e-d32e5acedfa8")
+			(uuid "75334f87-bcb8-4b57-ac64-c5618e4ce902")
 		)
 		(fp_poly
 			(pts
@@ -12343,7 +12332,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "4743cbc9-83e1-4a1a-92e1-d07d8089a7f7")
+			(uuid "bcb045bd-ce6b-40c9-8cfd-7aa2f579429b")
 		)
 		(fp_poly
 			(pts
@@ -12370,7 +12359,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "a01dd8bb-0c04-4fb4-8077-e6dac2ca3a99")
+			(uuid "11701437-79c7-453e-ac58-a0a435f3e814")
 		)
 		(fp_poly
 			(pts
@@ -12397,7 +12386,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "090d209d-b99b-41a7-8a3b-148b252dc498")
+			(uuid "89b71e5a-e454-4749-ad23-23b6c9046bd3")
 		)
 		(fp_poly
 			(pts
@@ -12425,7 +12414,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "60f2807b-ae02-49ba-9ed8-f79b2c4d277f")
+			(uuid "51d5a354-123e-458a-92f8-6a0430aa8f18")
 		)
 		(fp_poly
 			(pts
@@ -12453,7 +12442,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "ba913eae-69d0-4f0a-8091-442b8d594fee")
+			(uuid "65f46abb-3cc3-4283-9a65-531b8b5a0ae7")
 		)
 		(fp_poly
 			(pts
@@ -12484,7 +12473,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "c9b5e472-998c-422e-ac92-17e42777e75c")
+			(uuid "bd3c9a45-f2a0-45bf-bfbe-18ed0443e462")
 		)
 		(fp_poly
 			(pts
@@ -12519,7 +12508,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "59f07727-2ab2-4860-a407-4a1697feffd3")
+			(uuid "33cb8f1a-fd24-48f7-acee-ff76b8bbd899")
 		)
 		(fp_poly
 			(pts
@@ -12605,7 +12594,7 @@
 			)
 			(fill solid)
 			(layer "B.SilkS")
-			(uuid "910c1641-c671-4344-bff2-859e8bd4e52f")
+			(uuid "a5b65526-eca7-455b-a372-5ff27d2abdba")
 		)
 	)
 	(gr_arc

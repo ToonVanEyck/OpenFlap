@@ -9,10 +9,12 @@
 	(paper "A4" portrait)
 	(title_block
 		(title "Side Panel")
-		(date "2024-08-03")
+		(date "${DATE}")
 		(rev "4.0.0")
 		(company "OpenFlap")
-		(comment 1 "Designer: Toon Van Eyck")
+		(comment 1 "${GIT_TAG}")
+		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
+		(comment 3 "Designer: Toon Van Eyck")
 	)
 	(layers
 		(0 "F.Cu" signal)
@@ -11542,7 +11544,7 @@
 		(at 140.759 105.258204 180)
 		(descr "Through hole straight pin header, 1x09, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x09 2.54mm single row")
-		(property "Reference" "J7"
+		(property "Reference" "J4"
 			(at 0 2.33 0)
 			(layer "B.SilkS")
 			(uuid "eb680f51-d229-4804-a5b2-86714ef735ce")

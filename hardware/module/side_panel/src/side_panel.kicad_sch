@@ -6,10 +6,12 @@
 	(paper "A4" portrait)
 	(title_block
 		(title "Side Panel")
-		(date "2024-07-28")
+		(date "${DATE}")
 		(rev "4.0.0")
 		(company "OpenFlap")
-		(comment 1 "Designer: Toon Van Eyck")
+		(comment 1 "${GIT_TAG}")
+		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
+		(comment 3 "Designer: Toon Van Eyck")
 	)
 	(lib_symbols
 		(symbol "74xGxx:74LVC1G66"
@@ -11322,7 +11324,7 @@
 		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "b28105d9-470a-47dc-9ad5-77418e725186")
-		(property "Reference" "J7"
+		(property "Reference" "J4"
 			(at 45.72 237.49 0)
 			(effects
 				(font
@@ -11397,7 +11399,7 @@
 		(instances
 			(project ""
 				(path "/36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1"
-					(reference "J7")
+					(reference "J4")
 					(unit 1)
 				)
 			)

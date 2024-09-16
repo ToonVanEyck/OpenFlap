@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "puya")(type "KiCad")(uri "${KIPRJMOD}/../../../resources/Puya.kicad_sym")(options "")(descr ""))
+  (lib (name "L9110S")(type "KiCad")(uri "${KIPRJMOD}/../../../resources/L9110S.kicad_sym")(options "")(descr ""))
+)

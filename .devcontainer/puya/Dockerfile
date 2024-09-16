@@ -30,7 +30,6 @@ RUN adduser ${NEW_USER} sudo
 RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd && \
     chmod 0440 /etc/sudoers.d/nopasswd
 
-
 # Install figlet font
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
 
@@ -68,6 +67,5 @@ COPY .bashrc_devcontainer_addons ${HOME}/.bashrc_devcontainer_addons
 
 # Don't display message about how to use sudo...
 RUN touch ${HOME}/.sudo_as_admin_successful
-
 
 CMD ["/bin/bash", "-c"]

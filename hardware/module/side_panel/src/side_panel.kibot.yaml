@@ -1,0 +1,135 @@
+kibot:
+  version: 1
+
+globals:
+  restore_project: true
+  time_reformat: false
+
+preflight:
+  check_zone_fills: true
+  erc: 
+    enabled: true
+    warnings_as_errors : true
+  drc:
+    enabled: true
+    warnings_as_errors : true
+  update_xml: true
+  set_text_variables:
+    - name: GIT_TAG
+      command: git describe --tags --dirty
+      before: 'Commit: '
+    - name: DATE
+      command: date --iso-8601
+
+outputs:
+  - name: print_sch
+    comment: Schematic PDF
+    type: pdf_sch_print
+    dir: ..
+
+  - name: board_top
+    comment: "Top layer view"
+    type: pcbdraw
+    dir: ..
+    options:
+      format: jpg
+      dpi: 300
+
+  - name: board_bottom
+    comment: Bottom layer view
+    type: pcbdraw
+    dir: ..
+    options:
+      format: jpg
+      dpi: 300
+      bottom: true
+
+  - name: gerbers
+    comment: Gerbers
+    type: gerber
+    dir: ../build/gerbers
+    layers:
+      - F.Cu  
+      - B.Cu
+      - F.Paste
+      - B.Paste
+      - F.Silkscreen
+      - B.Silkscreen
+      - F.Mask
+      - B.Mask
+      - Edge.Cuts
+    options:
+      use_protel_extensions: true
+      subtract_mask_from_silk : true
+      tent_vias : true
+      plot_footprint_refs : true
+      plot_footprint_values : false
+
+  - name: drill
+    comment: Drill files
+    type: excellon
+    dir: ../build/drill
+    options:
+      metric_units : true
+      map:
+        type: gerber
+      route_mode_for_oval_holes : false
+      pth_and_npth_single_file: true
+      zeros_format : DECIMAL_FORMAT
+
+  - name: fabrication
+    comment: Combine drill and gerbers into .zip
+    type: compress
+    dir: ../build
+    options:
+      files:
+        - from_output: gerbers
+        - from_output: drill
+
+  - name: position
+    comment: Component Placement List
+    type: position
+    dir: ../build
+    options:
+      format: CSV
+      output: '%f-cpl.%x'
+      units: millimeters
+      separate_files_for_front_and_back: false
+      only_smd: false
+      columns:
+        - id: Ref
+          name: Designator
+        - id: PosX
+          name: "Mid X"
+        - id: PosY
+          name: "Mid Y"
+        - id: Side
+          name: Layer
+        - id: Rot
+          name: Rotation
+
+  - name: bom
+    comment: Bill Of Materials
+    type: kibom
+    dir: ../build
+    options:
+      format: CSV
+      conf:
+        columns:
+          - field: Value
+            name: Comment
+          - field: References
+            name: Designator
+          - field: Footprint
+            name: Package
+          - field: LCSC
+            name: LCSC Part \#
+
+  - name: ibom
+    comment: Interactive Bill Of Materials
+    type: ibom
+    dir: ..
+    options:
+      bom_view: left-right
+      layer_view: FB
+      dark_mode : true

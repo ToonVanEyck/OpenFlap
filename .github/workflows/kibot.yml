@@ -2,18 +2,18 @@ name: "Experimenting with KiBot"
 
 # Controls when the action will run.
 on:
-  push:
-    paths:
-      - '*.kicad_sch'
-      - '*.kicad_pcb'
-      - '*.kibot.yaml'
-      - '.github/workflows/kibot_action.yml'
-  pull_request:
-    paths:
-      - '*.kicad_sch'
-      - '*.kicad_pcb'
-      - '*.kibot.yaml'
-      - '.github/workflows/kibot_action.yml'
+  # push:
+  #   paths:
+  #     - '*.kicad_sch'
+  #     - '*.kicad_pcb'
+  #     - '*.kibot.yaml'
+  #     - '.github/workflows/kibot_action.yml'
+  # pull_request:
+  #   paths:
+  #     - '*.kicad_sch'
+  #     - '*.kicad_pcb'
+  #     - '*.kibot.yaml'
+  #     - '.github/workflows/kibot_action.yml'
   repository_dispatch:
     types: [run_gha]
 

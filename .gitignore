@@ -1,7 +1,7 @@
 .vscode
-build/*
+build
+**/build
 software/module/external/*
-software/*/build
 software/controller/managed_components/*
 hardware/flaps/pcb/scr_files/*
 hardware/flaps/pcb/tmp/*
@@ -15,15 +15,16 @@ hardware/flaps/pcb/tmp/*
 *.bck
 *.kicad_pcb-bak
 *.kicad_sch-bak
+*.kicad_pro-bak
 *-backups
 *.kicad_prl
-*.sch-bak
 *~
 _autosave-*
 *.tmp
 *-save.pro
 *-save.kicad_pcb
 fp-info-cache
+**/hardware/**/src/*.xml
 
 # Netlist files (exported from Eeschema)
 *.net
@@ -36,3 +37,5 @@ fp-info-cache
 *drc.html
 *erc.html
 *.lck
+*kibom.ini
+**/hardware/**/*.filter

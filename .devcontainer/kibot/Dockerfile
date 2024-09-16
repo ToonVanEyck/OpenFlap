@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y -q \
     wget \
     figlet \
     ssh \
+    less \
     sudo
 
 # Create a non-root user with sudo rights
@@ -23,6 +24,9 @@ ENV USER=${NEW_USER}
 ENV HOME=/home/${NEW_USER}
 WORKDIR ${HOME}
 USER ${NEW_USER}
+
+# Set the locale
+ENV LC_ALL=C
 
 # Install the bashrc addons
 COPY .bashrc_devcontainer_addons ${HOME}/.bashrc_devcontainer_addons

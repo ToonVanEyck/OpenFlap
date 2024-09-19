@@ -4,14 +4,15 @@
         "dockerfile": "Dockerfile",
         "context": "."
     },
-    "workspaceFolder": "/workspaces/openflap/hardware/",
+    "remoteUser": "openflap",
+    "containerUser": "openflap",
     "runArgs": [
         "--privileged",
         "--hostname=kibot",
         "--name=openflap_kibot"
     ],
     "mounts": [
-        "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.bashrc,target=/home/OpenFlap/.bashrc,type=bind,consistency=cached",
     ],
-    "postStartCommand": "/workspaces/openflap/.devcontainer/bashrc_addons_add.sh"
+    "postStartCommand": "/workspaces/OpenFlap/.devcontainer/bashrc_addons_add.sh || true",
 }

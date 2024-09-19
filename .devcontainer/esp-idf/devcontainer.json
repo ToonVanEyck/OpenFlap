@@ -4,7 +4,9 @@
         "dockerfile": "Dockerfile",
         "context": "."
     },
-    "workspaceFolder": "/workspaces/openflap/software/controller/",
+    "remoteUser": "openflap",
+    "containerUser": "openflap",
+    // "workspaceFolder": "/workspaces/OpenFlap/software/controller/",
     "customizations": {
         "vscode": {
             "settings": {
@@ -32,10 +34,10 @@
         "--name=openflap_esp-idf"
     ],
     "mounts": [
-        "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.bashrc,target=/home/OpenFlap/.bashrc,type=bind,consistency=cached",
         "source=/dev,target=/dev,type=bind,consistency=cached",
         "source=/run/udev,target=/run/udev,type=bind,consistency=cached",
         "source=/etc/udev/rules.d,target=/etc/udev/rules.d,type=bind,consistency=cached",
     ],
-    "postStartCommand": "/workspaces/openflap/.devcontainer/bashrc_addons_add.sh"
+    "postStartCommand": "/workspaces/OpenFlap/.devcontainer/bashrc_addons_add.sh"
 }

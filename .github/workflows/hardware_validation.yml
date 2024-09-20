@@ -2,17 +2,23 @@ name: 'Validate hardware design'
 on:
   workflow_dispatch:
   pull_request:
-  push:
     branches:
-      - main
+      - dev
+      - master
+    paths:
+      - hardware/**
+      - .devcontainer/kibot/**
+      - .github/workflows/hardware_validation.yml
+  
+env:
+  CI_ARG: ${{ github.ref == 'refs/heads/main' && '' || '--dry-run' }}
 
 jobs:
   validate_hardware_designs:
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout (GitHub)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # fetch all history for tags
           fetch-tags: true
@@ -24,15 +30,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and run Dev Container task
+      - name: Validate hardware design
         uses: devcontainers/ci@v0.3
         with:
           configFile: .devcontainer/kibot/devcontainer.json
-          skipContainerUserIdUpdate: false
           imageName: ghcr.io/toonvaneyck/openflap-kibot-devcontainer
           cacheFrom: ghcr.io/toonvaneyck/openflap-kibot-devcontainer
           push: always
           runCmd: |
-            figlet -f 3d.flf Open Flap
             cd hardware
-            ./ci-script.sh --dry-run
+            ./ci-script.sh ${CI_ARG}

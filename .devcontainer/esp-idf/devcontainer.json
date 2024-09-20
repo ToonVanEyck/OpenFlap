@@ -6,7 +6,6 @@
     },
     "remoteUser": "openflap",
     "containerUser": "openflap",
-    // "workspaceFolder": "/workspaces/OpenFlap/software/controller/",
     "customizations": {
         "vscode": {
             "settings": {

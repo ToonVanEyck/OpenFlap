@@ -12,7 +12,7 @@
 		(date "2024-07-26")
 		(rev "2.0.2")
 		(company "OpenFlap")
-        (comment 1 "${GIT_TAG}")
+		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
 		(comment 3 "Designer: Toon Van Eyck")
 	)

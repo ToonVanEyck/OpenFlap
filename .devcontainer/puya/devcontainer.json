@@ -4,7 +4,6 @@
         "dockerfile": "Dockerfile",
         "context": "."
     },
-    // "workspaceFolder": "/workspaces/OpenFlap/software/module",
     "remoteUser": "openflap",
     "containerUser": "openflap",
     "extensions": [

@@ -5,7 +5,7 @@ ARG ORIGINAL_USER=vscode
 ARG NEW_USER=openflap
 
 # Install additional packages
-RUN apt-get update && apt-get install -y -q \
+RUN apt update && apt install -y \
     wget \
     figlet \
     gdb-multiarch \
@@ -16,10 +16,7 @@ RUN apt-get update && apt-get install -y -q \
 # Change user name from vscode to openflap
 RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
     groupmod -n ${NEW_USER} ${ORIGINAL_USER} && \
-    usermod -d /home/${NEW_USER} -m ${NEW_USER} 
-    #&& \
-    # echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER} && \
-    # chmod 0440 /etc/sudoers.d/${NEW_USER}
+    usermod -d /home/${NEW_USER} -m ${NEW_USER}
 
 # Add user to dialout and plugdev group
 RUN adduser ${NEW_USER} dialout

@@ -1,5 +1,5 @@
 {
-    "name": "OpenFlap: KiBot",
+    "name": "OpenFlap: Gerbolyze",
     "build": {
         "dockerfile": "Dockerfile",
         "context": "."
@@ -8,8 +8,8 @@
     "containerUser": "openflap",
     "runArgs": [
         "--privileged",
-        "--hostname=kibot",
-        "--name=openflap_kibot"
+        "--hostname=gerbolyze",
+        "--name=openflap_gerbolyze"
     ],
     "mounts": [
         "source=${localEnv:HOME}/.bashrc,target=/home/OpenFlap/.bashrc,type=bind,consistency=cached",

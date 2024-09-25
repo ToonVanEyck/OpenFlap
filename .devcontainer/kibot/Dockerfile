@@ -5,7 +5,7 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Install additional packages
-RUN apt-get update && apt-get install -y -q \
+RUN apt update && apt install -y \
     wget \
     figlet \
     ssh \
@@ -13,9 +13,6 @@ RUN apt-get update && apt-get install -y -q \
     sudo
 
 # Create a non-root user with sudo rights
-# RUN groupadd --gid ${USER_GID} ${NEW_USER} && \ 
-#     useradd --uid ${USER_UID} --gid ${USER_GID} -m ${NEW_USER} \
-# usermod -aG sudo ${NEW_USER} && \
 RUN useradd -ms /bin/bash ${NEW_USER} -u ${USER_UID} -U -G sudo && \
     echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER} && \
     chmod 0440 /etc/sudoers.d/${NEW_USER}

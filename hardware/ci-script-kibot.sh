@@ -15,6 +15,12 @@ else
     kibot_preflight_only=""
 fi
 
+# Check if the script is being ran in the correct container.
+if [ "$(hostname)" != "kibot" ]; then
+    echo -e "\e[31mError: This script is meant to be ran in the gerbolyze container.\e[0m"
+    exit 1
+fi
+
 # Declare modules
 declare -A modules=(
     ["Side Panel"]="module/side_panel/src"

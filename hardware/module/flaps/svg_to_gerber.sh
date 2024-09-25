@@ -29,16 +29,17 @@ input_zip="$1"
 output_dir="$2"
 
 # Unzip the input file
-unzip "$input_zip" -d temp_dir
+unzip "$input_zip" -d /tmp/flaps
 
 # Loop through each .svg file in the temp directory
-for svg_file in temp_dir/*.svg; do
+for svg_file in /tmp/flaps/*.svg; do
     # Get the filename without extension
     filename=$(basename "$svg_file" .svg)
     
     # Call gerbolyze convert command
+    echo -e "\033[94mGerbolyze $svg_file\033[0m"
     gerbolyze convert -n altium "$svg_file" "$output_dir/$filename.zip"
 done
 
 # Remove the temporary directory
-rm -rf temp_dir
+rm -rf /tmp/flaps

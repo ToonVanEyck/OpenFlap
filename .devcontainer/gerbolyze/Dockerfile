@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y -q \
     python3-pip \
     sudo
 
+# Install git-lfs
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt install git-lfs
+
 # Install figlet font
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
 

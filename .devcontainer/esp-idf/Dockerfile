@@ -11,7 +11,11 @@ RUN apt-get update \
   libglib2.0-0 \
   libnuma1 \
   libpixman-1-0 \
+  curl \
   && rm -rf /var/lib/apt/lists/*
+
+# Install git-lfs
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt install git-lfs
 
 # QEMU
 ENV QEMU_REL=esp_develop_8.2.0_20240122

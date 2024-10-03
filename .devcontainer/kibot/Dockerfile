@@ -12,13 +12,16 @@ RUN apt update && apt install -y \
     less \
     sudo
 
+# Install git-lfs
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt install git-lfs
+
+# Install figlet font
+RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
+
 # Create a non-root user with sudo rights
 RUN useradd -ms /bin/bash ${NEW_USER} -u ${USER_UID} -U -G sudo && \
     echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER} && \
     chmod 0440 /etc/sudoers.d/${NEW_USER}
-
-# Install figlet font
-RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
 
 # Setup user and home
 ENV USER=${NEW_USER}

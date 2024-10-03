@@ -13,6 +13,12 @@ RUN apt update && apt install -y \
     srecord \
     sudo
 
+# Install git-lfs
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt install git-lfs
+
+# Install figlet font
+RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
+
 # Change user name from vscode to openflap
 RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
     groupmod -n ${NEW_USER} ${ORIGINAL_USER} && \
@@ -26,9 +32,6 @@ RUN adduser ${NEW_USER} sudo
 # Allow all users in the sudo group to use sudo without a password
 RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd && \
     chmod 0440 /etc/sudoers.d/nopasswd
-
-# Install figlet font
-RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
 
 WORKDIR /tmp
 

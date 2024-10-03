@@ -24,7 +24,7 @@ This repository houses all the required files to build, program and modify your 
 I would rather sink in more time than money.
 
 #### The split-flap display shall not require a homing sequence. 
-To achieve this, the OpenFlap modules contain an optical absolute encoder. This encoder allows the module to know i'ts position at any time.
+To achieve this, the OpenFlap modules contain an optical absolute encoder. This encoder allows the module to know it's position at any time.
 
 #### The design shall consist only of printed circuit boards and 3D printable parts. 
 

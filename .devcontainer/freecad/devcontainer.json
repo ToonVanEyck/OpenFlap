@@ -1,0 +1,18 @@
+{
+    "name": "OpenFlap: FreeCad",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+    "remoteUser": "openflap",
+    "containerUser": "openflap",
+    "runArgs": [
+        "--privileged",
+        "--hostname=freecad",
+        "--name=openflap_freecad"
+    ],
+    "mounts": [
+        "source=${localEnv:HOME}/.bashrc,target=/home/OpenFlap/.bashrc,type=bind,consistency=cached",
+    ],
+    "postStartCommand": "/workspaces/OpenFlap/.devcontainer/bashrc_addons_add.sh",
+}

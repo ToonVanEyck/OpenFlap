@@ -4128,7 +4128,7 @@
 			)
 			(uuid "ac4e4a6a-616f-4fb8-a43f-edbdb6b03005")
 		)
-		(model "${KIPRJMOD}/../resources/HLE-108-02-L-DV-BE-TR.stp"
+		(model "${KIPRJMOD}/../../resources/HLE-108-02-L-DV-BE-TR.stp"
 			(offset
 				(xyz 0 0 0.1)
 			)

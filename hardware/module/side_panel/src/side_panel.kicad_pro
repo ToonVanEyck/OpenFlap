@@ -58,7 +58,10 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "unresolved_variable|113007200|280102200||",
+        "unresolved_variable|91007200|264002200||"
+      ],
       "meta": {
         "version": 2
       },
@@ -229,7 +232,10 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [],
+    "erc_exclusions": [
+      "unresolved_variable|1130072|2801022|00000000-0000-0000-0000-000000000000|00000000-0000-0000-0000-000000000000|/36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1||",
+      "unresolved_variable|910072|2640022|00000000-0000-0000-0000-000000000000|00000000-0000-0000-0000-000000000000|/36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1||"
+    ],
     "meta": {
       "version": 0
     },

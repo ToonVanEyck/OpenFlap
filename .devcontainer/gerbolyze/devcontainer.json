@@ -12,7 +12,7 @@
         "--name=openflap_gerbolyze"
     ],
     "mounts": [
-        "source=${localEnv:HOME}/.bashrc,target=/home/OpenFlap/.bashrc,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
     ],
     "postStartCommand": "/workspaces/OpenFlap/.devcontainer/bashrc_addons_add.sh",
 }

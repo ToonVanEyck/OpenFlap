@@ -28,7 +28,12 @@ RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
     echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd && \
     chmod 0440 /etc/sudoers.d/nopasswd
 
-# Install FreeCAD
+# Get FreeCAD AppImage
+WORKDIR /tmp/freecad
+RUN apt install -y qtbase5-dev
+RUN pip install pyside2==5.15.2.1
+RUN wget https://github.com/FreeCAD/FreeCAD/releases/download/1.0rc2/FreeCAD_1.0.0RC2-conda-Linux-x86_64-py311.AppImage
+RUN chmod +x FreeCAD_1.0.0RC2-conda-Linux-x86_64-py311.AppImage && ./FreeCAD_1.0.0RC2-conda-Linux-x86_64-py311.AppImage --appimage-extract
 
 # Setup user and home
 ENV USER=${NEW_USER}

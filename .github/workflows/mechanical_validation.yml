@@ -20,6 +20,7 @@ jobs:
       - name: Checkout (GitHub)
         uses: actions/checkout@v4
         with:
+          lfs: 'true'
           fetch-depth: 1
 
       - name: Login to GitHub Container Registry

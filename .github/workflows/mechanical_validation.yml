@@ -11,7 +11,7 @@ on:
       - .github/workflows/mechanical_validation.yml
   
 env:
-  CI_ARG: ${{ github.ref == 'refs/heads/main' && '' || '--dry-run' }}
+  CI_ARG: ${{ github.ref == 'refs/heads/main' && '' || '--dry-run' }} # Full run on main brach, dry-run on other branches
 
 jobs:
   validate_hardware_designs:
@@ -39,4 +39,5 @@ jobs:
           push: always
           runCmd: |
             cd mechanical
+            mkdir -p build
             ./ci-script-freecad.sh ${CI_ARG}

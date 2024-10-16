@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 
 freecad_paths = [
-    '/opt/freecad/usr/lib',
+    '/opt/FreeCAD/usr/lib',
 ]
 
 for path in freecad_paths:

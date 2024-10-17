@@ -153,17 +153,26 @@ static void APP_GpioConfig(void)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
 
-    GPIO_InitStruct.Pin = GPIO_PIN_LED;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    /* Configure column-end detection pin. */
+    GPIO_InitStruct.Pin   = COLEND_GPIO_PIN;
+    GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIO_PORT_LED, &GPIO_InitStruct);
+    HAL_GPIO_Init(COLEND_GPIO_PORT, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_COLEND;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    /* Configure IR LED */
+    GPIO_InitStruct.Pin   = IR_LED_GPIO_PIN;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIO_PORT_COLEND, &GPIO_InitStruct);
+    HAL_GPIO_Init(IR_LED_GPIO_PORT, &GPIO_InitStruct);
+
+    /* Configure MOTOR A output. (motor direction) */
+    GPIO_InitStruct.Pin   = MOTOR_A_GPIO_PIN;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(MOTOR_A_GPIO_PORT, &GPIO_InitStruct);
 }
 
 static void APP_AdcConfig(void)
@@ -176,58 +185,41 @@ static void APP_AdcConfig(void)
     if (HAL_ADCEx_Calibration_Start(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
-    AdcHandle.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1; // ADC clock no division
-    AdcHandle.Init.Resolution = ADC_RESOLUTION_10B;           // 12bit
-    AdcHandle.Init.DataAlign = ADC_DATAALIGN_RIGHT;           // Right alignment
-    AdcHandle.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD; // Forward
-    AdcHandle.Init.EOCSelection = ADC_EOC_SEQ_CONV;           // End flag
-    AdcHandle.Init.LowPowerAutoWait = ENABLE;
-    AdcHandle.Init.ContinuousConvMode = DISABLE;
+    AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV1;   // ADC clock no division
+    AdcHandle.Init.Resolution            = ADC_RESOLUTION_10B;         // 12bit
+    AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;        // Right alignment
+    AdcHandle.Init.ScanConvMode          = ADC_SCAN_DIRECTION_FORWARD; // Forward
+    AdcHandle.Init.EOCSelection          = ADC_EOC_SEQ_CONV;           // End flag
+    AdcHandle.Init.LowPowerAutoWait      = ENABLE;
+    AdcHandle.Init.ContinuousConvMode    = DISABLE;
     AdcHandle.Init.DiscontinuousConvMode = DISABLE;
-    AdcHandle.Init.ExternalTrigConv = ADC1_2_EXTERNALTRIG_T1_TRGO; // External trigger: TIM1_TRGO
-    AdcHandle.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    AdcHandle.Init.ExternalTrigConv      = ADC1_2_EXTERNALTRIG_T1_TRGO; // External trigger: TIM1_TRGO
+    AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
     AdcHandle.Init.DMAContinuousRequests = ENABLE; // DMA
-    AdcHandle.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
-    AdcHandle.Init.SamplingTimeCommon = ADC_SAMPLETIME_41CYCLES_5;
+    AdcHandle.Init.Overrun               = ADC_OVR_DATA_OVERWRITTEN;
+    AdcHandle.Init.SamplingTimeCommon    = ADC_SAMPLETIME_41CYCLES_5;
     if (HAL_ADC_Init(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
 
     sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-    sConfig.Channel = ADC_CHANNEL_0;
-    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-    sConfig.Channel = ADC_CHANNEL_1;
-    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-    sConfig.Channel = ADC_CHANNEL_2;
-    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-    sConfig.Channel = ADC_CHANNEL_3;
-    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-    sConfig.Channel = ADC_CHANNEL_4;
-    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-    sConfig.Channel = ADC_CHANNEL_5;
-    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
-        APP_ErrorHandler();
+    /* Configure the ADC channels. */
+    for (uint8_t i = 0; i < ENCODER_RESOLUTION; i++) {
+        sConfig.Channel = ADC_CHANNEL_LIST[i];
+        if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
+            APP_ErrorHandler();
+        }
     }
 }
 
 static void APP_TimerInit(void)
 {
     // (240 * 10) / 24Mhz = 100us
-    Tim1Handle.Instance = TIM1;
-    Tim1Handle.Init.Period = 10 - 1;
-    Tim1Handle.Init.Prescaler = 240 - 1;
-    Tim1Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    Tim1Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+    Tim1Handle.Instance               = TIM1;
+    Tim1Handle.Init.Period            = 10 - 1;
+    Tim1Handle.Init.Prescaler         = 240 - 1;
+    Tim1Handle.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
+    Tim1Handle.Init.CounterMode       = TIM_COUNTERMODE_UP;
     Tim1Handle.Init.RepetitionCounter = 0;
     Tim1Handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     if (HAL_TIM_Base_Init(&Tim1Handle) != HAL_OK) {
@@ -236,7 +228,7 @@ static void APP_TimerInit(void)
 
     TIM_MasterConfigTypeDef sMasterConfig;
     sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
     HAL_TIMEx_MasterConfigSynchronization(&Tim1Handle, &sMasterConfig);
     if (HAL_TIM_Base_Start_IT(&Tim1Handle) != HAL_OK) {
         APP_ErrorHandler();
@@ -246,23 +238,23 @@ static void APP_TimerInit(void)
 static void APP_PwmInit(void)
 {
     // (250 * 3) / 8Mhz = 32kHz
-    Tim3Handle.Instance = TIM3;
-    Tim3Handle.Init.Period = 255 - 1;
-    Tim3Handle.Init.Prescaler = 3;
+    Tim3Handle.Instance           = TIM3;
+    Tim3Handle.Init.Period        = 255 - 1;
+    Tim3Handle.Init.Prescaler     = 3;
     Tim3Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    Tim3Handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+    Tim3Handle.Init.CounterMode   = TIM_COUNTERMODE_UP;
     if (HAL_TIM_PWM_Init(&Tim3Handle) != HAL_OK) {
         APP_ErrorHandler();
     }
 
     TIM_MasterConfigTypeDef sMasterConfig;
     sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
     HAL_TIMEx_MasterConfigSynchronization(&Tim3Handle, &sMasterConfig);
 
     TIM_OC_InitTypeDef sConfigOC;
-    sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = 0;
+    sConfigOC.OCMode     = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse      = 0;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
     HAL_TIM_PWM_ConfigChannel(&Tim3Handle, &sConfigOC, TIM_CHANNEL_1);
@@ -277,13 +269,13 @@ static void APP_DmaInit(void)
 
 static void APP_UartInit(void)
 {
-    UartHandle.Instance = USART1;
-    UartHandle.Init.BaudRate = 115200;
+    UartHandle.Instance        = USART1;
+    UartHandle.Init.BaudRate   = 115200;
     UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-    UartHandle.Init.StopBits = UART_STOPBITS_1;
-    UartHandle.Init.Parity = UART_PARITY_NONE;
-    UartHandle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    UartHandle.Init.Mode = UART_MODE_TX_RX;
+    UartHandle.Init.StopBits   = UART_STOPBITS_1;
+    UartHandle.Init.Parity     = UART_PARITY_NONE;
+    UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+    UartHandle.Init.Mode       = UART_MODE_TX_RX;
 
     if (HAL_UART_Init(&UartHandle) != HAL_OK) {
         APP_ErrorHandler();
@@ -293,7 +285,7 @@ static void APP_UartInit(void)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     // Disable IR led.
-    HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_RESET);
 
     // debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
     //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
@@ -316,7 +308,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             // Power IR led's every 50ms.
         } else if (openflap_ctx.ir_tick_cnt >= (openflap_ctx.motor_active ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS)) {
             openflap_ctx.ir_tick_cnt = 0;
-            HAL_GPIO_WritePin(GPIO_PORT_LED, GPIO_PIN_LED, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_SET);
         }
     }
 }

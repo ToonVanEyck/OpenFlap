@@ -1,5 +1,4 @@
 .vscode
-build
 **/build
 software/module/external/*
 software/controller/managed_components/*

@@ -1,2 +1,3 @@
 figlet -f 3d.flf Open Flap
+export PATH="/home/${USER}/.vscode-server/extensions/ms-vscode.cpptools-1.22.9-linux-x64/LLVM/bin/:$PATH"
 echo "Puya developmnet environment"

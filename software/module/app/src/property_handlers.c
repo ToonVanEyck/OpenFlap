@@ -8,13 +8,13 @@ static openflap_ctx_t *openflap_ctx = NULL;
 
 void firmware_property_set(uint8_t *buf)
 {
-    uint32_t addr_base = (uint32_t)(APP_START_PTR + (NEW_APP * APP_SIZE / 4));
+    uint32_t addr_base   = (uint32_t)(APP_START_PTR + (NEW_APP * APP_SIZE / 4));
     uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
-    uint32_t addr = addr_base + addr_offset;
+    uint32_t addr        = addr_base + addr_offset;
     flashWrite(addr, (buf + 2), FLASH_PAGE_SIZE);
     if (addr_offset + FLASH_PAGE_SIZE == APP_SIZE) {
         openflap_ctx->config.ota_completed = true;
-        openflap_ctx->store_config = true;
+        openflap_ctx->store_config         = true;
     }
 }
 
@@ -32,7 +32,7 @@ void command_property_set(uint8_t *buf)
 
 void columnEnd_property_get(uint8_t *buf)
 {
-    buf[0] = HAL_GPIO_ReadPin(GPIO_PORT_COLEND, GPIO_PIN_COLEND);
+    buf[0] = HAL_GPIO_ReadPin(COLEND_GPIO_PORT, COLEND_GPIO_PIN);
 }
 
 void characterMapSize_property_get(uint8_t *buf)
@@ -59,7 +59,7 @@ void offset_property_set(uint8_t *buf)
         return;
     }
     openflap_ctx->config.encoder_offset = buf[0];
-    openflap_ctx->store_config = true;
+    openflap_ctx->store_config          = true;
 }
 void offset_property_get(uint8_t *buf)
 {
@@ -95,7 +95,7 @@ void baseSpeed_property_set(uint8_t *buf)
         return;
     }
     openflap_ctx->config.base_speed = buf[0];
-    openflap_ctx->store_config = true;
+    openflap_ctx->store_config      = true;
 }
 
 void baseSpeed_property_get(uint8_t *buf)

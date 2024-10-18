@@ -24,6 +24,7 @@
         "source=/dev,target=/dev,type=bind,consistency=cached",
         "source=/run/udev,target=/run/udev,type=bind,consistency=cached",
         "source=/etc/udev/rules.d,target=/etc/udev/rules.d,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/.devcontainer/puya/.vscode,target=${containerWorkspaceFolder}/.vscode,type=bind,consistency=cached",
     ],
     "postStartCommand": "/workspaces/OpenFlap/.devcontainer/bashrc_addons_add.sh"
 }

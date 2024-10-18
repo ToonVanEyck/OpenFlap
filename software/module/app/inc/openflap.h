@@ -5,6 +5,8 @@
 #include "flash.h"
 #include "platform.h"
 
+extern TIM_HandleTypeDef motorPwmHandle;
+
 /** Struct with helper variables. */
 typedef struct openflap_ctx_tag {
     uint8_t flap_setpoint;              /**< The desired position of flap wheel. */
@@ -19,6 +21,14 @@ typedef struct openflap_ctx_tag {
     uint32_t comms_active_timeout_tick; /**< The time when the communication busy timeout will occur. */
     uint16_t ir_tick_cnt;               /**< Counter for determining IR sensor state. */
 } openflap_ctx_t;
+
+/** Motor operation modes. */
+typedef enum motorMode_tag {
+    MOTOR_IDLE,    /**< Let the motor idle / freewheel. */
+    MOTOR_BRAKE,   /**< Actively brake the motor. */
+    MOTOR_FORWARD, /**< Run the motor forwards. */
+    MOTOR_REVERSE, /**< Run the motor in reverse. */
+} motorMode_t;
 
 /**
  * \brief Calculate a PWM duty cycle based on the distance between the setpoint and the encoder position.
@@ -69,3 +79,47 @@ void updateMotorState(openflap_ctx_t *ctx);
  * \param[inout] ctx A pointer to the openflap context.
  */
 void updateCommsState(openflap_ctx_t *ctx);
+
+/**
+ * \brief Set the motor mode and speed.
+ *
+ * \param[in] mode The motor mode.
+ * \param[in] speed The motor speed, unused when \p mode is #MOTOR_FORWARD or #MOTOR_REVERSE.
+ */
+void setMotor(motorMode_t mode, uint8_t speed);
+
+/**
+ * \brief Run the motor forwards.
+ *
+ * \param[in] speed The speed of the motor.
+ */
+inline void motorForward(uint8_t speed)
+{
+    setMotor(MOTOR_FORWARD, speed);
+}
+
+/**
+ * \brief Run the motor in reverse.
+ *
+ * \param[in] speed The speed of the motor.
+ */
+inline void motorReverse(uint8_t speed)
+{
+    setMotor(MOTOR_REVERSE, speed);
+}
+
+/**
+ * \brief Let the motor idle / freewheel.
+ */
+inline void motorIdle(void)
+{
+    setMotor(MOTOR_IDLE, 0);
+}
+
+/**
+ * \brief Actively brake the motor.
+ */
+inline void motorBrake(void)
+{
+    setMotor(MOTOR_BRAKE, 0);
+}

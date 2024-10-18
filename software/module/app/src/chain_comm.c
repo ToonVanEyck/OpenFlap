@@ -33,11 +33,11 @@ void chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx);
 
 void chain_comm_init(chain_comm_ctx_t *ctx, uart_driver_ctx_t *uart)
 {
-    ctx->uart = uart;
-    ctx->state = rxHeader;
+    ctx->uart     = uart;
+    ctx->state    = rxHeader;
     ctx->data_cnt = 0;
-    ctx->index = 0;
-    ctx->ack = false;
+    ctx->index    = 0;
+    ctx->ack      = false;
 }
 
 bool chain_comm(chain_comm_ctx_t *ctx)
@@ -121,7 +121,7 @@ void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
     if (state != rxHeader) {
         chain_comm_timer_start(ctx);
     }
-    ctx->state = state;
+    ctx->state    = state;
     ctx->data_cnt = 0;
 }
 

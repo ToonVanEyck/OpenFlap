@@ -5,18 +5,26 @@
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    if (distance == 0) {
-        return 0;
+    const uint8_t min_pwm           = 40;
+    const uint8_t max_pwm           = 120;
+    const uint8_t min_ramp_distance = 1;  /* Go min speed when distance is below this. */
+    const uint8_t max_ramp_distance = 15; /* Go max speed when distance is above this. */
+
+    if (distance <= min_ramp_distance) {
+        return min_pwm;
     }
-    uint8_t min_pwm = 25;
-    uint8_t max_pwm = 80;
-    return (distance - 1) * (max_pwm - min_pwm) / (SYMBOL_CNT - 2) + min_pwm;
+
+    if (distance >= max_ramp_distance) {
+        return max_pwm;
+    }
+
+    return (distance - min_ramp_distance) * (max_pwm - min_pwm) / (max_ramp_distance - min_ramp_distance) + min_pwm;
 }
 
 void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
 {
     static uint8_t old_position = SYMBOL_CNT;
-    uint8_t encoder_graycode = 0;
+    uint8_t encoder_graycode    = 0;
 
     for (uint8_t i = 0; i < ENCODER_RESOLUTION; i++) {
         if (adc_data[IR_MAP[i]] > ctx->config.ir_limits[i]) {
@@ -39,7 +47,7 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
         new_position = flapIndexWrapCalc(new_position + ctx->config.encoder_offset);
         // Ignore sensor backspin.
         if (flapIndexWrapCalc(new_position + 1) != old_position) {
-            old_position = new_position;
+            old_position       = new_position;
             ctx->flap_position = new_position;
         }
     }
@@ -84,5 +92,33 @@ void updateCommsState(openflap_ctx_t *ctx)
         ctx->comms_active = false;
         debug_io_log_enable();
         debug_io_log_info("Comms Idle\n");
+    }
+}
+
+void setMotor(motorMode_t mode, uint8_t speed)
+{
+    switch (mode) {
+        case MOTOR_REVERSE:
+            /* Disabled because this might cause damage to the system.
+             * The mechanism is designed to locks up in reverse direction. */
+            // __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
+            // HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_RESET);
+            break;
+        case MOTOR_FORWARD:
+            speed = 0xff - speed; /* Invert Duty-Cycle. */
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
+            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_SET);
+            break;
+        case MOTOR_BRAKE:
+            /* Set MOTOR A & B high, braking the motor. */
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0xff);
+            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_SET);
+            break;
+        case MOTOR_IDLE:
+        default:
+            /* Set MOTOR A & B low, let the motor freewheel. */
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0x00);
+            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_RESET);
+            break;
     }
 }

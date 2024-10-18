@@ -30,7 +30,7 @@ uint32_t aADCxConvertedData[ENCODER_RESOLUTION] = {0};
 
 TIM_HandleTypeDef Tim1Handle; // ADC/IR timer
 
-TIM_HandleTypeDef Tim3Handle; // PWM
+TIM_HandleTypeDef motorPwmHandle; // PWM
 
 UART_HandleTypeDef UartHandle;
 
@@ -99,14 +99,42 @@ int main(void)
 
     uint8_t new_position = 0;
     int rtt_key;
+    uint8_t speed          = 0;
+    motorMode_t motor_mode = MOTOR_IDLE;
     while (1) {
 
         // Receive commands from debug_io.
         rtt_key = debug_io_get();
         if (rtt_key > 0) {
             debug_io_log_debug("received command:  %c\n", (char)rtt_key);
-            if (rtt_key == '\n') {
-                configPrint(&openflap_ctx.config);
+            switch (rtt_key) {
+                case '\n':
+                    configPrint(&openflap_ctx.config);
+                    break;
+                case '8':
+                    speed += 5;
+                    debug_io_log_info("Speed UP: %d\n", speed);
+                    break;
+                case '2':
+                    speed -= 5;
+                    debug_io_log_info("Speed DN: %d\n", speed);
+                    break;
+                case '6':
+                    motor_mode = MOTOR_FORWARD;
+                    debug_io_log_info("Motor Forward\n");
+                    break;
+                case '4':
+                    motor_mode = MOTOR_REVERSE;
+                    debug_io_log_info("Motor Reverse\n");
+                    break;
+                case '5':
+                    motor_mode = MOTOR_IDLE;
+                    debug_io_log_info("Motor Idle\n");
+                    break;
+                case '0':
+                    motor_mode = MOTOR_BRAKE;
+                    debug_io_log_info("Motor Brake\n");
+                    break;
             }
         }
 
@@ -122,7 +150,12 @@ int main(void)
 
         // Set PWM duty cycle.
         uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
-        __HAL_TIM_SET_COMPARE(&Tim3Handle, TIM_CHANNEL_1, pwmDutyCycleCalc(distance));
+        if (distance > 0) {
+            motorForward(pwmDutyCycleCalc(distance));
+        } else {
+            motorBrake();
+        }
+        // setMotor(motor_mode, speed);
 
         // Communication status.
         updateCommsState(&openflap_ctx);
@@ -238,27 +271,27 @@ static void APP_TimerInit(void)
 static void APP_PwmInit(void)
 {
     // (250 * 3) / 8Mhz = 32kHz
-    Tim3Handle.Instance           = TIM3;
-    Tim3Handle.Init.Period        = 255 - 1;
-    Tim3Handle.Init.Prescaler     = 3;
-    Tim3Handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    Tim3Handle.Init.CounterMode   = TIM_COUNTERMODE_UP;
-    if (HAL_TIM_PWM_Init(&Tim3Handle) != HAL_OK) {
+    motorPwmHandle.Instance           = TIM3;
+    motorPwmHandle.Init.Period        = 255 - 1;
+    motorPwmHandle.Init.Prescaler     = 3;
+    motorPwmHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    motorPwmHandle.Init.CounterMode   = TIM_COUNTERMODE_UP;
+    if (HAL_TIM_PWM_Init(&motorPwmHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
 
     TIM_MasterConfigTypeDef sMasterConfig;
     sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
     sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
-    HAL_TIMEx_MasterConfigSynchronization(&Tim3Handle, &sMasterConfig);
+    HAL_TIMEx_MasterConfigSynchronization(&motorPwmHandle, &sMasterConfig);
 
     TIM_OC_InitTypeDef sConfigOC;
     sConfigOC.OCMode     = TIM_OCMODE_PWM1;
     sConfigOC.Pulse      = 0;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-    HAL_TIM_PWM_ConfigChannel(&Tim3Handle, &sConfigOC, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&Tim3Handle, TIM_CHANNEL_1);
+    HAL_TIM_PWM_ConfigChannel(&motorPwmHandle, &sConfigOC, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&motorPwmHandle, TIM_CHANNEL_1);
 }
 
 static void APP_DmaInit(void)

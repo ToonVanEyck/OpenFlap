@@ -99,8 +99,7 @@ int main(void)
 
     uint8_t new_position = 0;
     int rtt_key;
-    uint8_t speed          = 0;
-    motorMode_t motor_mode = MOTOR_IDLE;
+    bool stop = false;
     while (1) {
 
         // Receive commands from debug_io.
@@ -111,29 +110,13 @@ int main(void)
                 case '\n':
                     configPrint(&openflap_ctx.config);
                     break;
-                case '8':
-                    speed += 5;
-                    debug_io_log_info("Speed UP: %d\n", speed);
+                case 's':
+                    stop = true;
+                    debug_io_log_info("Stopping Motor\n");
                     break;
-                case '2':
-                    speed -= 5;
-                    debug_io_log_info("Speed DN: %d\n", speed);
-                    break;
-                case '6':
-                    motor_mode = MOTOR_FORWARD;
-                    debug_io_log_info("Motor Forward\n");
-                    break;
-                case '4':
-                    motor_mode = MOTOR_REVERSE;
-                    debug_io_log_info("Motor Reverse\n");
-                    break;
-                case '5':
-                    motor_mode = MOTOR_IDLE;
-                    debug_io_log_info("Motor Idle\n");
-                    break;
-                case '0':
-                    motor_mode = MOTOR_BRAKE;
-                    debug_io_log_info("Motor Brake\n");
+                case 'r':
+                    stop = false;
+                    debug_io_log_info("Resuming Motor\n");
                     break;
             }
         }
@@ -150,7 +133,7 @@ int main(void)
 
         // Set PWM duty cycle.
         uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
-        if (distance > 0) {
+        if (distance > 0 && !stop) {
             motorForward(pwmDutyCycleCalc(distance));
         } else {
             motorBrake();

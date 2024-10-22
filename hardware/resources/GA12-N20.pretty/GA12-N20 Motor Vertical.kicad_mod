@@ -153,10 +153,10 @@
 		)
 	)
 	(pad "1" thru_hole oval
-		(at -3.625 0)
-		(size 1.6 2.8)
-		(drill oval 0.7 1.8
-			(offset -0.1 0)
+		(at -3.6 0)
+		(size 2 3.5)
+		(drill oval 1 2.2
+			(offset -0.25 0)
 		)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)
@@ -165,9 +165,9 @@
 	)
 	(pad "2" thru_hole oval
 		(at 3.6 0)
-		(size 1.6 2.8)
-		(drill oval 0.7 1.8
-			(offset 0.1 0)
+		(size 2 3.5)
+		(drill oval 1 2.2
+			(offset 0.25 0)
 		)
 		(layers "*.Cu" "*.Mask")
 		(remove_unused_layers no)

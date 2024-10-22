@@ -8,12 +8,11 @@
             "name": "py32 Debug",
             "cwd": "${workspaceFolder}/software/module",
             "loadFiles": [
-                "${workspaceFolder}/build/bin/OpenFlap_Module_BtlAppCfg.hex"
-                // "build/bin/OpenFlap_Module_App.hex"
+                "${workspaceFolder}/build/module/bin/OpenFlap_Module_BtlAppCfg.hex"
             ],
             "symbolFiles": [
-                "${workspaceFolder}/build/app/OpenFlap_Module_App.elf",
-                "${workspaceFolder}/build/btl/OpenFlap_Module_Btl.elf",
+                "${workspaceFolder}/build/module/app/OpenFlap_Module_App.elf",
+                "${workspaceFolder}/build/module/btl/OpenFlap_Module_Btl.elf",
             ],
             // "sourceFileMap": {
             //     "/workspace/software/common/chain_comm_abi/src": "${workspaceFolder}/../common/chain_comm_abi/src"
@@ -29,11 +28,12 @@
             // "postLaunchCommands": [
             // "set substitute-path ${workspaceFolder}/software/common/chain_comm_abi/src ${workspaceFolder}/../common/chain_comm_abi/src",
             // ] 
+            "preLaunchTask": "build",
         },
         {
             "name": "py32 Attach",
             "cwd": "${workspaceFolder}/software/module",
-            "executable": "${workspaceFolder}/build/app/OpenFlap_Module_App.elf",
+            "executable": "${workspaceFolder}/build/module/app/OpenFlap_Module_App.elf",
             "request": "attach",
             "type": "cortex-debug",
             "servertype": "pyocd",

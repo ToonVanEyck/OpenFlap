@@ -1,6 +1,8 @@
 /.vscode
 /.devcontainer/*/.vscode/*
-!.devcontainer/puya/.vscode/launch.json
+!.devcontainer/*/.vscode/launch.json
+!.devcontainer/*/.vscode/settings.json
+!.devcontainer/*/.vscode/tasks.json
 build
 software/controller/managed_components/*
 

@@ -16,6 +16,7 @@ typedef struct openflap_ctx_tag {
     bool store_config;                  /**< Flag to store the configuration. */
     bool reboot;                        /**< Flag to indicate the module must preform a system reboot. */
     bool motor_active;                  /**< Flag to indicate if the motor is busy. */
+    bool extend_revolution;           /**< Flag to indicate if the motor must make at least on revolution. */
     uint32_t motor_active_timeout_tick; /**< The time when the motor busy timeout will occur. */
     bool comms_active;                  /**< Flag to indicate if the communication is busy. */
     uint32_t comms_active_timeout_tick; /**< The time when the communication busy timeout will occur. */

@@ -98,4 +98,3 @@ add_custom_target(rtt
             --target ${PUYA_CHIP} 
             -a `grep -Po '.*(0x[0-9a-f]{8}).*_SEGGER_RTT' ${CMAKE_BINARY_DIR}/app/${PROJECT_NAME}.map | grep -Po '0x[0-9a-f]{8}'`
     )
-# add_dependencies(rtt ${App})

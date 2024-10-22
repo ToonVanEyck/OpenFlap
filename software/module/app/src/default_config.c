@@ -6,7 +6,7 @@
 /* When SET_DEFAULT_CONFIG is not defined, the default configuration wil not be included in the final binary. */
 const openflap_config_t __attribute__((section(".config"))) config = {
     .encoder_offset = 0,
-    .ir_limits      = {200, 200, 200, 200, 200, 200},
+    .ir_limits      = {500, 500, 500, 500, 500, 500},
     .vtrim          = 0,
     .base_speed     = 0,
     .symbol_set =
@@ -19,6 +19,7 @@ const openflap_config_t __attribute__((section(".config"))) config = {
             (uint32_t)'8', (uint32_t)'9', SYMBOL_€,      (uint32_t)'$', (uint32_t)'!', (uint32_t)'?', (uint32_t)'.',
             (uint32_t)',', (uint32_t)':', (uint32_t)'/', (uint32_t)'@', (uint32_t)'#', (uint32_t)'&',
         },
-    .ota_completed = false,
+    .ota_completed    = false,
+    .minimum_distance = 10,
 };
 #endif

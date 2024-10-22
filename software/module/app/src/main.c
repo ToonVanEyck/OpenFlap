@@ -40,6 +40,7 @@ static openflap_ctx_t openflap_ctx = {0};
 static uint8_t uart_rx_rb_buff[RB_BUFF_SIZE];
 static uint8_t uart_tx_rb_buff[RB_BUFF_SIZE];
 static uart_driver_ctx_t uart_driver;
+static bool debug_mode = false;
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -99,7 +100,7 @@ int main(void)
 
     uint8_t new_position = 0;
     int rtt_key;
-    bool stop = false;
+    uint8_t speed = 0;
     while (1) {
 
         // Receive commands from debug_io.
@@ -110,13 +111,18 @@ int main(void)
                 case '\n':
                     configPrint(&openflap_ctx.config);
                     break;
-                case 's':
-                    stop = true;
-                    debug_io_log_info("Stopping Motor\n");
+
+                case 'd':
+                    debug_mode = !debug_mode;
+                    debug_io_log_info("%s Debug Mode\n", debug_mode ? "Entering" : "Exiting");
                     break;
-                case 'r':
-                    stop = false;
-                    debug_io_log_info("Resuming Motor\n");
+                case '8':
+                    speed += 5;
+                    debug_io_log_info("Speed: %d\n", speed);
+                    break;
+                case '2':
+                    speed -= 5;
+                    debug_io_log_info("Speed: %d\n", speed);
                     break;
             }
         }
@@ -131,14 +137,25 @@ int main(void)
                               &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
         }
 
-        // Set PWM duty cycle.
-        uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
-        if (distance > 0 && !stop) {
-            motorForward(pwmDutyCycleCalc(distance));
+        if (!debug_mode) {
+            uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
+            /* Check if a short rotation needs to be extended. */
+            if (openflap_ctx.extend_revolution) {
+                if (distance < openflap_ctx.config.minimum_distance) {
+                    distance += SYMBOL_CNT;
+                } else {
+                    openflap_ctx.extend_revolution = false;
+                }
+            }
+            /* Set the motor speed based on the distance between the current and target flap. */
+            if (distance > 0) {
+                motorForward(pwmDutyCycleCalc(distance));
+            } else {
+                motorBrake();
+            }
         } else {
-            motorBrake();
+            setMotor(MOTOR_FORWARD, speed);
         }
-        // setMotor(motor_mode, speed);
 
         // Communication status.
         updateCommsState(&openflap_ctx);
@@ -303,9 +320,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     // Disable IR led.
     HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_RESET);
 
-    // debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
-    //                   aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
-    //                   aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
+    if (debug_mode) {
+        debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
+                           aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
+                           aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
+    }
 
     // Update encoder position.
     encoderPositionUpdate(&openflap_ctx, aADCxConvertedData);

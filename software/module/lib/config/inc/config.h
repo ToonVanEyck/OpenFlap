@@ -17,6 +17,8 @@ typedef struct openflap_config_tag {
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
     bool ota_completed;              /**< Flag to indicate that the OTA process is completed. */
     uint8_t random_seed;             /**< Random seed for the random number generator. */
+    uint8_t minimum_distance;        /**< Add a complete rotation if the minimum distance between the current flap and
+                                         destination flap is not met. */
 } openflap_config_t;
 
 /** Load the config form NVM. */

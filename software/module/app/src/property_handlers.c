@@ -82,6 +82,8 @@ void vtrim_property_get(uint8_t *buf)
 void character_property_set(uint8_t *buf)
 {
     openflap_ctx->flap_setpoint = buf[0];
+    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx->flap_setpoint - openflap_ctx->flap_position);
+    openflap_ctx->extend_revolution = (distance < openflap_ctx->config.minimum_distance);
 }
 
 void character_property_get(uint8_t *buf)

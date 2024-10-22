@@ -1,0 +1,48 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "py32 Debug",
+            "cwd": "${workspaceFolder}/software/module",
+            "loadFiles": [
+                "${workspaceFolder}/build/bin/OpenFlap_Module_BtlAppCfg.hex"
+                // "build/bin/OpenFlap_Module_App.hex"
+            ],
+            "symbolFiles": [
+                "${workspaceFolder}/build/app/OpenFlap_Module_App.elf",
+                "${workspaceFolder}/build/btl/OpenFlap_Module_Btl.elf",
+            ],
+            // "sourceFileMap": {
+            //     "/workspace/software/common/chain_comm_abi/src": "${workspaceFolder}/../common/chain_comm_abi/src"
+            // }
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "pyocd",
+            "targetId": "PY32F003x8",
+            "cmsisPack": "${workspaceFolder}/software/module/Puya.PY32F0xx_DFP.1.1.7.pack",
+            "svdFile": "py32f003xx.svd",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            // "postLaunchCommands": [
+            // "set substitute-path ${workspaceFolder}/software/common/chain_comm_abi/src ${workspaceFolder}/../common/chain_comm_abi/src",
+            // ] 
+        },
+        {
+            "name": "py32 Attach",
+            "cwd": "${workspaceFolder}/software/module",
+            "executable": "${workspaceFolder}/build/app/OpenFlap_Module_App.elf",
+            "request": "attach",
+            "type": "cortex-debug",
+            "servertype": "pyocd",
+            "targetId": "PY32F003x8",
+            "cmsisPack": "Puya.PY32F0xx_DFP.1.1.7.pack",
+            "svdFile": "py32f003xx.svd",
+            "runToEntryPoint": "main",
+            "showDevDebugTimestamps": true,
+            "showDevDebugOutput": "none",
+        }
+    ]
+}

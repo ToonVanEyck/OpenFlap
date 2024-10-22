@@ -38,6 +38,10 @@ WORKDIR /tmp
 # Create symlink to new gdb
 RUN ln -s /usr/bin/gdb-multiarch /usr/bin/arm-none-eabi-gdb
 
+# Install lib ncurses5
+RUN apt install -y libncurses5
+RUN ln -s libncursesw.so.6.3 /usr/lib/x86_64-linux-gnu/libncursesw.so.5
+
 # install pyocd
 RUN apt -y install python3 python3-pip netcat && \
     python3 -mpip install -U pyocd && \

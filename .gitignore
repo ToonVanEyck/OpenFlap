@@ -1,10 +1,9 @@
-.vscode
-**/build
-software/module/external/*
+/.vscode
+/.devcontainer/*/.vscode/*
+!.devcontainer/puya/.vscode/launch.json
+build
 software/controller/managed_components/*
-hardware/flaps/pcb/scr_files/*
-hardware/flaps/pcb/tmp/*
-**/*-backups/*
+
 ##############################################
 ##                Kicad files              ##
 ##############################################

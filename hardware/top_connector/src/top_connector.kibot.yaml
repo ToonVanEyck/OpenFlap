@@ -29,12 +29,10 @@ outputs:
   - name: print_sch
     comment: Schematic PDF
     type: pdf_sch_print
-    dir: ..
 
   - name: board_top
     comment: "Top layer view"
     type: pcbdraw
-    dir: ..
     options:
       format: jpg
       dpi: 300
@@ -42,7 +40,6 @@ outputs:
   - name: board_bottom
     comment: Bottom layer view
     type: pcbdraw
-    dir: ..
     options:
       format: jpg
       dpi: 300
@@ -51,7 +48,7 @@ outputs:
   - name: gerbers
     comment: Gerbers
     type: gerber
-    dir: ../build/gerbers
+    dir: gerbers
     layers:
       - F.Cu  
       - B.Cu
@@ -72,7 +69,7 @@ outputs:
   - name: drill
     comment: Drill files
     type: excellon
-    dir: ../build/drill
+    dir: drill
     options:
       metric_units : true
       map:
@@ -84,7 +81,6 @@ outputs:
   - name: fabrication
     comment: Combine drill and gerbers into .zip
     type: compress
-    dir: ../build
     options:
       files:
         - from_output: gerbers
@@ -93,7 +89,6 @@ outputs:
   - name: position
     comment: Component Placement List
     type: position
-    dir: ../build
     options:
       format: CSV
       output: '%f-cpl.%x'
@@ -115,7 +110,6 @@ outputs:
   - name: bom
     comment: Bill Of Materials
     type: kibom
-    dir: ../build
     options:
       format: CSV
       conf:
@@ -132,7 +126,6 @@ outputs:
   - name: ibom
     comment: Interactive Bill Of Materials
     type: ibom
-    dir: ..
     options:
       bom_view: left-right
       layer_view: FB

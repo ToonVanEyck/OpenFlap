@@ -19,7 +19,7 @@ if [ "$(hostname)" != "gerbolyze" ]; then
     exit 1
 fi
 
-BASE_DIR=/workspaces/OpenFlap
+BASE_DIR=$(git rev-parse --show-toplevel)
 FLAPS_SOURCE_DIR=${BASE_DIR}/hardware/module/flaps
 FLAPS_BUILD_DIR=${BASE_DIR}/build/flaps
 

@@ -68,6 +68,7 @@ if $check_modified; then
 fi
 
 # Run KiBot for each module
+all_success=true
 for name in "${!modules[@]}"; do
     path=${modules[$name]}
     echo -e "\033[1;36m$message $name\033[0m"
@@ -91,6 +92,7 @@ for name in "${!modules[@]}"; do
         cp $BUILD_DIR/$(basename $(dirname $path))/*.pdf $SOURCE_DIR/$path/../ > /dev/null 2>&1
         cp $BUILD_DIR/$(basename $(dirname $path))/*ibom.html $SOURCE_DIR/$path/../ > /dev/null 2>&1
     fi
+    [[ $? -ne 0 ]] && all_success=false
 done
 
 # Return success only if there were no failures

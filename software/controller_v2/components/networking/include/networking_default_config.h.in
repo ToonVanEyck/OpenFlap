@@ -1,0 +1,50 @@
+/**
+ * \file networking.h
+ *
+ * This file contains a default configuration for the networking component.
+ * This file will be "configured" by CMake to replace the placeholders with the actual wifi SSID and password.
+ * Wifi credentials are set by the environment variables OPENFLAP_DEFAULT_SSID and OPENFLAP_DEFAULT_PASS.
+ *
+ * When using NETWORKING_DEFAULT_CONFIG in qemu, ethernet will be used, and on target wifi shall be used.
+ */
+
+/* @INPUT_FILE@ */
+#pragma once
+
+#include "networking_config.h"
+
+/**
+ * \brief Default networking configuration for ethernet
+ */
+#define NETWORKING_DEFAULT_ETHERNET_CONFIG                                                                             \
+    (networking_config_t)                                                                                              \
+    {                                                                                                                  \
+        .ethernet = {                                                                                                  \
+            .enable = true,                                                                                            \
+        },                                                                                                             \
+    }
+
+/**
+ * \brief Default networking configuration for wifi
+ */
+#define NETWORKING_DEFAULT_WIFI_CONFIG                                                                                 \
+    (networking_config_t)                                                                                              \
+    {                                                                                                                  \
+        .wifi = {                                                                                                      \
+            .station =                                                                                                 \
+                {                                                                                                      \
+                    .enable   = true,                                                                                  \
+                    .ssid     = "@NETWORKING_DEFAULT_STA_SSID@", /**< Defined by env var OPENFLAP_DEFAULT_SSID */      \
+                    .password = "@NETWORKING_DEFAULT_STA_PASS@", /**< Defined by env var OPENFLAP_DEFAULT_PASS */      \
+                },                                                                                                     \
+        }                                                                                                              \
+    }
+
+/**
+ * \brief Default networking configuration
+ */
+#if QEMU
+#define NETWORKING_DEFAULT_CONFIG NETWORKING_DEFAULT_ETHERNET_CONFIG
+#else
+#define NETWORKING_DEFAULT_CONFIG NETWORKING_DEFAULT_WIFI_CONFIG
+#endif

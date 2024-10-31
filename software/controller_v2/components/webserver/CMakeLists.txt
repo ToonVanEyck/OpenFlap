@@ -1,0 +1,13 @@
+idf_component_register(
+    SRCS 
+        "webserver.c"
+    INCLUDE_DIRS 
+        "include"
+    EMBED_FILES
+        "assets/index.html"
+        "assets/style.css"
+        "assets/script.js"
+        "assets/favicon.svg"        
+    REQUIRES
+        esp_http_server
+)

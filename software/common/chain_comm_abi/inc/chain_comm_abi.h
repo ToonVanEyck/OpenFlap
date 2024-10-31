@@ -6,17 +6,17 @@
 
 #define ABI_VERSION 2
 
-#define MAX_PROPERTIES (64) // (6 bits)
-#define WRITE_HEADER_LEN 1  // Write header is 1 bytes long: [HEADER]
-#define READ_HEADER_LEN 3   // Read header is 3 bytes long: [HEADER] [CNT_LSB] [CNT_MSB]
-#define ACKNOWLEDGE_LEN 1
-#define CHAIN_COM_MAX_LEN 256
-#define SEQUENTIAL_WRITE_TRIGGER_DELAY_MS 50
+#define MAX_PROPERTIES                          (64) // (6 bits)
+#define WRITE_HEADER_LEN                        1    // Write header is 1 bytes long: [HEADER]
+#define READ_HEADER_LEN                         3    // Read header is 3 bytes long: [HEADER] [CNT_LSB] [CNT_MSB]
+#define ACKNOWLEDGE_LEN                         1
+#define CHAIN_COM_MAX_LEN                       256
+#define SEQUENTIAL_WRITE_TRIGGER_DELAY_MS       50
 #define SEQUENTIAL_WRITE_TRIGGER_DELAY_EXTRA_MS 5
 #define SEQUENTIAL_WRITE_PASSTHROUGH_PERIOD_MS                                                                         \
     (SEQUENTIAL_WRITE_TRIGGER_DELAY_MS - SEQUENTIAL_WRITE_TRIGGER_DELAY_EXTRA_MS)
 #define MAX_COMMAND_PERIOD_MS (SEQUENTIAL_WRITE_TRIGGER_DELAY_MS + SEQUENTIAL_WRITE_TRIGGER_DELAY_EXTRA_MS)
-#define ACK 0x00
+#define ACK                   0x00
 
 typedef enum __attribute__((__packed__)) {
     do_nothing,
@@ -42,10 +42,10 @@ typedef enum __attribute__((__packed__)) {
     PROPERTY(baseSpeed_property, "baseSpeed", 1)                                                                       \
     PROPERTY(end_of_properties, NULL, 0)
 
-typedef enum __attribute__((__packed__)) { MODULE_PROPERTY(GENERATE_PROPERTY_ENUM) } moduleProperty_t;
+typedef enum __attribute__((__packed__)) { MODULE_PROPERTY(GENERATE_PROPERTY_ENUM) } module_property_t;
 
-const char *get_property_name(moduleProperty_t property);
-const uint8_t get_property_size(moduleProperty_t property);
+const char *get_property_name(module_property_t property);
+const uint8_t get_property_size(module_property_t property);
 
 typedef union __attribute__((__packed__)) {
     uint8_t raw;

@@ -1,0 +1,185 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "name": "Component [qemu]",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/build/controller/debug/debug.elf",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "${command:espIdf.getToolchainGdb}",
+            "miDebuggerServerAddress": "localhost:3333",
+            "debugServerPath": "qemu-system-xtensa",
+            "debugServerArgs": "-M esp32 -m 16M -drive file=${workspaceFolder}/build/controller/debug/debug.bin,if=mtd,format=raw -global driver=timer.esp32.timg,property=wdt_disable,value=true -nic user,model=open_eth,hostfwd=tcp::80-:80 -gdb tcp::3333 -S -nographic -serial tcp::5555,server,nowait",
+            "serverStarted": "QEMU [0-9]+\\.[0-9]+\\.[0-9]+ monitor - type 'help' for more information",
+            "stopAtEntry": true,
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Hard Reset and Immediately Halt",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set Temporary Hardware Assisted Breakpoint at `app_main`",
+                    "text": "thbreak app_main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Shutdown GDB Server on GDB Detach",
+                    "text": "monitor [target current] configure -event gdb-detach { shutdown }",
+                    "ignoreFailures": false
+                },
+            ],
+            "preLaunchTask": "Component: Build & Monitor [qemu]",
+        },
+        {
+            "name": "Component [target]",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/build/controller/debug/debug.elf",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "${command:espIdf.getToolchainGdb}",
+            "miDebuggerServerAddress": "localhost:3333",
+            "debugServerPath": "openocd",
+            "debugServerArgs": "-f interface/ftdi/esp32_devkitj_v1.cfg -f target/esp32.cfg -c \"esp32.cpu1 configure -rtos FreeRTOS\"",
+            "serverStarted": "Listening on port [0-9]+ for gdb connections",
+            "filterStderr": true,
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Flash application",
+                    "text": "monitor program_esp ${workspaceFolder}/build/controller/debug/debug.bin 0x00 verify",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Respect Hardware Limitations (as prescribed by Espressif)",
+                    "text": "set remote hardware-watchpoint-limit 2",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Hard Reset and Immediately Halt",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Flush Internal Register Cache",
+                    "text": "maintenance flush register-cache",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set Temporary Hardware Assisted Breakpoint at `app_main`",
+                    "text": "thbreak app_main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Shutdown GDB Server on GDB Detach",
+                    "text": "monitor [target current] configure -event gdb-detach { shutdown }",
+                    "ignoreFailures": false
+                },
+            ],
+            "stopAtConnect": false,
+            "logging": {
+                "exceptions": true,
+                "engineLogging": false,
+                "moduleLoad": true,
+                "programOutput": true,
+                "trace": true,
+                "traceResponse": false
+            },
+            "preLaunchTask": "Component: Build & Monitor [target]",
+        },
+        {
+            "name": "Application [qemu]",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/build/controller/debug/debug.elf",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "${command:espIdf.getToolchainGdb}",
+            "miDebuggerServerAddress": "localhost:3333",
+            "debugServerPath": "qemu-system-xtensa",
+            "debugServerArgs": "-M esp32 -m 16M -drive file=${workspaceFolder}/build/controller/debug/debug.bin,if=mtd,format=raw -global driver=timer.esp32.timg,property=wdt_disable,value=true -nic user,model=open_eth,hostfwd=tcp::80-:80 -gdb tcp::3333 -S -nographic -serial tcp::5555,server,nowait",
+            "serverStarted": "QEMU [0-9]+\\.[0-9]+\\.[0-9]+ monitor - type 'help' for more information",
+            "stopAtEntry": true,
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Hard Reset and Immediately Halt",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set Temporary Hardware Assisted Breakpoint at `app_main`",
+                    "text": "thbreak app_main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Shutdown GDB Server on GDB Detach",
+                    "text": "monitor [target current] configure -event gdb-detach { shutdown }",
+                    "ignoreFailures": false
+                },
+            ],
+            "preLaunchTask": "Application: Build & Monitor [qemu]",
+        },
+        {
+            "name": "Application [target]",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/build/controller/debug/debug.elf",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "${command:espIdf.getToolchainGdb}",
+            "miDebuggerServerAddress": "localhost:3333",
+            "debugServerPath": "openocd",
+            "debugServerArgs": "-f interface/ftdi/esp32_devkitj_v1.cfg -f target/esp32.cfg -c \"esp32.cpu1 configure -rtos FreeRTOS\"",
+            "serverStarted": "Listening on port [0-9]+ for gdb connections",
+            "filterStderr": true,
+            "postRemoteConnectCommands": [
+                {
+                    "description": "Flash application",
+                    "text": "monitor program_esp ${workspaceFolder}/build/controller/debug/debug.bin 0x00 verify",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Respect Hardware Limitations (as prescribed by Espressif)",
+                    "text": "set remote hardware-watchpoint-limit 2",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Hard Reset and Immediately Halt",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Flush Internal Register Cache",
+                    "text": "maintenance flush register-cache",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set Temporary Hardware Assisted Breakpoint at `app_main`",
+                    "text": "thbreak app_main",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Shutdown GDB Server on GDB Detach",
+                    "text": "monitor [target current] configure -event gdb-detach { shutdown }",
+                    "ignoreFailures": false
+                },
+            ],
+            "stopAtConnect": false,
+            "logging": {
+                "exceptions": true,
+                "engineLogging": true,
+                "moduleLoad": true,
+                "programOutput": true,
+                "trace": true,
+                "traceResponse": false
+            },
+            "preLaunchTask": "Application: Build & Monitor [target]",
+        }
+    ],
+}

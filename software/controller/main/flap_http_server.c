@@ -5,7 +5,7 @@
 static const char *TAG = "[HTTP]";
 TaskHandle_t task;
 
-static httpd_handle_t server = NULL;
+static httpd_handle_t server                                                = NULL;
 http_modulePropertyHandler_t http_modulePropertyHandlers[end_of_properties] = {0};
 
 typedef struct {
@@ -45,10 +45,10 @@ typedef enum { update_none, update_module, update_controller } update_firmware_t
 
 static esp_err_t firmware_handler(httpd_req_t *req)
 {
-    static update_firmware_t update = update_none;
+    static update_firmware_t update          = update_none;
     controller_queue_data_t *controller_comm = calloc(1, sizeof(controller_queue_data_t));
-    int read_cnt = 0;
-    int boundry_length = 0;
+    int read_cnt                             = 0;
+    int boundry_length                       = 0;
     while (read_cnt <= 4 || controller_comm->data[read_cnt - 4] != '\r' ||
            controller_comm->data[read_cnt - 3] != '\n' || controller_comm->data[read_cnt - 2] != '\r' ||
            controller_comm->data[read_cnt - 1] != '\n') {
@@ -57,8 +57,9 @@ static esp_err_t firmware_handler(httpd_req_t *req)
         }
         read_cnt++;
         if (!boundry_length && controller_comm->data[read_cnt - 2] == '\r' &&
-            controller_comm->data[read_cnt - 1] == '\n')
+            controller_comm->data[read_cnt - 1] == '\n') {
             boundry_length = read_cnt + 4;
+        }
     }
     ESP_LOGI(TAG, "boundry len %d", boundry_length);
     ESP_LOGI(TAG, "%s", controller_comm->data);
@@ -73,8 +74,9 @@ static esp_err_t firmware_handler(httpd_req_t *req)
         reti = regexec(&b, controller_comm->data, 5, groupArray, 0);
         if (!reti) {
             for (int g = 0; g < 5; g++) {
-                if (groupArray[g].rm_so == (size_t)-1)
+                if (groupArray[g].rm_so == (size_t)-1) {
                     break; // No more groups
+                }
                 controller_comm->data[groupArray[g].rm_eo] = 0;
                 if (g == 1) {
                     if (!strcmp(controller_comm->data + groupArray[g].rm_so, "controller_firmware")) {
@@ -92,8 +94,8 @@ static esp_err_t firmware_handler(httpd_req_t *req)
     }
     regfree(&b);
     controller_comm->total_data_len = req->content_len - read_cnt - boundry_length;
-    controller_comm->data_len = CMD_COMM_BUF_LEN;
-    controller_comm->data_offset = 0;
+    controller_comm->data_len       = CMD_COMM_BUF_LEN;
+    controller_comm->data_offset    = 0;
 
     ESP_LOGI(TAG, "total useful data len %d, + boundry %d", controller_comm->total_data_len, req->content_len);
     ESP_LOGI(TAG, "already read %d, after data read %d", read_cnt, boundry_length);
@@ -146,9 +148,9 @@ static esp_err_t firmware_handler(httpd_req_t *req)
     return ESP_OK;
 }
 static const httpd_uri_t firmware_uri = {
-    .uri = "/firmware",
-    .method = HTTP_POST,
-    .handler = firmware_handler,
+    .uri      = "/firmware",
+    .method   = HTTP_POST,
+    .handler  = firmware_handler,
     .user_ctx = NULL,
 };
 
@@ -181,14 +183,14 @@ static esp_err_t script_get_handler(httpd_req_t *req)
 static const httpd_uri_t script_uri = {
     .uri = "/script.js", .method = HTTP_GET, .handler = script_get_handler, .user_ctx = NULL};
 
-void http_addModulePropertyHandler(moduleProperty_t property, http_modulePropertyCallback_t toJson,
+void http_addModulePropertyHandler(module_property_t property, http_modulePropertyCallback_t toJson,
                                    http_modulePropertyCallback_t fromJson)
 {
     if (property <= no_property && property >= end_of_properties) {
         ESP_LOGE(TAG, "Cannot add invalid property %d", property);
         return;
     }
-    http_modulePropertyHandlers[property].toJson = toJson;
+    http_modulePropertyHandlers[property].toJson   = toJson;
     http_modulePropertyHandlers[property].fromJson = fromJson;
 }
 
@@ -199,7 +201,7 @@ esp_err_t api_get_http_modulePropertyHandlers(httpd_req_t *req)
     char buf[MAX_HTTP_BODY_SIZE] = {0};
     strcpy(buf, "[");
 
-    for (moduleProperty_t p = no_property + 1; p < end_of_properties; p++) {
+    for (module_property_t p = no_property + 1; p < end_of_properties; p++) {
         if (http_modulePropertyHandlers[p].toJson) {
             display_requestModuleProperty(p);
         }
@@ -217,14 +219,14 @@ esp_err_t api_get_http_modulePropertyHandlers(httpd_req_t *req)
     if (display_getSize()) {
         for (size_t i = 0; i < display_getSize();) {
             ESP_LOGI(TAG, "getting info of module %d", i);
-            cJSON *json = cJSON_CreateObject();
+            cJSON *json      = cJSON_CreateObject();
             module_t *module = display_getModule(i);
             if (!module) {
                 ESP_LOGE(TAG, "display object is missing module %d", i);
                 continue;
             }
             cJSON_AddNumberToObject(json, "module", i);
-            for (moduleProperty_t p = no_property + 1; p < end_of_properties; p++) {
+            for (module_property_t p = no_property + 1; p < end_of_properties; p++) {
                 cJSON *property = NULL;
                 if (requestedProperties & (1 << p) && http_modulePropertyHandlers[p].toJson) {
                     http_modulePropertyHandlers[p].toJson(&property, module);
@@ -259,14 +261,14 @@ esp_err_t api_set_http_modulePropertyHandlers(httpd_req_t *req)
     ESP_LOGI(TAG, "POST request on %s", req->uri);
     ulTaskNotifyTake(true, 0);
     char buf[MAX_HTTP_BODY_SIZE] = {0};
-    size_t to_parse_size = 0;
-    int recv_cnt = 0;
+    size_t to_parse_size         = 0;
+    int recv_cnt                 = 0;
     // Receive data. Only a json array is starting with '[' at index 0 is accepted. A large json can be read an parsed
     // in multiple sections.
     while ((recv_cnt = httpd_req_recv(req, buf + to_parse_size, MAX_HTTP_BODY_SIZE - 1 - to_parse_size))) {
-        size_t json_last_object_end = 0;
+        size_t json_last_object_end    = 0;
         size_t json_first_object_start = 0;
-        size_t json_object_token_cnt = 0;
+        size_t json_object_token_cnt   = 0;
 
         if (buf[0] != '[') {
             httpd_resp_set_status(req, "422 Unprocessable Entity");
@@ -294,7 +296,7 @@ esp_err_t api_set_http_modulePropertyHandlers(httpd_req_t *req)
             httpd_resp_send(req, NULL, 0);
             return ESP_OK;
         }
-        buf[json_last_object_end + 1] = ']';
+        buf[json_last_object_end + 1]    = ']';
         buf[json_first_object_start - 1] = '[';
 
         // parse object
@@ -330,7 +332,7 @@ esp_err_t api_set_http_modulePropertyHandlers(httpd_req_t *req)
             char *string = cJSON_Print(json_module);
             ESP_LOGI(TAG, "%s", string);
             free(string);
-            for (moduleProperty_t p = no_property + 1; p < end_of_properties; p++) {
+            for (module_property_t p = no_property + 1; p < end_of_properties; p++) {
                 cJSON *property = cJSON_GetObjectItemCaseSensitive(json_module, get_property_name(p));
                 if (property && http_modulePropertyHandlers[p].fromJson) {
                     if (!http_modulePropertyHandlers[p].fromJson(&property, module)) {
@@ -410,7 +412,7 @@ static esp_err_t wifiCredentials_post_handler(httpd_req_t *req)
     }
 
     cJSON *ssid = cJSON_GetObjectItemCaseSensitive(type, "ssid");
-    cJSON *pwd = cJSON_GetObjectItemCaseSensitive(type, "password");
+    cJSON *pwd  = cJSON_GetObjectItemCaseSensitive(type, "password");
 
     if (!(cJSON_IsString(ssid) && cJSON_IsString(pwd))) {
         httpd_resp_set_status(req, "400 Bad Request");
@@ -495,7 +497,7 @@ void http_server_connect_handler(void *arg, esp_event_base_t event_base, int32_t
     if (server == NULL) {
         ESP_LOGI(TAG, "Starting webserver");
         server = flap_start_webserver();
-        task = xTaskGetHandle("httpd");
+        task   = xTaskGetHandle("httpd");
     }
 }
 

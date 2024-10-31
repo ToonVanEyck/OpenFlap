@@ -14,7 +14,7 @@ void msg_init()
     memset(&msg, 0, sizeof(chainCommMessage_t));
 }
 
-void msg_newReadAll(moduleProperty_t property)
+void msg_newReadAll(module_property_t property)
 {
     msg_init();
     msg_addHeader(property_readAll, property);
@@ -22,25 +22,25 @@ void msg_newReadAll(moduleProperty_t property)
     msg_addData(0); // add module index bytes
 }
 
-void msg_newWriteSequential(moduleProperty_t property)
+void msg_newWriteSequential(module_property_t property)
 {
     msg_init();
     msg_addHeader(property_writeSequential, property);
 }
 
-void msg_newWriteAll(moduleProperty_t property)
+void msg_newWriteAll(module_property_t property)
 {
     msg_init();
     msg_addHeader(property_writeAll, property);
 }
 
-void msg_addHeader(moduleAction_t action, moduleProperty_t property)
+void msg_addHeader(moduleAction_t action, module_property_t property)
 {
     if (msg.size > 0) {
         ESP_LOGE(TAG, "Message is not empty");
         return;
     }
-    msg.structured.header.field.action = action;
+    msg.structured.header.field.action   = action;
     msg.structured.header.field.property = property;
     msg.size++;
 }
@@ -83,7 +83,7 @@ void msg_send(const unsigned commandPeriod)
     xLastWakeTime = xTaskGetTickCount();
 }
 
-void uart_addModulePropertyHandler(moduleProperty_t property, uart_modulePropertyCallback_t deserialize,
+void uart_addModulePropertyHandler(module_property_t property, uart_modulePropertyCallback_t deserialize,
                                    uart_modulePropertyCallback_t serialize)
 {
     if (property <= no_property && property >= end_of_properties) {
@@ -91,10 +91,10 @@ void uart_addModulePropertyHandler(moduleProperty_t property, uart_modulePropert
         return;
     }
     uart_modulePropertyHandlers[property].deserialize = deserialize;
-    uart_modulePropertyHandlers[property].serialize = serialize;
+    uart_modulePropertyHandlers[property].serialize   = serialize;
 }
 
-bool uart_propertyReadAll(moduleProperty_t property)
+bool uart_propertyReadAll(module_property_t property)
 {
     if ((property <= no_property && property >= end_of_properties) ||
         !uart_modulePropertyHandlers[property].deserialize) {
@@ -107,7 +107,7 @@ bool uart_propertyReadAll(moduleProperty_t property)
     return true;
 }
 
-bool uart_propertyWriteAll(moduleProperty_t property)
+bool uart_propertyWriteAll(module_property_t property)
 {
     if ((property <= no_property && property >= end_of_properties) ||
         !uart_modulePropertyHandlers[property].serialize || !display_getSize()) {
@@ -127,7 +127,7 @@ bool uart_propertyWriteAll(moduleProperty_t property)
     return true;
 }
 
-bool uart_propertyWriteSequential(moduleProperty_t property)
+bool uart_propertyWriteSequential(module_property_t property)
 {
     if ((property <= no_property && property >= end_of_properties) ||
         !uart_modulePropertyHandlers[property].serialize) {
@@ -153,7 +153,7 @@ bool uart_propertyWriteSequential(moduleProperty_t property)
     return true;
 }
 
-bool uart_moduleSerializedPropertiesAreEqual(moduleProperty_t property)
+bool uart_moduleSerializedPropertiesAreEqual(module_property_t property)
 {
     if (display_getSize() < 2 && uart_modulePropertyHandlers[property].serialize) {
         return true;
@@ -188,11 +188,11 @@ uint32_t uart_receive(char *buf, uint32_t length, TickType_t ticks_to_wait)
 
 static void flap_uart_task(void *arg)
 {
-    uint32_t len = 0;
+    uint32_t len          = 0;
     uint16_t module_total = 0, module_index = 0;
     bool waitingForWriteSequentialAck = false;
-    char buf[CHAIN_COM_MAX_LEN] = {0};
-    uint32_t expected_rx_len = 0;
+    char buf[CHAIN_COM_MAX_LEN]       = {0};
+    uint32_t expected_rx_len          = 0;
 
     chainCommHeader_t header;
     while (1) {
@@ -200,7 +200,7 @@ static void flap_uart_task(void *arg)
         switch (header.field.action) {
             case property_writeAll:
                 expected_rx_len = get_property_size(header.field.property) + WRITE_HEADER_LEN + ACKNOWLEDGE_LEN;
-                len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
+                len             = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
                 if (len != expected_rx_len) {
                     ESP_LOGE(TAG, "Received %ld bytes but expected %ld bytes for this \"writeAll\" command.", len,
                              expected_rx_len);
@@ -216,7 +216,7 @@ static void flap_uart_task(void *arg)
                 break;
             case property_readAll:
                 expected_rx_len = READ_HEADER_LEN;
-                len = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
+                len             = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
 
                 if (len != expected_rx_len) {
                     ESP_LOGE(TAG, "Received %ld bytes but expected a %ld byte \"readAll\" header.", len,
@@ -252,7 +252,7 @@ static void flap_uart_task(void *arg)
             default:
                 if (waitingForWriteSequentialAck) {
                     waitingForWriteSequentialAck = 0;
-                    len = uart_receive(buf, 1, 250 / portTICK_RATE_MS);
+                    len                          = uart_receive(buf, 1, 250 / portTICK_RATE_MS);
                     if (len != 1) {
                         ESP_LOGE(TAG, "Received %ld bytes but expected %d bytes for this \"writeSequential\" command.",
                                  len, 1);
@@ -274,11 +274,11 @@ static void flap_uart_task(void *arg)
 void flap_uart_init(void)
 {
     uart_config_t uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .baud_rate  = 115200,
+        .data_bits  = UART_DATA_8_BITS,
+        .parity     = UART_PARITY_DISABLE,
+        .stop_bits  = UART_STOP_BITS_1,
+        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_APB,
     };
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM, UART_BUF_SIZE, UART_BUF_SIZE, 0, NULL, 0));

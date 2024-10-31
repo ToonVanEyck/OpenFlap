@@ -73,7 +73,7 @@ void model_preformUart();
 controller_t *controller_new();
 void controller_delete(controller_t *controller);
 
-void display_requestModuleProperty(moduleProperty_t property);
+void display_requestModuleProperty(module_property_t property);
 uint64_t display_getRequestModuleProperties();
 
 void display_setPowered(bool powered);

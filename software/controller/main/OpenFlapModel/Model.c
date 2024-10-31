@@ -23,7 +23,7 @@ static void OpenFlapModelTask(void *arg)
             // }
 
             ESP_LOGI(TAG, "Requested properties: 0x%08llx", ctx.controller->display.requestedProperties);
-            for (moduleProperty_t property = no_property + 1; property < end_of_properties; property++) {
+            for (module_property_t property = no_property + 1; property < end_of_properties; property++) {
                 if (ctx.controller->display.requestedProperties & (1 << property)) {
                     ctx.controller->display.requestedProperties ^= (1 << property);
                     ESP_LOGI(TAG, "read property: %d %s", property, get_property_name(property));
@@ -32,14 +32,14 @@ static void OpenFlapModelTask(void *arg)
             }
 
             // handle write updates
-            uint64_t updatableProperties = no_property;
-            uint64_t updatablePropertiesWriteAll = no_property;
+            uint64_t updatableProperties                = no_property;
+            uint64_t updatablePropertiesWriteAll        = no_property;
             uint64_t updatablePropertiesWriteSequential = no_property;
             for (int i = 0; i < display_getSize(); i++) {
                 module_t *module = display_getModule(i);
                 updatableProperties |= module->updatableProperties;
             }
-            for (moduleProperty_t property = no_property + 1; property < end_of_properties; property++) {
+            for (module_property_t property = no_property + 1; property < end_of_properties; property++) {
                 updatablePropertiesWriteAll |=
                     ((updatableProperties & (1 << property) && uart_moduleSerializedPropertiesAreEqual(property))
                      << property);
@@ -49,7 +49,7 @@ static void OpenFlapModelTask(void *arg)
             ESP_LOGI(TAG, "Updatable properties with WriteAll command: 0x%04llX", updatablePropertiesWriteAll);
             ESP_LOGI(TAG, "Updatable properties with WriteSequential command: 0x%04llX",
                      updatablePropertiesWriteSequential);
-            for (moduleProperty_t property = no_property + 1; property < end_of_properties; property++) {
+            for (module_property_t property = no_property + 1; property < end_of_properties; property++) {
                 if (updatablePropertiesWriteAll & (1 << property)) {
                     ESP_LOGI(TAG, "updateing property: %d", property);
                     uart_propertyWriteAll(property);
@@ -71,7 +71,7 @@ TaskHandle_t modelTask()
 
 void flap_model_init(void)
 {
-    ctx.controller = controller_new();
+    ctx.controller                              = controller_new();
     ctx.controller->display.requestedProperties = 0;
     xTaskCreate(OpenFlapModelTask, "OpenFlap Model task", 6000, NULL, 10, &ctx.task);
 }
@@ -91,9 +91,9 @@ controller_t *controller_new()
         ESP_LOGE(TAG, "Failed to allocate memory for Controller object");
         return NULL;
     }
-    controller->display.size = 0;
-    controller->display.module = NULL;
-    controller->modulesPowered = false;        // getRelayState
+    controller->display.size    = 0;
+    controller->display.module  = NULL;
+    controller->modulesPowered  = false;       // getRelayState
     controller->firmwareVersion = __VERSION__; // getFwVersion
     return controller;
 }
@@ -110,7 +110,7 @@ void controller_delete(controller_t *controller)
 
 // Display
 
-void display_requestModuleProperty(moduleProperty_t property)
+void display_requestModuleProperty(module_property_t property)
 {
     ctx.controller->display.requestedProperties |= (1 << property);
 }
@@ -146,7 +146,7 @@ bool display_setSize(size_t size)
         return true;
     }
     size_t oldSize = display->size;
-    display->size = size;
+    display->size  = size;
     ESP_LOGI(TAG, "Changing display size from %d to %d", oldSize, display->size);
     display->module = realloc(display->module, display->size * sizeof(module_t));
     if (display->module == NULL) {
@@ -189,8 +189,8 @@ characterMap_t *characterMap_new(size_t size)
         ESP_LOGE(TAG, "Failed to allocate memory for Charset object");
         return NULL;
     }
-    characterMap->size = size;
-    characterMap->reffCnt = 1;
+    characterMap->size      = size;
+    characterMap->reffCnt   = 1;
     characterMap->character = calloc(size, 4 * sizeof(char));
     if (characterMap->character == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for Charset characters");

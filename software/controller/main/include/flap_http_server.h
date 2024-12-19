@@ -32,7 +32,7 @@ typedef struct {
     http_modulePropertyCallback_t toJson;
     http_modulePropertyCallback_t fromJson;
 } http_modulePropertyHandler_t;
-void http_addModulePropertyHandler(module_property_t property, http_modulePropertyCallback_t toJson,
+void http_addModulePropertyHandler(property_id_t property, http_modulePropertyCallback_t toJson,
                                    http_modulePropertyCallback_t fromJson);
 
 httpd_handle_t flap_start_webserver(void);

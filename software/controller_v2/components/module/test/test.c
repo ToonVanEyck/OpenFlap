@@ -2,9 +2,13 @@
 #include "esp_err.h"
 #include "esp_system.h"
 #include "memory_checks.h"
-#include "modules.h"
+#include "module.h"
+#include "networking.h"
 #include "properties.h"
 #include "unity.h"
+#include "webserver.h"
+
+#define TAG "MODULE_TEST"
 
 #define TEST_JSON_VALID_PROPERTY                                                                                       \
     "{"                                                                                                                \
@@ -20,7 +24,7 @@
 
 /* TODO mock the property handlers? */
 
-TEST_CASE("Test set module properties from json, valid", "[modules][qemu]")
+TEST_CASE("Test set module properties from json, valid", "[module][qemu]")
 {
     module_t module;
     module.module_info = MODULE_INFO(MODULE_TYPE_SPLITFLAP, 0);
@@ -31,7 +35,7 @@ TEST_CASE("Test set module properties from json, valid", "[modules][qemu]")
     cJSON_Delete(test_json);
 }
 
-TEST_CASE("Test set module properties from json, not suported by module type", "[modules][qemu]")
+TEST_CASE("Test set module properties from json, not suported by module type", "[module][qemu]")
 {
     module_t module;
     module.module_info = MODULE_INFO(MODULE_TYPE_UNDEFINED, 0);
@@ -42,7 +46,7 @@ TEST_CASE("Test set module properties from json, not suported by module type", "
     cJSON_Delete(test_json);
 }
 
-TEST_CASE("Test set module properties from json, not suported by controller", "[modules][qemu]")
+TEST_CASE("Test set module properties from json, not suported by controller", "[module][qemu]")
 {
     module_t module;
     module.module_info = MODULE_INFO(MODULE_TYPE_UNDEFINED, 0);

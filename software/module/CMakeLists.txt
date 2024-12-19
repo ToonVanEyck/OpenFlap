@@ -27,7 +27,7 @@ ExternalProject_Add(common_chain_comm_abi
 )
 add_library(chain_comm_abi STATIC IMPORTED)
 set_property(TARGET chain_comm_abi PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/chain_comm_abi/libchain_comm_abi.a)
-set_property(TARGET chain_comm_abi PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../common/chain_comm_abi/inc)
+set_property(TARGET chain_comm_abi PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../common/chain_comm_abi/include)
 add_dependencies(chain_comm_abi common_chain_comm_abi)
 
 # Include the libraries

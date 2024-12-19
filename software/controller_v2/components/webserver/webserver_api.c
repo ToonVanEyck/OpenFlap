@@ -4,18 +4,17 @@
 #define TAG "WEBSERVER_API"
 
 #define WEBSERVER_APIP_ENDPOINT_LENGTH_MAX (64)
-#define WEBSERVER_APIP_ENDPOINT_PREFIX     "/api/"
+#define WEBSERVER_APIP_ENDPOINT_PREFIX     "/api"
 
-esp_err_t webserver_api_endpoint_add(webserver_handle_t webserver_handle, const char *uri, httpd_method_t method,
+esp_err_t webserver_api_endpoint_add(webserver_ctx_t *webserver_ctx, const char *uri, httpd_method_t method,
                                      webserver_api_handler handler, void *user_ctx)
 {
     /* Validate webserver handle. */
-    webserver_ctx_t *webserver_ctx = (webserver_ctx_t *)webserver_handle;
     ESP_RETURN_ON_FALSE(webserver_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "Invalid webserver handle.");
 
     /* Validate uri endpoint length. */
-    char *uri_endpoint[WEBSERVER_APIP_ENDPOINT_LENGTH_MAX] = WEBSERVER_APIP_ENDPOINT_PREFIX;
-    uint8_t uri_offset                                     = strlen(uri_endpoint);
+    char uri_endpoint[WEBSERVER_APIP_ENDPOINT_LENGTH_MAX] = WEBSERVER_APIP_ENDPOINT_PREFIX;
+    uint8_t uri_offset                                    = strlen(uri_endpoint);
     ESP_RETURN_ON_FALSE(strlen(uri) + uri_offset < WEBSERVER_APIP_ENDPOINT_LENGTH_MAX, ESP_ERR_INVALID_ARG, TAG,
                         "URI too long");
 

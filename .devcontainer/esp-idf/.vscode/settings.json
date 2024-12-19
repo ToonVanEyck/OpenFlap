@@ -52,5 +52,6 @@
     ],
     "files.associations": {
         "sdkconfig*": "kconfig"
-    }
+    },
+    "cmake.sourceDirectory": "/workspaces/OpenFlap/software/controller"
 }

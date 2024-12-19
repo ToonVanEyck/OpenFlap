@@ -15,12 +15,12 @@ typedef struct {
  * \param[in] json The json object to convert.
  * \param[out] property The property to populate.
  *
- * \return true if the conversion was successful, false otherwise.
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline bool calibration_from_json(void *property, const cJSON *json)
+static inline esp_err_t calibration_from_json(void *property, const cJSON *json)
 {
     ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
-    return true;
+    return ESP_OK;
 }
 
 /**
@@ -29,12 +29,12 @@ static inline bool calibration_from_json(void *property, const cJSON *json)
  * \param[out] json The json object in which we will store the property.
  * \param[in] property The property to convert.
  *
- * \return true if the conversion was successful, false otherwise.
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline bool calibration_to_json(cJSON **json, const void *property)
+static inline esp_err_t calibration_to_json(cJSON **json, const void *property)
 {
     ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
-    return true;
+    return ESP_OK;
 }
 
 /**
@@ -44,12 +44,12 @@ static inline bool calibration_to_json(cJSON **json, const void *property)
  * \param[in] bin The byte array to deserialize.
  * \param[in] index The index of in case of a multipart property.
  *
- * \return true if the conversion was successful, false otherwise.
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline bool calibration_from_binary(void *property, const uint8_t *bin, uint8_t index)
+static inline esp_err_t calibration_from_binary(void *property, const uint8_t *bin, uint8_t index)
 {
     ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
-    return true;
+    return ESP_OK;
 }
 
 /**
@@ -59,12 +59,12 @@ static inline bool calibration_from_binary(void *property, const uint8_t *bin, u
  * \param[in] property The property to serialize.
  * \param[in] index The index of in case of a multipart property.
  *
- * \return true if the conversion was successful, false otherwise.
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline bool calibration_to_binary(uint8_t *bin, const void *property, uint8_t index)
+static inline esp_err_t calibration_to_binary(uint8_t *bin, const void *property, uint8_t index)
 {
     ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
-    return true;
+    return ESP_OK;
 }
 
 /**
@@ -74,12 +74,12 @@ static inline bool calibration_to_binary(uint8_t *bin, const void *property, uin
  * adjust the offset between the character set and the encoder postion.
  */
 static const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
-    .id                     = PROPERTY_CALIBRATION,
-    .name                   = "calibration",
-    .from_json              = calibration_from_json,
-    .to_json                = calibration_to_json,
-    .from_binary            = calibration_from_binary,
-    .to_binary              = calibration_to_binary,
-    .from_binary_attributes = {.static_size = 2},
-    .to_binary_attributes   = {.static_size = 2},
+    .id = PROPERTY_CALIBRATION,
+    // .name        = "calibration",
+    .from_json   = calibration_from_json,
+    .to_json     = calibration_to_json,
+    .from_binary = calibration_from_binary,
+    .to_binary   = calibration_to_binary,
+    // .from_binary_attributes = {.static_size = 2},
+    // .to_binary_attributes   = {.static_size = 2},
 };

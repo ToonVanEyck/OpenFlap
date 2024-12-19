@@ -1,7 +1,5 @@
 import pytest
 from pytest_embedded_idf.dut import IdfDut
-from pytest_embedded_qemu.dut import QemuDut
-from pytest_embedded_qemu.app import QemuApp
 import requests
 import os
 import re

@@ -20,7 +20,7 @@ add_custom_target(compile_time
 add_dependencies(${App} compile_time)
 
 target_compile_definitions(${App} PUBLIC
-    GENERATE_STATE_NAMES=1      # Generate state names for chain comm fsm
+    GENERATE_STATE_NAMES=0      # Generate state names for chain comm fsm
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary
 )
 

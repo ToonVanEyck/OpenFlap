@@ -19,7 +19,7 @@ void character_deserialize(char *data, module_t *module)
 
 void characterMapSize_deserialize(char *data, module_t *module)
 {
-    uint8_t characterMapSize = data[0];
+    uint8_t characterMapSize     = data[0];
     characterMap_t *characterMap = characterMap_new(characterMapSize);
     // memcpy(characterMap->character,data,characterMapSize*4);
     module_setCharacterMap(module, characterMap);
@@ -27,14 +27,14 @@ void characterMapSize_deserialize(char *data, module_t *module)
 
 void characterMap_serialize(char *data, module_t *module)
 {
-    uint8_t characterMapSize = module_getCharacterMapSize(module);
+    uint8_t characterMapSize     = module_getCharacterMapSize(module);
     characterMap_t *characterMap = module_getCharacterMap(module);
     memcpy(data, characterMap->character, characterMapSize * 4);
 }
 
 void characterMap_deserialize(char *data, module_t *module)
 {
-    uint8_t characterMapSize = 48;
+    uint8_t characterMapSize     = 48;
     characterMap_t *characterMap = characterMap_new(characterMapSize);
     memcpy(characterMap->character, data, characterMapSize * 4);
     module_setCharacterMap(module, characterMap);
@@ -72,11 +72,11 @@ void baseSpeed_deserialize(char *data, module_t *module)
 
 void uart_api_init()
 {
-    uart_addModulePropertyHandler(columnEnd_property, columnEnd_deserialize, NULL);
-    uart_addModulePropertyHandler(character_property, character_deserialize, character_serialize);
+    uart_addModulePropertyHandler(PROPERTY_MODULE_INFO, columnEnd_deserialize, NULL);
+    uart_addModulePropertyHandler(PROPERTY_CHARACTER, character_deserialize, character_serialize);
     uart_addModulePropertyHandler(characterMapSize_property, characterMapSize_deserialize, NULL);
-    uart_addModulePropertyHandler(characterMap_property, characterMap_deserialize, characterMap_serialize);
-    uart_addModulePropertyHandler(offset_property, offset_deserialize, offset_serialize);
+    uart_addModulePropertyHandler(PROPERTY_CHARACTER_SET, characterMap_deserialize, characterMap_serialize);
+    uart_addModulePropertyHandler(PROPERTY_CALIBRATION, offset_deserialize, offset_serialize);
     uart_addModulePropertyHandler(vtrim_property, vtrim_deserialize, vtrim_serialize);
     uart_addModulePropertyHandler(baseSpeed_property, baseSpeed_deserialize, baseSpeed_serialize);
 }

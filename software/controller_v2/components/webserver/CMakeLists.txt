@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS 
         "webserver.c"
+        "webserver_api.c"
     INCLUDE_DIRS 
         "include"
     EMBED_FILES

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "webserver.h"
+#include "webserver_common.h"
 
 typedef esp_err_t (*webserver_api_handler)(httpd_req_t *r);
 
@@ -9,7 +9,7 @@ typedef esp_err_t (*webserver_api_handler)(httpd_req_t *r);
  *
  * Add an API endpoint to the webserver. The endpoint will be accessible at /api/<uri>.
  *
- * \param[in] webserver_handle Handle to the webserver
+ * \param[in] webserver_ctx Handle to the webserver
  * \param[in] uri URI of the endpoint
  * \param[in] method HTTP method of the endpoint
  * \param[in] handler Handler function for the endpoint
@@ -17,5 +17,5 @@ typedef esp_err_t (*webserver_api_handler)(httpd_req_t *r);
  *
  * \return esp_err_t
  */
-esp_err_t webserver_api_endpoint_add(webserver_handle_t webserver_handle, const char *uri, httpd_method_t method,
+esp_err_t webserver_api_endpoint_add(webserver_ctx_t *webserver_ctx, const char *uri, httpd_method_t method,
                                      webserver_api_handler handler, void *user_ctx);

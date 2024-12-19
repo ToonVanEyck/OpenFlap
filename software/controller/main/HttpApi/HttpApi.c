@@ -36,9 +36,9 @@ bool characterMapSize_toJson(cJSON **json, module_t *module)
 
 bool characterMap_toJson(cJSON **json, module_t *module)
 {
-    *json = cJSON_CreateArray();
+    *json                        = cJSON_CreateArray();
     characterMap_t *characterMap = module_getCharacterMap(module);
-    char character[5] = {0};
+    char character[5]            = {0};
     for (int i = 0; i < characterMap->size; i++) {
         characterMap_getCharacter(characterMap, i, character);
         cJSON *characterMapMember = cJSON_CreateString(character);
@@ -53,7 +53,7 @@ bool characterMap_fromJson(cJSON **json, module_t *module)
     characterMap_t *characterMap = characterMap_new(48);
     GUARD(!characterMap, "Failed to create a new characterMap");
     cJSON *map_it = NULL;
-    int i = 0;
+    int i         = 0;
     cJSON_ArrayForEach(map_it, *json)
     {
         if (!cJSON_IsString(map_it)) {
@@ -113,11 +113,11 @@ bool baseSpeed_fromJson(cJSON **json, module_t *module)
 
 void http_moduleEndpointInit()
 {
-    http_addModulePropertyHandler(columnEnd_property, columnEnd_toJson, NULL);
-    http_addModulePropertyHandler(character_property, character_toJson, character_fromJson);
+    http_addModulePropertyHandler(PROPERTY_MODULE_INFO, columnEnd_toJson, NULL);
+    http_addModulePropertyHandler(PROPERTY_CHARACTER, character_toJson, character_fromJson);
     http_addModulePropertyHandler(characterMapSize_property, characterMapSize_toJson, NULL);
-    http_addModulePropertyHandler(characterMap_property, characterMap_toJson, characterMap_fromJson);
-    http_addModulePropertyHandler(offset_property, offset_toJson, offset_fromJson);
+    http_addModulePropertyHandler(PROPERTY_CHARACTER_SET, characterMap_toJson, characterMap_fromJson);
+    http_addModulePropertyHandler(PROPERTY_CALIBRATION, offset_toJson, offset_fromJson);
     http_addModulePropertyHandler(vtrim_property, vtrim_toJson, vtrim_fromJson);
     http_addModulePropertyHandler(baseSpeed_property, baseSpeed_toJson, baseSpeed_fromJson);
 }

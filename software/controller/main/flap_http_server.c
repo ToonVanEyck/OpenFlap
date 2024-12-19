@@ -5,8 +5,8 @@
 static const char *TAG = "[HTTP]";
 TaskHandle_t task;
 
-static httpd_handle_t server                                                = NULL;
-http_modulePropertyHandler_t http_modulePropertyHandlers[end_of_properties] = {0};
+static httpd_handle_t server                                             = NULL;
+http_modulePropertyHandler_t http_modulePropertyHandlers[PROPERTIES_MAX] = {0};
 
 typedef struct {
     size_t data_len;
@@ -183,10 +183,10 @@ static esp_err_t script_get_handler(httpd_req_t *req)
 static const httpd_uri_t script_uri = {
     .uri = "/script.js", .method = HTTP_GET, .handler = script_get_handler, .user_ctx = NULL};
 
-void http_addModulePropertyHandler(module_property_t property, http_modulePropertyCallback_t toJson,
+void http_addModulePropertyHandler(property_id_t property, http_modulePropertyCallback_t toJson,
                                    http_modulePropertyCallback_t fromJson)
 {
-    if (property <= no_property && property >= end_of_properties) {
+    if (property <= PROPERTY_NONE && property >= PROPERTIES_MAX) {
         ESP_LOGE(TAG, "Cannot add invalid property %d", property);
         return;
     }
@@ -201,7 +201,7 @@ esp_err_t api_get_http_modulePropertyHandlers(httpd_req_t *req)
     char buf[MAX_HTTP_BODY_SIZE] = {0};
     strcpy(buf, "[");
 
-    for (module_property_t p = no_property + 1; p < end_of_properties; p++) {
+    for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
         if (http_modulePropertyHandlers[p].toJson) {
             display_requestModuleProperty(p);
         }
@@ -226,11 +226,11 @@ esp_err_t api_get_http_modulePropertyHandlers(httpd_req_t *req)
                 continue;
             }
             cJSON_AddNumberToObject(json, "module", i);
-            for (module_property_t p = no_property + 1; p < end_of_properties; p++) {
+            for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
                 cJSON *property = NULL;
                 if (requestedProperties & (1 << p) && http_modulePropertyHandlers[p].toJson) {
                     http_modulePropertyHandlers[p].toJson(&property, module);
-                    cJSON_AddItemToObject(json, get_property_name(p), property);
+                    cJSON_AddItemToObject(json, chain_comm_property_name_get(p), property);
                 }
             }
 
@@ -332,8 +332,8 @@ esp_err_t api_set_http_modulePropertyHandlers(httpd_req_t *req)
             char *string = cJSON_Print(json_module);
             ESP_LOGI(TAG, "%s", string);
             free(string);
-            for (module_property_t p = no_property + 1; p < end_of_properties; p++) {
-                cJSON *property = cJSON_GetObjectItemCaseSensitive(json_module, get_property_name(p));
+            for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
+                cJSON *property = cJSON_GetObjectItemCaseSensitive(json_module, chain_comm_property_name_get(p));
                 if (property && http_modulePropertyHandlers[p].fromJson) {
                     if (!http_modulePropertyHandlers[p].fromJson(&property, module)) {
                         cJSON_Delete(json);

@@ -34,16 +34,16 @@ typedef union {
 typedef void (*uart_modulePropertyCallback_t)(char *data, module_t *module);
 
 typedef struct {
-    module_property_t property;
+    property_id_t property;
     uart_modulePropertyCallback_t deserialize;
     uart_modulePropertyCallback_t serialize;
 } uart_modulePropertyHandler_t;
 
 void msg_init();
-void msg_newReadAll(module_property_t property);
-void msg_newWriteAll(module_property_t property);
-void msg_newWriteSequential(module_property_t property);
-void msg_addHeader(moduleAction_t action, module_property_t property);
+void msg_newReadAll(property_id_t property);
+void msg_newWriteAll(property_id_t property);
+void msg_newWriteSequential(property_id_t property);
+void msg_addHeader(moduleAction_t action, property_id_t property);
 void msg_addData(uint8_t byte);
 void msg_send(const unsigned commandPeriod);
 void msg_sendDoNothing(const unsigned commandPeriod);
@@ -52,12 +52,12 @@ inline void msg_sendAcknowledge()
     msg_sendDoNothing(MAX_COMMAND_PERIOD_MS);
 }
 
-bool uart_propertyReadAll(module_property_t property);
-bool uart_propertyWriteAll(module_property_t property);
-bool uart_propertyWriteSequential(module_property_t property);
-bool uart_moduleSerializedPropertiesAreEqual(module_property_t property);
+bool uart_propertyReadAll(property_id_t property);
+bool uart_propertyWriteAll(property_id_t property);
+bool uart_propertyWriteSequential(property_id_t property);
+bool uart_moduleSerializedPropertiesAreEqual(property_id_t property);
 
-void uart_addModulePropertyHandler(module_property_t property, uart_modulePropertyCallback_t deserialize,
+void uart_addModulePropertyHandler(property_id_t property, uart_modulePropertyCallback_t deserialize,
                                    uart_modulePropertyCallback_t serialize);
 void flap_uart_init();
 

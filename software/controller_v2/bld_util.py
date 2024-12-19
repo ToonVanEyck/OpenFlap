@@ -36,6 +36,7 @@ from idf_pytest.script import get_pytest_cases
 from idf_build_apps import CMakeApp
 from gen_esp32part import PartitionTable
 import shlex
+import json
 
 
 from idf_build_apps.constants import (
@@ -64,6 +65,19 @@ project_name = None
 
 qemu_process = None
 openocd_process = None
+
+
+# Check if .vscode/settings.json exists and set tty_device if idf.port is set
+vscode_settings_path = os.path.join(os.getcwd(), ".vscode", "settings.json")
+if os.path.exists(vscode_settings_path):
+    try:
+        with open(vscode_settings_path, "r") as settings_file:
+            settings = json.load(settings_file)
+            if "idf.port" in settings:
+                tty_device = settings["idf.port"]
+                print(f"Using tty_device from .vscode/settings.json: {tty_device}")
+    except json.JSONDecodeError:
+        pass
 
 #######################################################################################################
 ####                                         UTIL FUNCTIONS                                        ####

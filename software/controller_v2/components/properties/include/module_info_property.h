@@ -29,12 +29,12 @@ typedef uint8_t module_info_property_t;
  * \param[out] json The json object in which we will store the property.
  * \param[in] property The property to convert.
  *
- * \return true if the conversion was successful, false otherwise.
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline bool module_info_to_json(cJSON **json, const void *property)
+static inline esp_err_t module_info_to_json(cJSON **json, const void *property)
 {
     ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
-    return true;
+    return ESP_OK;
 }
 
 /**
@@ -44,12 +44,12 @@ static inline bool module_info_to_json(cJSON **json, const void *property)
  * \param[in] bin The byte array to deserialize.
  * \param[in] index The index of in case of a multipart property.
  *
- * \return true if the conversion was successful, false otherwise.
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline bool module_info_from_binary(void *property, const uint8_t *bin, uint8_t index)
+static inline esp_err_t module_info_from_binary(void *property, const uint8_t *bin, uint8_t index)
 {
     ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
-    return true;
+    return ESP_OK;
 }
 
 /**
@@ -59,9 +59,9 @@ static inline bool module_info_from_binary(void *property, const uint8_t *bin, u
  * store any data, as such the property is write-only.
  */
 static const property_handler_t PROPERTY_HANDLER_MODULE_INFO = {
-    .id                     = PROPERTY_MODULE_INFO,
-    .name                   = "module_info",
-    .to_json                = module_info_to_json,
-    .from_binary            = module_info_from_binary,
-    .from_binary_attributes = {.static_size = 1},
+    .id = PROPERTY_MODULE_INFO,
+    // .name        = "module_info",
+    .to_json     = module_info_to_json,
+    .from_binary = module_info_from_binary,
+    // .from_binary_attributes = {.static_size = 1},
 };

@@ -4,8 +4,6 @@
 
 #define TAG "WEBSERVER"
 
-static httpd_handle_t server;
-
 //---------------------------------------------------------------------------------------------------------------------
 
 /* Index http handler. */
@@ -61,21 +59,19 @@ static const httpd_uri_t script_uri = {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t webserver_init(webserver_handle_t webserver_handle)
+esp_err_t webserver_init(webserver_ctx_t *webserver_ctx)
 {
     /* Validate webserver handle. */
-    webserver_ctx_t *webserver_ctx = (webserver_ctx_t *)webserver_handle;
     ESP_RETURN_ON_FALSE(webserver_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "Invalid webserver handle.");
 
     /* Configure HTTP server. */
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    // config.stack_size += MAX_HTTP_BODY_SIZE;
+    httpd_config_t config   = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = 20;
     config.server_port      = 80;
 
     /* Start server. */
     ESP_LOGI(TAG, "Starting web server on port: %d", config.server_port);
-    ESP_RETURN_ON_ERROR(httpd_start(&server, &config), TAG, "Failed to start web server.");
+    ESP_RETURN_ON_ERROR(httpd_start(&webserver_ctx->server, &config), TAG, "Failed to start web server.");
 
     /* Register website URL handlers. */
     ESP_LOGI(TAG, "Registering URI handlers");

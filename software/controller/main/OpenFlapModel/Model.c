@@ -15,31 +15,31 @@ static void OpenFlapModelTask(void *arg)
 
             // if (ctx.controller->display.requestedProperties) {
             //     // send command to switch from bootloader to application
-            //     msg_newWriteAll(command_property);
+            //     msg_newWriteAll(PROPERTY_COMMAND);
             //     msg_addData(runApp_command);
-            //     msg_addData(no_property);
+            //     msg_addData(PROPERTY_NONE);
             //     msg_send(MAX_COMMAND_PERIOD_MS);
             //     ulTaskNotifyTake(true, 5000 / portTICK_RATE_MS); // wait for command to finish
             // }
 
             ESP_LOGI(TAG, "Requested properties: 0x%08llx", ctx.controller->display.requestedProperties);
-            for (module_property_t property = no_property + 1; property < end_of_properties; property++) {
+            for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
                 if (ctx.controller->display.requestedProperties & (1 << property)) {
                     ctx.controller->display.requestedProperties ^= (1 << property);
-                    ESP_LOGI(TAG, "read property: %d %s", property, get_property_name(property));
+                    ESP_LOGI(TAG, "read property: %d %s", property, chain_comm_property_name_get(property));
                     uart_propertyReadAll(property);
                 }
             }
 
             // handle write updates
-            uint64_t updatableProperties                = no_property;
-            uint64_t updatablePropertiesWriteAll        = no_property;
-            uint64_t updatablePropertiesWriteSequential = no_property;
+            uint64_t updatableProperties                = PROPERTY_NONE;
+            uint64_t updatablePropertiesWriteAll        = PROPERTY_NONE;
+            uint64_t updatablePropertiesWriteSequential = PROPERTY_NONE;
             for (int i = 0; i < display_getSize(); i++) {
                 module_t *module = display_getModule(i);
                 updatableProperties |= module->updatableProperties;
             }
-            for (module_property_t property = no_property + 1; property < end_of_properties; property++) {
+            for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
                 updatablePropertiesWriteAll |=
                     ((updatableProperties & (1 << property) && uart_moduleSerializedPropertiesAreEqual(property))
                      << property);
@@ -49,7 +49,7 @@ static void OpenFlapModelTask(void *arg)
             ESP_LOGI(TAG, "Updatable properties with WriteAll command: 0x%04llX", updatablePropertiesWriteAll);
             ESP_LOGI(TAG, "Updatable properties with WriteSequential command: 0x%04llX",
                      updatablePropertiesWriteSequential);
-            for (module_property_t property = no_property + 1; property < end_of_properties; property++) {
+            for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
                 if (updatablePropertiesWriteAll & (1 << property)) {
                     ESP_LOGI(TAG, "updateing property: %d", property);
                     uart_propertyWriteAll(property);
@@ -110,7 +110,7 @@ void controller_delete(controller_t *controller)
 
 // Display
 
-void display_requestModuleProperty(module_property_t property)
+void display_requestModuleProperty(property_id_t property)
 {
     ctx.controller->display.requestedProperties |= (1 << property);
 }
@@ -285,7 +285,7 @@ void module_setCharacter(module_t *module, char *character)
 void module_setCharacterIndex(module_t *module, uint8_t characterIndex)
 {
     module->characterIndex = characterIndex;
-    module->updatableProperties |= (1 << character_property);
+    module->updatableProperties |= (1 << PROPERTY_CHARACTER);
 }
 
 uint8_t module_getCharacterIndex(module_t *module)
@@ -316,7 +316,7 @@ void module_setCharacterMap(module_t *module, characterMap_t *characterMap)
     }
     characterMap_delete(module->characterMap);
     module->characterMap = characterMap;
-    module->updatableProperties |= (1 << characterMap_property);
+    module->updatableProperties |= (1 << PROPERTY_CHARACTER_SET);
 }
 
 uint8_t module_getOffset(module_t *module)
@@ -326,7 +326,7 @@ uint8_t module_getOffset(module_t *module)
 void module_setOffset(module_t *module, uint8_t offset)
 {
     module->calibration.offset = offset;
-    module->updatableProperties |= (1 << offset_property);
+    module->updatableProperties |= (1 << PROPERTY_CALIBRATION);
 }
 
 uint8_t module_getVtrim(module_t *module)

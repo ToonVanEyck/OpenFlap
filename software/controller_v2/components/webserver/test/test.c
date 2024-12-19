@@ -14,7 +14,8 @@ TEST_CASE("Test webserver", "[webserver][qemu]")
     networking_setup(&config);
     TEST_ASSERT_EQUAL(networking_wait_for_connection(10000), ESP_OK);
 
-    TEST_ASSERT_EQUAL(webserver_init(), ESP_OK);
+    webserver_ctx_t webserver_ctx;
+    TEST_ASSERT_EQUAL(webserver_init(&webserver_ctx), ESP_OK);
 
     ESP_LOGI(TAG, "Webserver started");
 

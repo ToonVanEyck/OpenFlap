@@ -3,27 +3,27 @@
         "commands": [
             {
                 "name": "⚙️ Configure",
-                "command": "cmake --toolchain puya_toolchain.cmake -S software/module/ -B build/module -Wno-dev",
+                "command": "cmake --toolchain ${workspaceFolder}/software/module/puya_toolchain.cmake -S ${workspaceFolder}/software/module/ -B ${workspaceFolder}/build/module -Wno-dev",
                 "terminalName": "bash"
             },
             {
                 "name": "🔨 Build",
-                "command": "cmake --build build/module",
+                "command": "cmake --build ${workspaceFolder}/build/module",
                 "terminalName": "bash",
             },
             {
                 "name": "⚡ Flash All",
-                "command": "cmake --build build/module --target flash_target",
+                "command": "cmake --build ${workspaceFolder}/build/module --target flash_target",
                 "terminalName": "bash"
             },
             {
                 "name": "⚡ Flash App",
-                "command": "cmake --build build/module --target flash_app",
+                "command": "cmake --build ${workspaceFolder}/build/module --target flash_app",
                 "terminalName": "bash"
             },
             {
                 "name": "👀 Rtt",
-                "command": "cmake --build build/module --target rtt",
+                "command": "cmake --build ${workspaceFolder}/build/module --target rtt",
                 "terminalName": "bash"
             }
         ]

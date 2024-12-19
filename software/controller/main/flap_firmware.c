@@ -29,7 +29,7 @@ void flap_controller_firmware_update(char *data, size_t data_len, size_t data_of
     esp_err_t err;
     if (data_offset == 0) {
         ESP_LOGI(TAG, "STARTING OTA UPDATE!");
-        update_handle = 0;
+        update_handle    = 0;
         update_partition = esp_ota_get_next_update_partition(NULL);
         assert(update_partition != NULL);
         err = esp_ota_begin(update_partition, total_data_len, &update_handle);
@@ -71,16 +71,16 @@ static uint16_t strtou16(char *str)
     return strtol(buf, NULL, 16);
 }
 
-#define MODULE_FLASH_APP_SIZE (28672)
-#define MODULE_FLASH_PAGE_SIZE (128)
+#define MODULE_FLASH_APP_SIZE   (28672)
+#define MODULE_FLASH_PAGE_SIZE  (128)
 #define MODULE_FLASH_PAGE_COUNT (MODULE_FLASH_APP_SIZE / MODULE_FLASH_PAGE_SIZE)
 
 void flap_module_firmware_update(char *data, size_t data_len, size_t data_offset, size_t total_data_len)
 {
     static char flash_page[MODULE_FLASH_PAGE_SIZE] = {0xFF};
-    static uint8_t flash_page_offset = 0;
-    static uint8_t flash_page_index = 0; /* The index of the page in the firmware. */
-    static uint8_t flash_data_index = 0; /* The index of the data in the page. */
+    static uint8_t flash_page_offset               = 0;
+    static uint8_t flash_page_index                = 0; /* The index of the page in the firmware. */
+    static uint8_t flash_data_index                = 0; /* The index of the data in the page. */
 
     /* Clear offset if this is the start of the update. */
     if (data_offset == 0) {
@@ -94,7 +94,7 @@ void flap_module_firmware_update(char *data, size_t data_len, size_t data_offset
             flash_data_index = 0;
             // write flash_page to flash
             ESP_LOGI(TAG, "Writing firmware page %d / %d", flash_page_index, MODULE_FLASH_PAGE_COUNT);
-            msg_newWriteAll(firmware_property);
+            msg_newWriteAll(PROPERTY_FIRMWARE);
             msg_addData((flash_page_index >> 8) & 0xff);
             msg_addData((flash_page_index >> 0) & 0xff);
             for (int i = 0; i < MODULE_FLASH_PAGE_SIZE; i++) {
@@ -109,8 +109,8 @@ void flap_module_firmware_update(char *data, size_t data_len, size_t data_offset
     if (data_offset + data_len == total_data_len) {
         ESP_LOGI(TAG, "Module firmware update complete!");
         ESP_LOGI(TAG, "Sending reboot command to modules ...");
-        msg_newWriteAll(command_property);
-        msg_addData(reboot_command);
+        msg_newWriteAll(PROPERTY_COMMAND);
+        msg_addData(CMD_REBOOT);
         msg_addData(ACK);
         msg_send(200);
     }
@@ -133,8 +133,8 @@ void flap_module_firmware_update(char *data, size_t data_len, size_t data_offset
 
 //     gpio_set_level(FLAP_ENABLE_PIN, 1);
 //     vTaskDelay(50 / portTICK_PERIOD_MS);
-//     // msg_newWriteAll(command_property);
-//     // msg_addData(reboot_command);
+//     // msg_newWriteAll(PROPERTY_COMMAND);
+//     // msg_addData(CMD_REBOOT);
 //     // msg_addData(ACK);
 //     // msg_send(200);
 //     // vTaskDelay(200 / portTICK_PERIOD_MS);
@@ -167,7 +167,7 @@ void flap_module_firmware_update(char *data, size_t data_len, size_t data_offset
 //                     }
 //                 }
 //                 if (flash_data_cnt == 64) {
-//                     msg_newWriteAll(firmware_property);
+//                     msg_newWriteAll(PROPERTY_FIRMWARE);
 //                     msg_addData((addr >> 8) & 0xff);
 //                     msg_addData((addr >> 0) & 0xff);
 //                     for (int i = 0; i < 64; i++) {

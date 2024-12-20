@@ -27,7 +27,7 @@ void app_main(void)
 
     /* Connect to a newtork. */
     networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;
-    networking_setup(&network_config);
+    ESP_ERROR_CHECK(networking_setup(&network_config));
     networking_wait_for_connection(10000);
     ESP_LOGI(TAG, "Connected to network!");
 

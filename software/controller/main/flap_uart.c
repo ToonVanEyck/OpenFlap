@@ -5,13 +5,13 @@ static const char *TAG = "[UART]";
 
 static TaskHandle_t task;
 
-static chainCommMessage_t msg;
+static chain_comm_msg_t msg;
 
 static uart_modulePropertyHandler_t uart_modulePropertyHandlers[MAX_PROPERTIES] = {0};
 
 void msg_init()
 {
-    memset(&msg, 0, sizeof(chainCommMessage_t));
+    memset(&msg, 0, sizeof(chain_comm_msg_t));
 }
 
 void msg_newReadAll(property_id_t property)
@@ -34,7 +34,7 @@ void msg_newWriteAll(property_id_t property)
     msg_addHeader(property_writeAll, property);
 }
 
-void msg_addHeader(moduleAction_t action, property_id_t property)
+void msg_addHeader(chain_comm_action_t action, property_id_t property)
 {
     if (msg.size > 0) {
         ESP_LOGE(TAG, "Message is not empty");
@@ -193,7 +193,7 @@ static void flap_uart_task(void *arg)
     char buf[CHAIN_COM_MAX_LEN]       = {0};
     uint32_t expected_rx_len          = 0;
 
-    chainCommHeader_t header;
+    chain_comm_msg_header_t header;
     while (1) {
         header.raw = (uint8_t)ulTaskNotifyTake(true, 250 / portTICK_RATE_MS);
         switch (header.field.action) {

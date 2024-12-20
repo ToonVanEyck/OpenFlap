@@ -134,7 +134,7 @@ static void networking_event_handler(void *arg, esp_event_base_t event_base, int
 static esp_err_t networking_wifi_setup(const networking_config_t *config)
 {
     /* Initialize NVS, required for using wifi. */
-    nvs_flash_init();
+    ESP_RETURN_ON_ERROR(nvs_flash_init(), TAG, "Failed to initialize NVS.");
 
     /* Validate credentials. */
     if (config->wifi.access_point.enable) {

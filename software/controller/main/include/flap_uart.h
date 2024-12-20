@@ -25,7 +25,7 @@
 
 typedef union {
     struct {
-        chainCommHeader_t commHeader;
+        chain_comm_msg_header_t commHeader;
         uint16_t size;
     } field;
     uint32_t raw;
@@ -43,7 +43,7 @@ void msg_init();
 void msg_newReadAll(property_id_t property);
 void msg_newWriteAll(property_id_t property);
 void msg_newWriteSequential(property_id_t property);
-void msg_addHeader(moduleAction_t action, property_id_t property);
+void msg_addHeader(chain_comm_action_t action, property_id_t property);
 void msg_addData(uint8_t byte);
 void msg_send(const unsigned commandPeriod);
 void msg_sendDoNothing(const unsigned commandPeriod);

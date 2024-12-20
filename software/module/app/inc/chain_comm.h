@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
     uart_driver_ctx_t *uart;                             /**< Uart driver to be used by the protocol. */
     chain_comm_state_t state;                            /**< The current state of the FSM managing the protocol. */
-    chainCommHeader_t header;                            /**< The header of the current message. */
+    chain_comm_msg_header_t header;                      /**< The header of the current message. */
     uint8_t data_cnt;                                    /**< The number of bytes handled in the current state. */
     uint16_t index;                                      /**< The index counter of the module in the display. */
     uint8_t property_data[CHAIN_COM_MAX_LEN];            /**< The data of the current property to be written or read. */

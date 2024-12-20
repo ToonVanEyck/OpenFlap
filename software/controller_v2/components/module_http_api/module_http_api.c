@@ -1,9 +1,12 @@
 #include "module_http_api.h"
 #include "cJSON.h"
+#include "chain_comm_abi.h"
 #include "esp_check.h"
 #include "esp_log.h"
 
 #define TAG "MODULE_HTTP_API"
+
+#define MODULE_INDEX_KEY_STR "module"
 
 esp_err_t module_http_api_get_handler(httpd_req_t *req);
 esp_err_t module_http_api_post_handler(httpd_req_t *req);
@@ -28,14 +31,74 @@ esp_err_t module_http_api_init(webserver_ctx_t *webserver_ctx, display_t *displa
 esp_err_t module_http_api_get_handler(httpd_req_t *req)
 {
     display_t *display = (display_t *)req->user_ctx;
-    (void)display;
-    cJSON *json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "module", "placeholder");
+    esp_err_t err      = ESP_OK;
+
+    /* Desynchronize all properties to force them to be read. */
+    for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
+        display_property_indicate_desynchronized(display, p, PROPERTY_SYNC_METHOD_READ);
+    }
+    display_event_desynchronized(display);
+
+    /* Wait for synchronisation event. */
+    err = display_event_wait_for_synchronized(display, 5000 / portTICK_PERIOD_MS);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to synchronize display");
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, NULL);
+        return err;
+    }
+
+    /* Create a json object. */
+    cJSON *json = cJSON_CreateArray();
+    for (uint16_t i = 0; i < display_size_get(display); i++) {
+        module_t *module   = display_module_get(display, i);
+        cJSON *module_json = cJSON_CreateObject();
+
+        cJSON_AddNumberToObject(module_json, MODULE_INDEX_KEY_STR, i);
+
+        /* Get all properties from a module. */
+        for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
+            /* Get the property handler. */
+            const char *property_name                  = chain_comm_property_name_get(p);
+            const property_handler_t *property_handler = property_handler_get_by_id(p);
+            if (property_handler == NULL) {
+                ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_name);
+                continue;
+            }
+
+            /* Get property field from the module. */
+            void *module_property = module_property_get_by_id(module, p);
+            if (module_property == NULL) {
+                ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %s.", property_name,
+                         chain_comm_module_type_name_get(module->module_info.field.type));
+                continue;
+            }
+
+            /* Check if the property can be converted to a JSON. */
+            if (property_handler->to_json == NULL) {
+                ESP_LOGE("MODULE", "Property \"%s\" is not readable.", property_name);
+                continue;
+            }
+
+            /* Call the property handler. */
+            cJSON *property_json = cJSON_CreateObject();
+            if (property_handler->to_json(&property_json, module_property) == ESP_FAIL) {
+                ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_name);
+                continue;
+            }
+
+            /* Add the property json to the module json. */
+            cJSON_AddItemToObject(module_json, property_name, property_json);
+        }
+
+        /* Add the module json to the array. */
+        cJSON_AddItemToArray(json, module_json);
+    }
     char *json_str = cJSON_Print(json);
-    cJSON_Delete(json);
 
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, json_str, strlen(json_str));
+
+    cJSON_Delete(json);
     free(json_str);
 
     return ESP_OK;
@@ -89,13 +152,8 @@ esp_err_t module_http_api_post_handler(httpd_req_t *req)
     cJSON *module_json = NULL;
     cJSON_ArrayForEach(module_json, json)
     {
-        // char *module_json_str = cJSON_Print(module_json);
-        // if (module_json_str) {
-        //     ESP_LOGI(TAG, "Module JSON: %s", module_json_str);
-        //     free(module_json_str);
-        // }
         /* Check if module has valid index specified. */
-        cJSON *module_index_json = cJSON_GetObjectItem(module_json, "module");
+        cJSON *module_index_json = cJSON_GetObjectItem(module_json, MODULE_INDEX_KEY_STR);
         if (!cJSON_IsNumber(module_index_json)) {
             ESP_LOGE(TAG, "No module index specified");
             continue;
@@ -103,8 +161,51 @@ esp_err_t module_http_api_post_handler(httpd_req_t *req)
 
         /* Update the module. */
         module_t *module = display_module_get(display, module_index_json->valueint);
-        if (module) {
-            module_properties_set_from_json(module, module_json);
+        if (module == NULL) {
+            ESP_LOGE(TAG, "Display does not contain module with index %d", module_index_json->valueint);
+            continue;
+        }
+
+        /* Update all properties. */
+        cJSON *property_json = NULL;
+
+        /* Loop through all json object in the module_json object. */
+        cJSON_ArrayForEach(property_json, module_json)
+        {
+            /* Ignore the module index. */
+            if (strcmp(property_json->string, "module") == 0) {
+                continue;
+            }
+
+            /* Get the property handler. */
+            const property_handler_t *property_handler = property_handler_get_by_name(property_json->string);
+            if (property_handler == NULL) {
+                ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
+                continue;
+            }
+
+            /* Get property field from the module. */
+            void *property = module_property_get_by_id(module, property_handler->id);
+            if (property == NULL) {
+                ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %d.", property_json->string,
+                         module->module_info.field.type);
+                continue;
+            }
+
+            /* Check if the property is writable. */
+            if (property_handler->from_json == NULL) {
+                ESP_LOGE("MODULE", "Property \"%s\" is not writable.", property_json->string);
+                continue;
+            }
+
+            /* Call the property handler. */
+            if (property_handler->from_json(property, property_json) == ESP_FAIL) {
+                ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_json->string);
+                continue;
+            }
+
+            /* Indicate that the property needs to be written to the actual module. */
+            module_property_indicate_desynchronized(module, property_handler->id);
         }
     }
 

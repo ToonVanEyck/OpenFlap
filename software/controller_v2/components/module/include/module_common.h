@@ -18,10 +18,8 @@ typedef struct {
     union {
         module_splitflap_t splitflap; /**< Splitflap module properties. */
     };
-    /** Indicates witch properties need to be synchronized by reading actual modules. */
-    uint64_t sync_properties_read_required;
     /** Indicates witch properties need to be synchronized by writing to actual modules. */
-    uint64_t sync_properties_write_required;
+    uint64_t sync_properties_write_seq_required;
 } module_t;
 
 //---------------------------------------------------------------------------------------------------------------------

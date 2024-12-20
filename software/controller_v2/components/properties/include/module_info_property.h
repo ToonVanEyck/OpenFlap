@@ -2,27 +2,6 @@
 
 #include "properties_common.h"
 
-typedef enum {
-    MODULE_TYPE_UNDEFINED = 0,
-    MODULE_TYPE_SPLITFLAP = 1,
-} module_type_t;
-
-/**
- * \brief Module info.
- *
- * The 7 most significant bits are reserved for the module type. The least significant bit is used to indicate if the
- * module position is a column end.
- */
-typedef uint8_t module_info_property_t;
-
-#define MODULE_INFO_COLUMN_END_MASK  0x01
-#define MODULE_INFO_TYPE_MASK        0xFE
-#define MODULE_INFO_TYPE_SHIFT       1
-#define MODULE_INFO_TYPE(info)       ((info & MODULE_INFO_TYPE_MASK) >> MODULE_INFO_TYPE_SHIFT)
-#define MODULE_INFO_COLUMN_END(info) (info & MODULE_INFO_COLUMN_END_MASK)
-#define MODULE_INFO(type, column_end)                                                                                  \
-    (((type << MODULE_INFO_TYPE_SHIFT) & MODULE_INFO_TYPE_MASK) | (column_end & MODULE_INFO_COLUMN_END_MASK))
-
 /**
  * \brief Convert the property into it's json representation.
  *
@@ -33,7 +12,14 @@ typedef uint8_t module_info_property_t;
  */
 static inline esp_err_t module_info_to_json(cJSON **json, const void *property)
 {
-    ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
+    assert(json != NULL);
+    assert(property != NULL);
+
+    const module_info_property_t *module_info = (const module_info_property_t *)property;
+
+    cJSON_AddBoolToObject(*json, "column_end", module_info->field.column_end);
+    cJSON_AddStringToObject(*json, "type", chain_comm_module_type_name_get(module_info->field.type));
+
     return ESP_OK;
 }
 
@@ -48,7 +34,13 @@ static inline esp_err_t module_info_to_json(cJSON **json, const void *property)
  */
 static inline esp_err_t module_info_from_binary(void *property, const uint8_t *bin, uint8_t index)
 {
-    ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
+    assert(property != NULL);
+    assert(bin != NULL);
+
+    module_info_property_t *module_info = (module_info_property_t *)property;
+
+    module_info->raw = bin[0];
+
     return ESP_OK;
 }
 

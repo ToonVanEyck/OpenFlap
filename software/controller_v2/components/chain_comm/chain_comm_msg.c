@@ -6,11 +6,11 @@
 
 #define TAG "CHAIN_COMM_MSG"
 
-void chain_comm_msg_header_set(chainCommMessage_t *msg, moduleAction_t action, property_id_t property);
+void chain_comm_msg_header_set(chain_comm_msg_t *msg, chain_comm_action_t action, property_id_t property);
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void chain_comm_msg_init_read_all(chainCommMessage_t *msg, property_id_t property)
+void chain_comm_msg_init_read_all(chain_comm_msg_t *msg, property_id_t property)
 {
     assert(msg != NULL);
     chain_comm_msg_init(msg);
@@ -21,7 +21,7 @@ void chain_comm_msg_init_read_all(chainCommMessage_t *msg, property_id_t propert
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void chain_comm_msg_init_write_seq(chainCommMessage_t *msg, property_id_t property)
+void chain_comm_msg_init_write_seq(chain_comm_msg_t *msg, property_id_t property)
 {
     assert(msg != NULL);
     chain_comm_msg_init(msg);
@@ -30,7 +30,7 @@ void chain_comm_msg_init_write_seq(chainCommMessage_t *msg, property_id_t proper
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void chain_comm_msg_init_write_all(chainCommMessage_t *msg, property_id_t property)
+void chain_comm_msg_init_write_all(chain_comm_msg_t *msg, property_id_t property)
 {
     assert(msg != NULL);
     chain_comm_msg_init(msg);
@@ -39,7 +39,7 @@ void chain_comm_msg_init_write_all(chainCommMessage_t *msg, property_id_t proper
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void chain_comm_msg_data_add(chainCommMessage_t *msg, uint8_t byte)
+void chain_comm_msg_data_add(chain_comm_msg_t *msg, uint8_t byte)
 {
     assert(msg != NULL);
     assert(msg->size < CHAIN_COM_MAX_LEN);
@@ -49,10 +49,10 @@ void chain_comm_msg_data_add(chainCommMessage_t *msg, uint8_t byte)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void chain_comm_msg_init(chainCommMessage_t *msg)
+void chain_comm_msg_init(chain_comm_msg_t *msg)
 {
     assert(msg != NULL);
-    memset(msg, 0, sizeof(chainCommMessage_t));
+    memset(msg, 0, sizeof(chain_comm_msg_t));
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ void chain_comm_msg_init(chainCommMessage_t *msg)
  * \param[in] action The action to add.
  * \param[in] property The property to add.
  */
-void chain_comm_msg_header_set(chainCommMessage_t *msg, moduleAction_t action, property_id_t property)
+void chain_comm_msg_header_set(chain_comm_msg_t *msg, chain_comm_action_t action, property_id_t property)
 {
     assert(msg != NULL);
     assert(msg->size == 0);

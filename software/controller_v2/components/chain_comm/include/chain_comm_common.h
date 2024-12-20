@@ -5,5 +5,5 @@
 
 typedef struct {
     display_t *display; /**< Display context. */
-    chainCommMessage_t msg;
+    chain_comm_msg_t msg;
 } chain_comm_ctx_t;

@@ -1,12 +1,13 @@
 #pragma once
 
+#include "esp_check.h"
 #include "properties_common.h"
+
+#define PROPERTY_TAG "CALIBRATION_PROPERTY_HANDLER"
 
 /** Calibration properties */
 typedef struct {
     uint8_t offset; /**< Offset between the actual character and the index on the encoder wheel. */
-    uint8_t vtrim; /**< Virtual trim allows the motor to spin for a bit longer after the encoder has reached the desired
-                      position. */
 } calibration_property_t;
 
 /**
@@ -19,7 +20,17 @@ typedef struct {
  */
 static inline esp_err_t calibration_from_json(void *property, const cJSON *json)
 {
-    ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
+    assert(property != NULL);
+    assert(json != NULL);
+
+    calibration_property_t *calibration = (calibration_property_t *)property;
+
+    ESP_RETURN_ON_FALSE(json->type != cJSON_Number, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected a number");
+    ESP_RETURN_ON_FALSE(json->valueint >= 0 && json->valueint <= 255, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Value out of range");
+
+    calibration->offset = json->valueint;
+
     return ESP_OK;
 }
 
@@ -33,7 +44,13 @@ static inline esp_err_t calibration_from_json(void *property, const cJSON *json)
  */
 static inline esp_err_t calibration_to_json(cJSON **json, const void *property)
 {
-    ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
+    assert(json != NULL);
+    assert(property != NULL);
+
+    const calibration_property_t *calibration = (const calibration_property_t *)property;
+
+    cJSON_AddNumberToObject(*json, "offset", calibration->offset);
+
     return ESP_OK;
 }
 
@@ -48,7 +65,13 @@ static inline esp_err_t calibration_to_json(cJSON **json, const void *property)
  */
 static inline esp_err_t calibration_from_binary(void *property, const uint8_t *bin, uint8_t index)
 {
-    ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
+    assert(property != NULL);
+    assert(bin != NULL);
+
+    calibration_property_t *calibration = (calibration_property_t *)property;
+
+    calibration->offset = bin[0];
+
     return ESP_OK;
 }
 
@@ -63,7 +86,13 @@ static inline esp_err_t calibration_from_binary(void *property, const uint8_t *b
  */
 static inline esp_err_t calibration_to_binary(uint8_t *bin, const void *property, uint8_t index)
 {
-    ESP_LOGI("PROPERTY", "placeholder for: %s", __func__);
+    assert(bin != NULL);
+    assert(property != NULL);
+
+    const calibration_property_t *calibration = (const calibration_property_t *)property;
+
+    bin[0] = calibration->offset;
+
     return ESP_OK;
 }
 
@@ -74,12 +103,11 @@ static inline esp_err_t calibration_to_binary(uint8_t *bin, const void *property
  * adjust the offset between the character set and the encoder postion.
  */
 static const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
-    .id = PROPERTY_CALIBRATION,
-    // .name        = "calibration",
+    .id          = PROPERTY_CALIBRATION,
     .from_json   = calibration_from_json,
     .to_json     = calibration_to_json,
     .from_binary = calibration_from_binary,
     .to_binary   = calibration_to_binary,
-    // .from_binary_attributes = {.static_size = 2},
-    // .to_binary_attributes   = {.static_size = 2},
 };
+
+#undef PROPERTY_TAG

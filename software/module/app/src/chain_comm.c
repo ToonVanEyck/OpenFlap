@@ -169,7 +169,7 @@ void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx)
     uint8_t data;
     if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
         ctx->header.raw = data;
-        if (ctx->header.field.action >= PROPERTIES_MAX) {
+        if (ctx->header.field.property >= PROPERTIES_MAX) {
             ctx->header.field.action = do_nothing;
         }
         switch (ctx->header.field.action) {

@@ -117,3 +117,66 @@ module_t *display_module_get(display_t *display, uint16_t module_index)
     }
     return &display->modules[module_index];
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t display_property_indicate_desynchronized(display_t *display, property_id_t property_id,
+                                                   property_sync_method_t sync_method)
+{
+    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
+    ESP_RETURN_ON_FALSE(property_id < PROPERTIES_MAX, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+
+    /* Reset all flags synchronisation flags because reads and writes cannot be combined. */
+    display_property_indicate_synchronized(display, property_id);
+
+    /* Indicate that all modules have been desynchronised. */
+    if (sync_method == PROPERTY_SYNC_METHOD_READ) {
+        display->sync_properties_read_all_required |= (1 << property_id);
+    } else {
+        display->sync_properties_write_all_required |= (1 << property_id);
+    }
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t display_property_indicate_synchronized(display_t *display, property_id_t property_id)
+{
+    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
+    ESP_RETURN_ON_FALSE(property_id < PROPERTIES_MAX, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+
+    /* Reset the synchronisation flags for display. */
+    display->sync_properties_write_all_required &= ~(1 << property_id);
+    display->sync_properties_read_all_required &= ~(1 << property_id);
+
+    /* Indicate that all modules have been synchronized. */
+    for (uint16_t i = 0; i < display_size_get(display); i++) {
+        module_property_indicate_synchronized(display_module_get(display, i), property_id);
+    }
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+bool display_property_is_desynchronized(display_t *display, property_id_t property_id,
+                                        property_sync_method_t sync_method)
+{
+    /* Validate inputs. */
+    if (display == NULL) {
+        ESP_LOGE(TAG, "Module is NULL");
+        return false;
+    }
+
+    if (property_id >= PROPERTIES_MAX) {
+        ESP_LOGE(TAG, "Invalid property id");
+        return false;
+    }
+
+    if (sync_method == PROPERTY_SYNC_METHOD_READ) {
+        return (display->sync_properties_read_all_required & (1 << property_id));
+    }
+    /*else*/
+    return (display->sync_properties_write_all_required & (1 << property_id));
+}

@@ -32,7 +32,10 @@ void property_command_set(uint8_t *buf)
 
 void property_module_info_get(uint8_t *buf)
 {
-    buf[0] = HAL_GPIO_ReadPin(COLEND_GPIO_PORT, COLEND_GPIO_PIN);
+    module_info_property_t module_info = {0};
+    module_info.field.column_end       = HAL_GPIO_ReadPin(COLEND_GPIO_PORT, COLEND_GPIO_PIN);
+    module_info.field.type             = MODULE_TYPE_SPLITFLAP;
+    buf[0]                             = module_info.raw;
 }
 
 void characterMapSize_property_get(uint8_t *buf)

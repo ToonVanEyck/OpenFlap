@@ -5,5 +5,5 @@ idf_component_register(
     INCLUDE_DIRS 
         "include"
     REQUIRES 
-        chain_comm_abi esp_driver_uart display module properties
+        chain_comm_abi esp_driver_uart display module property_handler
 )

@@ -27,10 +27,8 @@ typedef enum __attribute__((__packed__)) {
 } chain_comm_action_t;
 
 typedef struct {
-    bool dynamic_page_cnt;
-    uint8_t static_page_cnt;
-    bool dynamic_page_size;
-    uint8_t static_page_size;
+    bool dynamic_property_size;
+    uint16_t static_property_size;
 } chain_comm_binary_attributes_t;
 
 #define GENERATE_PROPERTY_ENUM(ENUM, NAME, READ_ATTR, WRITE_ATTR)       ENUM,
@@ -38,33 +36,29 @@ typedef struct {
 #define GENERATE_PROPERTY_READ_ATTR(ENUM, NAME, READ_ATTR, WRITE_ATTR)  {READ_ATTR},
 #define GENERATE_PROPERTY_WRITE_ATTR(ENUM, NAME, READ_ATTR, WRITE_ATTR) {WRITE_ATTR},
 
-#define PAGE_CNT_STATIC(_s)  .dynamic_page_cnt = false, .static_page_cnt = (_s)
-#define PAGE_CNT_DYNAMIC()   .dynamic_page_cnt = true, .static_page_cnt = 0
-#define PAGE_SIZE_STATIC(_s) .dynamic_page_size = false, .static_page_size = (_s)
-#define PAGE_SIZE_DYNAMIC()  .dynamic_page_size = true, .static_page_size = 0
-
-#define PROP_ATTR(_c, _s) _c, _s
-#define PROP_ATTR_SP(_s)  PROP_ATTR(PAGE_CNT_STATIC(1), PAGE_SIZE_STATIC(_s)) /* Single Page Static Size */
-#define PROP_ATTR_DD      PROP_ATTR(PAGE_CNT_DYNAMIC(), PAGE_SIZE_DYNAMIC())  /* Dynamic Page count and size */
-#define PROP_ATTR_NONE    0, 0, 0, 0
+#define PROP_ATTR_STATIC(_s) .dynamic_property_size = false, .static_property_size = (_s)
+#define PROP_ATTR_DYNAMIC()  .dynamic_property_size = true, .static_property_size = 0
+#define PROP_ATTR_NONE()     0, 0
 
 /**
  * ENUM , NAME, READ ATTRIBUTES, WRITE ATTRIBUTES
  */
 #define MODULE_PROPERTY(PROPERTY)                                                                                      \
-    PROPERTY(PROPERTY_NONE, NULL, PROP_ATTR_NONE, PROP_ATTR_NONE)                                                      \
-    PROPERTY(PROPERTY_FIRMWARE, "firmware", PROP_ATTR_NONE, PROP_ATTR_SP(130))                                         \
-    PROPERTY(PROPERTY_COMMAND, "command", PROP_ATTR_NONE, PROP_ATTR_SP(1))                                             \
-    PROPERTY(PROPERTY_MODULE_INFO, "module_info", PROP_ATTR_SP(1), PROP_ATTR_NONE)                                     \
-    PROPERTY(PROPERTY_CHARACTER_SET, "character_set", PROP_ATTR_DD, PROP_ATTR_DD)                                      \
-    PROPERTY(PROPERTY_CHARACTER, "character", PROP_ATTR_SP(1), PROP_ATTR_SP(1))                                        \
-    PROPERTY(PROPERTY_CALIBRATION, "calibration", PROP_ATTR_SP(1), PROP_ATTR_SP(1))                                    \
-    PROPERTY(PROPERTIES_MAX, NULL, PROP_ATTR_NONE, PROP_ATTR_NONE)
+    PROPERTY(PROPERTY_NONE, NULL, PROP_ATTR_NONE(), PROP_ATTR_NONE())                                                  \
+    PROPERTY(PROPERTY_FIRMWARE, "firmware", PROP_ATTR_NONE(), PROP_ATTR_STATIC(130))                                   \
+    PROPERTY(PROPERTY_COMMAND, "command", PROP_ATTR_NONE(), PROP_ATTR_STATIC(1))                                       \
+    PROPERTY(PROPERTY_MODULE_INFO, "module_info", PROP_ATTR_STATIC(1), PROP_ATTR_NONE())                               \
+    PROPERTY(PROPERTY_CHARACTER_SET, "character_set", PROP_ATTR_DYNAMIC(), PROP_ATTR_DYNAMIC())                        \
+    PROPERTY(PROPERTY_CHARACTER, "character", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                                \
+    PROPERTY(PROPERTY_CALIBRATION, "calibration", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                            \
+    PROPERTY(PROPERTIES_MAX, NULL, PROP_ATTR_NONE(), PROP_ATTR_NONE())
 
 typedef enum __attribute__((__packed__)) { MODULE_PROPERTY(GENERATE_PROPERTY_ENUM) } property_id_t;
 
 uint8_t get_property_size(property_id_t property);
-const char *chain_comm_property_name_get(property_id_t property);
+const char *chain_comm_property_name_by_id(property_id_t property);
+property_id_t chain_comm_property_id_by_name(const char *name);
+
 const chain_comm_binary_attributes_t *chain_comm_property_read_attributes_get(property_id_t property);
 const chain_comm_binary_attributes_t *chain_comm_property_write_attributes_get(property_id_t property);
 

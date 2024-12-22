@@ -230,7 +230,7 @@ esp_err_t api_get_http_modulePropertyHandlers(httpd_req_t *req)
                 cJSON *property = NULL;
                 if (requestedProperties & (1 << p) && http_modulePropertyHandlers[p].toJson) {
                     http_modulePropertyHandlers[p].toJson(&property, module);
-                    cJSON_AddItemToObject(json, chain_comm_property_name_get(p), property);
+                    cJSON_AddItemToObject(json, chain_comm_property_name_by_id(p), property);
                 }
             }
 
@@ -333,7 +333,7 @@ esp_err_t api_set_http_modulePropertyHandlers(httpd_req_t *req)
             ESP_LOGI(TAG, "%s", string);
             free(string);
             for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
-                cJSON *property = cJSON_GetObjectItemCaseSensitive(json_module, chain_comm_property_name_get(p));
+                cJSON *property = cJSON_GetObjectItemCaseSensitive(json_module, chain_comm_property_name_by_id(p));
                 if (property && http_modulePropertyHandlers[p].fromJson) {
                     if (!http_modulePropertyHandlers[p].fromJson(&property, module)) {
                         cJSON_Delete(json);

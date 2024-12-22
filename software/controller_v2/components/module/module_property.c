@@ -1,53 +1,51 @@
 #include "module_property.h"
-#include "cJSON.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "module.h"
-#include "properties.h"
 
 #include <string.h>
 
 #define TAG "MODULE_PROPERTY"
 
-void *module_property_get_by_id(module_t *module, property_id_t property_id)
-{
-    if (module == NULL) {
-        ESP_LOGE(TAG, "Module is NULL");
-        return NULL;
-    }
+// void *module_property_get_by_id(module_t *module, property_id_t property_id)
+// {
+//     if (module == NULL) {
+//         ESP_LOGE(TAG, "Module is NULL");
+//         return NULL;
+//     }
 
-    switch (property_id) {
-        case PROPERTY_MODULE_INFO:
-            return &module->module_info;
-        case PROPERTY_COMMAND:
-            return &module->command;
-        default:
-            switch (module->module_info.field.type) {
-                case MODULE_TYPE_SPLITFLAP:
-                    return module_splitflap_property_get_by_id(&module->splitflap, property_id);
-                default:
-                    return NULL;
-            }
-    }
-}
+//     switch (property_id) {
+//         case PROPERTY_MODULE_INFO:
+//             return &module->module_info;
+//         case PROPERTY_COMMAND:
+//             return &module->command;
+//         default:
+//             switch (module->module_info.field.type) {
+//                 case MODULE_TYPE_SPLITFLAP:
+//                     return module_splitflap_property_get_by_id(&module->splitflap, property_id);
+//                 default:
+//                     return NULL;
+//             }
+//     }
+// }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void *module_property_get_by_name(module_t *module, const char *property_name)
-{
-    if (module == NULL) {
-        ESP_LOGE(TAG, "Module is NULL");
-        return NULL;
-    }
+// void *module_property_get_by_name(module_t *module, const char *property_name)
+// {
+//     if (module == NULL) {
+//         ESP_LOGE(TAG, "Module is NULL");
+//         return NULL;
+//     }
 
-    const property_handler_t *property_handler = property_handler_get_by_name(property_name);
+//     const property_handler_t *property_handler = property_handler_get_by_name(property_name);
 
-    if (property_handler == NULL) {
-        return NULL;
-    }
+//     if (property_handler == NULL) {
+//         return NULL;
+//     }
 
-    return module_property_get_by_id(module, property_handler->id);
-}
+//     return module_property_get_by_id(module, property_handler->id);
+// }
 
 //---------------------------------------------------------------------------------------------------------------------
 

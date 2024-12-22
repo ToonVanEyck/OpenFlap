@@ -6,7 +6,7 @@
 
 static openflap_ctx_t *openflap_ctx = NULL;
 
-void property_firmware_set(uint8_t *buf)
+void property_firmware_set(uint8_t *buf, uint16_t *size)
 {
     uint32_t addr_base   = (uint32_t)(APP_START_PTR + (NEW_APP * APP_SIZE / 4));
     uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
@@ -18,7 +18,7 @@ void property_firmware_set(uint8_t *buf)
     }
 }
 
-void property_command_set(uint8_t *buf)
+void property_command_set(uint8_t *buf, uint16_t *size)
 {
     switch (buf[0]) {
         case CMD_REBOOT:
@@ -30,7 +30,7 @@ void property_command_set(uint8_t *buf)
     }
 }
 
-void property_module_info_get(uint8_t *buf)
+void property_module_info_get(uint8_t *buf, uint16_t *size)
 {
     module_info_property_t module_info = {0};
     module_info.field.column_end       = HAL_GPIO_ReadPin(COLEND_GPIO_PORT, COLEND_GPIO_PIN);
@@ -38,25 +38,25 @@ void property_module_info_get(uint8_t *buf)
     buf[0]                             = module_info.raw;
 }
 
-void characterMapSize_property_get(uint8_t *buf)
+void property_character_set_set(uint8_t *buf, uint16_t *size)
 {
-    buf[0] = SYMBOL_CNT;
-}
-
-void property_character_set_set(uint8_t *buf)
-{
-    if (!memcmp(openflap_ctx->config.symbol_set, buf, 4 * SYMBOL_CNT)) {
+    if (*(uint16_t *)&buf != SYMBOL_CNT) {
         return;
     }
-    memcpy(openflap_ctx->config.symbol_set, buf, 4 * SYMBOL_CNT);
+
+    if (!memcmp(openflap_ctx->config.symbol_set, buf + 2, 4 * SYMBOL_CNT)) {
+        return;
+    }
+    memcpy(openflap_ctx->config.symbol_set, buf + 2, 4 * SYMBOL_CNT);
     openflap_ctx->store_config = true;
 }
-void property_character_set_get(uint8_t *buf)
+void property_character_set_get(uint8_t *buf, uint16_t *size)
 {
+    *size = 4 * SYMBOL_CNT; /* bytes per character to support UTF-8. */
     memcpy(buf, openflap_ctx->config.symbol_set, 4 * SYMBOL_CNT);
 }
 
-void property_calibration_set(uint8_t *buf)
+void property_calibration_set(uint8_t *buf, uint16_t *size)
 {
     if (openflap_ctx->config.encoder_offset == buf[0]) {
         return;
@@ -64,37 +64,24 @@ void property_calibration_set(uint8_t *buf)
     openflap_ctx->config.encoder_offset = buf[0];
     openflap_ctx->store_config          = true;
 }
-void property_calibration_get(uint8_t *buf)
+void property_calibration_get(uint8_t *buf, uint16_t *size)
 {
     buf[0] = openflap_ctx->config.encoder_offset;
 }
 
-void vtrim_property_set(uint8_t *buf)
-{
-    if (openflap_ctx->config.vtrim == buf[0]) {
-        return;
-    }
-    openflap_ctx->config.vtrim = buf[0];
-    openflap_ctx->store_config = true;
-}
-void vtrim_property_get(uint8_t *buf)
-{
-    buf[0] = openflap_ctx->config.vtrim;
-}
-
-void property_character_set(uint8_t *buf)
+void property_character_set(uint8_t *buf, uint16_t *size)
 {
     openflap_ctx->flap_setpoint = buf[0];
     uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx->flap_setpoint - openflap_ctx->flap_position);
     openflap_ctx->extend_revolution = (distance < openflap_ctx->config.minimum_distance);
 }
 
-void property_character_get(uint8_t *buf)
+void property_character_get(uint8_t *buf, uint16_t *size)
 {
     buf[0] = openflap_ctx->flap_position;
 }
 
-void baseSpeed_property_set(uint8_t *buf)
+void baseSpeed_property_set(uint8_t *buf, uint16_t *size)
 {
     if (openflap_ctx->config.base_speed == buf[0]) {
         return;
@@ -103,7 +90,7 @@ void baseSpeed_property_set(uint8_t *buf)
     openflap_ctx->store_config      = true;
 }
 
-void baseSpeed_property_get(uint8_t *buf)
+void baseSpeed_property_get(uint8_t *buf, uint16_t *size)
 {
     buf[0] = openflap_ctx->config.base_speed;
 }

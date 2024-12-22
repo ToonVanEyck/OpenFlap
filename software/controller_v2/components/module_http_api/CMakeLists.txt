@@ -4,5 +4,5 @@ idf_component_register(
     INCLUDE_DIRS 
         "include"
     REQUIRES 
-        properties webserver module display
+        property_handler webserver module display
 )

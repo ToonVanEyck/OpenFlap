@@ -135,17 +135,19 @@ void chain_comm_state_change(chain_comm_ctx_t *ctx, chain_comm_state_t state)
  */
 void chain_comm_exec(chain_comm_ctx_t *ctx)
 {
-    const char *property_name = chain_comm_property_name_get(ctx->header.field.property);
+    const char *property_name = chain_comm_property_name_by_id(ctx->header.field.property);
     if (ctx->header.field.action == property_readAll) {
         if (ctx->property_handler[ctx->header.field.property].get) {
-            ctx->property_handler[ctx->header.field.property].get(ctx->property_data);
+            ctx->property_size =
+                chain_comm_property_read_attributes_get(ctx->header.field.property)->static_property_size;
+            ctx->property_handler[ctx->header.field.property].get(ctx->property_data, &ctx->property_size);
             debug_io_log_debug("Read %s property\n", property_name);
         } else {
             debug_io_log_debug("Read %s property not supported\n", property_name);
         }
     } else if (ctx->header.field.action == property_writeAll || ctx->header.field.action == property_writeSequential) {
         if (ctx->property_handler[ctx->header.field.property].set) {
-            ctx->property_handler[ctx->header.field.property].set(ctx->property_data);
+            ctx->property_handler[ctx->header.field.property].set(ctx->property_data, &ctx->property_size);
             debug_io_log_debug("Write %s property\n", property_name);
         } else {
             debug_io_log_debug("Write %s property not supported\n", property_name);
@@ -244,13 +246,29 @@ void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
 void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx)
 {
     uint8_t data;
-    while (uart_driver_cnt_writable(ctx->uart) &&
-           ctx->data_cnt < chain_comm_property_read_attributes_get(ctx->header.field.property)->static_size &&
+
+    bool rx_dynamic_size = chain_comm_property_read_attributes_get(ctx->header.field.property)->dynamic_property_size;
+
+    if (ctx->data_cnt == 0 && rx_dynamic_size) {
+        if (uart_driver_cnt_writable(ctx->uart) < 2 && uart_driver_cnt_readable(ctx->uart) >= 2) {
+            /* We can't read and write the dynamic size right now. */
+            return;
+        }
+        /* Read dynamic size. */
+        uart_driver_read(ctx->uart, (uint8_t *)&ctx->property_size, 2);
+        /* Send dynamic size. */
+        uart_driver_write(ctx->uart, (uint8_t *)&ctx->property_size, 2);
+
+        ctx->data_cnt += 2;
+        ctx->property_size += 2;
+    }
+
+    while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < ctx->property_size &&
            uart_driver_read(ctx->uart, &data, 1)) {
         ctx->data_cnt++;
         uart_driver_write(ctx->uart, &data, 1);
     }
-    if (ctx->data_cnt == chain_comm_property_read_attributes_get(ctx->header.field.property)->static_size) {
+    if (ctx->data_cnt == ctx->property_size) {
         if (--ctx->index) {
             chain_comm_state_change(ctx, readAll_rxData);
         } else {
@@ -275,11 +293,20 @@ void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx)
  */
 void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
 {
-    uint8_t data_cnt = uart_driver_write(
-        ctx->uart, &ctx->property_data[ctx->data_cnt],
-        chain_comm_property_read_attributes_get(ctx->header.field.property)->static_size - ctx->data_cnt);
+    if (ctx->data_cnt == 0 &&
+        chain_comm_property_read_attributes_get(ctx->header.field.property)->dynamic_property_size) {
+        if (uart_driver_cnt_writable(ctx->uart) < 2) {
+            /* We can't send the dynamic size right now. */
+            return;
+        }
+        /* Send dynamic size. */
+        uart_driver_write(ctx->uart, (uint8_t *)&ctx->property_size, 2);
+    }
+    /* Send data. */
+    uint8_t data_cnt =
+        uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], ctx->property_size - ctx->data_cnt);
     ctx->data_cnt += data_cnt;
-    if (ctx->data_cnt == chain_comm_property_read_attributes_get(ctx->header.field.property)->static_size) {
+    if (ctx->data_cnt == ctx->property_size) {
         chain_comm_state_change(ctx, rxHeader);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
@@ -302,14 +329,14 @@ void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
 void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx)
 {
     while (uart_driver_cnt_writable(ctx->uart) &&
-           ctx->data_cnt < chain_comm_property_write_attributes_get(ctx->header.field.property)->static_size &&
+           ctx->data_cnt < chain_comm_property_write_attributes_get(ctx->header.field.property)->static_property_size &&
            uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
         if (!uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
             debug_io_log_error("Error writing data to uart\n");
         };
         ctx->data_cnt++;
     }
-    if (ctx->data_cnt == chain_comm_property_write_attributes_get(ctx->header.field.property)->static_size &&
+    if (ctx->data_cnt == chain_comm_property_write_attributes_get(ctx->header.field.property)->static_property_size &&
         uart_driver_cnt_written(ctx->uart) == 0) { // All bytes have been transmitted.
         chain_comm_exec(ctx);
         chain_comm_state_change(ctx, writeAll_rxAck);
@@ -359,7 +386,8 @@ void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx)
 {
     if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
         uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1);
-        if (++ctx->data_cnt == chain_comm_property_write_attributes_get(ctx->header.field.property)->static_size) {
+        if (++ctx->data_cnt ==
+            chain_comm_property_write_attributes_get(ctx->header.field.property)->static_property_size) {
             chain_comm_state_change(ctx, writeSeq_rxToTx);
         }
     } else if (chain_comm_timer_elapsed(ctx)) {

@@ -1,0 +1,111 @@
+#pragma once
+
+#include "esp_check.h"
+#include "property_handler_common.h"
+
+#define PROPERTY_TAG "CHARACTER_PROPERTY_HANDLER"
+
+/**
+ * \brief Populate the property from a json object.
+ *
+ * \param[in] json The json object to convert.
+ * \param[out] property The property to populate.
+ *
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
+ */
+static inline esp_err_t character_from_json(module_t *module, const cJSON *json)
+{
+    assert(module != NULL);
+    assert(json != NULL);
+
+    uint8_t *character_index = &module->character_index;
+
+    ESP_RETURN_ON_FALSE(cJSON_IsString(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected a character");
+
+    ESP_RETURN_ON_ERROR(module_character_set_index_of_character(character_index, module, json->valuestring),
+                        PROPERTY_TAG, "Character %s not in character set", json->valuestring);
+
+    return ESP_OK;
+}
+
+/**
+ * \brief Convert the property into it's json representation.
+ *
+ * \param[out] json The json object in which we will store the property.
+ * \param[in] property The property to convert.
+ *
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
+ */
+static inline esp_err_t character_to_json(cJSON **json, const module_t *module)
+{
+    assert(json != NULL);
+    assert(module != NULL);
+
+    const uint8_t *character_index = &module->character_index;
+
+    *json = cJSON_CreateString((const char *)&module->character_set.character_set[4 * (*character_index)]);
+    ESP_RETURN_ON_FALSE(*json != NULL, ESP_FAIL, PROPERTY_TAG, "Failed to create JSON string");
+
+    return ESP_OK;
+}
+
+/**
+ * \brief Deserialize a byte array into a property.
+ *
+ * \param[out] property The property to populate.
+ * \param[in] bin The byte array to deserialize.
+ * \param[in] bin_size The size of the byte array.
+ *
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
+ */
+static inline esp_err_t character_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
+{
+    assert(module != NULL);
+    assert(bin != NULL);
+
+    uint8_t *character_index = &module->character_index;
+
+    *character_index = bin[0];
+
+    return ESP_OK;
+}
+
+/**
+ * \brief Serialize the property into a byte array.
+ *
+ * \param[out] bin The serialized byte array.
+ * \param[out] bin_size The size of the byte array.
+ * \param[in] property The property to serialize.
+ *
+ * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
+ */
+static inline esp_err_t character_to_binary(uint8_t *bin, uint16_t *bin_size, const module_t *module)
+{
+    assert(bin != NULL);
+    assert(bin_size != NULL);
+    assert(module != NULL);
+
+    const uint8_t *character_index = &module->character_index;
+
+    bin[0] = *character_index;
+
+    *bin_size = chain_comm_property_read_attributes_get(PROPERTY_CHARACTER)->static_property_size;
+
+    return ESP_OK;
+}
+
+/**
+ * The character property handler.
+ *
+ * The character property is used to store the character data for the modules. The character data is used to
+ * adjust the offset between the character set and the encoder postion.
+ */
+static const property_handler_t PROPERTY_HANDLER_CHARACTER = {
+    .id          = PROPERTY_CHARACTER,
+    .from_json   = character_from_json,
+    .to_json     = character_to_json,
+    .from_binary = character_from_binary,
+    .to_binary   = character_to_binary,
+};
+
+#undef PROPERTY_TAG

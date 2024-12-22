@@ -22,7 +22,7 @@
             "servertype": "pyocd",
             "targetId": "PY32F003x8",
             "cmsisPack": "${workspaceFolder}/software/module/Puya.PY32F0xx_DFP.1.1.7.pack",
-            "svdFile": "py32f003xx.svd",
+            "svdFile": "${workspaceFolder}/software/module/py32f003xx.svd",
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
             // "postLaunchCommands": [
@@ -39,7 +39,7 @@
             "servertype": "pyocd",
             "targetId": "PY32F003x8",
             "cmsisPack": "Puya.PY32F0xx_DFP.1.1.7.pack",
-            "svdFile": "py32f003xx.svd",
+            "svdFile": "${workspaceFolder}/software/module/py32f003xx.svd",
             "runToEntryPoint": "main",
             "showDevDebugTimestamps": true,
             "showDevDebugOutput": "none",

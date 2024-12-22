@@ -2,7 +2,7 @@
 #include "driver/uart.h"
 #include "esp_check.h"
 #include "esp_log.h"
-#include "properties.h"
+#include "property_handler.h"
 
 #include <string.h>
 
@@ -58,9 +58,12 @@ static void chain_comm_task(void *arg)
         //     chain_comm_property_read_all(ctx->display, PROPERTY_MODULE_INFO);
         // }
 
-        for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
-            if (display_property_is_desynchronized(ctx->display, p, PROPERTY_SYNC_METHOD_READ)) {
-                chain_comm_property_read_all(ctx->display, p);
+        for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
+            if (display_property_is_desynchronized(ctx->display, property, PROPERTY_SYNC_METHOD_READ)) {
+                esp_err_t err = chain_comm_property_read_all(ctx->display, property);
+                if (err == ESP_ERR_NOT_SUPPORTED) {
+                    display_property_indicate_synchronized(ctx->display, property);
+                }
             }
         }
 
@@ -73,14 +76,14 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
 
-    const char *property_name = chain_comm_property_name_get(property_id);
+    const char *property_name = chain_comm_property_name_by_id(property_id);
     ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
 
     const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_INVALID_ARG, TAG, "No handler for property: %s",
+    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for property: %s",
                         property_name);
-    ESP_RETURN_ON_FALSE(property_handler->from_binary != NULL, ESP_ERR_INVALID_ARG, TAG, "Property is not readable: %s",
-                        property_name);
+    ESP_RETURN_ON_FALSE(property_handler->from_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
+                        "Property is not readable: %s", property_name);
 
     ESP_LOGI(TAG, "Reading all property %s", property_name);
 
@@ -118,41 +121,36 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
         module_t *module = display_module_get(display, i);
         assert(module != NULL);
 
-        /* Get property field from the module. */
-        void *module_property = module_property_get_by_id(module, property_id);
-        assert(module_property != NULL);
+        // /* Get property field from the module. */
+        // void *module_property = module_property_get_by_id(module, property_id);
+        // assert(module_property != NULL);
 
         /* Get the property read attributes.  */
         const chain_comm_binary_attributes_t *chain_comm_read_attr =
             chain_comm_property_read_attributes_get(property_handler->id);
 
         /* Set the page cnt and size. */
-        uint8_t property_page_cnt  = chain_comm_read_attr->static_page_cnt;
-        uint8_t property_page_size = chain_comm_read_attr->static_page_size;
+        uint16_t property_size = chain_comm_read_attr->static_property_size;
 
-        if (chain_comm_read_attr->dynamic_page_cnt) {
-            ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, &property_page_cnt, 1, RX_BYTES_TIMEOUT(1)) ==
-                                    property_page_size,
-                                ESP_FAIL, TAG, "Failed to receive dynamic page count");
+        if (chain_comm_read_attr->dynamic_property_size) {
+            ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, (uint8_t *)&property_size, 2, RX_BYTES_TIMEOUT(2)) == 2,
+                                ESP_FAIL, TAG, "Failed to receive dynamic property size");
         }
 
-        for (uint8_t page_index = 0; page_index < property_page_cnt; page_index++) {
+        /* Allocate memory for the data. */
+        uint8_t *rx_buff = malloc(property_size);
+        ESP_RETURN_ON_FALSE(rx_buff != NULL, ESP_ERR_NO_MEM, TAG, "Memory allocation failed");
 
-            if (chain_comm_read_attr->dynamic_page_size) {
-                ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, &property_page_size, 1, RX_BYTES_TIMEOUT(1)) ==
-                                        property_page_size,
-                                    ESP_FAIL, TAG, "Failed to receive dynamic page size");
-            }
+        /* Read the data. */
+        ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) ==
+                                property_size,
+                            ESP_FAIL, TAG, "Failed to receive read all data");
 
-            /* Receive the data*/
-            uint8_t rx_buff[CHAIN_COM_MAX_LEN] = {0};
-            ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, rx_buff, property_page_size,
-                                                RX_BYTES_TIMEOUT(property_page_size)) == property_page_size,
-                                ESP_FAIL, TAG, "Failed to receive read all data");
+        /* Handle the data. */
+        ESP_RETURN_ON_ERROR(property_handler->from_binary(module, rx_buff, property_size), TAG,
+                            "Failed to convert read all data");
 
-            ESP_RETURN_ON_ERROR(property_handler->from_binary(module_property, rx_buff, page_index), TAG,
-                                "Failed to convert read all data");
-        }
+        free(rx_buff);
     }
 
     /* Indicate that the property has been synchronized. */

@@ -3,6 +3,7 @@
 #include "chain_comm_abi.h"
 #include "esp_check.h"
 #include "esp_log.h"
+#include "property_handler.h"
 
 #define TAG "MODULE_HTTP_API"
 
@@ -33,9 +34,12 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
     display_t *display = (display_t *)req->user_ctx;
     esp_err_t err      = ESP_OK;
 
-    /* Desynchronize all properties to force them to be read. */
-    for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
-        display_property_indicate_desynchronized(display, p, PROPERTY_SYNC_METHOD_READ);
+    /* Desynchronize all properties which can be read through json. to force them to be read. */
+    for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
+        const property_handler_t *property_handler = property_handler_get_by_id(property);
+        if ((property_handler != NULL) && (property_handler->to_json != NULL)) {
+            display_property_indicate_desynchronized(display, property, PROPERTY_SYNC_METHOD_READ);
+        }
     }
     display_event_desynchronized(display);
 
@@ -56,32 +60,20 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
         cJSON_AddNumberToObject(module_json, MODULE_INDEX_KEY_STR, i);
 
         /* Get all properties from a module. */
-        for (property_id_t p = PROPERTY_NONE + 1; p < PROPERTIES_MAX; p++) {
+        for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
             /* Get the property handler. */
-            const char *property_name                  = chain_comm_property_name_get(p);
-            const property_handler_t *property_handler = property_handler_get_by_id(p);
-            if (property_handler == NULL) {
-                ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_name);
-                continue;
-            }
-
-            /* Get property field from the module. */
-            void *module_property = module_property_get_by_id(module, p);
-            if (module_property == NULL) {
-                ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %s.", property_name,
-                         chain_comm_module_type_name_get(module->module_info.field.type));
-                continue;
-            }
+            const char *property_name                  = chain_comm_property_name_by_id(property);
+            const property_handler_t *property_handler = property_handler_get_by_id(property);
 
             /* Check if the property can be converted to a JSON. */
-            if (property_handler->to_json == NULL) {
-                ESP_LOGE("MODULE", "Property \"%s\" is not readable.", property_name);
+            if ((property_handler == NULL) && (property_handler->to_json == NULL)) {
+                /* Property is not suported for reading. */
                 continue;
             }
 
             /* Call the property handler. */
             cJSON *property_json = cJSON_CreateObject();
-            if (property_handler->to_json(&property_json, module_property) == ESP_FAIL) {
+            if (property_handler->to_json(&property_json, module) == ESP_FAIL) {
                 ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_name);
                 continue;
             }
@@ -178,19 +170,20 @@ esp_err_t module_http_api_post_handler(httpd_req_t *req)
             }
 
             /* Get the property handler. */
-            const property_handler_t *property_handler = property_handler_get_by_name(property_json->string);
+            property_id_t property_id                  = chain_comm_property_id_by_name(property_json->string);
+            const property_handler_t *property_handler = property_handler_get_by_id(property_id);
             if (property_handler == NULL) {
                 ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
                 continue;
             }
 
             /* Get property field from the module. */
-            void *property = module_property_get_by_id(module, property_handler->id);
-            if (property == NULL) {
-                ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %d.", property_json->string,
-                         module->module_info.field.type);
-                continue;
-            }
+            // module_t *module = module_property_get_by_id(module, property_handler->id);
+            // if (property == NULL) {
+            //     ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %d.", property_json->string,
+            //              module->module_info.field.type);
+            //     continue;
+            // }
 
             /* Check if the property is writable. */
             if (property_handler->from_json == NULL) {
@@ -199,7 +192,7 @@ esp_err_t module_http_api_post_handler(httpd_req_t *req)
             }
 
             /* Call the property handler. */
-            if (property_handler->from_json(property, property_json) == ESP_FAIL) {
+            if (property_handler->from_json(module, property_json) == ESP_FAIL) {
                 ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_json->string);
                 continue;
             }

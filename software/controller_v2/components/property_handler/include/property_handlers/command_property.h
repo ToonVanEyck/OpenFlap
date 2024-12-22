@@ -1,7 +1,8 @@
 #pragma once
 
 #include "esp_check.h"
-#include "properties_common.h"
+#include "property_handler_common.h"
+
 #include <string.h>
 
 #define PROPERTY_TAG "COMMAND_PROPERTY_HANDLER"
@@ -14,14 +15,14 @@
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t command_from_json(void *property, const cJSON *json)
+static inline esp_err_t command_from_json(module_t *module, const cJSON *json)
 {
-    assert(property != NULL);
+    assert(module != NULL);
     assert(json != NULL);
 
-    command_property_t *command = (command_property_t *)property;
+    command_property_t *command = &module->command;
 
-    ESP_RETURN_ON_FALSE(json->type != cJSON_String, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected a string");
+    ESP_RETURN_ON_FALSE(cJSON_IsString(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected a string");
 
     for (command_property_t cmd = CMD_NO_COMMAND + 1; cmd < CMD_MAX; cmd++) {
         if (strcmp(json->valuestring, chain_comm_command_name_get(cmd)) == 0) {
@@ -38,17 +39,18 @@ static inline esp_err_t command_from_json(void *property, const cJSON *json)
  * \brief Serialize the property into a byte array.
  *
  * \param[out] bin The serialized byte array.
+ * \param[out] bin_size The size of the byte array.
  * \param[in] property The property to serialize.
- * \param[in] index The index of in case of a multipart property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t command_to_binary(uint8_t *bin, const void *property, uint8_t index)
+static inline esp_err_t command_to_binary(uint8_t *bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
-    assert(property != NULL);
+    assert(bin_size != NULL);
+    assert(module != NULL);
 
-    const command_property_t *command = (const command_property_t *)property;
+    const command_property_t *command = &module->command;
 
     bin[0] = *command;
 

@@ -1,6 +1,6 @@
 
-const moduleEndpoint = "/api/modules"
-// const moduleEndpoint = "http://openflap.local/api/modules" // enable this line for local development
+const moduleEndpoint = "/api/module"
+// const moduleEndpoint = "http://openflap.local/api/module" // enable this line for local development
 
 var moduleObjects = [];
 var dimensions = { width: 0, height: 0 };

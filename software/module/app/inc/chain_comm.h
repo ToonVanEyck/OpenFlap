@@ -25,7 +25,14 @@
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chain_comm_state_t;
 
-typedef void (*property_callback)(uint8_t *buf);
+/**
+ * \brief Chain communication property callback.
+ *
+ * \param[in] buf Pointer to the data buffer.
+ * \param[inout] size Pointer to the size of the data buffer. This must be set in the handler if the property has a
+ *      dynamic length.
+ */
+typedef void (*property_callback)(uint8_t *buf, uint16_t *size);
 
 typedef struct {
     property_callback get;
@@ -45,6 +52,7 @@ typedef struct {
     property_handler_t property_handler[PROPERTIES_MAX]; /**< The property handlers. */
     bool ack;                  /**< Flag indicating if the current message is waiting for an acknowledgment.  */
     uint32_t timeout_tick_cnt; /**< Counter for determining timeout. */
+    uint16_t property_size;    /**< The size of the current property. */
 } chain_comm_ctx_t;
 
 /**

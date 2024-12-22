@@ -2,6 +2,8 @@
 #include "esp_check.h"
 #include "esp_log.h"
 
+#include <string.h>
+
 #define TAG "DISPLAY"
 
 /** Indicates that the model and actual modules are no longer in sync. */
@@ -32,9 +34,16 @@ esp_err_t display_resize(display_t *display, uint16_t module_count)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
+    int32_t count_diff = display->module_count - module_count;
     /* Reallocate memory for the modules. */
     module_t *new_modules = realloc(display->modules, module_count * sizeof(module_t));
     ESP_RETURN_ON_FALSE(new_modules != NULL, ESP_ERR_NO_MEM, TAG, "Failed to reallocate memory for modules");
+
+    /* If the display size has grown, zeroing the new modules. */
+    ESP_LOGW(TAG, "Resizing display from %d to %d, diff:%ld", display->module_count, module_count, count_diff);
+    if (count_diff > 0) {
+        memset(&new_modules[display->module_count], 0, count_diff * sizeof(module_t));
+    }
 
     display->modules      = new_modules;
     display->module_count = module_count;

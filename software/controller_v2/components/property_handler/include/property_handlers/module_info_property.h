@@ -1,6 +1,6 @@
 #pragma once
 
-#include "properties_common.h"
+#include "property_handler_common.h"
 
 /**
  * \brief Convert the property into it's json representation.
@@ -10,12 +10,12 @@
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t module_info_to_json(cJSON **json, const void *property)
+static inline esp_err_t module_info_to_json(cJSON **json, const module_t *module)
 {
     assert(json != NULL);
-    assert(property != NULL);
+    assert(module != NULL);
 
-    const module_info_property_t *module_info = (const module_info_property_t *)property;
+    const module_info_property_t *module_info = &module->module_info;
 
     cJSON_AddBoolToObject(*json, "column_end", module_info->field.column_end);
     cJSON_AddStringToObject(*json, "type", chain_comm_module_type_name_get(module_info->field.type));
@@ -28,16 +28,16 @@ static inline esp_err_t module_info_to_json(cJSON **json, const void *property)
  *
  * \param[out] property The property to populate.
  * \param[in] bin The byte array to deserialize.
- * \param[in] index The index of in case of a multipart property.
+ * \param[in] bin_size The size of the byte array.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t module_info_from_binary(void *property, const uint8_t *bin, uint8_t index)
+static inline esp_err_t module_info_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
 {
-    assert(property != NULL);
+    assert(module != NULL);
     assert(bin != NULL);
 
-    module_info_property_t *module_info = (module_info_property_t *)property;
+    module_info_property_t *module_info = &module->module_info;
 
     module_info->raw = bin[0];
 

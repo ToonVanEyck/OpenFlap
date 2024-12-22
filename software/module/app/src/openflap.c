@@ -39,6 +39,9 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
     for (encoder_decimal = 0; encoder_graycode; encoder_graycode = encoder_graycode >> 1) {
         encoder_decimal ^= encoder_graycode;
     }
+
+    /* TODO: an issue occurs when encoder_decimal is 48. */
+
     // Reverse encoder direction.
     uint8_t new_position = (uint8_t)SYMBOL_CNT - encoder_decimal - 1;
 

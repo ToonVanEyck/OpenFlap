@@ -2,7 +2,6 @@
 
 #include "esp_err.h"
 #include "module_common.h"
-#include "properties.h"
 
 /**
  * \brief Get a property from a module by the property id.
@@ -12,7 +11,7 @@
  *
  * \return The property if found, NULL otherwise.
  */
-void *module_property_get_by_id(module_t *module, property_id_t property_id);
+// void *module_property_get_by_id(module_t *module, property_id_t property_id);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -24,7 +23,7 @@ void *module_property_get_by_id(module_t *module, property_id_t property_id);
  *
  * \return The property if found, NULL otherwise.
  */
-void *module_property_get_by_name(module_t *module, const char *property_name);
+// void *module_property_get_by_name(module_t *module, const char *property_name);
 
 //---------------------------------------------------------------------------------------------------------------------
 

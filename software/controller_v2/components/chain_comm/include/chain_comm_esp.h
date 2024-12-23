@@ -15,6 +15,6 @@
  */
 esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display);
 
-esp_err_t chain_comm_property_read_all(display_t *display, property_id_t property);
-esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property);
-esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t property);
+esp_err_t chain_comm_property_read_all(display_t *display, property_id_t property_id);
+esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property_id);
+esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t property_id);

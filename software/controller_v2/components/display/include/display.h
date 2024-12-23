@@ -167,3 +167,15 @@ esp_err_t display_property_indicate_synchronized(display_t *display, property_id
  */
 bool display_property_is_desynchronized(display_t *display, property_id_t property_id,
                                         property_sync_method_t sync_method);
+
+//---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Promote a property from write sequence to write all.
+ *
+ * If the property of any number of modules is required, but the property is equal for all modules, the property can be
+ * promoted to write all. This will allow the chain communication to write the property to all modules at once.
+ *
+ * \param[in] display The display ctx.
+ */
+void display_property_promote_write_seq_to_write_all(display_t *display);

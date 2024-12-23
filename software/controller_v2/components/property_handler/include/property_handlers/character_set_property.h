@@ -130,7 +130,7 @@ static inline esp_err_t character_set_from_binary(module_t *module, const uint8_
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t character_set_to_binary(uint8_t *bin, uint16_t *bin_size, const module_t *module)
+static inline esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
     assert(bin_size != NULL);
@@ -143,10 +143,13 @@ static inline esp_err_t character_set_to_binary(uint8_t *bin, uint16_t *bin_size
     ESP_RETURN_ON_FALSE(character_set->character_set != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Character set is NULL");
 
-    /* Copy the character set to the binary array. */
-    memcpy(bin, character_set->character_set, character_set->size * 4);
-
     *bin_size = character_set->size * 4;
+
+    *bin = calloc(1, sizeof(*bin_size));
+    ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
+
+    /* Copy the character set to the binary array. */
+    memcpy(*bin, character_set->character_set, character_set->size * 4);
 
     return ESP_OK;
 }

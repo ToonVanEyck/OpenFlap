@@ -44,7 +44,7 @@ static inline esp_err_t command_from_json(module_t *module, const cJSON *json)
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t command_to_binary(uint8_t *bin, uint16_t *bin_size, const module_t *module)
+static inline esp_err_t command_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
     assert(bin_size != NULL);
@@ -52,7 +52,12 @@ static inline esp_err_t command_to_binary(uint8_t *bin, uint16_t *bin_size, cons
 
     const command_property_t *command = &module->command;
 
-    bin[0] = *command;
+    *bin_size = chain_comm_property_read_attributes_get(PROPERTY_COMMAND)->static_property_size;
+
+    *bin = calloc(1, sizeof(*bin_size));
+    ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
+
+    *bin[0] = *command;
 
     return ESP_OK;
 }

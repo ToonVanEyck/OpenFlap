@@ -79,7 +79,7 @@ static inline esp_err_t character_from_binary(module_t *module, const uint8_t *b
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t character_to_binary(uint8_t *bin, uint16_t *bin_size, const module_t *module)
+static inline esp_err_t character_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
     assert(bin_size != NULL);
@@ -87,9 +87,12 @@ static inline esp_err_t character_to_binary(uint8_t *bin, uint16_t *bin_size, co
 
     const uint8_t *character_index = &module->character_index;
 
-    bin[0] = *character_index;
-
     *bin_size = chain_comm_property_read_attributes_get(PROPERTY_CHARACTER)->static_property_size;
+
+    *bin = calloc(1, sizeof(*bin_size));
+    ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
+
+    *bin[0] = *character_index;
 
     return ESP_OK;
 }

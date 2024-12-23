@@ -67,19 +67,19 @@ typedef union __attribute__((__packed__)) {
     struct {
         property_id_t property : 6;
         chain_comm_action_t action : 2;
-    } field;
+    };
 } chain_comm_msg_header_t;
 
-typedef struct __attribute__((__packed__)) {
-    union {
-        struct {
-            chain_comm_msg_header_t header;
-            uint8_t data[CHAIN_COM_MAX_LEN - 1];
-        } structured;
-        uint8_t raw[CHAIN_COM_MAX_LEN];
-    };
-    uint16_t size;
-} chain_comm_msg_t;
+// typedef struct __attribute__((__packed__)) {
+//     union {
+//         struct {
+//             chain_comm_msg_header_t header;
+//             uint8_t data[CHAIN_COM_MAX_LEN - 1];
+//         } structured;
+//         uint8_t raw[CHAIN_COM_MAX_LEN];
+//     };
+//     uint16_t size;
+// } chain_comm_msg_t;
 
 #define NAMED_ENUM_ENUM(ENUM, NAME) ENUM,
 #define NAMED_ENUM_NAME(ENUM, NAME) NAME,

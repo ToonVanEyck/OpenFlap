@@ -66,7 +66,7 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
             const property_handler_t *property_handler = property_handler_get_by_id(property);
 
             /* Check if the property can be converted to a JSON. */
-            if ((property_handler == NULL) && (property_handler->to_json == NULL)) {
+            if ((property_handler == NULL) || (property_handler->to_json == NULL)) {
                 /* Property is not suported for reading. */
                 continue;
             }

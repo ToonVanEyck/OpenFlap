@@ -35,12 +35,13 @@ esp_err_t display_resize(display_t *display, uint16_t module_count)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
-    int32_t count_diff = display->module_count - module_count;
+    int32_t count_diff = module_count - display->module_count;
     /* Reallocate memory for the modules. */
     module_t *new_modules = realloc(display->modules, module_count * sizeof(module_t));
     ESP_RETURN_ON_FALSE(new_modules != NULL, ESP_ERR_NO_MEM, TAG, "Failed to reallocate memory for modules");
 
     /* If the display size has grown, zero the new modules. */
+    ESP_LOGI(TAG, "Resizing display from %d to %d modules", display->module_count, module_count);
     if (count_diff > 0) {
         memset(&new_modules[display->module_count], 0, count_diff * sizeof(module_t));
     }
@@ -198,45 +199,54 @@ void display_property_promote_write_seq_to_write_all(display_t *display)
         return;
     }
 
-    for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
-        const property_handler_t *property_handler = property_handler_get_by_id(property);
-        /* Check if the property canb be serialized. */
+    for (property_id_t property_id = PROPERTY_NONE + 1; property_id < PROPERTIES_MAX; property_id++) {
+        // if (property_id == PROPERTY_CHARACTER_SET) {
+        //     continue;
+        // }
+        property_id                                = PROPERTY_CHARACTER_SET;
+        const property_handler_t *property_handler = property_handler_get_by_id(property_id);
+        /* Check if the property can be serialized. */
         if ((property_handler == NULL) || (property_handler->to_binary == NULL)) {
             continue;
         }
 
         /* Get the serialized data for the first module. */
-        uint8_t property_a_buf[CHAIN_COM_MAX_LEN] = {0};
-        uint16_t property_a_len                   = 0;
-        bool all_modules_are_same                 = true;
-        module_t *module                          = display_module_get(display, 0);
-        if (property_handler->to_binary(property_a_buf, &property_a_len, module) != ESP_OK) {
+        uint8_t *property_a_buf   = NULL;
+        uint16_t property_a_len   = 0;
+        bool all_modules_are_same = true;
+        module_t *module          = display_module_get(display, 0);
+
+        ESP_LOGW(TAG, "Checking property %d : %s", property_id, chain_comm_property_name_by_id(property_id));
+        if (property_handler->to_binary(&property_a_buf, &property_a_len, module) != ESP_OK) {
+            ESP_LOGI(TAG, "Failed to serialize property %d", property_id);
             continue;
         }
-        bool module_property_updated = module_property_is_desynchronized(module, property);
+        bool module_property_updated = module_property_is_desynchronized(module, property_id);
 
-        /* Compare the serialized data for the next properties. */
-        for (uint16_t i = 1; i < display_size_get(display); i++) {
-            uint8_t property_b_buf[CHAIN_COM_MAX_LEN] = {0};
-            uint16_t property_b_len                   = 0;
-            module                                    = display_module_get(display, i);
-            module_property_updated |= module_property_is_desynchronized(module, property);
-            if (property_handler->to_binary(property_b_buf, &property_b_len, module) != ESP_OK) {
-                break;
-            }
+        // /* Compare the serialized data for the next properties. */
+        // for (uint16_t i = 1; all_modules_are_same && i < display_size_get(display); i++) {
+        //     uint8_t *property_b_buf = NULL;
+        //     uint16_t property_b_len = 0;
+        //     module                  = display_module_get(display, i);
+        //     module_property_updated |= module_property_is_desynchronized(module, property_id);
+        //     if (property_handler->to_binary(&property_b_buf, &property_b_len, module) != ESP_OK) {
+        //         break;
+        //     }
 
-            if ((property_a_len != property_b_len) || memcmp(property_a_buf, property_b_buf, property_a_len) != 0) {
-                all_modules_are_same = false;
-                break;
-            }
-        }
+        //     if ((property_a_len != property_b_len) || memcmp(property_a_buf, property_b_buf, property_a_len) != 0) {
+        //         all_modules_are_same = false;
+        //     }
+        //     free(property_b_buf);
+        // }
+        ESP_LOGI(TAG, "%p", property_a_buf);
+        free(property_a_buf);
 
         /* If all modules are the same and the property has been updated, promote the write all. */
         if (all_modules_are_same && module_property_updated) {
-            display_property_indicate_desynchronized(display, property, PROPERTY_SYNC_METHOD_WRITE);
+            display_property_indicate_desynchronized(display, property_id, PROPERTY_SYNC_METHOD_WRITE);
             for (uint16_t i = 0; i < display_size_get(display); i++) {
                 module = display_module_get(display, i);
-                module_property_indicate_synchronized(module, property);
+                module_property_indicate_synchronized(module, property_id);
             }
         }
     }

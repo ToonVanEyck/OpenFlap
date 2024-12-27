@@ -8,20 +8,20 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "module.h"
-#include "module_http_api.h"
+// #include "module.h"
+// #include "module_http_api.h"
+#include "display.h"
 #include "networking.h"
-#include "webserver.h"
-#include <stdio.h>
+// #include "webserver.h"
 
 #define TAG "MAIN"
 
 void app_main(void)
 
 {
-    /* Fucking enable pin for UART and Relay on old controller. */
-    gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
-    gpio_set_level(GPIO_NUM_2, 1);
+    /* Fucking enable pin for UART and Relay on old controller. I removed the flipping relay */
+    // gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
+    // gpio_set_level(GPIO_NUM_2, 1);
 
     ESP_LOGI(TAG, "Starting OpenFlap controller!");
 
@@ -40,16 +40,17 @@ void app_main(void)
     chain_comm_ctx_t chain_comm_ctx;
     ESP_ERROR_CHECK(chain_comm_init(&chain_comm_ctx, &display));
 
-    /* Start the web server. */
-    webserver_ctx_t webserver_ctx;
-    ESP_ERROR_CHECK(webserver_init(&webserver_ctx));
-    ESP_LOGI(TAG, "Webserver started!");
+    // /* Start the web server. */
+    // webserver_ctx_t webserver_ctx;
+    // ESP_ERROR_CHECK(webserver_init(&webserver_ctx));
+    // ESP_LOGI(TAG, "Webserver started!");
 
-    /* Initialize http module api. */
-    module_http_api_init(&webserver_ctx, &display);
-    ESP_LOGI(TAG, "Module api endpoint started!");
+    // /* Initialize http module api. */
+    // module_http_api_init(&webserver_ctx, &display);
+    // ESP_LOGI(TAG, "Module api endpoint started!");
 
     while (1) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "Hello world!");
     }
 }

@@ -41,8 +41,8 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
             display_property_indicate_desynchronized(display, property, PROPERTY_SYNC_METHOD_READ);
         }
     }
+    ESP_LOGI(TAG, "Display desynchronized");
     display_event_desynchronized(display);
-
     /* Wait for synchronisation event. */
     err = display_event_wait_for_synchronized(display, 5000 / portTICK_PERIOD_MS);
     if (err != ESP_OK) {
@@ -50,7 +50,7 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, NULL);
         return err;
     }
-
+    ESP_LOGI(TAG, "Display synchronized");
     /* Create a json object. */
     cJSON *json = cJSON_CreateArray();
     for (uint16_t i = 0; i < display_size_get(display); i++) {

@@ -13,10 +13,10 @@ preflight:
   drc:
     enabled: true
     warnings_as_errors : true
-    filters:
-      - filter: J1 & J2 Courttard Overlap
-        error: courtyards_overlap
-        regex : (?s)Footprint J1(.*)Footprint J2
+    # filters:
+    #   - filter: J1 & J2 Courttard Overlap
+    #     error: courtyards_overlap
+    #     regex : (?s)Footprint J1(.*)Footprint J2
   update_xml: true
   set_text_variables:
     - name: GIT_TAG

@@ -23,13 +23,14 @@ fi
 
 BASE_DIR=$(git rev-parse --show-toplevel)
 HW_SOURCE_DIR=${BASE_DIR}/hardware
-HW_BUILD_DIR=${BASE_DIR}/build
+HW_BUILD_DIR=${BASE_DIR}/build/hardware
 
 # Declare modules
 declare -A modules=(
     ["Side Panel"]="module/side_panel/src"
     ["Encoder Wheel"]="module/encoder_wheel/src"
     ["Top Connector"]="top_connector/src"
+    ["Controller"]="controller/src"
 )
 
 # Run KiBot for each module

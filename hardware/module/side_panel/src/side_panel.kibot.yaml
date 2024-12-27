@@ -105,19 +105,18 @@ outputs:
 
   - name: bom
     comment: Bill Of Materials
-    type: kibom
+    type: bom
     options:
       format: CSV
-      conf:
-        columns:
-          - field: Value
-            name: Comment
-          - field: References
-            name: Designator
-          - field: Footprint
-            name: Package
-          - field: LCSC
-            name: LCSC Part \#
+      columns:
+        - field: Value
+          name: Comment
+        - field: References
+          name: Designator
+        - field: Footprint
+          name: Package
+        - field: LCSC
+          name: LCSC Part \#
 
   - name: ibom
     comment: Interactive Bill Of Materials

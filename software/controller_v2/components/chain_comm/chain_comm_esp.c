@@ -14,7 +14,7 @@
 #define RX_PIN               (9)
 #define CHAIN_COMM_TASK_SIZE 6000
 
-#define RX_BYTES_TIMEOUT(_byte_cnt) (((_byte_cnt) * 10) / portTICK_PERIOD_MS)
+#define RX_BYTES_TIMEOUT(_byte_cnt) (((_byte_cnt) * 20) / portTICK_PERIOD_MS)
 
 static void chain_comm_task(void *arg);
 
@@ -110,9 +110,10 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 
     /* Receive the header. */
     chain_comm_msg_header_t rx_header = {0};
-    ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header))) ==
-                            sizeof(rx_header),
-                        ESP_FAIL, TAG, "Failed to receive header");
+    ESP_LOGW(TAG, "timeout :%ld", RX_BYTES_TIMEOUT(sizeof(rx_header)));
+    uint8_t cnt = uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header)));
+    ESP_LOGW(TAG, "cnt: %d", cnt);
+    ESP_RETURN_ON_FALSE(cnt == sizeof(rx_header), ESP_FAIL, TAG, "Failed to receive header");
     ESP_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, ESP_FAIL, TAG, "Header mismatch");
 
     /* Receive the module count. */
@@ -122,8 +123,6 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 
     /* Resize the display. */
     if (display_size_get(display) != module_cnt) {
-        ESP_LOGW(TAG, "The display size has changed from %d to %d, resizing display...", display_size_get(display),
-                 module_cnt);
         display_resize(display, module_cnt);
     }
 
@@ -203,12 +202,12 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
     uint8_t *property_data = NULL;
     uint16_t property_size = 0;
 
-    ESP_RETURN_ON_ERROR(property_handler->to_binary(module, &property_data, &property_size), TAG,
+    ESP_RETURN_ON_ERROR(property_handler->to_binary(&property_data, &property_size, module), TAG,
                         "Failed to get property size");
 
     /* Send dynamic property size. */
     if (chain_comm_write_attr->dynamic_property_size) {
-        ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, &property_size, sizeof(property_data)) == sizeof(property_data),
+        ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, &property_size, sizeof(property_size)) == sizeof(property_size),
                             ESP_FAIL, TAG, "Failed to send dynamic property size");
     }
 
@@ -244,7 +243,7 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
     }
 
     /* Receive the data */
-    uint8_t *rx_buff = calloc(1, property_size);
+    uint8_t *rx_buff = malloc(property_size);
     if (rx_buff == NULL) {
         ESP_LOGE(TAG, "Memory allocation failed");
         rx_err = ESP_ERR_NO_MEM;
@@ -256,7 +255,7 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
 
     free(property_data);
     free(rx_buff);
-    return ESP_OK;
+    return rx_err;
 }
 
 esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t property_id)

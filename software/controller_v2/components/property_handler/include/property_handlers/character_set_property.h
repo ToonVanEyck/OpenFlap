@@ -71,6 +71,8 @@ static inline esp_err_t character_set_to_json(cJSON **json, const module_t *modu
 
     const character_set_property_t *character_set = &module->character_set;
 
+    ESP_RETURN_ON_FALSE(character_set->size > 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set size is 0");
+
     *json = cJSON_CreateArray();
     ESP_RETURN_ON_FALSE(*json != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Memory allocation failed");
 
@@ -145,7 +147,7 @@ static inline esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_siz
 
     *bin_size = character_set->size * 4;
 
-    *bin = calloc(1, sizeof(*bin_size));
+    *bin = malloc(sizeof(*bin_size));
     ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
     /* Copy the character set to the binary array. */

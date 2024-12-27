@@ -89,10 +89,10 @@ static inline esp_err_t character_to_binary(uint8_t **bin, uint16_t *bin_size, c
 
     *bin_size = chain_comm_property_read_attributes_get(PROPERTY_CHARACTER)->static_property_size;
 
-    *bin = calloc(1, sizeof(*bin_size));
+    *bin = malloc(sizeof(*bin_size));
     ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
-    *bin[0] = *character_index;
+    (*bin)[0] = *character_index;
 
     return ESP_OK;
 }

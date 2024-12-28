@@ -1719,7 +1719,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C61063"
+		(property "LCSC" "C2681226"
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5293,7 +5293,7 @@
 				)
 			)
 		)
-		(property "Value" "47µH"
+		(property "Value" "47uH"
 			(at 0 4 90)
 			(layer "F.Fab")
 			(uuid "a4517b47-df5c-4d97-a237-64e44150c836")
@@ -9285,7 +9285,7 @@
 				)
 			)
 		)
-		(property "Value" "68µH"
+		(property "Value" "68uH"
 			(at 0 4 90)
 			(layer "F.Fab")
 			(uuid "1c22c033-da1a-4f2b-b27a-0adda42df685")

@@ -9,7 +9,7 @@
 		(date "2024-07-24")
 		(rev "2.0.1")
 		(company "OpenFlap")
-        (comment 1 "${GIT_TAG}")
+		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
 		(comment 3 "Designer: Toon Van Eyck")
 	)
@@ -4514,7 +4514,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "22µF"
+		(property "Value" "22uF"
 			(at 69.85 201.422 0)
 			(effects
 				(font
@@ -4661,7 +4661,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "68µH"
+		(property "Value" "68uH"
 			(at 131.826 193.04 90)
 			(effects
 				(font
@@ -5680,7 +5680,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "100µF"
+		(property "Value" "100uF"
 			(at 138.43 201.3839 0)
 			(effects
 				(font

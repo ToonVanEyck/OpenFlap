@@ -9565,7 +9565,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C61063"
+		(property "LCSC" "C2681226"
 			(at 53.34 205.74 0)
 			(effects
 				(font
@@ -9985,7 +9985,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47µH"
+		(property "Value" "47uH"
 			(at 83.566 200.66 90)
 			(effects
 				(font
@@ -12776,7 +12776,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "68µH"
+		(property "Value" "68uH"
 			(at 180.086 200.66 90)
 			(effects
 				(font

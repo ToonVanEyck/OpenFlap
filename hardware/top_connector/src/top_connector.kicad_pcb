@@ -230,7 +230,7 @@
 		(property ki_fp_filters "SOT* SC*")
 		(path "/edd2637e-dedc-4e3c-9f1f-74ac37f81f02")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start 0 -1.56)
@@ -528,7 +528,7 @@
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm*")
 		(path "/e7906d3a-f942-456b-8f1e-dac71aefa714")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start 0 -2.56)
@@ -885,7 +885,7 @@
 		(property ki_fp_filters "TO-???* *_Diode_* *SingleDiode* D_*")
 		(path "/29d58539-8ab4-4bf2-82fe-1d7b50ffc490")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start -3.51 1.65)
@@ -1118,7 +1118,7 @@
 				)
 			)
 		)
-		(property "Value" "68µH"
+		(property "Value" "68uH"
 			(at 0 4 0)
 			(layer "F.Fab")
 			(uuid "76c40cb2-2881-4ed0-a8e0-3b92c27fcdf8")
@@ -1181,7 +1181,7 @@
 		(property ki_fp_filters "Choke_* *Coil* Inductor_* L_*")
 		(path "/4d1b0335-ed08-46f8-b985-72a621cde83c")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start 3.26 3.26)
@@ -1382,7 +1382,7 @@
 				)
 			)
 		)
-		(property "Value" "22µF"
+		(property "Value" "22uF"
 			(at 0 3.7 180)
 			(layer "F.Fab")
 			(uuid "3bb64c4d-5b52-4fac-8dd4-7b847ebea971")
@@ -1448,7 +1448,7 @@
 		(property ki_fp_filters "CP_*")
 		(path "/48b8c1fe-8078-4f64-8067-b2d387764480")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start 2.76 2.76)
@@ -1893,7 +1893,7 @@
 		(property ki_fp_filters "Connector*:*_2x??_*")
 		(path "/9e440e19-81a1-4c53-ab0c-0e8eacb2fae6")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr through_hole)
 		(fp_line
 			(start 5.83 22.99)
@@ -2403,7 +2403,7 @@
 				)
 			)
 		)
-		(property "Value" "100µF"
+		(property "Value" "100uF"
 			(at 0 2.35 90)
 			(layer "F.Fab")
 			(uuid "8d3ef72c-c41a-424a-af6e-23ff97a25037")
@@ -2469,7 +2469,7 @@
 		(property ki_fp_filters "CP_*")
 		(path "/d46e0ebc-9e22-4bff-ae50-193329cc5eee")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start 1.75 -1.51)
@@ -2703,7 +2703,7 @@
 		(property ki_fp_filters "C_*")
 		(path "/f2b120f2-0ec6-42d3-ac93-91befc8bbf57")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start -0.261252 -0.735)
@@ -2917,7 +2917,7 @@
 		(property ki_fp_filters "MountingHole*")
 		(path "/bc1fa259-ac14-44bf-b6a3-ae8ee2f81e71")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr exclude_from_pos_files exclude_from_bom)
 		(fp_circle
 			(center 0 0)
@@ -3031,7 +3031,7 @@
 		(property ki_fp_filters "R_*")
 		(path "/b71d12ad-2c05-4870-90e5-c3cb27309e8c")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start -0.227064 -0.735)
@@ -3245,7 +3245,7 @@
 		(property ki_fp_filters "Connector*:*_2x??_*")
 		(path "/695dc255-0833-4921-aa8e-bfcd98f5fee4")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start -9.785 -3.56)
@@ -4211,7 +4211,7 @@
 		(property ki_fp_filters "Connector*:*_2x??_*")
 		(path "/20ea95ba-52dc-4df3-aafc-e7987f3fe255")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr through_hole)
 		(fp_line
 			(start 5.83 22.99)
@@ -4774,7 +4774,7 @@
 		(property ki_fp_filters "C_*")
 		(path "/4b9c6743-b14e-4d47-b3b1-69c14d4a15c8")
 		(sheetname "Root")
-		(sheetfile "Top Connector.kicad_sch")
+		(sheetfile "top_connector.kicad_sch")
 		(attr smd)
 		(fp_line
 			(start -0.261252 0.735)

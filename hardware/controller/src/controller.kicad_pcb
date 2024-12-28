@@ -921,7 +921,7 @@
 		(path "/7d10f579-e2cc-4f82-8053-d09e9fe5ce71")
 		(sheetname "Root")
 		(sheetfile "controller.kicad_sch")
-		(attr through_hole)
+		(attr through_hole dnp)
 		(fp_rect
 			(start -2.5 -6.275)
 			(end 2.5 6.275)
@@ -2262,6 +2262,19 @@
 				)
 			)
 		)
+		(property "LCSC" "C5340120"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d507ba8f-246b-4536-a1e9-cc164aa0e9f6")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/1f5ec749-c55b-4504-9ce9-831e8822adf5")
 		(sheetname "Root")
 		(sheetfile "controller.kicad_sch")
@@ -2570,6 +2583,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C2761795"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "be3af30f-9f0f-4e3f-ab32-81e99b881464")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -4117,6 +4143,19 @@
 				)
 			)
 		)
+		(property "LCSC" "C319133"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "87d05b61-ed0e-409b-9233-2549269a0a9e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "BarrelJack*")
 		(path "/a36402f1-4e64-4942-a169-c414e21b85b8")
 		(sheetname "Root")
@@ -4427,7 +4466,7 @@
 			(size 3 2)
 			(layers "F.Cu" "F.Paste" "F.Mask")
 			(net 11 "unconnected-(J3-Pad3)")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "7601602b-d1f6-4c44-8890-78f37dd841bc")
 		)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_BarrelJack.3dshapes/BarrelJack_CLIFF_FC681465S_SMT_Horizontal.wrl"
@@ -4762,6 +4801,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C5340120"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d0384cda-d25a-4d80-beb9-c6f795696095")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -5288,7 +5340,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C53663"
+		(property "LCSC" "C36414"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5550,6 +5602,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C5340120"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "eaa9f2d3-1577-4423-b0f2-7124c3f026c1")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -6083,7 +6148,7 @@
 		(path "/0cedbf9a-c13a-4d39-b115-8cc8dd262a57")
 		(sheetname "Root")
 		(sheetfile "controller.kicad_sch")
-		(attr through_hole)
+		(attr through_hole dnp)
 		(fp_line
 			(start -1.33 1.27)
 			(end -1.33 8.95)
@@ -6375,6 +6440,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C3406"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6339c228-a551-41f7-b934-dee6cf4ca33e")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -6941,6 +7019,19 @@
 				)
 			)
 		)
+		(property "LCSC" "C1509088,C783414"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5075bfe6-87bc-454c-b0aa-4d539ad8d3e1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "TSSOP*P0.65mm*")
 		(path "/63d874cc-9ca4-408a-b438-53f05cd087b5")
 		(sheetname "Root")
@@ -7275,7 +7366,7 @@
 		(path "/01b98db0-c9b4-42ad-b5a3-573378a7d582")
 		(sheetname "Root")
 		(sheetfile "controller.kicad_sch")
-		(attr through_hole)
+		(attr through_hole dnp)
 		(fp_rect
 			(start -2.5 -5)
 			(end 2.5 5)
@@ -7917,6 +8008,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "LCSC" "C529578"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5eb9de87-fb2d-4d34-8b70-1df39118eb26")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -16148,12 +16252,6 @@
 				(xy 134.057 112.146922) (xy 134.057 112.239078) (xy 134.078147 112.318) (xy 133.465853 112.318)
 				(xy 133.487 112.239078) (xy 133.487 112.146922) (xy 133.465853 112.068) (xy 134.078147 112.068)
 			)
-		)
-	)
-	(group ""
-		(uuid "2c1fab69-1cb7-449f-a441-7a06eb28eb13")
-		(members "10ad8a08-9c75-4403-acc5-e4b36f342cf3" "880351e3-eea6-4e4d-941f-de375d4ad918"
-			"ca2c1b65-b12a-4d5e-a614-d820cc6662fa"
 		)
 	)
 )

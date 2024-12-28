@@ -10021,7 +10021,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" " C36414"
+		(property "LCSC" "C36414"
 			(at 81.28 203.2 90)
 			(effects
 				(font

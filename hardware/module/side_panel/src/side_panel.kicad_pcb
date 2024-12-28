@@ -7475,7 +7475,7 @@
 		(path "/0b5a6c7e-0e92-4af4-9853-76455a12b0c6")
 		(sheetname "Root")
 		(sheetfile "side_panel.kicad_sch")
-		(attr through_hole)
+		(attr through_hole dnp)
 		(fp_line
 			(start 1.33 1.27)
 			(end 1.33 11.49)

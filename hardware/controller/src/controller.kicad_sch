@@ -7529,7 +7529,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "01b98db0-c9b4-42ad-b5a3-573378a7d582")
 		(property "Reference" "J4"
@@ -7804,7 +7804,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "0cedbf9a-c13a-4d39-b115-8cc8dd262a57")
 		(property "Reference" "J2"
@@ -8149,6 +8149,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C5340120"
+			(at 139.7 146.05 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "61eb6618-eef3-47a9-a243-a739707bf502")
 		)
@@ -8308,6 +8317,15 @@
 			)
 		)
 		(property "Description" "RGB LED with integrated controller"
+			(at 34.29 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C2761795"
 			(at 34.29 148.59 0)
 			(effects
 				(font
@@ -8794,6 +8812,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C529578"
+			(at 48.26 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "25"
 			(uuid "23629a3d-94c0-434e-b1bd-aae3314fd5a0")
 		)
@@ -9030,6 +9057,15 @@
 			)
 		)
 		(property "Description" "Push button switch, generic, two pins"
+			(at 161.29 146.05 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C5340120"
 			(at 161.29 146.05 0)
 			(effects
 				(font
@@ -9825,6 +9861,15 @@
 				(hide yes)
 			)
 		)
+		(property "LCSC" "C1509088,C783414"
+			(at 106.68 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "4"
 			(uuid "9e34ada3-a6c4-433a-8f18-13875ceef4fa")
 		)
@@ -9976,7 +10021,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C53663"
+		(property "LCSC" " C36414"
 			(at 81.28 203.2 90)
 			(effects
 				(font
@@ -10045,6 +10090,15 @@
 			)
 		)
 		(property "Description" "Push button switch, generic, two pins"
+			(at 184.15 146.05 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C5340120"
 			(at 184.15 146.05 0)
 			(effects
 				(font
@@ -10538,7 +10592,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "7d10f579-e2cc-4f82-8053-d09e9fe5ce71")
 		(property "Reference" "J5"
@@ -10797,6 +10851,15 @@
 			)
 		)
 		(property "Description" "Generic connector, double row, 02x08, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 163.83 50.8 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C3406"
 			(at 163.83 50.8 0)
 			(effects
 				(font
@@ -11470,6 +11533,15 @@
 			)
 		)
 		(property "Description" "DC Barrel Jack with an internal switch"
+			(at 31.75 181.61 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C319133"
 			(at 31.75 181.61 0)
 			(effects
 				(font

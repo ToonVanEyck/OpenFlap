@@ -58,7 +58,10 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "unresolved_variable|113007200|280102200||",
+        "unresolved_variable|91007200|264002200||"
+      ],
       "meta": {
         "version": 2
       },

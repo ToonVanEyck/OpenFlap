@@ -10,6 +10,7 @@ RUN apt update && apt install -y \
     figlet \
     ssh \
     less \
+    bash-completion \
     sudo
 
 # Install git-lfs

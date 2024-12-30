@@ -4,6 +4,9 @@ kibot:
 globals:
   restore_project: true
   time_reformat: false
+  filters:
+    - filter: Ignore missing KiCad 3D models, not in docker images
+      number: 98
 
 preflight:
   check_zone_fills: true
@@ -34,14 +37,14 @@ outputs:
     comment: "Top layer view"
     type: pcbdraw
     options:
-      format: jpg
+      format: png
       dpi: 300
 
   - name: board_bottom
     comment: Bottom layer view
     type: pcbdraw
     options:
-      format: jpg
+      format: png
       dpi: 300
       bottom: true
 
@@ -129,3 +132,16 @@ outputs:
       bom_view: left-right
       layer_view: FB
       dark_mode : true
+
+  - name: render
+    comment: 3D Render
+    type: blender_export
+    options:
+      render_options:
+        auto_crop : true
+        transparent_background: true
+        samples: 20
+      point_of_view:
+        rotate_x: 30
+      outputs:
+        - type: render

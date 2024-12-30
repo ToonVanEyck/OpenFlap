@@ -41,6 +41,11 @@ for name in "${!modules[@]}"; do
     kibot -c $(realpath $HW_SOURCE_DIR/$path/*.kibot.yaml) -e $(realpath $HW_SOURCE_DIR/$path/*.kicad_sch) -b $(realpath $HW_SOURCE_DIR/$path/*.kicad_pcb) -d $HW_BUILD_DIR/$(basename $(dirname $path))
     if [[ $? -ne 0 ]]; then
         all_success=false
+    else
+        # Copy the generated files to the source directory
+        cp $HW_BUILD_DIR/$(basename $(dirname $path))/*.png $HW_SOURCE_DIR/$path/../
+        cp $HW_BUILD_DIR/$(basename $(dirname $path))/*.pdf $HW_SOURCE_DIR/$path/../
+        cp $HW_BUILD_DIR/$(basename $(dirname $path))/*ibom.html $HW_SOURCE_DIR/$path/../
     fi
 done
 

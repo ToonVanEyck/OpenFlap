@@ -6,8 +6,8 @@
 	(paper "A4" portrait)
 	(title_block
 		(title "Top Connector")
-		(date "2024-07-24")
-		(rev "2.0.1")
+		(date "${DATE}")
+		(rev "2.0.2")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")

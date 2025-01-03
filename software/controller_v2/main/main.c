@@ -12,7 +12,8 @@
 // #include "module_http_api.h"
 #include "display.h"
 #include "networking.h"
-// #include "webserver.h"
+#include "oled_disp.h"
+#include "webserver.h"
 
 #define TAG "MAIN"
 
@@ -25,13 +26,15 @@ void app_main(void)
 
     ESP_LOGI(TAG, "Starting OpenFlap controller!");
 
+    oled_disp_init();
+
     /* Connect to a newtork. */
     networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;
     ESP_ERROR_CHECK(networking_setup(&network_config));
     networking_wait_for_connection(10000);
     ESP_LOGI(TAG, "Connected to network!");
 
-    /* Initialize the display. */
+    /* Initialize the OpenFlap display. */
     display_t display;
     ESP_ERROR_CHECK(display_init(&display));
     ESP_LOGI(TAG, "Display initialized!");
@@ -40,17 +43,17 @@ void app_main(void)
     chain_comm_ctx_t chain_comm_ctx;
     ESP_ERROR_CHECK(chain_comm_init(&chain_comm_ctx, &display));
 
-    // /* Start the web server. */
-    // webserver_ctx_t webserver_ctx;
-    // ESP_ERROR_CHECK(webserver_init(&webserver_ctx));
-    // ESP_LOGI(TAG, "Webserver started!");
+    /* Start the web server. */
+    webserver_ctx_t webserver_ctx;
+    ESP_ERROR_CHECK(webserver_init(&webserver_ctx));
+    ESP_LOGI(TAG, "Webserver started!");
 
     // /* Initialize http module api. */
     // module_http_api_init(&webserver_ctx, &display);
     // ESP_LOGI(TAG, "Module api endpoint started!");
 
-    while (1) {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        ESP_LOGI(TAG, "Hello world!");
-    }
+    // while (1) {
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //     ESP_LOGI(TAG, "Hello world!");
+    // }
 }

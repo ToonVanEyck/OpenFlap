@@ -7,7 +7,16 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "idf.py -B ${workspaceFolder}/build/controller build -C ${workspaceFolder}/software/controller_v2",
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Monitor",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 monitor",
             "problemMatcher": []
         },
         {
@@ -16,7 +25,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "idf.py -B ${workspaceFolder}/build/controller flash monitor -C ${workspaceFolder}/software/controller_v2",
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 flash monitor",
             "problemMatcher": []
         },
         {

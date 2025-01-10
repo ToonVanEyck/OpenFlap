@@ -1,58 +1,32 @@
-#include "cJSON.h"
 #include "esp_err.h"
 #include "esp_system.h"
 #include "memory_checks.h"
 #include "module.h"
 #include "networking.h"
-#include "properties.h"
 #include "unity.h"
 #include "webserver.h"
 
 #define TAG "MODULE_TEST"
 
-#define TEST_JSON_VALID_PROPERTY                                                                                       \
-    "{"                                                                                                                \
-    "   \"module\": 1,"                                                                                                \
-    "   \"calibration\": \"dummy\""                                                                                    \
-    "}"
-
-#define TEST_JSON_INVALID_PROPERTY                                                                                     \
-    "{"                                                                                                                \
-    "   \"module\": 1,"                                                                                                \
-    "   \"unsupported_property\": \"value\""                                                                           \
-    "}"
-
 /* TODO mock the property handlers? */
 
-TEST_CASE("Test set module properties from json, valid", "[module][qemu]")
+TEST_CASE("Test module_character_set_index_of_character", "[module][qemu]")
 {
-    module_t module;
-    module.module_info = MODULE_INFO(MODULE_TYPE_SPLITFLAP, 0);
-    cJSON *test_json   = cJSON_Parse(TEST_JSON_VALID_PROPERTY);
-    TEST_ASSERT_NOT_NULL(test_json);
-    uint8_t ret = module_properties_set_from_json(&module, test_json);
-    TEST_ASSERT_EQUAL(1, ret);
-    cJSON_Delete(test_json);
-}
-
-TEST_CASE("Test set module properties from json, not suported by module type", "[module][qemu]")
-{
-    module_t module;
-    module.module_info = MODULE_INFO(MODULE_TYPE_UNDEFINED, 0);
-    cJSON *test_json   = cJSON_Parse(TEST_JSON_VALID_PROPERTY);
-    TEST_ASSERT_NOT_NULL(test_json);
-    uint8_t ret = module_properties_set_from_json(&module, test_json);
-    TEST_ASSERT_EQUAL(0, ret);
-    cJSON_Delete(test_json);
-}
-
-TEST_CASE("Test set module properties from json, not suported by controller", "[module][qemu]")
-{
-    module_t module;
-    module.module_info = MODULE_INFO(MODULE_TYPE_UNDEFINED, 0);
-    cJSON *test_json   = cJSON_Parse(TEST_JSON_INVALID_PROPERTY);
-    TEST_ASSERT_NOT_NULL(test_json);
-    uint8_t ret = module_properties_set_from_json(&module, test_json);
-    TEST_ASSERT_EQUAL(0, ret);
-    cJSON_Delete(test_json);
+    module_t module = {
+        .character_set =
+            {
+                .size          = 3,
+                .character_set = (uint8_t *)((char *) {"A\0\0\0B\0\0\0€\0"}),
+            },
+    };
+    uint8_t index;
+    esp_err_t err;
+    err = module_character_set_index_of_character(&module, &index, "A");
+    TEST_ASSERT_EQUAL(ESP_OK, err);
+    TEST_ASSERT_EQUAL(0, index);
+    err = module_character_set_index_of_character(&module, &index, "€");
+    TEST_ASSERT_EQUAL(ESP_OK, err);
+    TEST_ASSERT_EQUAL(2, index);
+    err = module_character_set_index_of_character(&module, &index, "!");
+    TEST_ASSERT_EQUAL(ESP_FAIL, err);
 }

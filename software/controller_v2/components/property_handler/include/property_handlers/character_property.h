@@ -22,7 +22,7 @@ static inline esp_err_t character_from_json(module_t *module, const cJSON *json)
 
     ESP_RETURN_ON_FALSE(cJSON_IsString(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected a character");
 
-    ESP_RETURN_ON_ERROR(module_character_set_index_of_character(character_index, module, json->valuestring),
+    ESP_RETURN_ON_ERROR(module_character_set_index_of_character(module, character_index, json->valuestring),
                         PROPERTY_TAG, "Character %s not in character set", json->valuestring);
 
     return ESP_OK;

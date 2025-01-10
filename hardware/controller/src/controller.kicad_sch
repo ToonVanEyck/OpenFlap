@@ -7,7 +7,7 @@
 	(title_block
 		(title "Controller")
 		(date "${DATE}")
-		(rev "2.0.3 DEV")
+		(rev "2.0.4 DEV")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
@@ -5079,6 +5079,12 @@
 		(uuid "ddab5e6d-6cc6-4ee5-9fdc-e6aa5ef0f31c")
 	)
 	(junction
+		(at 43.18 161.29)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "e8076437-bcc4-4043-a6c3-214531d5fbf2")
+	)
+	(junction
 		(at 184.15 180.34)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -5147,10 +5153,6 @@
 	(no_connect
 		(at 100.33 78.74)
 		(uuid "317c987b-4963-42e5-b746-4b6d4d52e4f0")
-	)
-	(no_connect
-		(at 39.37 158.75)
-		(uuid "47cac1cc-6db6-46ff-a182-4cbc965ddfd3")
 	)
 	(no_connect
 		(at 100.33 68.58)
@@ -5453,6 +5455,16 @@
 			(type default)
 		)
 		(uuid "21b197c2-113c-45d2-95e5-b239eaafaab8")
+	)
+	(wire
+		(pts
+			(xy 43.18 158.75) (xy 43.18 161.29)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "228c17a1-af3b-44df-b9db-785f3703793b")
 	)
 	(wire
 		(pts
@@ -7033,6 +7045,16 @@
 			(type default)
 		)
 		(uuid "fa29db57-adaa-4ad3-a6bd-fb2aeeb31d0c")
+	)
+	(wire
+		(pts
+			(xy 39.37 158.75) (xy 43.18 158.75)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fa4c2d16-9b66-43ef-bdd3-44b73dc4e141")
 	)
 	(wire
 		(pts
@@ -11383,9 +11405,9 @@
 		(at 111.76 128.27 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "8c391b34-b592-42c2-89b6-e0db671fb5da")
 		(property "Reference" "R3"
 			(at 108.204 129.54 0)
@@ -11812,9 +11834,9 @@
 		(at 104.14 128.27 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "9e7e1f4f-382c-4ff3-ad60-4ecda2ee4c6a")
 		(property "Reference" "R2"
 			(at 100.584 129.54 0)

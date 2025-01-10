@@ -165,6 +165,15 @@
             "problemMatcher": []
         },
         {
+            "label": "Component: Flash [target]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "./software/controller_v2/bld_util.py flash -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "problemMatcher": []
+        },
+        {
             "label": "Component: Monitor [target]",
             "type": "shell",
             "options": {
@@ -195,6 +204,15 @@
             "dependsOrder": "sequence",
             "dependsOn": [
                 "Component: Build [target]",
+                "Component: Monitor [target]"
+            ]
+        },
+        {
+            "label": "Component: Build, Flash & Monitor [target]",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Component: Build [target]",
+                "Component: Flash [target]",
                 "Component: Monitor [target]"
             ]
         },

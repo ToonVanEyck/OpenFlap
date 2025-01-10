@@ -1,5 +1,10 @@
-idf_component_register(SRCS "main.c"
-                    INCLUDE_DIRS ".")
+idf_component_register(
+    SRCS 
+        "main.c"
+        "utils.c" 
+    INCLUDE_DIRS 
+        "include"
+)
 
 # Check if QEMU is defined and add the define to the compiler flags
 if(QEMU)

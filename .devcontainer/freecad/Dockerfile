@@ -30,7 +30,7 @@ RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
 # Get FreeCAD AppImage
 WORKDIR /tmp
 RUN apt install -y qtbase5-dev
-RUN pip install pyside2==5.15.2.1
+RUN pip install pyside2==5.15.2.1 colorama
 RUN wget https://github.com/FreeCAD/FreeCAD/releases/download/1.0rc2/FreeCAD_1.0.0RC2-conda-Linux-x86_64-py311.AppImage
 RUN chmod +x FreeCAD*.AppImage && ./FreeCAD*.AppImage --appimage-extract
 RUN mv squashfs-root /opt/FreeCAD && rm -rf FreeCAD*.AppImage
@@ -45,6 +45,7 @@ USER ${NEW_USER}
 COPY --chown=${NEW_USER} .bashrc_devcontainer_addons ${HOME}/.bashrc_devcontainer_addons
 
 # Install RedHatMono font
+RUN mkdir -p ${HOME}/.fonts
 RUN wget https://github.com/RedHatOfficial/RedHatFont/raw/4.0.3/fonts/mono/RedHatMono.ttf -P ${HOME}/.fonts
 
 # Don't display message about how to use sudo...

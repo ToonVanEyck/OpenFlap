@@ -26,6 +26,8 @@ static esp_err_t networking_ethernet_setup(const networking_config_t *config);
 
 static void wifi_re_connect(uint8_t *retry_count);
 
+//---------------------------------------------------------------------------------------------------------------------
+
 esp_err_t networking_setup(const networking_config_t *config)
 {
     /* Validate that networking has not been configured yet. */
@@ -57,6 +59,8 @@ esp_err_t networking_setup(const networking_config_t *config)
     return ESP_OK;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+
 esp_err_t networking_wait_for_connection(uint32_t timeout_ms)
 {
     EventBits_t bits = xEventGroupWaitBits(networking_events, WIFI_CONNECTED_BIT | ETH_CONNECTED_BIT, pdFALSE, pdFALSE,
@@ -67,6 +71,8 @@ esp_err_t networking_wait_for_connection(uint32_t timeout_ms)
         return ESP_ERR_TIMEOUT;
     }
 }
+
+//---------------------------------------------------------------------------------------------------------------------
 
 static void networking_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -130,6 +136,8 @@ static void networking_event_handler(void *arg, esp_event_base_t event_base, int
         }
     }
 }
+
+//---------------------------------------------------------------------------------------------------------------------
 
 static esp_err_t networking_wifi_setup(const networking_config_t *config)
 {
@@ -210,6 +218,8 @@ static esp_err_t networking_wifi_setup(const networking_config_t *config)
     return ESP_OK;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+
 static esp_err_t networking_ethernet_setup(const networking_config_t *config)
 {
     eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
@@ -244,6 +254,8 @@ static esp_err_t networking_ethernet_setup(const networking_config_t *config)
     ESP_RETURN_ON_ERROR(esp_eth_start(eth_handle), TAG, "Failed to start ethernet.");
     return ESP_OK;
 }
+
+//---------------------------------------------------------------------------------------------------------------------
 
 static void wifi_re_connect(uint8_t *retry_count)
 {

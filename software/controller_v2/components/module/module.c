@@ -5,7 +5,7 @@
 
 #define TAG "MODULE"
 
-esp_err_t module_character_set_index_of_character(uint8_t *index, module_t *module, const char *character)
+esp_err_t module_character_set_index_of_character(module_t *module, uint8_t *index, const char *character)
 {
     ESP_RETURN_ON_FALSE(index != NULL, ESP_ERR_INVALID_ARG, TAG, "Index is NULL");
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");

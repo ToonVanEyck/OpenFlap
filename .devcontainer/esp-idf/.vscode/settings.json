@@ -20,6 +20,15 @@
                 ]
             },
             {
+                "name": "🧯 Run Test",
+                "useVsCodeApi": true,
+                "command": "workbench.action.tasks.runTask",
+                "tooltip": "Flash and monitor a esp-idf openflap component test.",
+                "args": [
+                    "Component: Build, Flash & Monitor [target]"
+                ]
+            },
+            {
                 "name": "🖥️ Monitor",
                 "useVsCodeApi": true,
                 "command": "workbench.action.tasks.runTask",

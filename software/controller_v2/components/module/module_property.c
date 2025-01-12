@@ -20,7 +20,7 @@
 //         case PROPERTY_COMMAND:
 //             return &module->command;
 //         default:
-//             switch (module->module_info.field.type) {
+//             switch (module->module_info.type) {
 //                 case MODULE_TYPE_SPLITFLAP:
 //                     return module_splitflap_property_get_by_id(&module->splitflap, property_id);
 //                 default:

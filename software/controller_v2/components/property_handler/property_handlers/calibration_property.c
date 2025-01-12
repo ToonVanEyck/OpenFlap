@@ -16,7 +16,7 @@ static esp_err_t calibration_from_json(module_t *module, const cJSON *json)
     assert(module != NULL);
     assert(json != NULL);
 
-    ESP_RETURN_ON_FALSE(module->module_info.field.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module->module_info.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Module type is not splitflap");
     calibration_property_t *calibration = &module->splitflap.calibration;
 
@@ -46,7 +46,7 @@ static esp_err_t calibration_to_json(cJSON **json, const module_t *module)
     assert(json != NULL);
     assert(module != NULL);
 
-    ESP_RETURN_ON_FALSE(module->module_info.field.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module->module_info.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Module type is not splitflap");
     const calibration_property_t *calibration = &module->splitflap.calibration;
 
@@ -69,7 +69,7 @@ static esp_err_t calibration_from_binary(module_t *module, const uint8_t *bin, u
     assert(module != NULL);
     assert(bin != NULL);
 
-    ESP_RETURN_ON_FALSE(module->module_info.field.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module->module_info.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Module type is not splitflap");
     calibration_property_t *calibration = &module->splitflap.calibration;
 
@@ -93,7 +93,7 @@ static esp_err_t calibration_to_binary(uint8_t **bin, uint16_t *bin_size, const 
     assert(bin_size != NULL);
     assert(module != NULL);
 
-    ESP_RETURN_ON_FALSE(module->module_info.field.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module->module_info.type == MODULE_TYPE_SPLITFLAP, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Module type is not splitflap");
     const calibration_property_t *calibration = &module->splitflap.calibration;
 
@@ -120,9 +120,9 @@ static bool calibration_compare(const module_t *module_a, const module_t *module
     assert(module_a != NULL);
     assert(module_b != NULL);
 
-    ESP_RETURN_ON_FALSE(module_a->module_info.field.type == MODULE_TYPE_SPLITFLAP, false, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module_a->module_info.type == MODULE_TYPE_SPLITFLAP, false, PROPERTY_TAG,
                         "Module a type is not splitflap");
-    ESP_RETURN_ON_FALSE(module_b->module_info.field.type == MODULE_TYPE_SPLITFLAP, false, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module_b->module_info.type == MODULE_TYPE_SPLITFLAP, false, PROPERTY_TAG,
                         "Module b type is not splitflap");
 
     const calibration_property_t *calibration_a = &module_a->splitflap.calibration;
@@ -138,7 +138,7 @@ static bool calibration_compare(const module_t *module_a, const module_t *module
  * The calibration property is used to store the calibration data for the modules. The calibration data is used to
  * adjust the offset between the character set and the encoder postion.
  */
-__attribute__((used, section(".property_handlers"))) const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
+const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
     .id          = PROPERTY_CALIBRATION,
     .from_json   = calibration_from_json,
     .to_json     = calibration_to_json,

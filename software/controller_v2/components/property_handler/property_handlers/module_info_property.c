@@ -17,8 +17,8 @@ static esp_err_t module_info_to_json(cJSON **json, const module_t *module)
 
     const module_info_property_t *module_info = &module->module_info;
 
-    cJSON_AddBoolToObject(*json, "column_end", module_info->field.column_end);
-    cJSON_AddStringToObject(*json, "type", chain_comm_module_type_name_get(module_info->field.type));
+    cJSON_AddBoolToObject(*json, "column_end", module_info->column_end);
+    cJSON_AddStringToObject(*json, "type", chain_comm_module_type_name_get(module_info->type));
 
     return ESP_OK;
 }
@@ -50,7 +50,7 @@ static esp_err_t module_info_from_binary(module_t *module, const uint8_t *bin, u
  * The module_info property is used to send module_infos to the modules. Commands are executed in the modules and do not
  * store any data, as such the property is write-only.
  */
-__attribute__((section(".property_handlers"))) const property_handler_t PROPERTY_HANDLER_MODULE_INFO = {
+const property_handler_t PROPERTY_HANDLER_MODULE_INFO = {
     .id          = PROPERTY_MODULE_INFO,
     .to_json     = module_info_to_json,
     .from_binary = module_info_from_binary,

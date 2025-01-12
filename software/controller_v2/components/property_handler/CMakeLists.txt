@@ -7,7 +7,6 @@ idf_component_register(
         "property_handlers/command_property.c"
         "property_handlers/module_info_property.c"
     INCLUDE_DIRS "include"
-    LDFRAGMENTS  "property_handler.lf"
     REQUIRES json chain_comm_abi module)
 
     

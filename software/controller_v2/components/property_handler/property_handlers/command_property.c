@@ -66,11 +66,10 @@ static esp_err_t command_to_binary(uint8_t **bin, uint16_t *bin_size, const modu
  * The command property is used to send commands to the modules. Commands are executed in the modules and do not store
  * any data, as such the property is write-only.
  */
-static const property_handler_t PROPERTY_HANDLER_COMMAND = {
+const property_handler_t PROPERTY_HANDLER_COMMAND = {
     .id        = PROPERTY_COMMAND,
     .from_json = command_from_json,
     .to_binary = command_to_binary,
 };
 
-PROPERTY_HANDLER_REGISTER(PROPERTY_HANDLER_COMMAND);
 #undef PROPERTY_TAG

@@ -87,12 +87,12 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
     ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
 
     const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for property: %s",
+    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for [%s] property.",
                         property_name);
     ESP_RETURN_ON_FALSE(property_handler->from_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
-                        "Property is not readable: %s", property_name);
+                        "[%s] Property is not readable.", property_name);
 
-    ESP_LOGI(TAG, "Reading all property %s", property_name);
+    ESP_LOGI(TAG, "Reading all [%s] property", property_name);
 
     /* Initiate the message. */
     chain_comm_msg_header_t tx_header = {.action = property_readAll, .property = property_id};
@@ -172,15 +172,15 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
     ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
 
     const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for property: %s",
+    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for [%s] property.",
                         property_name);
-    ESP_RETURN_ON_FALSE(property_handler->to_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "Property is not writable: %s",
-                        property_name);
+    ESP_RETURN_ON_FALSE(property_handler->to_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
+                        "[%s] Property is not writable.", property_name);
 
     module_t *module = display_module_get(display, 0);
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "No modules in display");
 
-    ESP_LOGI(TAG, "Writing all property %s", property_name);
+    ESP_LOGI(TAG, "Writing all [%s] property", property_name);
 
     /* Flush uart RX buffer. */
     uart_flush_input(UART_NUM);
@@ -215,44 +215,44 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
 
     esp_err_t rx_err = ESP_OK;
     /* Receive the header */
-    chain_comm_msg_header_t rx_header = {0};
-    if (uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header))) !=
-        sizeof(rx_header)) {
-        ESP_LOGE(TAG, "Failed to receive header");
-        rx_err = ESP_FAIL;
-    }
-    if (rx_header.raw != tx_header.raw) {
-        ESP_LOGE(TAG, "Header mismatch");
-        rx_err = ESP_FAIL;
-    }
+    // chain_comm_msg_header_t rx_header = {0};
+    // if (uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header))) !=
+    //     sizeof(rx_header)) {
+    //     ESP_LOGE(TAG, "Failed to receive header");
+    //     rx_err = ESP_FAIL;
+    // }
+    // if (rx_header.raw != tx_header.raw) {
+    //     ESP_LOGE(TAG, "Header mismatch");
+    //     rx_err = ESP_FAIL;
+    // }
 
-    /* Receive dynamic size */
-    if (chain_comm_write_attr->dynamic_property_size) {
-        uint16_t rx_property_size = 0;
-        if (uart_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
-                            RX_BYTES_TIMEOUT(sizeof(rx_property_size))) != sizeof(rx_property_size)) {
-            ESP_LOGE(TAG, "Failed to receive property size header");
-            rx_err = ESP_FAIL;
-        }
-        if (rx_property_size != property_size) {
-            ESP_LOGE(TAG, "Property size mismatch");
-            rx_err = ESP_FAIL;
-        }
-    }
+    // /* Receive dynamic size */
+    // if (chain_comm_write_attr->dynamic_property_size) {
+    //     uint16_t rx_property_size = 0;
+    //     if (uart_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
+    //                         RX_BYTES_TIMEOUT(sizeof(rx_property_size))) != sizeof(rx_property_size)) {
+    //         ESP_LOGE(TAG, "Failed to receive property size header");
+    //         rx_err = ESP_FAIL;
+    //     }
+    //     if (rx_property_size != property_size) {
+    //         ESP_LOGE(TAG, "Property size mismatch");
+    //         rx_err = ESP_FAIL;
+    //     }
+    // }
 
-    /* Receive the data */
-    uint8_t *rx_buff = malloc(property_size);
-    if (rx_buff == NULL) {
-        ESP_LOGE(TAG, "Memory allocation failed");
-        rx_err = ESP_ERR_NO_MEM;
-    }
-    if (uart_read_bytes(UART_NUM, &rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) != property_size) {
-        ESP_LOGE(TAG, "Failed to receive data");
-        rx_err = ESP_FAIL;
-    }
+    // /* Receive the data */
+    // uint8_t *rx_buff = malloc(property_size);
+    // if (rx_buff == NULL) {
+    //     ESP_LOGE(TAG, "Memory allocation failed");
+    //     rx_err = ESP_ERR_NO_MEM;
+    // }
+    // if (uart_read_bytes(UART_NUM, &rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) != property_size) {
+    //     ESP_LOGE(TAG, "Failed to receive data");
+    //     rx_err = ESP_FAIL;
+    // }
 
     free(property_data);
-    free(rx_buff);
+    // free(rx_buff);
     return rx_err;
 }
 

@@ -145,8 +145,7 @@ static esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_size, cons
 
     *bin_size = character_set->size * 4;
 
-    *bin = malloc(sizeof(*bin_size));
-    ESP_LOGI(PROPERTY_TAG, "%p", *bin);
+    *bin = malloc(*bin_size);
     ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
     /* Copy the character set to the binary array. */
@@ -185,7 +184,7 @@ static bool character_set_compare(const module_t *module_a, const module_t *modu
  *
  * The character_set property is used to store the character_set data for the modules.
  */
-__attribute__((section(".property_handlers"))) const property_handler_t PROPERTY_HANDLER_CHARACTER_SET = {
+const property_handler_t PROPERTY_HANDLER_CHARACTER_SET = {
     .id          = PROPERTY_CHARACTER_SET,
     .from_json   = character_set_from_json,
     .to_json     = character_set_to_json,

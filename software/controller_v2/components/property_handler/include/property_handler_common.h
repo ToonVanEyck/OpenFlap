@@ -25,7 +25,3 @@ typedef struct {
     property_handler_compare_cb compare;
 } property_handler_t;
 
-/* Macro to register a handler into a custom linker section. */
-#define PROPERTY_HANDLER_REGISTER(handler)                                                                             \
-    static const property_handler_t *const __handler_##handler __attribute__((used, section(".property_handlers"))) =  \
-        &handler;

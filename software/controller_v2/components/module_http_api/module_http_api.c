@@ -181,7 +181,7 @@ esp_err_t module_http_api_post_handler(httpd_req_t *req)
             // module_t *module = module_property_get_by_id(module, property_handler->id);
             // if (property == NULL) {
             //     ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %d.", property_json->string,
-            //              module->module_info.field.type);
+            //              module->module_info.type);
             //     continue;
             // }
 

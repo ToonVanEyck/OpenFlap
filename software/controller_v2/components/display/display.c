@@ -208,8 +208,6 @@ void display_property_promote_write_seq_to_write_all(display_t *display)
             continue;
         }
 
-        ESP_LOGW(TAG, "Checking property %d : %s", property_id, chain_comm_property_name_by_id(property_id));
-
         /* Get the serialized data for the first module. */
         bool all_modules_are_same    = true;
         module_t *module_a           = display_module_get(display, 0);
@@ -224,6 +222,7 @@ void display_property_promote_write_seq_to_write_all(display_t *display)
 
         /* If all modules are the same and the property has been updated, promote the write all. */
         if (all_modules_are_same && module_property_updated) {
+            ESP_LOGI(TAG, "Promoting [%s] property to write all", chain_comm_property_name_by_id(property_id));
             display_property_indicate_desynchronized(display, property_id, PROPERTY_SYNC_METHOD_WRITE);
             for (uint16_t i = 0; i < display_size_get(display); i++) {
                 module_a = display_module_get(display, i);

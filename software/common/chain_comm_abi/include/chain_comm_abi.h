@@ -109,7 +109,7 @@ typedef struct __attribute__((__packed__)) {
             bool column_end : 1;    /**< Indicates that this module is the last one in a column. */
             module_type_t type : 4; /**< The type of the module. */
             uint8_t reserved : 3;   /**< Reserved for future use. */
-        } field;
+        };
         uint8_t raw; /**< The raw value of the module info. */
     };
 } module_info_property_t;

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "esp_check.h"
 #include "property_handler_common.h"
 
@@ -15,7 +13,7 @@
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t character_set_from_json(module_t *module, const cJSON *json)
+static esp_err_t character_set_from_json(module_t *module, const cJSON *json)
 {
     assert(module != NULL);
     assert(json != NULL);
@@ -64,7 +62,7 @@ static inline esp_err_t character_set_from_json(module_t *module, const cJSON *j
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t character_set_to_json(cJSON **json, const module_t *module)
+static esp_err_t character_set_to_json(cJSON **json, const module_t *module)
 {
     assert(json != NULL);
     assert(module != NULL);
@@ -94,7 +92,7 @@ static inline esp_err_t character_set_to_json(cJSON **json, const module_t *modu
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t character_set_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
+static esp_err_t character_set_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
 {
     assert(module != NULL);
     assert(bin != NULL);
@@ -132,7 +130,7 @@ static inline esp_err_t character_set_from_binary(module_t *module, const uint8_
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
+static esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
     assert(bin_size != NULL);
@@ -148,6 +146,7 @@ static inline esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_siz
     *bin_size = character_set->size * 4;
 
     *bin = malloc(sizeof(*bin_size));
+    ESP_LOGI(PROPERTY_TAG, "%p", *bin);
     ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
     /* Copy the character set to the binary array. */
@@ -157,16 +156,42 @@ static inline esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_siz
 }
 
 /**
+ * \brief Compare the properties of two modules.
+ *
+ * \param[in] module_a The first module to compare.
+ * \param[in] module_b The second module to compare.
+ *
+ * \return true if the properties are the same, false otherwise.
+ */
+static bool character_set_compare(const module_t *module_a, const module_t *module_b)
+{
+    assert(module_a != NULL);
+    assert(module_b != NULL);
+
+    const character_set_property_t *character_set_a = &module_a->character_set;
+    const character_set_property_t *character_set_b = &module_b->character_set;
+
+    /* Check if the sizes are the same. */
+    if (character_set_a->size != character_set_b->size) {
+        return false;
+    }
+
+    /* Compare the character sets. */
+    return memcmp(character_set_a->character_set, character_set_b->character_set, character_set_a->size * 4) == 0;
+}
+
+/**
  * The character_set property handler.
  *
  * The character_set property is used to store the character_set data for the modules.
  */
-static const property_handler_t PROPERTY_HANDLER_CHARACTER_SET = {
+__attribute__((section(".property_handlers"))) const property_handler_t PROPERTY_HANDLER_CHARACTER_SET = {
     .id          = PROPERTY_CHARACTER_SET,
     .from_json   = character_set_from_json,
     .to_json     = character_set_to_json,
     .from_binary = character_set_from_binary,
     .to_binary   = character_set_to_binary,
+    .compare     = character_set_compare,
 };
 
 #undef PROPERTY_TAG

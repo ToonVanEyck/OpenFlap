@@ -1,0 +1,13 @@
+[sections:property_handlers]
+entries:
+    .property_handlers+
+
+[scheme:property_handlers]
+entries:
+    property_handlers -> dram0_data
+
+[mapping:property_handlers]
+archive: libproperty_handler.a
+entries:
+    * (property_handlers);
+        property_handlers -> dram0_data KEEP() SURROUND(property_handlers)

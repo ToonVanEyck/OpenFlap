@@ -1,17 +1,16 @@
 #include "property_handler.h"
 #include <string.h>
 
-static const property_handler_t property_handlers[] = {
-    PROPERTY_HANDLER_CALIBRATION,   PROPERTY_HANDLER_COMMAND,   PROPERTY_HANDLER_MODULE_INFO,
-    PROPERTY_HANDLER_CHARACTER_SET, PROPERTY_HANDLER_CHARACTER,
-};
+/* Declare an external symbol for the handlers array. */
+// extern const property_handler_t _property_handlers_start[];
+// extern const property_handler_t _property_handlers_end[];
 
 const property_handler_t *property_handler_get_by_id(property_id_t id)
 {
-    for (uint8_t i = 0; i < sizeof(property_handlers) / sizeof(property_handlers[0]); i++) {
-        if (property_handlers[i].id == id) {
-            return &property_handlers[i];
-        }
-    }
-    return NULL;
+    // for (const property_handler_t *handler = _property_handlers_start; handler < _property_handlers_end; ++handler) {
+    //     if (handler->id == id) {
+    //         return handler;
+    //     }
+    // }
+    return NULL; // Not found
 }

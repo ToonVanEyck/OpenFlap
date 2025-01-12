@@ -1,5 +1,3 @@
-#pragma once
-
 #include "esp_check.h"
 #include "property_handler_common.h"
 
@@ -13,7 +11,7 @@
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t calibration_from_json(module_t *module, const cJSON *json)
+static esp_err_t calibration_from_json(module_t *module, const cJSON *json)
 {
     assert(module != NULL);
     assert(json != NULL);
@@ -43,7 +41,7 @@ static inline esp_err_t calibration_from_json(module_t *module, const cJSON *jso
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t calibration_to_json(cJSON **json, const module_t *module)
+static esp_err_t calibration_to_json(cJSON **json, const module_t *module)
 {
     assert(json != NULL);
     assert(module != NULL);
@@ -66,7 +64,7 @@ static inline esp_err_t calibration_to_json(cJSON **json, const module_t *module
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t calibration_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
+static esp_err_t calibration_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
 {
     assert(module != NULL);
     assert(bin != NULL);
@@ -89,7 +87,7 @@ static inline esp_err_t calibration_from_binary(module_t *module, const uint8_t 
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t calibration_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
+static esp_err_t calibration_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
     assert(bin_size != NULL);
@@ -110,17 +108,43 @@ static inline esp_err_t calibration_to_binary(uint8_t **bin, uint16_t *bin_size,
 }
 
 /**
+ * \brief Compare the properties of two modules.
+ *
+ * \param[in] module_a The first module to compare.
+ * \param[in] module_b The second module to compare.
+ *
+ * \return true if the properties are the same, false otherwise.
+ */
+static bool calibration_compare(const module_t *module_a, const module_t *module_b)
+{
+    assert(module_a != NULL);
+    assert(module_b != NULL);
+
+    ESP_RETURN_ON_FALSE(module_a->module_info.field.type == MODULE_TYPE_SPLITFLAP, false, PROPERTY_TAG,
+                        "Module a type is not splitflap");
+    ESP_RETURN_ON_FALSE(module_b->module_info.field.type == MODULE_TYPE_SPLITFLAP, false, PROPERTY_TAG,
+                        "Module b type is not splitflap");
+
+    const calibration_property_t *calibration_a = &module_a->splitflap.calibration;
+    const calibration_property_t *calibration_b = &module_b->splitflap.calibration;
+
+    /* Compare */
+    return calibration_a->offset == calibration_b->offset;
+}
+
+/**
  * The calibration property handler.
  *
  * The calibration property is used to store the calibration data for the modules. The calibration data is used to
  * adjust the offset between the character set and the encoder postion.
  */
-static const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
+__attribute__((used, section(".property_handlers"))) const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
     .id          = PROPERTY_CALIBRATION,
     .from_json   = calibration_from_json,
     .to_json     = calibration_to_json,
     .from_binary = calibration_from_binary,
     .to_binary   = calibration_to_binary,
+    .compare     = calibration_compare,
 };
 
 #undef PROPERTY_TAG

@@ -26,10 +26,6 @@
 void app_main(void)
 
 {
-    /* Fucking enable pin for UART and Relay on old controller. I removed the flipping relay */
-    // gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
-    // gpio_set_level(GPIO_NUM_2, 1);
-
     const esp_app_desc_t app_desc = *esp_app_get_description();
     ESP_LOGI(TAG, "Starting OpenFlap controller: %s", app_desc.version);
 
@@ -38,7 +34,7 @@ void app_main(void)
     oled_disp_init(&oled_disp_ctx);
     uint8_t major, minor, patch;
     util_extract_version(app_desc.version, &major, &minor, &patch);
-    // oled_disp_home(&oled_disp_ctx, "OpenFlap", major, minor, patch);
+    oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
 
     /* Connect to a network. */
     networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;

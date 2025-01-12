@@ -12,8 +12,8 @@
 #define QEMU_RETURN(_r) ;
 #endif
 
-#define I2C_MASTER_SCL_IO      GPIO_NUM_26 /*!< GPIO number used for I2C master clock */
-#define I2C_MASTER_SDA_IO      GPIO_NUM_25 /*!< GPIO number used for I2C master data  */
+#define I2C_MASTER_SCL_IO      GPIO_NUM_33 /*!< GPIO number used for I2C master clock */
+#define I2C_MASTER_SDA_IO      GPIO_NUM_32 /*!< GPIO number used for I2C master data  */
 #define I2C_SLAVE_SSD1306_ADDR 0x3C        /*!< slave address for SSD1306 display */
 #define OLED_DISP_TASK_SIZE    2048        /*!< OLED display task stack size */
 

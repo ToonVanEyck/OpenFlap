@@ -10,8 +10,8 @@
 
 #define UART_BUF_SIZE        (1024)
 #define UART_NUM             UART_NUM_1
-#define TX_PIN               (10)
-#define RX_PIN               (9)
+#define TX_PIN               (17)
+#define RX_PIN               (16)
 #define CHAIN_COMM_TASK_SIZE 6000
 
 #define RX_BYTES_TIMEOUT(_byte_cnt) (((_byte_cnt) * 20) / portTICK_PERIOD_MS)
@@ -110,9 +110,7 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 
     /* Receive the header. */
     chain_comm_msg_header_t rx_header = {0};
-    ESP_LOGW(TAG, "timeout :%ld", RX_BYTES_TIMEOUT(sizeof(rx_header)));
     uint8_t cnt = uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header)));
-    ESP_LOGW(TAG, "cnt: %d", cnt);
     ESP_RETURN_ON_FALSE(cnt == sizeof(rx_header), ESP_FAIL, TAG, "Failed to receive header");
     ESP_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, ESP_FAIL, TAG, "Header mismatch");
 

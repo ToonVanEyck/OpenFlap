@@ -20,8 +20,8 @@ esp_err_t display_init(display_t *display)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
-    display->modules      = NULL;
-    display->module_count = 0;
+    /* Clear memory. */
+    memset(display, 0, sizeof(display_t));
 
     display->event_handle = xEventGroupCreate();
     ESP_RETURN_ON_FALSE(display->event_handle != NULL, ESP_FAIL, TAG, "Failed to create event group for display");
@@ -200,53 +200,34 @@ void display_property_promote_write_seq_to_write_all(display_t *display)
     }
 
     for (property_id_t property_id = PROPERTY_NONE + 1; property_id < PROPERTIES_MAX; property_id++) {
-        // if (property_id == PROPERTY_CHARACTER_SET) {
-        //     continue;
-        // }
-        property_id                                = PROPERTY_CHARACTER_SET;
+        /* Get the property handler. */
         const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-        /* Check if the property can be serialized. */
-        if ((property_handler == NULL) || (property_handler->to_binary == NULL)) {
+
+        /* Check if the property can be compared. */
+        if ((property_handler == NULL) || (property_handler->compare == NULL)) {
             continue;
         }
-
-        /* Get the serialized data for the first module. */
-        uint8_t *property_a_buf   = NULL;
-        uint16_t property_a_len   = 0;
-        bool all_modules_are_same = true;
-        module_t *module          = display_module_get(display, 0);
 
         ESP_LOGW(TAG, "Checking property %d : %s", property_id, chain_comm_property_name_by_id(property_id));
-        if (property_handler->to_binary(&property_a_buf, &property_a_len, module) != ESP_OK) {
-            ESP_LOGI(TAG, "Failed to serialize property %d", property_id);
-            continue;
+
+        /* Get the serialized data for the first module. */
+        bool all_modules_are_same    = true;
+        module_t *module_a           = display_module_get(display, 0);
+        bool module_property_updated = module_property_is_desynchronized(module_a, property_id);
+
+        /* Compare the serialized data for the next properties. */
+        for (uint16_t i = 1; all_modules_are_same && i < display_size_get(display); i++) {
+            module_t *module_b = display_module_get(display, i);
+            module_property_updated |= module_property_is_desynchronized(module_b, property_id);
+            all_modules_are_same &= property_handler->compare(module_a, module_b);
         }
-        bool module_property_updated = module_property_is_desynchronized(module, property_id);
-
-        // /* Compare the serialized data for the next properties. */
-        // for (uint16_t i = 1; all_modules_are_same && i < display_size_get(display); i++) {
-        //     uint8_t *property_b_buf = NULL;
-        //     uint16_t property_b_len = 0;
-        //     module                  = display_module_get(display, i);
-        //     module_property_updated |= module_property_is_desynchronized(module, property_id);
-        //     if (property_handler->to_binary(&property_b_buf, &property_b_len, module) != ESP_OK) {
-        //         break;
-        //     }
-
-        //     if ((property_a_len != property_b_len) || memcmp(property_a_buf, property_b_buf, property_a_len) != 0) {
-        //         all_modules_are_same = false;
-        //     }
-        //     free(property_b_buf);
-        // }
-        ESP_LOGI(TAG, "%p", property_a_buf);
-        free(property_a_buf);
 
         /* If all modules are the same and the property has been updated, promote the write all. */
         if (all_modules_are_same && module_property_updated) {
             display_property_indicate_desynchronized(display, property_id, PROPERTY_SYNC_METHOD_WRITE);
             for (uint16_t i = 0; i < display_size_get(display); i++) {
-                module = display_module_get(display, i);
-                module_property_indicate_synchronized(module, property_id);
+                module_a = display_module_get(display, i);
+                module_property_indicate_synchronized(module_a, property_id);
             }
         }
     }

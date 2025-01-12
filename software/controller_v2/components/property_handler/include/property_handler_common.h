@@ -14,6 +14,7 @@ typedef esp_err_t (*property_handler_from_json_handler_cb)(module_t *module, con
 typedef esp_err_t (*property_handler_to_json_handler_cb)(cJSON **json, const module_t *module);
 typedef esp_err_t (*property_handler_from_binary_handler_cb)(module_t *module, const uint8_t *bin, uint16_t bin_size);
 typedef esp_err_t (*property_handler_to_binary_handler_cb)(uint8_t **bin, uint16_t *bin_size, const module_t *module);
+typedef bool (*property_handler_compare_cb)(const module_t *module_a, const module_t *module_b);
 
 typedef struct {
     property_id_t id; /**< Used as key in binary. */
@@ -21,4 +22,10 @@ typedef struct {
     property_handler_to_json_handler_cb to_json;
     property_handler_from_binary_handler_cb from_binary;
     property_handler_to_binary_handler_cb to_binary;
+    property_handler_compare_cb compare;
 } property_handler_t;
+
+/* Macro to register a handler into a custom linker section. */
+#define PROPERTY_HANDLER_REGISTER(handler)                                                                             \
+    static const property_handler_t *const __handler_##handler __attribute__((used, section(".property_handlers"))) =  \
+        &handler;

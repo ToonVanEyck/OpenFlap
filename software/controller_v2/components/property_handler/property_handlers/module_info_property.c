@@ -1,6 +1,6 @@
-#pragma once
-
 #include "property_handler_common.h"
+
+#define PROPERTY_TAG "MODULE_INFO_PROPERTY_HANDLER"
 
 /**
  * \brief Convert the property into it's json representation.
@@ -10,7 +10,7 @@
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t module_info_to_json(cJSON **json, const module_t *module)
+static esp_err_t module_info_to_json(cJSON **json, const module_t *module)
 {
     assert(json != NULL);
     assert(module != NULL);
@@ -32,7 +32,7 @@ static inline esp_err_t module_info_to_json(cJSON **json, const module_t *module
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t module_info_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
+static esp_err_t module_info_from_binary(module_t *module, const uint8_t *bin, uint16_t bin_size)
 {
     assert(module != NULL);
     assert(bin != NULL);
@@ -50,10 +50,10 @@ static inline esp_err_t module_info_from_binary(module_t *module, const uint8_t 
  * The module_info property is used to send module_infos to the modules. Commands are executed in the modules and do not
  * store any data, as such the property is write-only.
  */
-static const property_handler_t PROPERTY_HANDLER_MODULE_INFO = {
-    .id = PROPERTY_MODULE_INFO,
-    // .name        = "module_info",
+__attribute__((section(".property_handlers"))) const property_handler_t PROPERTY_HANDLER_MODULE_INFO = {
+    .id          = PROPERTY_MODULE_INFO,
     .to_json     = module_info_to_json,
     .from_binary = module_info_from_binary,
-    // .from_binary_attributes = {.static_size = 1},
 };
+
+#undef PROPERTY_TAG

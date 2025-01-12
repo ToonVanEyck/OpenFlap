@@ -1,5 +1,3 @@
-#pragma once
-
 #include "esp_check.h"
 #include "property_handler_common.h"
 
@@ -15,7 +13,7 @@
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t command_from_json(module_t *module, const cJSON *json)
+static esp_err_t command_from_json(module_t *module, const cJSON *json)
 {
     assert(module != NULL);
     assert(json != NULL);
@@ -44,7 +42,7 @@ static inline esp_err_t command_from_json(module_t *module, const cJSON *json)
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
-static inline esp_err_t command_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
+static esp_err_t command_to_binary(uint8_t **bin, uint16_t *bin_size, const module_t *module)
 {
     assert(bin != NULL);
     assert(bin_size != NULL);
@@ -74,4 +72,5 @@ static const property_handler_t PROPERTY_HANDLER_COMMAND = {
     .to_binary = command_to_binary,
 };
 
+PROPERTY_HANDLER_REGISTER(PROPERTY_HANDLER_COMMAND);
 #undef PROPERTY_TAG

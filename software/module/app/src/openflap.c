@@ -89,11 +89,15 @@ void updateCommsState(openflap_ctx_t *ctx)
         if (!ctx->comms_active) {
             ctx->comms_active = true;
             debug_io_log_info("Comms Active\n");
+#if !CHAIN_COMM_DEBUG
             debug_io_log_disable(); // Writing to RTT may fuck up the UART RX interrupt...
+#endif
         }
     } else if (ctx->comms_active && HAL_GetTick() > ctx->comms_active_timeout_tick) {
         ctx->comms_active = false;
+#if !CHAIN_COMM_DEBUG
         debug_io_log_enable();
+#endif
         debug_io_log_info("Comms Idle\n");
     }
 }

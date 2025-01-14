@@ -17,6 +17,10 @@
 #define RX_BYTES_TIMEOUT(_byte_cnt) (((_byte_cnt) * 20) / portTICK_PERIOD_MS)
 
 static void chain_comm_task(void *arg);
+static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size);
+static int chain_comm_read_bytes(uart_port_t uart_num, void *buf, uint32_t length, TickType_t ticks_to_wait);
+
+//---------------------------------------------------------------------------------------------------------------------
 
 esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display)
 {
@@ -39,11 +43,236 @@ esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display)
     ESP_RETURN_ON_ERROR(uart_set_pin(UART_NUM, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE), TAG,
                         "Failed to set UART pins");
 
-    ESP_RETURN_ON_FALSE(xTaskCreate(chain_comm_task, "chain_comm_task", CHAIN_COMM_TASK_SIZE, ctx, 10, NULL), ESP_FAIL,
-                        TAG, "Failed to create chain comm task");
+    ESP_RETURN_ON_FALSE(xTaskCreate(chain_comm_task, "chain_comm_task", CHAIN_COMM_TASK_SIZE, ctx, 10, &ctx->task),
+                        ESP_FAIL, TAG, "Failed to create chain comm task");
 
     return ESP_OK;
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t chain_comm_destroy(chain_comm_ctx_t *ctx)
+{
+    ESP_RETURN_ON_FALSE(ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "Chain-comm context is NULL");
+
+    uart_driver_delete(UART_NUM);
+
+    vTaskDelete(ctx->task);
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t chain_comm_property_read_all(display_t *display, property_id_t property_id)
+{
+    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
+
+    const char *property_name = chain_comm_property_name_by_id(property_id);
+    ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
+
+    const property_handler_t *property_handler = property_handler_get_by_id(property_id);
+    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for [%s] property.",
+                        property_name);
+    ESP_RETURN_ON_FALSE(property_handler->from_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
+                        "[%s] Property is not readable.", property_name);
+
+    ESP_LOGI(TAG, "Reading all [%s] property", property_name);
+
+    /* Initiate the message. */
+    chain_comm_msg_header_t tx_header = {.action = property_readAll, .property = property_id};
+    uint16_t module_cnt               = 0;
+
+    /* Flush uart RX buffer. */
+    uart_flush_input(UART_NUM);
+
+    /* Send the header. */
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header), ESP_FAIL,
+                        TAG, "Failed to send header");
+    /* Send the module count bytes. */
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &module_cnt, sizeof(module_cnt)) == sizeof(module_cnt),
+                        ESP_FAIL, TAG, "Failed to send module count bytes");
+
+    /* Receive the header. */
+    chain_comm_msg_header_t rx_header = {0};
+    uint8_t cnt = chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header)));
+    ESP_RETURN_ON_FALSE(cnt == sizeof(rx_header), ESP_FAIL, TAG, "Failed to receive header");
+    ESP_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, ESP_FAIL, TAG, "Header mismatch");
+
+    /* Receive the module count. */
+    ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &module_cnt, sizeof(module_cnt),
+                                              RX_BYTES_TIMEOUT(sizeof(module_cnt))) == sizeof(module_cnt),
+                        ESP_FAIL, TAG, "Failed to receive module count");
+
+    /* Resize the display. */
+    if (display_size_get(display) != module_cnt) {
+        display_resize(display, module_cnt);
+    }
+
+    /* Receive the data. */
+    for (uint16_t i = 0; i < module_cnt; i++) {
+        /* Get the module. */
+        module_t *module = display_module_get(display, i);
+        assert(module != NULL);
+
+        /* Get the property read attributes.  */
+        const chain_comm_binary_attributes_t *chain_comm_read_attr =
+            chain_comm_property_read_attributes_get(property_handler->id);
+
+        /* Set the page cnt and size. */
+        uint16_t property_size = chain_comm_read_attr->static_property_size;
+
+        if (chain_comm_read_attr->dynamic_property_size) {
+            ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, (uint8_t *)&property_size, 2, RX_BYTES_TIMEOUT(2)) == 2,
+                                ESP_FAIL, TAG, "Failed to receive dynamic property size");
+        }
+
+        /* Allocate memory for the data. */
+        uint8_t *rx_buff = malloc(property_size);
+        ESP_RETURN_ON_FALSE(rx_buff != NULL, ESP_ERR_NO_MEM, TAG, "Memory allocation failed");
+
+        /* Read the data. */
+        ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) ==
+                                property_size,
+                            ESP_FAIL, TAG, "Failed to receive read all data");
+
+        /* Handle the data. */
+        ESP_RETURN_ON_ERROR(property_handler->from_binary(module, rx_buff, property_size), TAG,
+                            "Failed to convert read all data");
+
+        free(rx_buff);
+    }
+
+    /* Indicate that the property has been synchronized. */
+    display_property_indicate_synchronized(display, property_id);
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property_id)
+{
+    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
+
+    const char *property_name = chain_comm_property_name_by_id(property_id);
+    ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
+
+    const property_handler_t *property_handler = property_handler_get_by_id(property_id);
+    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for [%s] property.",
+                        property_name);
+    ESP_RETURN_ON_FALSE(property_handler->to_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
+                        "[%s] Property is not writable.", property_name);
+
+    module_t *module = display_module_get(display, 0);
+    ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "No modules in display");
+
+    ESP_LOGI(TAG, "Writing all [%s] property", property_name);
+
+    /* Flush uart RX buffer. */
+    uart_flush_input(UART_NUM);
+
+    /* Initiate the message. */
+    chain_comm_msg_header_t tx_header = {.action = property_writeAll, .property = property_id};
+
+    /* Send the header. */
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header), ESP_FAIL,
+                        TAG, "Failed to send header");
+
+    /* Set the property data of the message. */
+
+    const chain_comm_binary_attributes_t *chain_comm_write_attr =
+        chain_comm_property_write_attributes_get(property_handler->id);
+
+    uint8_t *property_data = NULL;
+    uint16_t property_size = 0;
+
+    ESP_RETURN_ON_ERROR(property_handler->to_binary(&property_data, &property_size, module), TAG,
+                        "Failed to get property size");
+
+    /* Send dynamic property size. */
+    if (chain_comm_write_attr->dynamic_property_size) {
+        ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size)) ==
+                                sizeof(property_size),
+                            ESP_FAIL, TAG, "Failed to send dynamic property size");
+    }
+
+    /* Send the property data. */
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size) == property_size, ESP_FAIL, TAG,
+                        "Failed to send property data");
+
+    esp_err_t rx_err = ESP_OK;
+    /* Receive the header and compare with the original. */
+    chain_comm_msg_header_t rx_header = {0};
+    if (chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header))) !=
+        sizeof(rx_header)) {
+        ESP_LOGE(TAG, "Failed to receive header");
+        rx_err = ESP_FAIL;
+    }
+    if (rx_err == ESP_OK && rx_header.raw != tx_header.raw) {
+        ESP_LOGE(TAG, "Header mismatch");
+        rx_err = ESP_FAIL;
+    }
+
+    /* Receive dynamic size and compare with the original.*/
+    if (rx_err == ESP_OK && chain_comm_write_attr->dynamic_property_size) {
+        uint16_t rx_property_size = 0;
+        if (chain_comm_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
+                                  RX_BYTES_TIMEOUT(sizeof(rx_property_size))) != sizeof(rx_property_size)) {
+            ESP_LOGE(TAG, "Failed to receive property size header");
+            rx_err = ESP_FAIL;
+        }
+        if (rx_property_size != property_size) {
+            ESP_LOGE(TAG, "Property size mismatch");
+            rx_err = ESP_FAIL;
+        }
+    }
+
+    /* Receive the data and compare with the original data.*/
+    if (rx_err == ESP_OK) {
+        uint8_t *rx_buff = malloc(property_size);
+        if (rx_buff == NULL) {
+            ESP_LOGE(TAG, "Memory allocation failed");
+            rx_err = ESP_ERR_NO_MEM;
+        } else {
+            if (chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) !=
+                property_size) {
+                ESP_LOGE(TAG, "Failed to receive data");
+                rx_err = ESP_FAIL;
+            }
+            if (rx_err == ESP_OK && memcmp(property_data, rx_buff, property_size) != 0) {
+                ESP_LOGE(TAG, "TX and RD data mismatch");
+                rx_err = ESP_FAIL;
+            }
+            free(rx_buff);
+        }
+    }
+
+    free(property_data);
+    return rx_err;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t property_id)
+{
+    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
+
+    const char *property_name = chain_comm_property_name_by_id(property_id);
+    ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
+
+    const property_handler_t *property_handler = property_handler_get_by_id(property_id);
+    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for property: %s",
+                        property_name);
+    ESP_RETURN_ON_FALSE(property_handler->to_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "Property is not writable: %s",
+                        property_name);
+
+    ESP_LOGI(TAG, "Writing sequential property %s", property_name);
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
 
 static void chain_comm_task(void *arg)
 {
@@ -79,197 +308,40 @@ static void chain_comm_task(void *arg)
     }
 }
 
-esp_err_t chain_comm_property_read_all(display_t *display, property_id_t property_id)
+//---------------------------------------------------------------------------------------------------------------------
+
+static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size)
 {
-    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
-
-    const char *property_name = chain_comm_property_name_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
-
-    const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for [%s] property.",
-                        property_name);
-    ESP_RETURN_ON_FALSE(property_handler->from_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
-                        "[%s] Property is not readable.", property_name);
-
-    ESP_LOGI(TAG, "Reading all [%s] property", property_name);
-
-    /* Initiate the message. */
-    chain_comm_msg_header_t tx_header = {.action = property_readAll, .property = property_id};
-    uint16_t module_cnt               = 0;
-
-    /* Flush uart RX buffer. */
-    uart_flush_input(UART_NUM);
-
-    /* Send the header. */
-    ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header), ESP_FAIL, TAG,
-                        "Failed to send header");
-    /* Send the module count bytes. */
-    ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, &module_cnt, sizeof(module_cnt)) == sizeof(module_cnt), ESP_FAIL,
-                        TAG, "Failed to send module count bytes");
-
-    /* Receive the header. */
-    chain_comm_msg_header_t rx_header = {0};
-    uint8_t cnt = uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header)));
-    ESP_RETURN_ON_FALSE(cnt == sizeof(rx_header), ESP_FAIL, TAG, "Failed to receive header");
-    ESP_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, ESP_FAIL, TAG, "Header mismatch");
-
-    /* Receive the module count. */
-    ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, &module_cnt, sizeof(module_cnt),
-                                        RX_BYTES_TIMEOUT(sizeof(module_cnt))) == sizeof(module_cnt),
-                        ESP_FAIL, TAG, "Failed to receive module count");
-
-    /* Resize the display. */
-    if (display_size_get(display) != module_cnt) {
-        display_resize(display, module_cnt);
+#if CHAIN_COMM_DEBUG
+    /* Send bytes with a small delay to allow receiver time to print debug statements. */
+    const uint8_t *data = (const uint8_t *)src;
+    for (size_t i = 0; i < size; i++) {
+        uart_write_bytes(uart_num, &data[i], 1);
+        printf("%02X ", data[i]);
+        esp_rom_delay_us(200);
     }
-
-    /* Receive the data. */
-    for (uint16_t i = 0; i < module_cnt; i++) {
-        /* Get the module. */
-        module_t *module = display_module_get(display, i);
-        assert(module != NULL);
-
-        /* Get the property read attributes.  */
-        const chain_comm_binary_attributes_t *chain_comm_read_attr =
-            chain_comm_property_read_attributes_get(property_handler->id);
-
-        /* Set the page cnt and size. */
-        uint16_t property_size = chain_comm_read_attr->static_property_size;
-
-        if (chain_comm_read_attr->dynamic_property_size) {
-            ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, (uint8_t *)&property_size, 2, RX_BYTES_TIMEOUT(2)) == 2,
-                                ESP_FAIL, TAG, "Failed to receive dynamic property size");
-        }
-
-        /* Allocate memory for the data. */
-        uint8_t *rx_buff = malloc(property_size);
-        ESP_RETURN_ON_FALSE(rx_buff != NULL, ESP_ERR_NO_MEM, TAG, "Memory allocation failed");
-
-        /* Read the data. */
-        ESP_RETURN_ON_FALSE(uart_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) ==
-                                property_size,
-                            ESP_FAIL, TAG, "Failed to receive read all data");
-
-        /* Handle the data. */
-        ESP_RETURN_ON_ERROR(property_handler->from_binary(module, rx_buff, property_size), TAG,
-                            "Failed to convert read all data");
-
-        free(rx_buff);
-    }
-
-    /* Indicate that the property has been synchronized. */
-    display_property_indicate_synchronized(display, property_id);
-
-    return ESP_OK;
+    printf("\n");
+    return size;
+#else
+    return uart_write_bytes(uart_num, src, size);
+#endif
 }
 
-esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property_id)
+//---------------------------------------------------------------------------------------------------------------------
+
+static int chain_comm_read_bytes(uart_port_t uart_num, void *buf, uint32_t length, TickType_t ticks_to_wait)
 {
-    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
-
-    const char *property_name = chain_comm_property_name_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
-
-    const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for [%s] property.",
-                        property_name);
-    ESP_RETURN_ON_FALSE(property_handler->to_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG,
-                        "[%s] Property is not writable.", property_name);
-
-    module_t *module = display_module_get(display, 0);
-    ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "No modules in display");
-
-    ESP_LOGI(TAG, "Writing all [%s] property", property_name);
-
-    /* Flush uart RX buffer. */
-    uart_flush_input(UART_NUM);
-
-    /* Initiate the message. */
-    chain_comm_msg_header_t tx_header = {.action = property_writeAll, .property = property_id};
-
-    /* Send the header. */
-    ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header), ESP_FAIL, TAG,
-                        "Failed to send header");
-
-    /* Set the property data of the message. */
-
-    const chain_comm_binary_attributes_t *chain_comm_write_attr =
-        chain_comm_property_write_attributes_get(property_handler->id);
-
-    uint8_t *property_data = NULL;
-    uint16_t property_size = 0;
-
-    ESP_RETURN_ON_ERROR(property_handler->to_binary(&property_data, &property_size, module), TAG,
-                        "Failed to get property size");
-
-    /* Send dynamic property size. */
-    if (chain_comm_write_attr->dynamic_property_size) {
-        ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, &property_size, sizeof(property_size)) == sizeof(property_size),
-                            ESP_FAIL, TAG, "Failed to send dynamic property size");
+#if CHAIN_COMM_DEBUG
+    /* Read and print all bytes. */
+    int s = uart_read_bytes(uart_num, buf, length, ticks_to_wait);
+    for (int i = 0; i < s; i++) {
+        printf("%02X ", ((uint8_t *)buf)[i]);
     }
-
-    /* Send the property data. */
-    ESP_RETURN_ON_FALSE(uart_write_bytes(UART_NUM, property_data, property_size) == property_size, ESP_FAIL, TAG,
-                        "Failed to send property data");
-
-    esp_err_t rx_err = ESP_OK;
-    /* Receive the header */
-    // chain_comm_msg_header_t rx_header = {0};
-    // if (uart_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header))) !=
-    //     sizeof(rx_header)) {
-    //     ESP_LOGE(TAG, "Failed to receive header");
-    //     rx_err = ESP_FAIL;
-    // }
-    // if (rx_header.raw != tx_header.raw) {
-    //     ESP_LOGE(TAG, "Header mismatch");
-    //     rx_err = ESP_FAIL;
-    // }
-
-    // /* Receive dynamic size */
-    // if (chain_comm_write_attr->dynamic_property_size) {
-    //     uint16_t rx_property_size = 0;
-    //     if (uart_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
-    //                         RX_BYTES_TIMEOUT(sizeof(rx_property_size))) != sizeof(rx_property_size)) {
-    //         ESP_LOGE(TAG, "Failed to receive property size header");
-    //         rx_err = ESP_FAIL;
-    //     }
-    //     if (rx_property_size != property_size) {
-    //         ESP_LOGE(TAG, "Property size mismatch");
-    //         rx_err = ESP_FAIL;
-    //     }
-    // }
-
-    // /* Receive the data */
-    // uint8_t *rx_buff = malloc(property_size);
-    // if (rx_buff == NULL) {
-    //     ESP_LOGE(TAG, "Memory allocation failed");
-    //     rx_err = ESP_ERR_NO_MEM;
-    // }
-    // if (uart_read_bytes(UART_NUM, &rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) != property_size) {
-    //     ESP_LOGE(TAG, "Failed to receive data");
-    //     rx_err = ESP_FAIL;
-    // }
-
-    free(property_data);
-    // free(rx_buff);
-    return rx_err;
+    printf("\n");
+    return s;
+#else
+    return uart_read_bytes(uart_num, buf, length, ticks_to_wait);
+#endif
 }
 
-esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t property_id)
-{
-    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
-
-    const char *property_name = chain_comm_property_name_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_name != NULL, ESP_ERR_INVALID_ARG, TAG, "property %d invalid", property_id);
-
-    const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-    ESP_RETURN_ON_FALSE(property_handler != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "No handler for property: %s",
-                        property_name);
-    ESP_RETURN_ON_FALSE(property_handler->to_binary != NULL, ESP_ERR_NOT_SUPPORTED, TAG, "Property is not writable: %s",
-                        property_name);
-
-    ESP_LOGI(TAG, "Writing sequential property %s", property_name);
-
-    return ESP_OK;
-}
+//---------------------------------------------------------------------------------------------------------------------

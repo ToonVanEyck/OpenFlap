@@ -10,23 +10,19 @@ This repository houses all the required files to build, program and modify your 
 ## Specifications
 
 - 48 Flaps per module.
-- Simple wiring.
+- Plug and play.
 - Daisy chain communication.
 - Per module configuration & calibration.
 - No homing sequence.
 - HTTP API available.
 - Customizable.
-- Stackable design.
+- Modular design.
+- 3D printable parts.
 
 ## Design Requirements
 
-#### The split-flap display should be affordable but high quality. 
-I would rather sink in more time than money.
-
 #### The split-flap display shall not require a homing sequence. 
 To achieve this, the OpenFlap modules contain an optical absolute encoder. This encoder allows the module to know it's position at any time.
-
-#### The design shall consist only of printed circuit boards and 3D printable parts. 
 
 #### The amount of wiring to connect multiple modules should be minimal.
 The modules and top connector boards feature a smart switching mechanism that automatically routes the UART data signal.

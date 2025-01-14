@@ -39,6 +39,15 @@ esp_err_t display_init(display_t *display);
 //---------------------------------------------------------------------------------------------------------------------
 
 /**
+ * \brief Destroy the display.
+ *
+ * \param[in] display The display to destroy.
+ */
+esp_err_t display_destroy(display_t *display);
+
+//---------------------------------------------------------------------------------------------------------------------
+
+/**
  * \brief Resize the display.
  *
  * \param[in] display The display to resize.

@@ -15,8 +15,10 @@
 
 #define CHAIN_COMM_STATE(GENERATOR)                                                                                    \
     GENERATOR(rxHeader, "rxHeader")                                                                                    \
+    GENERATOR(propertySize_rx, "propertySize_rx")                                                                      \
     GENERATOR(readAll_rxCnt, "readAll_rxCnt")                                                                          \
     GENERATOR(readAll_rxData, "readAll_rxData")                                                                        \
+    GENERATOR(readAll_txSize, "readAll_txSize")                                                                        \
     GENERATOR(readAll_txData, "readAll_txData")                                                                        \
     GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
     GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \

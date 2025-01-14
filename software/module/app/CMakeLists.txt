@@ -20,13 +20,12 @@ add_custom_target(compile_time
 add_dependencies(${App} compile_time)
 
 target_compile_definitions(${App} PUBLIC
-    GENERATE_STATE_NAMES=0      # Generate state names for chain comm fsm
-    SET_DEFAULT_CONFIG          # provide a default configuration in the binary
+    # CHAIN_COMM_DEBUG=1          # Print debug info for chain communication.
+    SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 
 target_link_libraries(${App} PUBLIC debug_io config flash config chain_comm_abi uart_driver) 
 target_link_libraries(${App} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
-# target_link_libraries(${App} PUBLIC chain_comm_abi)
 target_include_directories(${App} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 
 set_target_properties(${App} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker_script_app.ld")

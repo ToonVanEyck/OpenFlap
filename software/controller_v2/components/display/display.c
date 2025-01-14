@@ -31,6 +31,25 @@ esp_err_t display_init(display_t *display)
 
 //---------------------------------------------------------------------------------------------------------------------
 
+esp_err_t display_destroy(display_t *display)
+{
+    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
+
+    /* Free modules. */
+    if (display->module_count && display->modules != NULL) {
+        free(display->modules);
+        display->modules      = NULL;
+        display->module_count = 0;
+    }
+
+    vEventGroupDelete(display->event_handle);
+    display->event_handle = 0;
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
 esp_err_t display_resize(display_t *display, uint16_t module_count)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");

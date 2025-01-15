@@ -1,6 +1,6 @@
 
 const moduleEndpoint = "/api/module"
-// const moduleEndpoint = "http://openflap.local/api/module" // enable this line for local development
+// const moduleEndpoint = "http://192.168.0.43:80/api/module" // enable this line for local development
 
 var moduleObjects = [];
 var dimensions = { width: 0, height: 0 };
@@ -21,8 +21,8 @@ var displayCharacterAt = (index) => [...document.querySelectorAll(".displayChara
 var activePropertyIndex = () => [...document.querySelectorAll(".propertyCharacter")].indexOf(document.activeElement)
 var propertyCharacterAt = (index) => [...document.querySelectorAll(".propertyCharacter")][index]
 var activeAnyIndex = () => activeDisplayIndex() + activePropertyIndex() + 1;
-var activeCharacterMapEntry = () => document.activeElement.id.split('_').map(Number).slice(1, 3);
-var characterMapEntryAt = (m_index, c_index) => document.getElementById("characterMapMember_" + m_index + "_" + c_index);
+var activecharacterSetEntry = () => document.activeElement.id.split('_').map(Number).slice(1, 3);
+var characterSetEntryAt = (m_index, c_index) => document.getElementById("characterSetMember_" + m_index + "_" + c_index);
 
 function createModuleTable() {
     let table = document.getElementById("moduleTable");
@@ -40,31 +40,31 @@ function createModuleTable() {
         let moduleProperties = row.appendChild(elNew("div", { className: "moduleProperties" }));
         moduleProperties.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Properties:" }));
         let propertyList = moduleProperties.appendChild(elNew("div", { className: "contentWrapper" })).appendChild(elNew("div", { className: "moduleProperties__list" }));
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "columnEnd_" + i, innerHTML: "columnEnd" }), elNew("input", { id: "columnEnd_" + i, className: "propertyInput checkBox noclick", type: "checkbox", name: "columnEnd", checked: module.columnEnd }));
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "vtrim_" + i, innerHTML: "vtrim" }), elNew("input", { id: "vtrim_" + i, className: "propertyInput", type: "number", min: "0", max: "200", step: "5", name: "vtrim", defaultValue: module.vtrim }));
-        propertyList.lastChild.lastChild.onchange = function () { module.vtrim = parseInt(this.value) };
+        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "columnEnd_" + i, innerHTML: "columnEnd" }), elNew("input", { id: "columnEnd_" + i, className: "propertyInput checkBox noclick", type: "checkbox", name: "columnEnd", checked: module.module_info.column_end }));
+        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "vtrim_" + i, innerHTML: "vtrim" }), elNew("input", { id: "vtrim_" + i, className: "propertyInput", type: "number", min: "0", max: "200", step: "5", name: "vtrim", defaultValue: module.calibration.vtrim }));
+        propertyList.lastChild.lastChild.onchange = function () { module.calibration.vtrim = parseInt(this.value) };
         propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "offset_" + i, innerHTML: "offset" }), elNew("input", { id: "offset_" + i, className: "propertyInput", type: "number", min: "0", max: module.characterMap.length - 1, name: "offset", defaultValue: module.offset }));
-        propertyList.lastChild.lastChild.onchange = function () { module.offset = parseInt(this.value) };
+        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "offset_" + i, innerHTML: "offset" }), elNew("input", { id: "offset_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "offset", defaultValue: module.calibration.offset }));
+        propertyList.lastChild.lastChild.onchange = function () { module.calibration.offset = parseInt(this.value) };
         propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "baseSpeed_" + i, innerHTML: "baseSpeed" }), elNew("input", { id: "baseSpeed_" + i, className: "propertyInput", type: "number", min: "0", max: module.characterMap.length - 1, name: "baseSpeed", defaultValue: module.baseSpeed }));
+        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "baseSpeed_" + i, innerHTML: "baseSpeed" }), elNew("input", { id: "baseSpeed_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "baseSpeed", defaultValue: module.baseSpeed }));
         propertyList.lastChild.lastChild.onchange = function () { module.baseSpeed = parseInt(this.value) };
         propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        // module characterMap
-        let moduleCharaterMap = row.appendChild(elNew("div", { className: "moduleCharacterMap" }));
+        // module characterSet
+        let moduleCharaterMap = row.appendChild(elNew("div", { className: "modulecharacterSet" }));
         moduleCharaterMap.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Supported Characters:" }));
-        let characterMap = moduleCharaterMap.appendChild(elNew("div", { className: "contentWrapper" })).appendChild(elNew("div", { className: "characterMap" }));
-        for (let j = 0; j < module.characterMap.length; j++) {
-            characterMap.appendChild(elNew("input", { id: "characterMapMember_" + i + "_" + j, className: "characterMapMember characterInput", pattern: "^ $", type: "text", maxLength: "1", defaultValue: module.characterMap[j] }));
-            characterMap.onbeforeinput = inputChanged;
-            characterMap.lastChild.onclick = function () { this.select(); };
+        let characterSet = moduleCharaterMap.appendChild(elNew("div", { className: "contentWrapper" })).appendChild(elNew("div", { className: "characterSet" }));
+        for (let j = 0; j < module.character_set.length; j++) {
+            characterSet.appendChild(elNew("input", { id: "characterSetMember_" + i + "_" + j, className: "characterSetMember characterInput", pattern: "^ $", type: "text", maxLength: "1", defaultValue: module.character_set[j] }));
+            characterSet.onbeforeinput = inputChanged;
+            characterSet.lastChild.onclick = function () { this.select(); };
         }
     }
 }
 
 function calculateDisplayDimensions() {
     var width = 0;
-    moduleObjects.forEach(module => width += (module.columnEnd));
+    moduleObjects.forEach(module => width += (module.module_info.column_end));
     var height = moduleObjects.length / width;
     if (!Number.isInteger(height)) {
         console.log("The display is not rectangular!");
@@ -102,8 +102,8 @@ function trySetLetter(index, letter) {
     letter = letter.toUpperCase();
     let displayElement = displayCharacterAt(index);
     let propertyElement = propertyCharacterAt(index);
-    console.log(letter + " in module " + index + " : " + moduleObjects[index].characterMap.includes(letter));
-    if (letter.length == 1 && moduleObjects[index].characterMap.includes(letter)) {
+    console.log(letter + " in module " + index + " : " + moduleObjects[index].character_set.includes(letter));
+    if (letter.length == 1 && moduleObjects[index].character_set.includes(letter)) {
         moduleObjects[index].character = letter;
         displayElement.value = letter;
         if (['/', '@', ',', ':', ';'].includes(letter)) displayElement.classList.add("characterRaised");
@@ -144,10 +144,10 @@ function inputChanged(e) {
                 };
                 displayCharacterAt(index).select();
             } else {
-                let acme = activeCharacterMapEntry();
-                moduleObjects[acme[0]].characterMap[acme[1]] = e.data[0].toUpperCase();
-                characterMapEntryAt(acme[0], acme[1]).value = moduleObjects[acme[0]].characterMap[acme[1]];
-                let nextEntry = characterMapEntryAt(acme[0], acme[1] + 1);
+                let acme = activecharacterSetEntry();
+                moduleObjects[acme[0]].character_set[acme[1]] = e.data[0].toUpperCase();
+                characterSetEntryAt(acme[0], acme[1]).value = moduleObjects[acme[0]].character_set[acme[1]];
+                let nextEntry = characterSetEntryAt(acme[0], acme[1] + 1);
                 if (nextEntry) {
                     nextEntry.focus();
                 }
@@ -279,21 +279,21 @@ async function modulesSetProperties(properties) {
 
 function startCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
-        trySetLetter(i, moduleObjects[i].characterMap[0]);
-        moduleObjects[i].offset = 0;
-        moduleObjects[i].vtrim = 0;
+        trySetLetter(i, moduleObjects[i].character_set[0]);
+        moduleObjects[i].calibration.offset = 0;
+        moduleObjects[i].calibration.vtrim = 0;
     }
-    modulesSetProperties(["character", "offset", "vtrim"]);
+    modulesSetProperties(["character", "calibration"]);
     createModuleTable();
 }
 
 function doCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
-        moduleObjects[i].offset += moduleObjects[i].characterMap.indexOf(moduleObjects[i].character);
-        if (moduleObjects[i].offset >= moduleObjects[i].characterMap.length) moduleObjects[i].offset -= moduleObjects[i].characterMap.length; 0
-        trySetLetter(i, moduleObjects[i].characterMap[0]);
+        moduleObjects[i].calibration.offset += moduleObjects[i].character_set.indexOf(moduleObjects[i].character);
+        if (moduleObjects[i].calibration.offset >= moduleObjects[i].character_set.length) moduleObjects[i].calibration.offset -= moduleObjects[i].character_set.length; 0
+        trySetLetter(i, moduleObjects[i].character_set[0]);
     }
-    modulesSetProperties(["character", "offset"]);
+    modulesSetProperties(["calibration"]);
 }
 
 async function setAccessPoint(type) {
@@ -316,8 +316,8 @@ function showCards(cards) {
     [...document.querySelectorAll(".card")].forEach(n => n.style.display = cards.includes(n.id) ? "" : "none")
 }
 
-function setDefaultCharacterMap() {
-    moduleObjects.forEach(module => module.characterMap = [" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"]);
+function setDefaultcharacterSet() {
+    moduleObjects.forEach(module => module.character_set = [" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"]);
 }
 
 window.addEventListener("keydown", keydownHandler, true);

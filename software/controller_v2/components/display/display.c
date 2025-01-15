@@ -55,12 +55,23 @@ esp_err_t display_resize(display_t *display, uint16_t module_count)
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
     int32_t count_diff = module_count - display->module_count;
+
+    if (count_diff == 0) {
+        return ESP_OK; /* No resize required. */
+    }
+
+    ESP_LOGI(TAG, "Resizing display from %d to %d modules", display->module_count, module_count);
+
     /* Reallocate memory for the modules. */
-    module_t *new_modules = realloc(display->modules, module_count * sizeof(module_t));
-    ESP_RETURN_ON_FALSE(new_modules != NULL, ESP_ERR_NO_MEM, TAG, "Failed to reallocate memory for modules");
+    module_t *new_modules = NULL;
+    if (module_count == 0) {
+        free(display->modules);
+    } else {
+        new_modules = realloc(display->modules, module_count * sizeof(module_t));
+        ESP_RETURN_ON_FALSE(new_modules != NULL, ESP_ERR_NO_MEM, TAG, "Failed to reallocate memory for modules");
+    }
 
     /* If the display size has grown, zero the new modules. */
-    ESP_LOGI(TAG, "Resizing display from %d to %d modules", display->module_count, module_count);
     if (count_diff > 0) {
         memset(&new_modules[display->module_count], 0, count_diff * sizeof(module_t));
     }

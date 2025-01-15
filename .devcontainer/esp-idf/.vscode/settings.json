@@ -70,5 +70,6 @@
     "files.associations": {
         "sdkconfig*": "kconfig"
     },
-    "cmake.sourceDirectory": "/workspaces/OpenFlap/software/controller"
+    "cmake.sourceDirectory": "/workspaces/OpenFlap/software/controller",
+    "livePreview.defaultPreviewPath": "/software/controller_v2/components/webserver/assets/index.html"
 }

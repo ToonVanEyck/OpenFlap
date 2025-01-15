@@ -95,8 +95,9 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 
     /* Receive the header. */
     chain_comm_msg_header_t rx_header = {0};
-    uint8_t cnt = chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header)));
-    ESP_RETURN_ON_FALSE(cnt == sizeof(rx_header), ESP_FAIL, TAG, "Failed to receive header");
+    ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header),
+                                              RX_BYTES_TIMEOUT(sizeof(rx_header))) == sizeof(rx_header),
+                        ESP_FAIL, TAG, "Failed to receive header");
     ESP_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, ESP_FAIL, TAG, "Header mismatch");
 
     /* Receive the module count. */
@@ -153,6 +154,11 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 
 esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property_id)
 {
+    esp_err_t ret          = ESP_OK;
+    uint8_t *property_data = NULL;
+    uint8_t *rx_buff       = NULL;
+    uint16_t property_size = 0;
+
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
 
     const char *property_name = chain_comm_property_name_by_id(property_id);
@@ -180,76 +186,78 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
                         TAG, "Failed to send header");
 
     /* Set the property data of the message. */
-
     const chain_comm_binary_attributes_t *chain_comm_write_attr =
         chain_comm_property_write_attributes_get(property_handler->id);
-
-    uint8_t *property_data = NULL;
-    uint16_t property_size = 0;
 
     ESP_RETURN_ON_ERROR(property_handler->to_binary(&property_data, &property_size, module), TAG,
                         "Failed to get property size");
 
     /* Send dynamic property size. */
     if (chain_comm_write_attr->dynamic_property_size) {
-        ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size)) ==
-                                sizeof(property_size),
-                            ESP_FAIL, TAG, "Failed to send dynamic property size");
+        ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size)) ==
+                              sizeof(property_size),
+                          ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to send dynamic property size");
     }
 
     /* Send the property data. */
-    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size) == property_size, ESP_FAIL, TAG,
-                        "Failed to send property data");
+    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size) == property_size, ESP_FAIL,
+                      exit_cleanup_property_data, TAG, "Failed to send property data");
 
-    esp_err_t rx_err = ESP_OK;
+    /* Send ack. */
+    const uint8_t ack = 0xff;
+    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &ack, 1) == 1, ESP_FAIL, exit_cleanup_property_data, TAG,
+                      "Failed to send ack");
+
     /* Receive the header and compare with the original. */
     chain_comm_msg_header_t rx_header = {0};
-    if (chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header), RX_BYTES_TIMEOUT(sizeof(rx_header))) !=
-        sizeof(rx_header)) {
-        ESP_LOGE(TAG, "Failed to receive header");
-        rx_err = ESP_FAIL;
-    }
-    if (rx_err == ESP_OK && rx_header.raw != tx_header.raw) {
-        ESP_LOGE(TAG, "Header mismatch");
-        rx_err = ESP_FAIL;
-    }
+    ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header),
+                                            RX_BYTES_TIMEOUT(sizeof(rx_header))) == sizeof(rx_header),
+                      ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to receive header");
+    ESP_GOTO_ON_FALSE(rx_header.raw == tx_header.raw, ESP_FAIL, exit_cleanup_property_data, TAG, "Header mismatch");
 
     /* Receive dynamic size and compare with the original.*/
-    if (rx_err == ESP_OK && chain_comm_write_attr->dynamic_property_size) {
+    if (ret == ESP_OK && chain_comm_write_attr->dynamic_property_size) {
         uint16_t rx_property_size = 0;
-        if (chain_comm_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
-                                  RX_BYTES_TIMEOUT(sizeof(rx_property_size))) != sizeof(rx_property_size)) {
-            ESP_LOGE(TAG, "Failed to receive property size header");
-            rx_err = ESP_FAIL;
-        }
-        if (rx_property_size != property_size) {
-            ESP_LOGE(TAG, "Property size mismatch");
-            rx_err = ESP_FAIL;
-        }
+        ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
+                                                RX_BYTES_TIMEOUT(sizeof(rx_property_size))) == sizeof(rx_property_size),
+                          ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to receive property size header");
+        ESP_GOTO_ON_FALSE(rx_property_size == property_size, ESP_FAIL, exit_cleanup_property_data, TAG,
+                          "Property size mismatch");
     }
 
     /* Receive the data and compare with the original data.*/
-    if (rx_err == ESP_OK) {
-        uint8_t *rx_buff = malloc(property_size);
-        if (rx_buff == NULL) {
-            ESP_LOGE(TAG, "Memory allocation failed");
-            rx_err = ESP_ERR_NO_MEM;
-        } else {
-            if (chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) !=
-                property_size) {
-                ESP_LOGE(TAG, "Failed to receive data");
-                rx_err = ESP_FAIL;
-            }
-            if (rx_err == ESP_OK && memcmp(property_data, rx_buff, property_size) != 0) {
-                ESP_LOGE(TAG, "TX and RD data mismatch");
-                rx_err = ESP_FAIL;
-            }
-            free(rx_buff);
+    if (ret == ESP_OK) {
+        rx_buff = malloc(property_size);
+        ESP_GOTO_ON_FALSE(rx_buff != NULL, ESP_ERR_NO_MEM, exit_cleanup_property_data, TAG, "Memory allocation failed");
+        ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) ==
+                              property_size,
+                          ESP_FAIL, exit_cleanup_rx_buff, TAG, "Failed to receive data");
+        ESP_GOTO_ON_FALSE(memcmp(property_data, rx_buff, property_size) == 0, ESP_FAIL, exit_cleanup_rx_buff, TAG,
+                          "TX and RD data mismatch");
+    }
+
+    /* Receive ack. */
+    if (ret == ESP_OK) {
+        uint8_t rx_ack = 0;
+        if (chain_comm_read_bytes(UART_NUM, &rx_ack, 1, RX_BYTES_TIMEOUT(1)) != 1) {
+            ESP_LOGE(TAG, "Failed to receive ack");
+            ret = ESP_FAIL;
+        }
+        if (rx_ack != ack) {
+            ESP_LOGE(TAG, "Ack mismatch");
+            ret = ESP_FAIL;
         }
     }
 
+    /* Indicate success. */
+    display_property_indicate_synchronized(display, property_id);
+
+    /*Cleanup. */
+exit_cleanup_rx_buff:
+    free(rx_buff);
+exit_cleanup_property_data:
     free(property_data);
-    return rx_err;
+    return ret;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -301,6 +309,9 @@ static void chain_comm_task(void *arg)
                     display_property_indicate_synchronized(ctx->display, property);
                 }
             }
+#if CHAIN_COMM_DEBUG
+            vTaskDelay(50 / portTICK_PERIOD_MS);
+#endif
         }
 
         display_event_synchronized(ctx->display);
@@ -318,7 +329,7 @@ static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t 
     for (size_t i = 0; i < size; i++) {
         uart_write_bytes(uart_num, &data[i], 1);
         printf("%02X ", data[i]);
-        esp_rom_delay_us(200);
+        esp_rom_delay_us(500);
     }
     printf("\n");
     return size;

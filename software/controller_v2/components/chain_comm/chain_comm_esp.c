@@ -106,9 +106,7 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
                         ESP_FAIL, TAG, "Failed to receive module count");
 
     /* Resize the display. */
-    if (display_size_get(display) != module_cnt) {
-        display_resize(display, module_cnt);
-    }
+    display_resize(display, module_cnt);
 
     /* Receive the data. */
     for (uint16_t i = 0; i < module_cnt; i++) {

@@ -7,7 +7,7 @@
 	(title_block
 		(title "Side Panel")
 		(date "${DATE}")
-		(rev "4.1.1")
+		(rev "4.1.2")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
@@ -5894,7 +5894,7 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 63.5) (xy 73.66 63.5)
+			(xy 72.39 63.5) (xy 87.63 63.5)
 		)
 		(stroke
 			(width 0)
@@ -6884,16 +6884,6 @@
 	)
 	(wire
 		(pts
-			(xy 81.28 60.96) (xy 91.44 60.96)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "901718ad-fddd-42cb-8924-66f457712891")
-	)
-	(wire
-		(pts
 			(xy 149.86 60.96) (xy 149.86 50.8)
 		)
 		(stroke
@@ -6951,16 +6941,6 @@
 			(type default)
 		)
 		(uuid "9ba4d748-eb18-4b17-8eb2-afbec439a132")
-	)
-	(wire
-		(pts
-			(xy 81.28 63.5) (xy 91.44 63.5)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9c6dda79-a38e-4f32-98da-6d73f938ccb4")
 	)
 	(wire
 		(pts
@@ -7294,7 +7274,7 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 60.96) (xy 73.66 60.96)
+			(xy 72.39 60.96) (xy 87.63 60.96)
 		)
 		(stroke
 			(width 0)
@@ -8040,7 +8020,7 @@
 		(uuid "08a494fb-9655-4dbd-bf5b-6a8b4d39a0e1")
 	)
 	(label "TX Bottom"
-		(at 91.44 60.96 180)
+		(at 87.63 60.96 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -8502,7 +8482,7 @@
 		(uuid "f874bf69-603f-49be-8da2-65576a2772e5")
 	)
 	(label "RX Top"
-		(at 91.44 63.5 180)
+		(at 87.63 63.5 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -11362,73 +11342,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R")
-		(at 77.47 63.5 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "8f3117a0-5032-447c-b2cc-8827560f9f97")
-		(property "Reference" "R17"
-			(at 75.438 68.834 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "100R"
-			(at 79.756 68.834 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
-			(at 77.47 65.278 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 77.47 63.5 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Resistor"
-			(at 77.47 63.5 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "d4f154ea-94c6-4ec5-84c8-a1f3b9fbbef9")
-		)
-		(pin "2"
-			(uuid "1ce99547-8d63-4546-ba05-049b0e080b0e")
-		)
-		(instances
-			(project "side_panel"
-				(path "/36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1"
-					(reference "R17")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:+5V")
 		(at 39.37 119.38 0)
 		(unit 1)
@@ -12930,73 +12843,6 @@
 			(project "side_panel"
 				(path "/36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1"
 					(reference "#PWR033")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R")
-		(at 77.47 60.96 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "d2f0936e-273c-49a2-8b1e-9842568b935b")
-		(property "Reference" "R16"
-			(at 75.438 66.294 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "100R"
-			(at 79.756 66.294 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
-			(at 77.47 62.738 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 77.47 60.96 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Resistor"
-			(at 77.47 60.96 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "c37d0342-981d-415f-84a9-8c45c6de7647")
-		)
-		(pin "2"
-			(uuid "009c5566-2d02-46a2-aedb-3a1815517138")
-		)
-		(instances
-			(project "side_panel"
-				(path "/36bb1b3b-7b5b-4a4c-b4db-cfb27ceb38a1"
-					(reference "R16")
 					(unit 1)
 				)
 			)

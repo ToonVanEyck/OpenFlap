@@ -1,10 +1,33 @@
 #!/bin/bash
 
-# Parse arguments
+# Parse options
+check_modified=false
 dry_run=false
-if [[ "$1" == "--dry-run" ]]; then
-    dry_run=true
-fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --modified)
+            check_modified=true
+            ;;
+        --dry-run)
+            dry_run=true
+            ;;
+        *)
+            echo "Invalid option: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# Function to check if any file in a module directory has changed
+has_changed() {
+    local dir=$1
+    if git status --porcelain | grep -q "$dir"; then
+        return 0
+    else
+        return 1
+    fi
+}
 
 # Set variables based on the argument
 if $dry_run; then
@@ -32,6 +55,16 @@ declare -A modules=(
     ["Top Connector"]="top_connector/src"
     ["Controller"]="controller/src"
 )
+
+# Remove unchanged modules if --modified option is set
+if $check_modified; then
+    for name in "${!modules[@]}"; do
+        path=${modules[$name]}
+        if ! has_changed "$path"; then
+            unset "modules[$name]"
+        fi
+    done
+fi
 
 # Run KiBot for each module
 for name in "${!modules[@]}"; do

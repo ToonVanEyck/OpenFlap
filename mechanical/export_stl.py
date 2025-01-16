@@ -49,6 +49,11 @@ if __name__ == '__main__':
     # Get the parts we want to 3d print.
     parts = {name: None for name in args.parts}
 
+    # If the output dir does not exist, create it.
+    output_dir = Path(args.output_dir)
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+
     # Get the parts we want to 3d print.
     export_failed = 0
     for part_name in args.parts:

@@ -12,11 +12,15 @@ if [ "$(hostname)" != "freecad" ]; then
     exit 1
 fi
 
+BASE_DIR=$(git rev-parse --show-toplevel)
+SOURCE_DIR=${BASE_DIR}/mechanical
+BUILD_DIR=${BASE_DIR}/build/mechanical
+
 # Declare FreeCAD model
-model="openflap_cad_model.FCStd"
+model="$SOURCE_DIR/openflap_cad_model.FCStd"
 
 # Declare bodies
 bodies=("shell" "core" "short_hub" "long_hub")
 
 # Run the export python script
-./export_stl.py ${model} ${bodies[@]} --output-dir build ${dry_run}
+$SOURCE_DIR/export_stl.py ${model} ${bodies[@]} --output-dir $BUILD_DIR ${dry_run}

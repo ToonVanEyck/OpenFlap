@@ -1,3 +1,3 @@
 idf_component_register(SRCS "test.c"
                        INCLUDE_DIRS .
-                       PRIV_REQUIRES unity test_utils controller_ota networking)
+                       PRIV_REQUIRES unity test_utils controller_ota webserver networking app_update)

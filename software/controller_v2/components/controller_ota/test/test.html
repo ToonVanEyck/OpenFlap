@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload with Progress</title>
+    <style>
+        #progressContainer {
+            display: none;
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        #progressBar {
+            width: 0%;
+            height: 20px;
+            background-color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload a File using PUT</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="file">
+        <button type="button" id="uploadButton">Upload</button>
+    </form>
+
+    <div id="progressContainer">
+        <div id="progressBar"></div>
+    </div>
+    <p id="status"></p>
+
+    <script>
+        document.getElementById("uploadButton").addEventListener("click", async () => {
+            const fileInput = document.getElementById("fileInput");
+            const status = document.getElementById("status");
+            const progressContainer = document.getElementById("progressContainer");
+            const progressBar = document.getElementById("progressBar");
+
+            if (!fileInput.files.length) {
+                status.textContent = "No file selected!";
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            try {
+                status.textContent = "Uploading...";
+                progressContainer.style.display = "block";
+                progressBar.style.width = "0%";
+
+                const xhr = new XMLHttpRequest();
+                xhr.open("PUT", "http://192.168.0.43/api/firmware/controller", true);
+
+                // Update progress bar
+                xhr.upload.addEventListener("progress", (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = (event.loaded / event.total) * 100;
+                        progressBar.style.width = percentComplete + "%";
+                    }
+                });
+
+                // Handle success or error
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        status.textContent = "File uploaded successfully!";
+                    } else {
+                        status.textContent = "Failed to upload file.";
+                    }
+                    progressContainer.style.display = "none";
+                };
+
+                xhr.onerror = () => {
+                    status.textContent = "An error occurred during upload.";
+                    progressContainer.style.display = "none";
+                };
+
+                // Send the file
+                xhr.send(file);
+            } catch (error) {
+                console.error("Error uploading file:", error);
+                status.textContent = "An error occurred.";
+            }
+        });
+    </script>
+</body>
+</html>

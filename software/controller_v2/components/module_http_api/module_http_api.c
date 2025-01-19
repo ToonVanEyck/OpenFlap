@@ -11,7 +11,6 @@
 
 esp_err_t module_http_api_get_handler(httpd_req_t *req);
 esp_err_t module_http_api_post_handler(httpd_req_t *req);
-esp_err_t module_http_api_allow_cors(httpd_req_t *req);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -19,15 +18,14 @@ esp_err_t module_http_api_init(webserver_ctx_t *webserver_ctx, display_t *displa
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
-    ESP_RETURN_ON_ERROR(
-        webserver_api_endpoint_add(webserver_ctx, "/module", HTTP_GET, module_http_api_get_handler, display), TAG,
-        "Failed to add GET handler for /module");
-    ESP_RETURN_ON_ERROR(
-        webserver_api_endpoint_add(webserver_ctx, "/module", HTTP_POST, module_http_api_post_handler, display), TAG,
-        "Failed to add POST handler for /module");
-    ESP_RETURN_ON_ERROR(
-        webserver_api_endpoint_add(webserver_ctx, "/module", HTTP_OPTIONS, module_http_api_allow_cors, NULL), TAG,
-        "Failed to add OPTIONS handler for /modules");
+    webserver_api_method_handlers_t controller_ota_handlers = {
+        .get_handler  = module_http_api_get_handler,
+        .post_handler = module_http_api_post_handler,
+    };
+
+    ESP_RETURN_ON_ERROR(webserver_api_endpoint_add(webserver_ctx, "/module", &controller_ota_handlers, true, display),
+                        TAG, "Failed to add GET handler for /module");
+
     return ESP_OK;
 }
 
@@ -37,10 +35,6 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
 {
     display_t *display = (display_t *)req->user_ctx;
     esp_err_t err      = ESP_OK;
-
-    /* Set CORS header */
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
     /* Desynchronize all properties which can be read through json. to force them to be read. */
     for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
@@ -52,7 +46,7 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
     ESP_LOGI(TAG, "Display desynchronized");
     display_event_desynchronized(display);
     /* Wait for synchronisation event. */
-    err = display_event_wait_for_synchronized(display, 5000 / portTICK_PERIOD_MS);
+    err = display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000));
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to synchronize display");
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, NULL);
@@ -109,10 +103,6 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
 esp_err_t module_http_api_post_handler(httpd_req_t *req)
 {
     display_t *display = (display_t *)req->user_ctx;
-
-    /* Set CORS header */
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
 
     ESP_LOGI(TAG, "POST data length: %d", req->content_len);
 
@@ -223,16 +213,5 @@ esp_err_t module_http_api_post_handler(httpd_req_t *req)
     /* Notify that we have updated the display modules. */
     display_event_desynchronized(display);
 
-    return ESP_OK;
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-
-esp_err_t module_http_api_allow_cors(httpd_req_t *req)
-{
-    httpd_resp_set_status(req, "204 No Content");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type");
-    httpd_resp_send(req, NULL, 0);
     return ESP_OK;
 }

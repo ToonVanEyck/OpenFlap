@@ -1,7 +1,6 @@
 idf_component_register(
     SRCS 
         "chain_comm_esp.c"
-        "chain_comm_msg.c"
     INCLUDE_DIRS 
         "include"
     REQUIRES 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "chain_comm_common.h"
-#include "chain_comm_msg.h"
 
 /**
  * \brief Initialize the chain communication.

@@ -64,7 +64,7 @@ esp_err_t networking_setup(const networking_config_t *config)
 esp_err_t networking_wait_for_connection(uint32_t timeout_ms)
 {
     EventBits_t bits = xEventGroupWaitBits(networking_events, WIFI_CONNECTED_BIT | ETH_CONNECTED_BIT, pdFALSE, pdFALSE,
-                                           timeout_ms / portTICK_PERIOD_MS);
+                                           pdMS_TO_TICKS(timeout_ms));
     if (bits & (WIFI_CONNECTED_BIT | ETH_CONNECTED_BIT)) {
         return ESP_OK;
     } else {

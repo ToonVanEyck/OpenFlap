@@ -4,4 +4,4 @@ idf_component_register(
     INCLUDE_DIRS 
         "include"
     REQUIRES 
-        property_handler webserver )
+        webserver app_update)

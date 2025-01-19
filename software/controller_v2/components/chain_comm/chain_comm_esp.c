@@ -8,13 +8,15 @@
 
 #define TAG "CHAIN_COMM"
 
-#define UART_BUF_SIZE        (1024)
-#define UART_NUM             UART_NUM_1
-#define TX_PIN               (17)
-#define RX_PIN               (16)
 #define CHAIN_COMM_TASK_SIZE 6000
+#define CHAIN_COMM_TASK_PRIO 5
 
-#define RX_BYTES_TIMEOUT(_byte_cnt) (((_byte_cnt) * 20) / portTICK_PERIOD_MS)
+#define UART_BUF_SIZE (1024)
+#define UART_NUM      UART_NUM_1
+#define TX_PIN        (17)
+#define RX_PIN        (16)
+
+#define RX_BYTES_TIMEOUT(_byte_cnt) (pdMS_TO_TICKS((_byte_cnt) * 20))
 
 static void chain_comm_task(void *arg);
 static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size);
@@ -43,8 +45,9 @@ esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display)
     ESP_RETURN_ON_ERROR(uart_set_pin(UART_NUM, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE), TAG,
                         "Failed to set UART pins");
 
-    ESP_RETURN_ON_FALSE(xTaskCreate(chain_comm_task, "chain_comm_task", CHAIN_COMM_TASK_SIZE, ctx, 10, &ctx->task),
-                        ESP_FAIL, TAG, "Failed to create chain comm task");
+    ESP_RETURN_ON_FALSE(
+        xTaskCreate(chain_comm_task, "chain_comm_task", CHAIN_COMM_TASK_SIZE, ctx, CHAIN_COMM_TASK_PRIO, &ctx->task),
+        ESP_FAIL, TAG, "Failed to create chain comm task");
 
     return ESP_OK;
 }
@@ -152,7 +155,7 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
 
 esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property_id)
 {
-    esp_err_t ret          = ESP_OK;
+    esp_err_t ret          = ESP_OK; /* Set by ESP_GOTO_ON_ERROR macro. */
     uint8_t *property_data = NULL;
     uint8_t *rx_buff       = NULL;
     uint16_t property_size = 0;
@@ -308,7 +311,7 @@ static void chain_comm_task(void *arg)
                 }
             }
 #if CHAIN_COMM_DEBUG
-            vTaskDelay(50 / portTICK_PERIOD_MS);
+            vTaskDelay(pdMS_TO_TICKS(50));
 #endif
         }
 

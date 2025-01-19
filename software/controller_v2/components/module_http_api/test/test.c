@@ -34,5 +34,4 @@ TEST_CASE("Test module http API post handler", "[module_http_api][qemu]")
     ESP_LOGI(TAG, "Webserver stopped");
 
     test_utils_record_free_mem();
-    TEST_ASSERT(true);
 }

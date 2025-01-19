@@ -36,7 +36,7 @@ TEST_CASE("Test chain comm write all character_set", "[chain_comm][target]")
     display_event_desynchronized(&display);
 
     /* Wait for the display to synchronize. */
-    display_event_wait_for_desynchronized(&display, 1000 / portTICK_PERIOD_MS);
+    display_event_wait_for_desynchronized(&display, pdMS_TO_TICKS(1000));
 
     /* Cleanup. */
     chain_comm_destroy(&ctx);

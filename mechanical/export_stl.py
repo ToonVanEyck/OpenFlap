@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/opt/FreeCAD/usr/bin/python
 import math
 import os
 import sys

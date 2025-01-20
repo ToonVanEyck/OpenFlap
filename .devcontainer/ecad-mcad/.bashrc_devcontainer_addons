@@ -1,0 +1,2 @@
+figlet -f 3d.flf Open Flap
+echo "🤖 KiCad & FreeCAD automation docker 🤖"

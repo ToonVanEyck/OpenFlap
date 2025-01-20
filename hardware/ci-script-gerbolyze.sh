@@ -14,8 +14,8 @@ else
 fi
 
 # Check if the script is being ran in the correct container.
-if [ "$(hostname)" != "gerbolyze" ]; then
-    echo -e "\e[31mError: This script is meant to be ran in the gerbolyze container.\e[0m"
+if [ "$(hostname)" != "ecad-mcad" ]; then
+    echo -e "\e[31mError: This script is meant to be ran in the ecad-mcad container.\e[0m"
     exit 1
 fi
 

@@ -1,5 +1,5 @@
 {
-    "name": "OpenFlap: FreeCad",
+    "name": "OpenFlap: ecad-mcad",
     "build": {
         "dockerfile": "Dockerfile",
         "context": "."
@@ -8,11 +8,18 @@
     "containerUser": "openflap",
     "runArgs": [
         "--privileged",
-        "--hostname=freecad",
-        "--name=openflap_freecad"
+        "--hostname=ecad-mcad",
+        "--name=openflap_ecad_mcad"
     ],
     "mounts": [
         "source=${localEnv:HOME}/.bashrc,target=/home/openflap/.bashrc,type=bind,consistency=cached",
     ],
     "postStartCommand": "/workspaces/OpenFlap/.devcontainer/bashrc_addons_add.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.live-server"
+            ]
+        }
+    },
 }

@@ -13,6 +13,7 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         *)
             echo "Invalid option: $1" >&2
+            echo "Usage: $0 [--modified] [--dry-run]"
             exit 1
             ;;
     esac

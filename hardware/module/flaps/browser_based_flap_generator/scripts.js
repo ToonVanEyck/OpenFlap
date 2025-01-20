@@ -23,6 +23,15 @@ window.onload = async function () {
     var flapPositionX = document.getElementById("flapPositionX")
     var flapPositionY = document.getElementById("flapPositionY")
 
+    // Print current template as base64
+    // fetch('gerbolyzer_template.svg')
+    //     .then(response => response.text())
+    //     .then(data => {
+    //         const b64 = btoa(data);
+    //         console.log(b64);
+    //     })
+    //     .catch(error => console.error('Error loading SVG:', error));
+
     // Resize the canvas
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);

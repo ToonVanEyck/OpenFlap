@@ -18,7 +18,8 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-vscode.live-server"
+                "ms-vscode.live-server",
+                "ms-python.black-formatter"
             ]
         }
     },

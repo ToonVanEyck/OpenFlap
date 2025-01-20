@@ -294,6 +294,10 @@ class FlapGenerator {
         back_glyph_intersect.position.x -= frontFlap.flap_upper.bounds.x
         front_glyph_intersect.position.y -= frontFlap.flap_upper.bounds.y
 
+        // set path id's
+        front_glyph_intersect.name = 'front_glyph';
+        back_glyph_intersect.name = 'back_glyph';
+
         // Add glyphs to output svg
         let gerbolyzer_svg_node = this.gerbolyzer_template_node.cloneNode(true);
         gerbolyzer_svg_node.getElementById('g-top-silk').appendChild(front_glyph_intersect.exportSVG());

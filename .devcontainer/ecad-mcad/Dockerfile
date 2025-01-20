@@ -55,6 +55,7 @@ RUN wget https://github.com/FreeCAD/FreeCAD/releases/download/1.0rc2/FreeCAD_1.0
 RUN chmod +x FreeCAD*.AppImage && ./FreeCAD*.AppImage --appimage-extract
 RUN mv squashfs-root /opt/FreeCAD && rm -rf FreeCAD*.AppImage
 RUN pip install colorama --target /opt/FreeCAD/usr/lib/python3.11/site-packages
+RUN pip install lxml --target /opt/FreeCAD/usr/lib/python3.11/site-packages
 
 ###### Setup KiCad ######
 

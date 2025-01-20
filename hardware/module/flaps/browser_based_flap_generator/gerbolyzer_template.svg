@@ -28,7 +28,7 @@
     <g id="g-outline" inkscape:label="outline" inkscape:groupmode="layer">
         <path
             d="M 4.0102063,0.01250001 A 3.9979501,3.9971507 0 0 0 0.0125,4.009407 v 17.58794 H 2.011353 V 32.389511 H 0.0125 v 0.999228 H 2.011353 V 34.9875 h 44.977293 v -1.598761 h 1.998855 V 32.389511 H 46.988646 V 21.597347 h 1.998855 V 4.009407 A 3.9979501,3.9971507 0 0 0 44.989276,0.01250001 Z"
-            style="fill:none;stroke:#000000;stroke-width:0.025;stroke-linecap:round;stroke-dasharray:none" />
+            style="fill:none;stroke:#000000;stroke-width:0.025;stroke-linecap:round;stroke-dasharray:none" id="flap_outline" />
     </g>
     <g id="g-drill-plated" inkscape:label="drill plated" inkscape:groupmode="layer">
     </g>

@@ -29,7 +29,7 @@ input_zip="$1"
 output_dir="$2"
 
 # Unzip the input file
-unzip "$input_zip" -d /tmp/flaps
+unzip -o "$input_zip" -d /tmp/flaps
 
 # Loop through each .svg file in the temp directory
 for svg_file in /tmp/flaps/*.svg; do

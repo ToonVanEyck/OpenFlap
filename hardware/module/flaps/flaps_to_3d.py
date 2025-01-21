@@ -75,7 +75,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Constants
     EXTRACT_PATH = "/tmp/flaps"
+    FLAP_THICKNESS_MM = 0.8  # Thickness of the flap
+    COLOR_THICKNESS_MM = 0.15  # Thickness of the colored characters.
 
     # Extract the SVG files from the zip archive
     with zipfile.ZipFile(args.zip_path, "r") as zip_ref:
@@ -123,12 +126,14 @@ if __name__ == "__main__":
                 doc.removeObject(obj.Name)
 
         # Extrude the outline and the silk paths
-        outlineExtrudeObj = extrude_path(doc, outline_path, 0.8, False)
+        outlineExtrudeObj = extrude_path(doc, outline_path, FLAP_THICKNESS_MM, False)
         topExtrudeObjs = [
-            extrude_path(doc, path, 0.15, False) for path in top_silk_paths
+            extrude_path(doc, path, COLOR_THICKNESS_MM, False)
+            for path in top_silk_paths
         ]
         botExtrudeObjs = [
-            extrude_path(doc, path, 0.15, True, 0.8) for path in bot_silk_paths
+            extrude_path(doc, path, COLOR_THICKNESS_MM, True, FLAP_THICKNESS_MM)
+            for path in bot_silk_paths
         ]
 
         # Generate a list of cut tools by copying the extruded paths

@@ -27,9 +27,9 @@ RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
 # Add user to dialout and plugdev group
 RUN adduser ${NEW_USER} dialout
 RUN adduser ${NEW_USER} plugdev
-RUN adduser ${NEW_USER} sudo
 
 # Allow all users in the sudo group to use sudo without a password
+RUN adduser ${NEW_USER} sudo
 RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd && \
     chmod 0440 /etc/sudoers.d/nopasswd
 

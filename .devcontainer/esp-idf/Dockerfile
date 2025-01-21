@@ -5,14 +5,16 @@ ARG ORIGINAL_USER=ubuntu
 ARG NEW_USER=openflap
 
 RUN apt-get update \
-  && apt install -y -q \
+  && apt install -y \
   cmake \
-  git \
+  git git-core bash-completion \
   libglib2.0-0 \
   libnuma1 \
   libpixman-1-0 \
   curl \
-  && rm -rf /var/lib/apt/lists/*
+  netcat-traditional \
+  figlet \
+  sudo
 
 # Install git-lfs
 RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt install git-lfs
@@ -35,7 +37,7 @@ ENV PATH=/opt/qemu/bin:${PATH}
 
 RUN chmod -R 775 /opt/esp/python_env/
 
-# Change user name from ubutu to openflap
+# Change user name from ubuntu to openflap
 RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
     groupmod -n ${NEW_USER} ${ORIGINAL_USER} && \
     usermod -d /home/${NEW_USER} -m ${NEW_USER}
@@ -44,11 +46,10 @@ RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
 RUN adduser ${NEW_USER} dialout
 RUN adduser ${NEW_USER} plugdev
 
-# Install additional packages
-RUN apt-get update && apt-get install -y -q \
-    netcat-traditional \
-    figlet \
-    sudo
+# Allow all users in the sudo group to use sudo without a password
+RUN adduser ${NEW_USER} sudo
+RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/nopasswd && \
+    chmod 0440 /etc/sudoers.d/nopasswd
 
 # Install figlet font
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf

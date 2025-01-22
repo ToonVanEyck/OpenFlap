@@ -13,7 +13,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "module.h"
-#include "module_http_api.h"
+#include "module_api.h"
 #include "networking.h"
 #include "oled_disp.h"
 #include "utils.h"
@@ -63,7 +63,7 @@ void app_main(void)
     ESP_LOGI(TAG, "Webserver started!");
 
     /* Initialize http module api. */
-    ESP_GOTO_ON_ERROR(module_http_api_init(&webserver_ctx, &display), verify_firmware, TAG,
+    ESP_GOTO_ON_ERROR(module_api_init(&webserver_ctx, &display), verify_firmware, TAG,
                       "Failed to initialize module api");
     ESP_LOGI(TAG, "Module api endpoint started!");
 

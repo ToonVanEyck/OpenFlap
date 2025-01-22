@@ -10,10 +10,6 @@
 #define TAG "CONTROLLER_OTA_TEST"
 
 /* Test Command:
-curl -s -F 'controller_firmware=@build/controller/openflap-controller.bin' 192.168.0.43/api/firmware/controller
-curl -s -F 'controller_firmware=@test.bin control=@test.bin' -F 'controller_version=1.2.3'
-192.168.0.43/api/firmware/controller curl -X POST -F 'controller_firmware=@software/controller_v2/main/main.c'
-192.168.0.43/api/firmware/controller
 curl -T build/controller/openflap-controller.bin 192.168.0.43:80/api/firmware/controller
 */
 

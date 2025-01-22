@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/stream_buffer.h"
 #include "webserver_common.h"
+#include <stdbool.h>
 
 typedef esp_err_t (*webserver_api_handler)(httpd_req_t *req);
 

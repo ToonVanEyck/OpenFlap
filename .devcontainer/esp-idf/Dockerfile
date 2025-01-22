@@ -6,6 +6,7 @@ ARG USER_UID=1000
 
 # Install additional packages
 RUN apt update && apt install -y \
+    netcat-traditional \
     libusb-1.0-0-dev \
     ruby-full \
     figlet \
@@ -59,12 +60,6 @@ RUN python $IDF_PATH/tools/idf_tools.py install qemu-xtensa
 
 # Make /opt/esp/ writable
 RUN chown -R ${NEW_USER}:${NEW_USER} /opt/esp/
-
-# Install additional packages
-RUN apt-get update && apt-get install -y -q \
-    netcat-traditional \
-    figlet \
-    sudo
 
 # Setup user and home
 ENV USER=${NEW_USER}

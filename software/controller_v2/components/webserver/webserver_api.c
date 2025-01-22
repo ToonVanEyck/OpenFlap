@@ -17,6 +17,7 @@ static esp_err_t webserver_api_handler_wrapper(httpd_req_t *req);
 static esp_err_t webserver_api_handler_options_wrapper(httpd_req_t *req);
 static webserver_api_handler *webserver_api_handler_get(webserver_api_method_handlers_t *handlers,
                                                         httpd_method_t method);
+static esp_err_t httpd_req_recv_blocking(httpd_req_t *r, char *buf, size_t buf_len, TickType_t timeout);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -127,22 +128,19 @@ esp_err_t webserver_api_util_file_upload_to_chunk_cb(httpd_req_t *req, webserver
     ESP_GOTO_ON_FALSE(buf != NULL, ESP_ERR_NO_MEM, exit_no_free, TAG, "Failed to allocate memory for POST data");
 
     while (remaining > 0) {
-        size_t len   = remaining < sizeof(buf) ? remaining : chunk_size;
-        int recv_cnt = httpd_req_recv(req, buf, len);
-        if (recv_cnt <= 0) {
-            if (recv_cnt == HTTPD_SOCK_ERR_TIMEOUT) {
-                continue; /* Retry receiving if timeout occurred. */
-            }
-            ESP_GOTO_ON_ERROR(recv_cnt, exit, TAG, "Failed to receive POST data");
-        }
+        size_t len = remaining < chunk_size ? remaining : chunk_size;
+
+        /* Receive a chunk of data. */
+        ESP_GOTO_ON_ERROR(httpd_req_recv_blocking(req, buf, len, pdMS_TO_TICKS(5000)), exit, TAG,
+                          "Failed to receive POST data");
 
         /* Call the chunk handler callback. */
-        ESP_GOTO_ON_ERROR(chunk_handler(user_ctx, buf, recv_cnt, offset, req->content_len), exit, TAG,
+        ESP_GOTO_ON_ERROR(chunk_handler(user_ctx, buf, len, offset, req->content_len), exit, TAG,
                           "Failed to handle chunk");
 
         /* Update data counters. */
-        offset += recv_cnt;
-        remaining -= recv_cnt;
+        offset += len;
+        remaining -= len;
     }
 
     /* Send a response. */
@@ -162,6 +160,15 @@ exit_no_free:
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/**
+ * \brief Wrapper function to handle API requests.
+ *
+ * This wrapper function is used to add CORS headers to the response.
+ *
+ * \param[in] req The HTTP request.
+ *
+ * \return esp_err_t
+ */
 static esp_err_t webserver_api_handler_wrapper(httpd_req_t *req)
 {
     /* Get the request handler. */
@@ -182,6 +189,16 @@ static esp_err_t webserver_api_handler_wrapper(httpd_req_t *req)
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/**
+ * \brief Wrapper function to handle OPTIONS requests.
+ *
+ * When an api endpoint is added with allow_cors set to true, the OPTIONS handler is automatically added. If a custom
+ * OPTIONS handler is provided, it will be called from within this function.
+ *
+ * \param[in] req The HTTP request.
+ *
+ * \return esp_err_t
+ */
 static esp_err_t webserver_api_handler_options_wrapper(httpd_req_t *req)
 {
     /* Get the request handler. */
@@ -210,6 +227,14 @@ static esp_err_t webserver_api_handler_options_wrapper(httpd_req_t *req)
 
 //---------------------------------------------------------------------------------------------------------------------
 
+/**
+ * \brief Get the handler for a given HTTP method.
+ *
+ * \param[in] handlers The method handlers.
+ * \param[in] method The HTTP method.
+ *
+ * \return webserver_api_handler
+ */
 static webserver_api_handler *webserver_api_handler_get(webserver_api_method_handlers_t *handlers,
                                                         httpd_method_t method)
 {
@@ -230,3 +255,39 @@ static webserver_api_handler *webserver_api_handler_get(webserver_api_method_han
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Receive data from a request blocking until all data is received.
+ *
+ * \param[in] r The HTTP request.
+ * \param[in] buf The buffer to store the data.
+ * \param[in] buf_len The length of the buffer.
+ * \param[in] timeout The timeout for the receive operation. The function might not return the moment the timeout is
+ *      exceeded.
+ *
+ * \return esp_err_t
+ */
+static esp_err_t httpd_req_recv_blocking(httpd_req_t *r, char *buf, size_t buf_len, TickType_t timeout)
+{
+    ESP_RETURN_ON_FALSE(r != NULL, ESP_ERR_INVALID_ARG, TAG, "Invalid request");
+
+    size_t received       = 0;
+    TickType_t start_tick = xTaskGetTickCount();
+
+    while (received < buf_len) {
+        int recv_len = httpd_req_recv(r, buf + received, buf_len - received);
+        if (recv_len < 0) {
+            if (recv_len == HTTPD_SOCK_ERR_TIMEOUT) {
+                /* Check if we need to timeout. */
+                ESP_RETURN_ON_FALSE((xTaskGetTickCount() - start_tick) < timeout, ESP_ERR_TIMEOUT, TAG,
+                                    "Receive Timeout");
+            } else {
+                ESP_LOGE(TAG, "Failed to receive data");
+                return ESP_FAIL;
+            }
+        }
+        received += recv_len;
+    }
+
+    return ESP_OK;
+}

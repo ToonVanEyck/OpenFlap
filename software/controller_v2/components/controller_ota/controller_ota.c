@@ -1,22 +1,20 @@
 #include "controller_ota.h"
 #include "esp_check.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/timers.h"
 
 #define TAG "CONTROLLER_OTA"
-
-#define CONTROLLER_OTA_TASK_SIZE (2048) /**< Task stack size. */
-#define CONTROLLER_OTA_TASK_PRIO (5)    /**< Task priority. */
 
 /** OTA chunk size. The firmware PUT request is read and handled in chunks of this size.  */
 #define CONTROLLER_OTA_CHUNK_SIZE (2048)
 
 #define CONTROLLER_OTA_URI "/firmware/controller" /**< Controller OTA endpoint. */
 
-esp_err_t controller_ota_post_handler(httpd_req_t *req);
-esp_err_t controller_ota_allow_cors(httpd_req_t *req);
-// static void controller_ota_task(void *arg);
-esp_err_t controller_ota_chunk_handler(void *ctx, char *data, size_t data_len, size_t data_offset,
-                                       size_t total_data_len);
+static esp_err_t controller_ota_handler(httpd_req_t *req);
+static esp_err_t controller_ota_chunk_handler(void *ctx, char *data, size_t data_len, size_t data_offset,
+                                              size_t total_data_len);
+static void controller_ota_reboot_callback(TimerHandle_t xTimer);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -29,7 +27,7 @@ esp_err_t controller_ota_init(controller_ota_ctx_t *ctx, webserver_ctx_t *webser
 
     /* Create the api endpoints. */
     webserver_api_method_handlers_t controller_ota_handlers = {
-        .put_handler = controller_ota_post_handler,
+        .put_handler = controller_ota_handler,
     };
 
     ESP_RETURN_ON_ERROR(
@@ -55,7 +53,7 @@ esp_err_t controller_ota_verify_firmware(bool startup_success)
         if (startup_success) {
             esp_ota_mark_app_valid_cancel_rollback();
         } else {
-            ESP_LOGE(TAG, "Diagnostics failed! Start rollback to the previous version ...");
+            ESP_LOGE(TAG, "Application did not start successfully, rolling back to the previous version ...");
             esp_ota_mark_app_invalid_rollback_and_reboot();
         }
     } else if (!startup_success) {
@@ -67,7 +65,14 @@ esp_err_t controller_ota_verify_firmware(bool startup_success)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t controller_ota_post_handler(httpd_req_t *req)
+/**
+ * \brief Handler for the controller OTA endpoint.
+ *
+ * \param[in] req The HTTP request.
+ *
+ * \return esp_err_t
+ */
+static esp_err_t controller_ota_handler(httpd_req_t *req)
 {
     controller_ota_ctx_t *ctx = (controller_ota_ctx_t *)req->user_ctx;
 
@@ -78,8 +83,22 @@ esp_err_t controller_ota_post_handler(httpd_req_t *req)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t controller_ota_chunk_handler(void *user_ctx, char *data, size_t data_len, size_t data_offset,
-                                       size_t total_data_len)
+/**
+ * \brief Handler for a chunk of data provided by the controller OTA endpoint.
+ *
+ * The data is written to the OTA partition in chunks. This is done because there is not enough memory to receive and
+ * store the entire binary before writing it to the partition.
+ *
+ * \param[in] user_ctx The OTA context.
+ * \param[in] data The data chunk.
+ * \param[in] data_len The length of the data chunk.
+ * \param[in] data_offset The offset of the data chunk relative to the total data.
+ * \param[in] total_data_len The total length of the data.
+ *
+ * \return esp_err_t
+ */
+static esp_err_t controller_ota_chunk_handler(void *user_ctx, char *data, size_t data_len, size_t data_offset,
+                                              size_t total_data_len)
 {
     ESP_RETURN_ON_FALSE(user_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "Controller OTA context is NULL");
     controller_ota_ctx_t *ctx = (controller_ota_ctx_t *)user_ctx;
@@ -105,7 +124,16 @@ esp_err_t controller_ota_chunk_handler(void *user_ctx, char *data, size_t data_l
         /* End OTA and mark the partition for next boot. */
         ESP_GOTO_ON_ERROR(esp_ota_end(ctx->update_handle), exit_abort, TAG, "Failed to end OTA update");
         ESP_RETURN_ON_ERROR(esp_ota_set_boot_partition(ctx->update_partition), TAG, "Failed to set boot partition");
-        ESP_LOGI(TAG, "Controller OTA complete. Reboot to apply changes.");
+        ESP_LOGI(TAG, "Controller OTA complete. Rebooting in 3 seconds...");
+
+        /* Start a FreeRTOS timer to reboot the device in 3 seconds. */
+        TimerHandle_t reboot_timer =
+            xTimerCreate("reboot_timer", pdMS_TO_TICKS(3000), pdFALSE, NULL, controller_ota_reboot_callback);
+        if (reboot_timer != NULL) {
+            xTimerStart(reboot_timer, 0);
+        } else {
+            ESP_LOGE(TAG, "Failed to create reboot timer.");
+        }
     }
 
 exit_abort:
@@ -116,4 +144,16 @@ exit_abort:
     }
 
     return ret;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Callback to reboot the device.
+ *
+ * \param[in] xTimer The timer handle.
+ */
+static void controller_ota_reboot_callback(TimerHandle_t xTimer)
+{
+    esp_restart();
 }

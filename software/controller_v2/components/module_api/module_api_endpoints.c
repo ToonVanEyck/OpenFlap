@@ -1,37 +1,17 @@
-#include "module_http_api.h"
+#include "module_api_endpoints.h"
 #include "cJSON.h"
 #include "chain_comm_abi.h"
+#include "display.h"
 #include "esp_check.h"
 #include "esp_log.h"
+#include "module.h"
 #include "property_handler.h"
-
-#define TAG "MODULE_HTTP_API"
 
 #define MODULE_INDEX_KEY_STR "module"
 
-esp_err_t module_http_api_get_handler(httpd_req_t *req);
-esp_err_t module_http_api_post_handler(httpd_req_t *req);
+#define TAG "MODULE_ENDPOINTS"
 
-//---------------------------------------------------------------------------------------------------------------------
-
-esp_err_t module_http_api_init(webserver_ctx_t *webserver_ctx, display_t *display)
-{
-    ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
-
-    webserver_api_method_handlers_t controller_ota_handlers = {
-        .get_handler  = module_http_api_get_handler,
-        .post_handler = module_http_api_post_handler,
-    };
-
-    ESP_RETURN_ON_ERROR(webserver_api_endpoint_add(webserver_ctx, "/module", &controller_ota_handlers, true, display),
-                        TAG, "Failed to add GET handler for /module");
-
-    return ESP_OK;
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-
-esp_err_t module_http_api_get_handler(httpd_req_t *req)
+esp_err_t module_api_get_handler(httpd_req_t *req)
 {
     display_t *display = (display_t *)req->user_ctx;
     esp_err_t err      = ESP_OK;
@@ -100,7 +80,7 @@ esp_err_t module_http_api_get_handler(httpd_req_t *req)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t module_http_api_post_handler(httpd_req_t *req)
+esp_err_t module_api_post_handler(httpd_req_t *req)
 {
     display_t *display = (display_t *)req->user_ctx;
 

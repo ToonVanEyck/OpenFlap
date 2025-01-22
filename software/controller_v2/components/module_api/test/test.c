@@ -4,15 +4,15 @@
 #include "esp_system.h"
 #include "memory_checks.h"
 #include "module.h"
-#include "module_http_api.h"
+#include "module_api.h"
 #include "networking.h"
 #include "properties.h"
 #include "unity.h"
 #include "webserver.h"
 
-#define TAG "MODULE_HTTP_API_TEST"
+#define TAG "module_api_TEST"
 
-TEST_CASE("Test module http API post handler", "[module_http_api][qemu]")
+TEST_CASE("Test module http API post handler", "[module_api][qemu]")
 {
     /* Configure Ethernet for testing on qemu. */
     networking_config_t config = NETWORKING_DEFAULT_CONFIG;
@@ -24,7 +24,7 @@ TEST_CASE("Test module http API post handler", "[module_http_api][qemu]")
 
     display_t display;
     TEST_ASSERT_EQUAL(display_init(&display), ESP_OK);
-    TEST_ASSERT_EQUAL(module_http_api_init(&webserver_ctx, &display), ESP_OK);
+    TEST_ASSERT_EQUAL(module_api_init(&webserver_ctx, &display), ESP_OK);
 
     ESP_LOGI(TAG, "Webserver started");
 

@@ -4,30 +4,6 @@
 #include "module_common.h"
 
 /**
- * \brief Get a property from a module by the property id.
- *
- * \param[in] module The module to get the property from.
- * \param[in] property_id The id of the property to get.
- *
- * \return The property if found, NULL otherwise.
- */
-// void *module_property_get_by_id(module_t *module, property_id_t property_id);
-
-//---------------------------------------------------------------------------------------------------------------------
-
-/**
- * \brief Get a property from a module by the property name.
- *
- * \param[in] module The module to get the property from.
- * \param[in] property_name The name of the property to get.
- *
- * \return The property if found, NULL otherwise.
- */
-// void *module_property_get_by_name(module_t *module, const char *property_name);
-
-//---------------------------------------------------------------------------------------------------------------------
-
-/**
  * \brief Indicate that a property of a module has been updated and and needs to be written to the actual module.
  *
  * \param[in] module The module which has it's property updated.

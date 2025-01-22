@@ -18,11 +18,22 @@ typedef struct {
 } character_set_property_t;
 
 /**
+ * \brief the firmware property.
+ *
+ * Contains one flash page at a time.
+ */
+typedef struct {
+    uint16_t index; /**< index of the currently contained flash page. */
+    uint8_t *data;  /**< Data in the firmware property.*/
+} firmware_property_t;
+
+/**
  * \brief Module structure.
  */
 typedef struct {
     module_info_property_t module_info; /**< Module info property. */
     command_property_t command;         /**< Command property. */
+    firmware_property_t firmware;       /**< Firmware property. */
     uint8_t character_index; /**< The index of the character in the charactermap that is currently being displayed. */
     character_set_property_t character_set;
     union {

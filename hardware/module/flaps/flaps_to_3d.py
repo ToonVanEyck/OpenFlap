@@ -78,7 +78,11 @@ if __name__ == "__main__":
     # Constants
     EXTRACT_PATH = "/tmp/flaps"
     FLAP_THICKNESS_MM = 0.8  # Thickness of the flap
-    COLOR_THICKNESS_MM = 0.15  # Thickness of the colored characters.
+    COLOR_THICKNESS_MM = 0.16 * 2  # Thickness of the colored characters.
+
+    # Printing the the flaps with 0.16 mm layers will result 5 layers (0.8 mm / 0.16 mm = 5)
+    # The colored characters will be printed with 2 layers (0.16 mm * 2 = 0.32 mm)
+    # This leaves a solid black layer in the middle.
 
     # Extract the SVG files from the zip archive
     with zipfile.ZipFile(args.zip_path, "r") as zip_ref:

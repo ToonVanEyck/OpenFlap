@@ -61,8 +61,8 @@ static esp_err_t firmware_to_binary(uint8_t **bin, uint16_t *bin_size, const mod
 
     const firmware_property_t *firmware = &module->firmware;
 
-    /* Check if the character set has been initialized before. */
-    ESP_RETURN_ON_FALSE(firmware->data != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set is NULL");
+    /* Check if the firmware property has been initialized before. */
+    ESP_RETURN_ON_FALSE(firmware->data != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "firmware property data is NULL");
 
     *bin_size = chain_comm_property_write_attributes_get(PROPERTY_FIRMWARE)->static_property_size;
 

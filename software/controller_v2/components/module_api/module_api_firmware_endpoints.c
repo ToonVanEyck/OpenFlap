@@ -35,7 +35,11 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
 
     ESP_LOGI(TAG, "writing %d %d/%d bytes", data_len, data_offset + data_len, total_data_len);
 
-    for (uint16_t i = 0; i < display_size_get(display); i++) {
+    /* Check display size. */
+    uint16_t display_size = display_size_get(display);
+    ESP_RETURN_ON_FALSE(display_size > 0, ESP_FAIL, TAG, "Display is empty");
+
+    for (uint16_t i = 0; i < display_size; i++) {
         module_t *module = display_module_get(display, i);
 
         /* Set the firmware page. */

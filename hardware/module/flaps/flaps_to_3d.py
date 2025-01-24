@@ -179,14 +179,10 @@ if __name__ == "__main__":
         topExtrudeObjsFixed = cut_path_holes(doc, topExtrudeObjs)
         botExtrudeObjsFixed = cut_path_holes(doc, botExtrudeObjs)
 
-        print([obj.Name for obj in topExtrudeObjsFixed + botExtrudeObjsFixed])
-
         # Generate a list of cut tools by copying the extruded paths
         cutToolObjs = [doc.copyObject(obj) for obj in topExtrudeObjsFixed] + [
             doc.copyObject(obj) for obj in botExtrudeObjsFixed
         ]
-
-        print([obj.Name for obj in cutToolObjs])
 
         # Perform a boolean cut operation to remove the copied paths from the outline
         bp = BOPFeatures.BOPFeatures(doc)

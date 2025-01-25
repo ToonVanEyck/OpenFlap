@@ -275,7 +275,8 @@ class FlapGenerator {
         const back_glyph_offset = backFlap.getThickness() / 2;
         let front_glyph = front_glyph_offset ? PaperOffset.offset(frontFlap.flap_glyph, front_glyph_offset) : frontFlap.flap_glyph.clone();
         let back_glyph = back_glyph_offset ? PaperOffset.offset(backFlap.flap_glyph, back_glyph_offset) : backFlap.flap_glyph.clone();
-        // Reposition bottom glyph
+
+        // Reposition bottom glyph to the flap to the left
         back_glyph.position = new paper.Point((frontFlap.flap_upper.bounds.width * 1.1) * (frontFlap.index + 1 / 2), frontFlap.flap_upper.bounds.height * 1.1 - frontFlap.gap_mm);
         back_glyph.position.x += backFlap.glyph_position_x;
         back_glyph.position.y -= backFlap.glyph_position_y;
@@ -283,20 +284,19 @@ class FlapGenerator {
         // Intersect glyphs
         let front_glyph_intersect = frontFlap.flap_upper.intersect(front_glyph);
         let back_glyph_intersect = frontFlap.flap_lower.intersect(back_glyph);
-        back_glyph_intersect.scale(1, -1);
-        back_glyph_intersect.position.y -= back_glyph_intersect.bounds.height + frontFlap.gap_mm;
         front_glyph.remove();
         back_glyph.remove();
 
-        // Reposition glyphs
+        // Move the bottom glyph to the top and mirror it
+        let back_glyph_top_offset = back_glyph_intersect.bounds.y - backFlap.flap_lower.bounds.y;
+        back_glyph_intersect.position.y -= back_glyph_intersect.bounds.height + frontFlap.gap_mm + (2 * back_glyph_top_offset);
+        back_glyph_intersect.scale(1, -1);
+
+        // Reposition glyphs to origin
         front_glyph_intersect.position.x -= frontFlap.flap_upper.bounds.x
         back_glyph_intersect.position.y -= frontFlap.flap_upper.bounds.y
         back_glyph_intersect.position.x -= frontFlap.flap_upper.bounds.x
         front_glyph_intersect.position.y -= frontFlap.flap_upper.bounds.y
-
-        // set path id's
-        front_glyph_intersect.name = 'front_glyph';
-        back_glyph_intersect.name = 'back_glyph';
 
         // Add glyphs to output svg
         let gerbolyzer_svg_node = this.gerbolyzer_template_node.cloneNode(true);

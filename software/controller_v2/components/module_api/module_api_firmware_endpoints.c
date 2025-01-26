@@ -49,6 +49,8 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
         module_property_indicate_desynchronized(module, PROPERTY_FIRMWARE);
     }
 
+    /* Notify that we have updated the display modules. */
+    display_event_desynchronized(display);
     /* Wait for synchronisation event. */
     return display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000));
 }

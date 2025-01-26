@@ -16,3 +16,5 @@ curl --header "Content-Type: application/json" POST --data '[{"module": 0,"chara
 curl --header "Content-Type: application/json" GET http://192.168.0.43:80/api/module
 
 curl --header "Content-Type: application/json" POST --data '[{"module": 0,"character_set": ["Y", "O", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"]}]' http://192.168.0.43:80/api/module
+
+curl -T build/module/bin/OpenFlap_Module_App.bin http://192.168.0.43:80/api/module/firmware

@@ -126,8 +126,11 @@ esp_err_t property_handler_firmware_set(module_t *module, uint16_t index, const 
 
     firmware_property_t *firmware = &module->firmware;
 
-    /* Check if the character set has been initialized before. */
-    ESP_RETURN_ON_FALSE(firmware->data != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set is NULL");
+    /* Check if the firmware data has been initialized before. */
+    if (firmware->data == NULL) {
+        firmware->data = malloc(data_size);
+        ESP_RETURN_ON_FALSE(firmware->data != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
+    }
 
     /* Copy the index and firmware page to the binary array. */
     firmware->index = index;

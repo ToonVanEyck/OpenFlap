@@ -16,7 +16,7 @@
 #define TX_PIN        (17)
 #define RX_PIN        (16)
 
-#define RX_BYTES_TIMEOUT(_byte_cnt) (pdMS_TO_TICKS((_byte_cnt) * 20))
+#define RX_BYTES_TIMEOUT(_byte_cnt) (pdMS_TO_TICKS((_byte_cnt) * 50))
 
 static void chain_comm_task(void *arg);
 static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size);

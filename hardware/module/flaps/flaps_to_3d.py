@@ -5,6 +5,7 @@ import argparse
 from colorama import Fore, Style
 import zipfile
 from lxml import etree
+from itertools import combinations
 
 freecad_paths = [
     "/opt/FreeCAD/usr/lib",
@@ -36,7 +37,7 @@ def svg_set_path_ids(svg_file):
             "{http://www.inkscape.org/namespaces/inkscape}label"
         ].replace(" ", "_")
         for index, path in enumerate(group.findall(".//svg:path", namespaces)):
-            path.attrib["id"] = f"{label}_{index}_"
+            path.attrib["id"] = f"{label}_{index}"
 
     tree.write(svg_file, pretty_print=True, xml_declaration=True, encoding="UTF-8")
 
@@ -63,30 +64,49 @@ def extrude_path(doc, pathObj, length, reversed=False, offset=0):
     return extrudeObj
 
 
-def cut_path_holes(doc, originalPaths):
+def combine_extrudes(doc, originalPaths):
     # When importing an svg into freecad, freecad imports sub-paths as a separate object.
-    # For example, an "O" character will be imported as 2 separate paths.
-    # One for the outer circle and one for the inner circle.
-    # The outer path will be named name__extrusion and the inner paths will be named name_00n_extrusion.
-    # We need to cut the inner paths out of the outer path.
+    # For example, an "O" character will be imported as 2 separate paths. One for the outer circle and one for the inner circle.
+    # The same is the case for characters like "?", "!" etc.
+    # We need to combine the paths into a single path. But we need to determine wether to combine or cut the paths.
     bp = BOPFeatures.BOPFeatures(doc)
-    newPaths = []
-    index = 0
-    for obj in originalPaths:
-        if "__" in obj.Name:
-            prefix = obj.Name.split("__")[0]
-            related_objs = [
-                o
-                for o in originalPaths
-                if o.Name.startswith(prefix) and o.Name != obj.Name
-            ]
-            cut_obj = obj
-            for related_obj in related_objs:
-                cut_obj = bp.make_cut([cut_obj.Name, related_obj.Name])
-            cut_obj.Label = f"{prefix}_fixed_{index}"
-            index += 1
-            newPaths.append(cut_obj)
-    return newPaths
+    combineObjs = set()
+    cutObjs = set()
+
+    if len(originalPaths) == 1:
+        return [originalPaths[0]]
+
+    # Get the non intersecting and intersecting objects.
+    for obj1, obj2 in combinations(originalPaths, 2):
+        intersectVolume = obj1.Shape.common(obj2.Shape).Volume
+        if intersectVolume > 0:
+            if intersectVolume == obj1.Shape.Volume:
+                combineObjs.add(obj2)
+                cutObjs.add(obj1)
+            elif intersectVolume == obj2.Shape.Volume:
+                combineObjs.add(obj1)
+                cutObjs.add(obj2)
+            else:
+                print(
+                    Fore.RED
+                    + "ERROR: intersectVolume is not equal to any of the volumes"
+                    + Style.RESET_ALL
+                )
+                exit(1)
+        else:
+            combineObjs.add(obj1)
+            combineObjs.add(obj2)
+
+    if len(combineObjs) == 0:
+        return []
+
+    # combine the objects
+    newObjs = combineObjs.pop()
+    for obj in combineObjs:
+        newObjs = bp.make_fuse([newObjs.Name, obj.Name])
+    for obj in cutObjs:
+        newObjs = bp.make_cut([newObjs.Name, obj.Name])
+    return [newObjs]
 
 
 if __name__ == "__main__":
@@ -175,14 +195,20 @@ if __name__ == "__main__":
             for path in bot_silk_paths
         ]
 
+        # Recompute the document required before performing boolean operations
+        doc.recompute()
+
         # Some characters Like an "O","B","8" have holes in them. They are imported as separate paths. So we need to cut the inner paths out of the outer path.
-        topExtrudeObjsFixed = cut_path_holes(doc, topExtrudeObjs)
-        botExtrudeObjsFixed = cut_path_holes(doc, botExtrudeObjs)
+        # Also, characters like "?", "!" have multiple paths. We need to combine them into a single path.
+        correctedExtrudeObjs = combine_extrudes(doc, topExtrudeObjs) + combine_extrudes(
+            doc, botExtrudeObjs
+        )
 
         # Generate a list of cut tools by copying the extruded paths
-        cutToolObjs = [doc.copyObject(obj) for obj in topExtrudeObjsFixed] + [
-            doc.copyObject(obj) for obj in botExtrudeObjsFixed
-        ]
+        cutToolObjs = [doc.copyObject(obj) for obj in correctedExtrudeObjs]
+
+        # Recompute the document required before performing boolean operations
+        doc.recompute()
 
         # Perform a boolean cut operation to remove the copied paths from the outline
         bp = BOPFeatures.BOPFeatures(doc)
@@ -192,7 +218,7 @@ if __name__ == "__main__":
 
         # Combine the shapes of topExtrudeObjs and botExtrudeObjs
         combinedObj = doc.addObject("Part::Compound", "combined")
-        combinedObj.Links = topExtrudeObjsFixed + botExtrudeObjsFixed + [flapObj]
+        combinedObj.Links = [flapObj] + correctedExtrudeObjs
 
         # Recompute the document
         doc.recompute()
@@ -214,3 +240,4 @@ if __name__ == "__main__":
         # Save the FreeCAD document as a .FCStd file
         # output_file = os.path.join(args.output_dir, f"{file_basename}.FCStd")
         # doc.saveAs(str(output_file))
+        # exit()

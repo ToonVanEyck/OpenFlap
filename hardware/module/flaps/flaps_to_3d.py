@@ -187,11 +187,11 @@ if __name__ == "__main__":
         # Extrude the outline and the silk paths
         outlineExtrudeObj = extrude_path(doc, outline_path, FLAP_THICKNESS_MM, False)
         topExtrudeObjs = [
-            extrude_path(doc, path, COLOR_THICKNESS_MM, False)
+            extrude_path(doc, path, COLOR_THICKNESS_MM, True, FLAP_THICKNESS_MM)
             for path in top_silk_paths
         ]
         botExtrudeObjs = [
-            extrude_path(doc, path, COLOR_THICKNESS_MM, True, FLAP_THICKNESS_MM)
+            extrude_path(doc, path, COLOR_THICKNESS_MM, False)
             for path in bot_silk_paths
         ]
 

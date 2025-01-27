@@ -9,7 +9,7 @@
  * \brief Populate the property from a json object.
  *
  * \param[in] json The json object to convert.
- * \param[out] property The property to populate.
+ * \param[out] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
@@ -58,7 +58,7 @@ static esp_err_t character_set_from_json(module_t *module, const cJSON *json)
  * \brief Convert the property into it's json representation.
  *
  * \param[out] json The json object in which we will store the property.
- * \param[in] property The property to convert.
+ * \param[in] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
@@ -86,7 +86,7 @@ static esp_err_t character_set_to_json(cJSON **json, const module_t *module)
 /**
  * \brief Deserialize a byte array into a property.
  *
- * \param[out] property The property to populate.
+ * \param[out] module The module containing the property.
  * \param[in] bin The byte array to deserialize.
  * \param[in] bin_size The size of the byte array.
  *
@@ -126,7 +126,7 @@ static esp_err_t character_set_from_binary(module_t *module, const uint8_t *bin,
  *
  * \param[out] bin The serialized byte array.
  * \param[out] bin_size The size of the byte array.
- * \param[in] property The property to serialize.
+ * \param[in] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */

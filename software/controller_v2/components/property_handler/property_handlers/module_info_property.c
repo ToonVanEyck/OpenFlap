@@ -6,7 +6,7 @@
  * \brief Convert the property into it's json representation.
  *
  * \param[out] json The json object in which we will store the property.
- * \param[in] property The property to convert.
+ * \param[in] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
@@ -26,7 +26,7 @@ static esp_err_t module_info_to_json(cJSON **json, const module_t *module)
 /**
  * \brief Deserialize a byte array into a property.
  *
- * \param[out] property The property to populate.
+ * \param[out] module The module containing the property.
  * \param[in] bin The byte array to deserialize.
  * \param[in] bin_size The size of the byte array.
  *

@@ -17,6 +17,17 @@ add_custom_target(compile_time
     COMMAND ${CMAKE_COMMAND} -E touch_nocreate src/main.c
 )
 
+# Get the version using git describe
+execute_process(
+    COMMAND git describe --tag --dirty
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Add the version as a compile definition
+target_compile_definitions(${App} PUBLIC GIT_VERSION="${GIT_VERSION}")
+
 add_dependencies(${App} compile_time)
 
 target_compile_definitions(${App} PUBLIC

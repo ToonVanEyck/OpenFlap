@@ -45,7 +45,7 @@ typedef struct {
  */
 #define MODULE_PROPERTY(PROPERTY)                                                                                      \
     PROPERTY(PROPERTY_NONE, NULL, PROP_ATTR_NONE(), PROP_ATTR_NONE())                                                  \
-    PROPERTY(PROPERTY_FIRMWARE, "firmware", PROP_ATTR_NONE(), PROP_ATTR_STATIC(130))                                   \
+    PROPERTY(PROPERTY_FIRMWARE, "firmware", PROP_ATTR_DYNAMIC(), PROP_ATTR_STATIC(130))                                \
     PROPERTY(PROPERTY_COMMAND, "command", PROP_ATTR_NONE(), PROP_ATTR_STATIC(1))                                       \
     PROPERTY(PROPERTY_MODULE_INFO, "module_info", PROP_ATTR_STATIC(1), PROP_ATTR_NONE())                               \
     PROPERTY(PROPERTY_CHARACTER_SET, "character_set", PROP_ATTR_DYNAMIC(), PROP_ATTR_DYNAMIC())                        \

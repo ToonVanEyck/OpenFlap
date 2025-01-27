@@ -14,7 +14,7 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(DEBUG_IO_RTT_BACKEND 1 CACHE BOOL "Use RTT as debug input output backend")
 
-# Include the external cain_comm_abi library
+# Include the external chain_comm_abi library
 include(ExternalProject)
 ExternalProject_Add(common_chain_comm_abi
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../common/chain_comm_abi

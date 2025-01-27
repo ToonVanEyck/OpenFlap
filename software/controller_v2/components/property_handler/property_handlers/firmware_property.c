@@ -10,7 +10,7 @@
  * \brief Convert the property into it's json representation.
  *
  * \param[out] json The json object in which we will store the property.
- * \param[in] property The property to convert.
+ * \param[in] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
@@ -19,9 +19,9 @@ static esp_err_t firmware_to_json(cJSON **json, const module_t *module)
     assert(json != NULL);
     assert(module != NULL);
 
-    const char *firmware_version = "v0.0.0";
+    const firmware_property_t *firmware = &module->firmware;
 
-    *json = cJSON_CreateString(firmware_version);
+    *json = cJSON_CreateString(firmware->version);
     ESP_RETURN_ON_FALSE(*json != NULL, ESP_FAIL, PROPERTY_TAG, "Failed to create JSON string");
 
     return ESP_OK;
@@ -30,7 +30,7 @@ static esp_err_t firmware_to_json(cJSON **json, const module_t *module)
 /**
  * \brief Deserialize a byte array into a property.
  *
- * \param[out] property The property to populate.
+ * \param[out] module The module containing the property.
  * \param[in] bin The byte array to deserialize.
  * \param[in] bin_size The size of the byte array.
  *
@@ -41,6 +41,17 @@ static esp_err_t firmware_from_binary(module_t *module, const uint8_t *bin, uint
     assert(module != NULL);
     assert(bin != NULL);
 
+    firmware_property_t *firmware = &module->firmware;
+
+    /* Check if the firmware data has been initialized before. */
+    if (firmware->version == NULL) {
+        firmware->version = malloc(bin_size + 1);
+        ESP_RETURN_ON_FALSE(firmware->version != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
+    }
+    memset(firmware->version, 0, bin_size + 1);
+
+    strncpy(firmware->version, (const char *)bin, bin_size);
+
     return ESP_OK;
 }
 
@@ -49,7 +60,7 @@ static esp_err_t firmware_from_binary(module_t *module, const uint8_t *bin, uint
  *
  * \param[out] bin The serialized byte array.
  * \param[out] bin_size The size of the byte array.
- * \param[in] property The property to serialize.
+ * \param[in] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */
@@ -112,7 +123,7 @@ static bool firmware_compare(const module_t *module_a, const module_t *module_b)
 const property_handler_t PROPERTY_HANDLER_FIRMWARE = {
     .id          = PROPERTY_FIRMWARE,
     .to_json     = firmware_to_json,
-    .from_binary = NULL,
+    .from_binary = firmware_from_binary,
     .to_binary   = firmware_to_binary,
     .compare     = firmware_compare,
 };

@@ -81,7 +81,8 @@ int main(void)
     property_handlers_init(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
-    debug_io_log_debug("Compilation Date: %s %s\n", __DATE__, __TIME__);
+    debug_io_log_info("Version: %s\n", GIT_VERSION);
+    debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
     debug_io_log_debug("Random seed: %d\n", openflap_ctx.config.random_seed);
 
     // Set setpoint equal to position to prevent instant rotation.

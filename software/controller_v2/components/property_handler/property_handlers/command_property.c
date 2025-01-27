@@ -8,7 +8,7 @@
 /**
  * \brief Populate the property from a json object.
  *
- * \param[out] property The property to populate.
+ * \param[out] module The module containing the property.
  * \param[in] json The json object to convert.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
@@ -38,7 +38,7 @@ static esp_err_t command_from_json(module_t *module, const cJSON *json)
  *
  * \param[out] bin The serialized byte array.
  * \param[out] bin_size The size of the byte array.
- * \param[in] property The property to serialize.
+ * \param[in] module The module containing the property.
  *
  * \return ESP_OK if the conversion was successful, ESP_FAIL otherwise.
  */

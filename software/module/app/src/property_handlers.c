@@ -18,6 +18,12 @@ void property_firmware_set(uint8_t *buf, uint16_t *size)
     }
 }
 
+void property_firmware_get(uint8_t *buf, uint16_t *size)
+{
+    *size = strlen(GIT_VERSION);
+    strncpy((char *)buf, GIT_VERSION, CHAIN_COM_MAX_LEN - 1);
+}
+
 void property_command_set(uint8_t *buf, uint16_t *size)
 {
     switch (buf[0]) {
@@ -100,7 +106,7 @@ void property_handlers_init(openflap_ctx_t *ctx)
     openflap_ctx = ctx;
 
     openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE].set = property_firmware_set;
-    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE].get = NULL;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE].get = property_firmware_get;
 
     openflap_ctx->chain_ctx.property_handler[PROPERTY_COMMAND].set = property_command_set;
     openflap_ctx->chain_ctx.property_handler[PROPERTY_COMMAND].get = NULL;

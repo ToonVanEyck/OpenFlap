@@ -23,6 +23,7 @@ typedef struct {
  * Contains one flash page at a time.
  */
 typedef struct {
+    char *version;  /**< Version of the firmware. */
     uint16_t index; /**< index of the currently contained flash page. */
     uint8_t *data;  /**< Data in the firmware property.*/
 } firmware_property_t;

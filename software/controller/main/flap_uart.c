@@ -7,7 +7,7 @@ static TaskHandle_t task;
 
 static chain_comm_msg_t msg;
 
-static uart_modulePropertyHandler_t uart_modulePropertyHandlers[MAX_PROPERTIES] = {0};
+static uart_modulePropertyHandler_t uart_modulePropertyHandlers[64] = {0};
 
 void msg_init()
 {
@@ -198,7 +198,7 @@ static void flap_uart_task(void *arg)
         header.raw = (uint8_t)ulTaskNotifyTake(true, 250 / portTICK_RATE_MS);
         switch (header.field.action) {
             case property_writeAll:
-                expected_rx_len = get_property_size(header.field.property) + WRITE_HEADER_LEN + ACKNOWLEDGE_LEN;
+                expected_rx_len = get_property_size(header.field.property) + 1 + 1;
                 len             = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
                 if (len != expected_rx_len) {
                     ESP_LOGE(TAG, "Received %ld bytes but expected %ld bytes for this \"writeAll\" command.", len,
@@ -214,7 +214,7 @@ static void flap_uart_task(void *arg)
                 }
                 break;
             case property_readAll:
-                expected_rx_len = READ_HEADER_LEN;
+                expected_rx_len = 3;
                 len             = uart_receive(buf, expected_rx_len, 250 / portTICK_RATE_MS);
 
                 if (len != expected_rx_len) {

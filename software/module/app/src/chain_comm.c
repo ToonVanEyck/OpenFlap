@@ -11,8 +11,6 @@
  */
 #define TRACE_CHAIN_COMM_UART false
 
-#define CHAIN_COMM_TIMEOUT_MS 250
-
 #if CHAIN_COMM_DEBUG
 const char *get_state_name(uint8_t state);
 #endif
@@ -410,9 +408,8 @@ void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx)
  */
 void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx)
 {
-    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
-        uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1);
-        if (++ctx->data_cnt == chain_comm_property_write_attributes_get(ctx->header.property)->static_property_size) {
+    if (uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
+        if (++ctx->data_cnt == ctx->property_size) {
             chain_comm_state_change(ctx, writeSeq_rxToTx);
         }
     } else if (chain_comm_timer_elapsed(ctx)) {

@@ -7,17 +7,9 @@
 
 #define ABI_VERSION 2
 
-#define MAX_PROPERTIES                          (64) // (6 bits)
-#define WRITE_HEADER_LEN                        1    // Write header is 1 bytes long: [HEADER]
-#define READ_HEADER_LEN                         3    // Read header is 3 bytes long: [HEADER] [CNT_LSB] [CNT_MSB]
-#define ACKNOWLEDGE_LEN                         1
-#define CHAIN_COM_MAX_LEN                       256
-#define SEQUENTIAL_WRITE_TRIGGER_DELAY_MS       50
-#define SEQUENTIAL_WRITE_TRIGGER_DELAY_EXTRA_MS 5
-#define SEQUENTIAL_WRITE_PASSTHROUGH_PERIOD_MS                                                                         \
-    (SEQUENTIAL_WRITE_TRIGGER_DELAY_MS - SEQUENTIAL_WRITE_TRIGGER_DELAY_EXTRA_MS)
-#define MAX_COMMAND_PERIOD_MS (SEQUENTIAL_WRITE_TRIGGER_DELAY_MS + SEQUENTIAL_WRITE_TRIGGER_DELAY_EXTRA_MS)
-#define ACK                   0x00
+#define CHAIN_COM_MAX_LEN      (256)  /**< Maximum length of a chain communication message. */
+#define CHAIN_COMM_TIMEOUT_ACK (0xFF) /**< Value used as acknowledge. */
+#define CHAIN_COMM_TIMEOUT_MS  (250)  /**< Time after which a timeout event occurs. */
 
 typedef enum __attribute__((__packed__)) {
     do_nothing,

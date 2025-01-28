@@ -134,7 +134,7 @@ int main(void)
         // Print position.
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
-            debug_io_log_info("Position: %d  %s\n", openflap_ctx.flap_position,
+            debug_io_log_info("Pos: %d  %s\n", openflap_ctx.flap_position,
                               &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
         }
 

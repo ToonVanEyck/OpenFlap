@@ -327,6 +327,9 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
                         "Failed to receive ack");
     ESP_RETURN_ON_FALSE(rx_ack == ack, ESP_FAIL, TAG, "Ack mismatch");
 
+    /* Sequential writes must wait for at least the timeout in order for the modules to execute the  */
+    vTaskDelay(pdMS_TO_TICKS(CHAIN_COMM_TIMEOUT_MS * 12 / 10));
+
     /* Indicate success. */
     display_property_indicate_synchronized(display, property_id);
 
@@ -343,13 +346,8 @@ static void chain_comm_task(void *arg)
         display_event_wait_for_desynchronized(ctx->display, portMAX_DELAY);
         ESP_LOGI(TAG, "Display desynchronized");
 
-        // if (display_size_get(ctx->display) == 0) {
-        //     ESP_LOGW(TAG, "No modules in model.");
-        //     chain_comm_property_read_all(ctx->display, PROPERTY_MODULE_INFO);
-        // }
-
         /* Promote possible write seq to write all. */
-        // display_property_promote_write_seq_to_write_all(ctx->display);
+        display_property_promote_write_seq_to_write_all(ctx->display);
         for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
             if (display_property_is_desynchronized(ctx->display, property, PROPERTY_SYNC_METHOD_READ)) {
                 esp_err_t err = chain_comm_property_read_all(ctx->display, property);

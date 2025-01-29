@@ -24,11 +24,11 @@ bool chain_comm_timer_elapsed(chain_comm_ctx_t *ctx);
 
 /* Chain comm FSM state implementations. */
 void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx);
+void chain_comm_state_rxSize(chain_comm_ctx_t *ctx);
 void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx);
 void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx);
 void chain_comm_state_readAll_txSize(chain_comm_ctx_t *ctx);
 void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx);
-void chain_comm_state_write_rxSize(chain_comm_ctx_t *ctx);
 void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx);
 void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx);
 void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx);
@@ -49,6 +49,9 @@ bool chain_comm(chain_comm_ctx_t *ctx)
         case rxHeader:
             chain_comm_state_rxHeader(ctx);
             break;
+        case rxSize:
+            chain_comm_state_rxSize(ctx);
+            break;
         case readAll_rxCnt:
             chain_comm_state_readAll_rxCnt(ctx);
             break;
@@ -60,9 +63,6 @@ bool chain_comm(chain_comm_ctx_t *ctx)
             break;
         case readAll_txData:
             chain_comm_state_readAll_txData(ctx);
-            break;
-        case write_rxSize:
-            chain_comm_state_write_rxSize(ctx);
             break;
         case writeAll_rxData:
             chain_comm_state_writeAll_rxData(ctx);
@@ -189,10 +189,10 @@ void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx)
                 break;
             case property_writeAll:
                 uart_driver_write(ctx->uart, &data, 1);
-                chain_comm_state_change(ctx, write_rxSize);
+                chain_comm_state_change(ctx, rxSize);
                 break;
             case property_writeSequential:
-                chain_comm_state_change(ctx, write_rxSize);
+                chain_comm_state_change(ctx, rxSize);
                 break;
             default:
                 chain_comm_state_change(ctx, rxHeader);
@@ -202,22 +202,24 @@ void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx)
 }
 
 /**
- * \brief Handles the write_rxSize state of the chain communication FSM.
+ * \brief Handles the rxSize state of the chain communication FSM.
  *
  * This state set initiates the property size in the context, it either sets the property size based on known static
  * property sizes, or it receives the property size in case of a dynamic property size.
  *
  * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */
-void chain_comm_state_write_rxSize(chain_comm_ctx_t *ctx)
+void chain_comm_state_rxSize(chain_comm_ctx_t *ctx)
 {
-    const chain_comm_binary_attributes_t *prop_attr = chain_comm_property_write_attributes_get(ctx->header.property);
+    const chain_comm_binary_attributes_t *prop_attr =
+        (ctx->header.action == property_readAll) ? chain_comm_property_read_attributes_get(ctx->header.property)
+                                                 : chain_comm_property_write_attributes_get(ctx->header.property);
 
     /* Get the dynamic size bytes and retransmit the for readAll and writeAll properties. */
     if (prop_attr->dynamic_property_size) {
         while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < 2 &&
                uart_driver_read(ctx->uart, &((uint8_t *)&ctx->property_size)[ctx->data_cnt], 1)) {
-            if (ctx->header.action == property_writeAll) {
+            if (ctx->header.action == property_writeAll || ctx->header.action == property_readAll) {
                 uart_driver_write(ctx->uart, &((uint8_t *)&ctx->property_size)[ctx->data_cnt], 1);
             }
             ctx->data_cnt++;
@@ -231,8 +233,10 @@ void chain_comm_state_write_rxSize(chain_comm_ctx_t *ctx)
         debug_io_log_debug("Property size: %d\n", ctx->property_size);
         if (ctx->header.action == property_writeAll) {
             chain_comm_state_change(ctx, writeAll_rxData);
-        } else {
+        } else if (ctx->header.action == property_writeSequential) {
             chain_comm_state_change(ctx, writeSeq_rxData);
+        } else if (ctx->header.action == property_readAll) {
+            chain_comm_state_change(ctx, readAll_rxData);
         }
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
@@ -261,7 +265,7 @@ void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
             data = (ctx->index >> 8) & 0xff;
             chain_comm_exec(ctx);
             if (--ctx->index) {
-                chain_comm_state_change(ctx, readAll_rxData);
+                chain_comm_state_change(ctx, rxSize);
             } else {
                 if (chain_comm_property_read_attributes_get(ctx->header.property)->dynamic_property_size) {
                     chain_comm_state_change(ctx, readAll_txSize);
@@ -279,9 +283,9 @@ void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
 /**
  * \brief Handles the readAll_rxData state of the chain communication FSM.
  *
- * This state receives the data bytes written by the readAll operation of the previous module. These bytes are forwarded
- * to the next modules. Once all data of the previous modules has been forwarded, the module will change the state to
- * readAll_txData.
+ * This state receives the data bytes written by the readAll operation of the previous module. These bytes are
+ * forwarded to the next modules. Once all data of the previous modules has been forwarded, the module will change
+ * the state to readAll_txData.
  *
  * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */
@@ -296,7 +300,7 @@ void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx)
     }
     if (ctx->data_cnt == ctx->property_size) {
         if (--ctx->index) {
-            chain_comm_state_change(ctx, readAll_rxData);
+            chain_comm_state_change(ctx, rxSize);
         } else {
             if (chain_comm_property_read_attributes_get(ctx->header.property)->dynamic_property_size) {
                 chain_comm_state_change(ctx, readAll_txSize);
@@ -331,8 +335,8 @@ void chain_comm_state_readAll_txSize(chain_comm_ctx_t *ctx)
 /**
  * \brief Handles the readAll_txData state of the chain communication FSM.
  *
- * This state sends the data bytes of the readAll operation to the next module. Once all data has been sent, the state
- * will change to rxHeader.
+ * This state sends the data bytes of the readAll operation to the next module. Once all data has been sent, the
+ * state will change to rxHeader.
  *
  * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */
@@ -352,9 +356,9 @@ void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
 /**
  * \brief Handles the writeAll_rxData state of the chain communication FSM.
  *
- * This state receives the data bytes to be written by the writeAll operation. All data is received is also passed to
- * the next module. Once all data has been forwarded to the next module, the module will execute the writeAll command
- * for the property and change the state to writeAll_rxAck.
+ * This state receives the data bytes to be written by the writeAll operation. All data is received is also passed
+ * to the next module. Once all data has been forwarded to the next module, the module will execute the writeAll
+ * command for the property and change the state to writeAll_rxAck.
  *
  * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */
@@ -400,9 +404,9 @@ void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx)
 /**
  * \brief Handles the writeSeq_rxData state of the chain communication FSM.
  *
- * This state receives the data bytes to be written by the writeSequential operation. The received bytes are NOT passed
- * to sequential modules. Once the data required for the writeSequential operation has been received, the state will
- * change to writeSeq_rxToTx.
+ * This state receives the data bytes to be written by the writeSequential operation. The received bytes are NOT
+ * passed to sequential modules. Once the data required for the writeSequential operation has been received, the
+ * state will change to writeSeq_rxToTx.
  *
  * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */
@@ -420,9 +424,9 @@ void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx)
 /**
  * \brief Handles the writeSeq_rxToTx state of the chain communication FSM.
  *
- * This state will forward all received data to the next module. This will happen until the timeout event occurs. Once
- * the timeout has occurred, the module will execute the writeSequential command for the property and change the state
- * to rxHeader.
+ * This state will forward all received data to the next module. This will happen until the timeout event occurs.
+ * Once the timeout has occurred, the module will execute the writeSequential command for the property and change
+ * the state to rxHeader.
  *
  * \param[inout] ctx Pointer to the chain_comm_ctx_t structure containing the context information.
  */

@@ -32,9 +32,9 @@ uint8_t uart_driver_read(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t 
 {
     HAL_UART_Receive_IT(uart_driver->huart, &uart_driver->rx_tmp_buff, 1);
     uint8_t rx_cnt = rbuff_read(&uart_driver->rx_rbuff, data, size);
-    for (uint8_t i = 0; i < rx_cnt; i++) {
-        debug_io_log_debug("RX : 0x%02X\n", data[i]);
-    }
+    // for (uint8_t i = 0; i < rx_cnt; i++) {
+    //     debug_io_log_debug("RX : 0x%02X\n", data[i]);
+    // }
     return rx_cnt;
 }
 
@@ -46,9 +46,9 @@ uint8_t uart_driver_cnt_readable(uart_driver_ctx_t *uart_driver)
 uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size)
 {
     uint8_t tx_cnt = rbuff_write(&uart_driver->tx_rbuff, data, size);
-    for (uint8_t i = 0; i < tx_cnt; i++) {
-        debug_io_log_debug("TX : 0x%02X\n", data[i]);
-    }
+    // for (uint8_t i = 0; i < tx_cnt; i++) {
+    //     debug_io_log_debug("TX : 0x%02X\n", data[i]);
+    // }
     uart_driver_ctx_tx_isr(uart_driver);
     return tx_cnt;
 }

@@ -123,11 +123,11 @@ if __name__ == "__main__":
 
     # Constants
     EXTRACT_PATH = "/tmp/flaps"
-    FLAP_THICKNESS_MM = 0.8  # Thickness of the flap
-    COLOR_THICKNESS_MM = 0.16 * 2  # Thickness of the colored characters.
+    FLAP_THICKNESS_MM = 0.75  # Thickness of the flap
+    COLOR_THICKNESS_MM = 0.15 * 2  # Thickness of the colored characters.
 
-    # Printing the the flaps with 0.16 mm layers will result 5 layers (0.8 mm / 0.16 mm = 5)
-    # The colored characters will be printed with 2 layers (0.16 mm * 2 = 0.32 mm)
+    # Printing the the flaps with 0.15 mm layers will result 5 layers (0.75 mm / 0.15 mm = 5)
+    # The colored characters will be printed with 2 layers (0.15 mm * 2 = 0.30 mm)
     # This leaves a solid black layer in the middle.
 
     # Create the EXTRACT_PATH directory if it does not exist or clear it if it does

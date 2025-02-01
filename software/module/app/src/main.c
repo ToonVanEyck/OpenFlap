@@ -131,6 +131,10 @@ int main(void)
         // Run chain comm.
         chain_comm(&openflap_ctx.chain_ctx);
 
+        /* Set debug pins based on flap position. */
+        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_1_PIN, openflap_ctx.flap_position & 1);
+        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_2_PIN, openflap_ctx.flap_position == 0);
+
         // Print position.
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
@@ -207,6 +211,13 @@ static void APP_GpioConfig(void)
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(MOTOR_A_GPIO_PORT, &GPIO_InitStruct);
+
+    /* Configure debug pins, these pins can be used for pin wiggling during development. */
+    GPIO_InitStruct.Pin   = DEBUG_GPIO_1_PIN | DEBUG_GPIO_2_PIN;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(DEBUG_GPIO_PORT, &GPIO_InitStruct);
 }
 
 static void APP_AdcConfig(void)

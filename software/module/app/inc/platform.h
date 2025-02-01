@@ -73,3 +73,14 @@
 /**
  * @}
  */
+
+/**
+ * \defgroup DEBUG pin definitions.
+ * @{
+ */
+#define DEBUG_GPIO_1_PIN (GPIO_PIN_0) /**< DEBUG 1 Pin. */
+#define DEBUG_GPIO_2_PIN (GPIO_PIN_1) /**< DEBUG 2 Pin. */
+#define DEBUG_GPIO_PORT  (GPIOF)      /**< DEBUG Port. */
+/**
+ * @}
+ */

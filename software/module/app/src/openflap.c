@@ -1,14 +1,19 @@
 #include "openflap.h"
 
-#define MOTOR_IDLE_TIMEOUT 500
-#define COMMS_IDLE_TIMEOUT 75
+#define MOTOR_IDLE_TIMEOUT_MS (500)
+#define COMMS_IDLE_TIMEOUT_MS (75)
+
+/** The motor will reverse direction for this duration after reaching the desired flap. */
+#define MOTOR_BACKSPIN_DURATION_MS (50)
+/** The motor will revers direction with this pwm value after reaching the desired flap. */
+#define MOTOR_BACKSPIN_PWM (5)
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
     const uint8_t min_pwm           = 40;
-    const uint8_t max_pwm           = 110;
-    const uint8_t min_ramp_distance = 1; /* Go min speed when distance is below this. */
-    const uint8_t max_ramp_distance = 8; /* Go max speed when distance is above this. */
+    const uint8_t max_pwm           = 110; /* 110 = +/- 0.5 rps = 30 rpm */
+    const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
+    const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */
 
     if (distance <= min_ramp_distance) {
         return min_pwm;
@@ -71,7 +76,7 @@ void updateMotorState(openflap_ctx_t *ctx)
 {
     uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - ctx->flap_position);
     if (distance > 0) {
-        ctx->motor_active_timeout_tick = HAL_GetTick() + MOTOR_IDLE_TIMEOUT;
+        ctx->motor_active_timeout_tick = HAL_GetTick() + MOTOR_IDLE_TIMEOUT_MS;
         if (!ctx->motor_active) {
             ctx->motor_active = true;
             debug_io_log_info("Motor Active\n");
@@ -85,7 +90,7 @@ void updateMotorState(openflap_ctx_t *ctx)
 void updateCommsState(openflap_ctx_t *ctx)
 {
     if (chain_comm_is_busy(&ctx->chain_ctx)) {
-        ctx->comms_active_timeout_tick = HAL_GetTick() + COMMS_IDLE_TIMEOUT;
+        ctx->comms_active_timeout_tick = HAL_GetTick() + COMMS_IDLE_TIMEOUT_MS;
         if (!ctx->comms_active) {
             ctx->comms_active = true;
             debug_io_log_info("Comms Active\n");
@@ -102,14 +107,29 @@ void updateCommsState(openflap_ctx_t *ctx)
     }
 }
 
+void setMotorFromDistance(openflap_ctx_t *ctx, uint8_t distance)
+{
+    if (distance > 0) {
+        motorForward(pwmDutyCycleCalc(distance));
+        ctx->motor_backspin_timeout_tick = 0;
+    } else {
+        if (ctx->motor_backspin_timeout_tick == 0) {
+            ctx->motor_backspin_timeout_tick = HAL_GetTick() + MOTOR_BACKSPIN_DURATION_MS;
+            motorReverse(MOTOR_BACKSPIN_PWM);
+        } else if (HAL_GetTick() > ctx->motor_backspin_timeout_tick) {
+            motorBrake();
+        }
+    }
+}
+
 void setMotor(motorMode_t mode, uint8_t speed)
 {
     switch (mode) {
         case MOTOR_REVERSE:
-            /* Disabled because this might cause damage to the system.
+            /* Use with caution, this might cause damage to the system.
              * The mechanism is designed to locks up in reverse direction. */
-            // __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            // HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_RESET);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
+            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_RESET);
             break;
         case MOTOR_FORWARD:
             speed = 0xff - speed; /* Invert Duty-Cycle. */

@@ -7,7 +7,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 build",
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller build",
             "problemMatcher": []
         },
         {
@@ -16,7 +16,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 monitor",
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller monitor",
             "problemMatcher": []
         },
         {
@@ -25,7 +25,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 flash monitor",
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller flash monitor",
             "problemMatcher": []
         },
         {
@@ -34,7 +34,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --qemu",
+            "command": "./software/controller/bld_util.py build -s software/controller/ -b build/controller/ --qemu",
         },
         {
             "label": "Application: Monitor [qemu]",
@@ -43,7 +43,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "isBackground": true,
-            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --qemu",
+            "command": "./software/controller/bld_util.py monitor -s software/controller/ -b build/controller/ --qemu",
             "problemMatcher": [
                 {
                     "pattern": [
@@ -76,7 +76,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --target",
+            "command": "./software/controller/bld_util.py build -s software/controller/ -b build/controller/ --target",
             "problemMatcher": []
         },
         {
@@ -86,7 +86,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "isBackground": true,
-            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --target",
+            "command": "./software/controller/bld_util.py monitor -s software/controller/ -b build/controller/ --target",
             "problemMatcher": [
                 {
                     "pattern": [
@@ -119,7 +119,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --qemu --component-from-path ${file}",
+            "command": "./software/controller/bld_util.py build -s software/controller/ -b build/controller/ --qemu --component-from-path ${file}",
         },
         {
             "label": "Component: Monitor [qemu]",
@@ -128,7 +128,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "isBackground": true,
-            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --qemu --component-from-path ${file}",
+            "command": "./software/controller/bld_util.py monitor -s software/controller/ -b build/controller/ --qemu --component-from-path ${file}",
             "problemMatcher": [
                 {
                     "pattern": [
@@ -161,7 +161,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "command": "./software/controller/bld_util.py build -s software/controller/ -b build/controller/ --target --component-from-path ${file}",
             "problemMatcher": []
         },
         {
@@ -170,7 +170,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "command": "./software/controller_v2/bld_util.py flash -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "command": "./software/controller/bld_util.py flash -s software/controller/ -b build/controller/ --target --component-from-path ${file}",
             "problemMatcher": []
         },
         {
@@ -180,7 +180,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "isBackground": true,
-            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "command": "./software/controller/bld_util.py monitor -s software/controller/ -b build/controller/ --target --component-from-path ${file}",
             "problemMatcher": [
                 {
                     "pattern": [

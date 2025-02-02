@@ -1,0 +1,10 @@
+dependencies:
+  idf:
+    version: '>=5.0'
+description: mDNS
+repository: git://github.com/espressif/esp-protocols.git
+repository_info:
+  commit_sha: 73c48307a367565f69e724df8641f8cbac45251d
+  path: components/mdns
+url: https://github.com/espressif/esp-protocols/tree/master/components/mdns
+version: 1.4.0

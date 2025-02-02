@@ -1,6 +1,6 @@
-[submodule "software/controller_v2/components/u8g2"]
-	path = software/controller_v2/components/u8g2
+[submodule "software/controller/components/u8g2"]
+	path = software/controller/components/u8g2
 	url = git@github.com:olikraus/u8g2.git
-[submodule "software/controller_v2/components/u8g2-hal-esp-idf"]
-	path = software/controller_v2/components/u8g2-hal-esp-idf
+[submodule "software/controller/components/u8g2-hal-esp-idf"]
+	path = software/controller/components/u8g2-hal-esp-idf
 	url = git@github.com:mkfrey/u8g2-hal-esp-idf.git

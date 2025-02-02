@@ -38,18 +38,18 @@
             },
             {
                 "name": "🔧 Menu Config",
-                "command": "idf.py -B build/controller menuconfig -C software/controller_v2",
+                "command": "idf.py -B build/controller menuconfig -C software/controller",
                 "tooltip": "idf.py menuconfig"
             },
             {
                 "name": "🧪 pyest component [qemu]",
-                "command": "${workspaceFolder}/software/controller_v2/bld_util.py pytest -s ${workspaceFolder}/software/controller_v2/ -b ${workspaceFolder}/build/controller/ --qemu  --component-from-path ${file} --rebuild",
+                "command": "${workspaceFolder}/software/controller/bld_util.py pytest -s ${workspaceFolder}/software/controller/ -b ${workspaceFolder}/build/controller/ --qemu  --component-from-path ${file} --rebuild",
                 "tooltip": "Run the pyest test suite for the component that contains the current file. This will rebuild the component and run the tests in the qemu environment.",
                 "singleInstance": true
             },
             {
                 "name": "⚗️ pyest component [target]",
-                "command": "${workspaceFolder}/software/controller_v2/bld_util.py pytest -s ${workspaceFolder}/software/controller_v2/ -b ${workspaceFolder}/build/controller/ --target --component-from-path ${file} --rebuild",
+                "command": "${workspaceFolder}/software/controller/bld_util.py pytest -s ${workspaceFolder}/software/controller/ -b ${workspaceFolder}/build/controller/ --target --component-from-path ${file} --rebuild",
                 "tooltip": "Run the pyest test suite for the component that contains the current file. This will rebuild the component and run the tests on the target hardware.",
                 "singleInstance": true
             }
@@ -71,5 +71,5 @@
         "sdkconfig*": "kconfig"
     },
     "cmake.sourceDirectory": "/workspaces/OpenFlap/software/controller",
-    "livePreview.defaultPreviewPath": "/software/controller_v2/components/webserver/assets/index.html"
+    "livePreview.defaultPreviewPath": "/software/controller/components/webserver/assets/index.html"
 }

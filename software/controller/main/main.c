@@ -1,88 +1,85 @@
-#define DO_GENERATE_PROPERTY_NAMES
-#include "Model.h"
-#include "board_io.h"
-#include "flap_firmware.h"
-#include "flap_http_server.h"
-#include "flap_mdns.h"
-#include "flap_nvs.h"
-#include "flap_socket_server.h"
-#include "flap_uart.h"
-#include "flap_wifi.h"
+/**
+ * \file main.c
+ * \brief Main file for the controller project
+ * \author Toon Van Eyck
+ */
+
+#include "chain_comm_esp.h"
+#include "controller_ota.h"
+#include "display.h"
+#include "driver/gpio.h"
+#include "esp_app_desc.h"
+#include "esp_check.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/timers.h"
+#include "module.h"
+#include "module_api.h"
+#include "networking.h"
+#include "oled_disp.h"
+#include "utils.h"
+#include "webserver.h"
+
+#include <regex.h>
 #include <stdio.h>
+#include <string.h>
 
-static const char *TAG = "[MAIN]";
+#define TAG "MAIN"
 
-TimerHandle_t xTimer;
-
-void timerCallback(TimerHandle_t pxTimer)
-{
-    /* The timer expired, therefore 5 seconds must have passed since a key
-    was pressed.  Switch off the LCD back-light. */
-    ESP_LOGI(TAG, "Timer done");
-    setLed(0, 0xff, 0);
-}
+#define STARTUP_ERROR_CHECK
 
 void app_main(void)
+
 {
-    nvs_init();
-    // The enable pin controls the relay to power the modules.
-    board_io_init(xTaskGetCurrentTaskHandle());
+    esp_err_t ret                 = ESP_OK; /* Set by ESP_GOTO_ON_ERROR macro. */
+    const esp_app_desc_t app_desc = *esp_app_get_description();
+    ESP_LOGI(TAG, "Starting OpenFlap controller: %s", app_desc.version);
 
-    xTimer = xTimerCreate("Boot Config", (500 / portTICK_PERIOD_MS), false, 0, timerCallback);
-    if (xTimerStart(xTimer, 0) != pdPASS) {
-        ESP_LOGE(TAG, "Timer could not be started");
-    } else {
-        ESP_LOGI(TAG, "Timer started");
-        setLed(0xff, 0, 0);
+    /* Initialize the oled display. */
+    oled_disp_ctx_t oled_disp_ctx;
+    oled_disp_init(&oled_disp_ctx);
+    uint8_t major, minor, patch;
+    util_extract_version(app_desc.version, &major, &minor, &patch);
+    oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
+
+    /* Connect to a network. */
+    networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;
+    ESP_GOTO_ON_ERROR(networking_setup(&network_config), verify_firmware, TAG, "Failed to setup networking");
+    networking_wait_for_connection(10000);
+    ESP_LOGI(TAG, "Connected to network!");
+
+    /* Initialize the OpenFlap display. */
+    display_t display;
+    ESP_GOTO_ON_ERROR(display_init(&display), verify_firmware, TAG, "Failed to initialize OpenFlap display");
+    ESP_LOGI(TAG, "Display initialized!");
+
+    /* Initialize the chain communication. */
+    chain_comm_ctx_t chain_comm_ctx;
+    ESP_GOTO_ON_ERROR(chain_comm_init(&chain_comm_ctx, &display), verify_firmware, TAG,
+                      "Failed to initialize chain comm");
+
+    /* Start the web server. */
+    webserver_ctx_t webserver_ctx;
+    ESP_GOTO_ON_ERROR(webserver_init(&webserver_ctx), verify_firmware, TAG, "Failed to start web server");
+    ESP_LOGI(TAG, "Webserver started!");
+
+    /* Initialize http module api. */
+    ESP_GOTO_ON_ERROR(module_api_init(&webserver_ctx, &display), verify_firmware, TAG,
+                      "Failed to initialize module api");
+    ESP_LOGI(TAG, "Module api endpoint started!");
+
+    /* Initialize controller OTA. */
+    controller_ota_ctx_t controller_ota_ctx;
+    ESP_GOTO_ON_ERROR(controller_ota_init(&controller_ota_ctx, &webserver_ctx), verify_firmware, TAG,
+                      "Failed to initialize controller OTA");
+    ESP_LOGI(TAG, "Controller OTA endpoint started!");
+
+verify_firmware:
+    /* Verify the firmware. */
+    bool startup_success = (ret == ESP_OK);
+    ESP_ERROR_CHECK(controller_ota_verify_firmware(startup_success));
+
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        // ESP_LOGI(TAG, "Hello world!");
     }
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-    while (xTimerIsTimerActive(xTimer)) {
-        uint32_t btn = ulTaskNotifyTake(true, 100 / portTICK_PERIOD_MS);
-        if (btn) {
-            ESP_LOGI(TAG, "Button pressed");
-            if (xTimerReset(xTimer, 10) != pdPASS) {
-                /* The reset command was not executed successfully.  Take appropriate
-                action here. */
-            }
-        }
-        ESP_LOGI(TAG, "Timer active");
-        // vTaskDelay();
-    };
-
-    // uint32_t statup_config = ulTaskNotifyTake(true, portMAX_DELAY);
-
-    // initialize components
-    flap_verify_controller_firmware();
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    flap_init_webserver();
-    // read Wi-Fi credentials from NVM
-    char *STA_pwd, *STA_ssid, *AP_pwd, *AP_ssid;
-    flap_nvs_get_string("STA_ssid", &STA_ssid);
-    if (!STA_ssid)
-        asprintf(&STA_ssid, "%c", 0);
-    flap_nvs_get_string("STA_pwd", &STA_pwd);
-    if (!STA_pwd)
-        asprintf(&STA_pwd, "%c", 0);
-    flap_nvs_get_string("AP_ssid", &AP_ssid);
-    if (!AP_ssid)
-        asprintf(&AP_ssid, "OpenFlap");
-    flap_nvs_get_string("AP_pwd", &AP_pwd);
-    if (!AP_pwd)
-        asprintf(&AP_pwd, "myOpenFlap");
-    // Set local hostname
-    flap_mdns_init("openflap");
-    // Start Wi-Fi
-    flap_wifi_init_apsta(STA_ssid, STA_pwd, AP_ssid, AP_pwd);
-    // start socket server for debugging
-    flap_init_socket_server();
-    // init uart
-    flap_uart_init();
-    flap_model_init();
-    ESP_LOGI(TAG, "OpenFlap Controller started!");
-
-    gpio_set_level(FLAP_ENABLE_PIN, 1);
 }

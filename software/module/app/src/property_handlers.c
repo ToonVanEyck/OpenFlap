@@ -4,7 +4,7 @@
 #include "flash.h"
 #include "memory_map.h"
 
-static openflap_ctx_t *openflap_ctx = NULL;
+static openflap_ctx_t *openflap_ctx = NULL; /* Set during initialization. */
 
 void property_firmware_set(uint8_t *buf, uint16_t *size)
 {
@@ -78,8 +78,11 @@ void property_calibration_get(uint8_t *buf, uint16_t *size)
 void property_character_set(uint8_t *buf, uint16_t *size)
 {
     openflap_ctx->flap_setpoint = buf[0];
-    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx->flap_setpoint - openflap_ctx->flap_position);
-    openflap_ctx->extend_revolution = (distance < openflap_ctx->config.minimum_distance);
+    distanceUpdate(openflap_ctx);
+    if (openflap_ctx->flap_distance < openflap_ctx->config.minimum_distance) {
+        openflap_ctx->extend_revolution = true;
+        openflap_ctx->flap_distance += SYMBOL_CNT;
+    }
 }
 
 void property_character_get(uint8_t *buf, uint16_t *size)

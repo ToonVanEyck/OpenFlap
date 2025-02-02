@@ -4,14 +4,14 @@
 #define COMMS_IDLE_TIMEOUT_MS (75)
 
 /** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (100)
+#define MOTOR_BACKSPIN_DURATION_MS (75)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
 #define MOTOR_BACKSPIN_PWM (15)
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    const uint8_t min_pwm           = 35;
-    const uint8_t max_pwm           = 110; /* 110 = +/- 0.5 rps = 30 rpm */
+    const uint8_t min_pwm           = 60;
+    const uint8_t max_pwm           = 160; /* 110 = +/- 0.5 rps = 30 rpm */
     const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
     const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */
 
@@ -57,8 +57,23 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
         if (flapIndexWrapCalc(new_position + 1) != old_position) {
             old_position       = new_position;
             ctx->flap_position = new_position;
+            distanceUpdate(ctx);
         }
     }
+}
+
+void distanceUpdate(openflap_ctx_t *ctx)
+{
+    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - ctx->flap_position);
+    /* Check if a short rotation needs to be extended. */
+    if (ctx->extend_revolution) {
+        if (distance < ctx->config.minimum_distance) {
+            distance += SYMBOL_CNT;
+        } else {
+            ctx->extend_revolution = false;
+        }
+    }
+    ctx->flap_distance = distance;
 }
 
 uint8_t getAdcBasedRandSeed(uint32_t *adc_data)
@@ -107,10 +122,10 @@ void updateCommsState(openflap_ctx_t *ctx)
     }
 }
 
-void setMotorFromDistance(openflap_ctx_t *ctx, uint8_t distance)
+void setMotorFromDistance(openflap_ctx_t *ctx)
 {
-    if (distance > 0) {
-        motorForward(pwmDutyCycleCalc(distance));
+    if (ctx->flap_distance > 0) {
+        motorForward(pwmDutyCycleCalc(ctx->flap_distance));
         ctx->motor_backspin_timeout_tick = 0;
     } else {
         if (ctx->motor_backspin_timeout_tick == 0) {

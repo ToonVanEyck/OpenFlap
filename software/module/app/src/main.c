@@ -14,9 +14,14 @@
 
 /** The period of the encoder readings when the system is idle. */
 #define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
-/** The period of the encoder readings when the system is active. */
-#define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
-/** The IR sensor will iluminate the encoder wheel for this time in microseconds before starting the conversion */
+/** The period of the encoder readings when the system is active and the distance to the setpoint flap is large. */
+#define IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
+/** The period of the encoder readings when the system is active and the distance to the setpoint flap is small. */
+#define IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(10)
+/** The period of the encoder readings when the system is active and the distance to the setpoint flap is very small. */
+#define IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(5)
+
+/** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
 
 #ifndef VERSION
@@ -60,11 +65,6 @@ int main(void)
 
     configLoad(&openflap_ctx.config);
     openflap_ctx.flap_position = SYMBOL_CNT;
-    /* Apply the random offset to the IR Encoder tick count to prevent all sensors from drawing current at the same
-     * time. */
-    openflap_ctx.ir_tick_cnt = IR_ILLUMINATE_TIME_US + 1 +
-                               (openflap_ctx.config.random_seed * 4 % (IR_ACTIVE_PERIOD_MS - IR_ILLUMINATE_TIME_US));
-    openflap_ctx.ir_tick_cnt = UINT16_MAX - 1;
 
     debug_io_init(LOG_LVL_DEBUG);
 
@@ -143,18 +143,8 @@ int main(void)
         }
 
         if (!debug_mode) {
-            uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + openflap_ctx.flap_setpoint - openflap_ctx.flap_position);
-            /* Check if a short rotation needs to be extended. */
-            if (openflap_ctx.extend_revolution) {
-                if (distance < openflap_ctx.config.minimum_distance) {
-                    distance += SYMBOL_CNT;
-                } else {
-                    openflap_ctx.extend_revolution = false;
-                }
-            }
             /* Set the motor speed based on the distance between the current and target flap. */
-            setMotorFromDistance(&openflap_ctx, distance);
-
+            setMotorFromDistance(&openflap_ctx);
         } else {
             if (speed < 0) {
                 motorReverse(-speed);
@@ -349,6 +339,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM1) {
         openflap_ctx.ir_tick_cnt++;
+        uint16_t ir_period = IR_IDLE_PERIOD_MS;
+        if (openflap_ctx.motor_active) {
+            if (openflap_ctx.flap_distance == 1) {
+                ir_period = IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS;
+            } else if (openflap_ctx.flap_distance == 2) {
+                ir_period = IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS;
+            } else {
+                ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;
+            }
+        }
         /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_RESOLUTION) != HAL_OK) {
@@ -356,7 +356,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             }
 
             /* Power IR led's every 50ms. */
-        } else if (openflap_ctx.ir_tick_cnt >= (openflap_ctx.motor_active ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS)) {
+        } else if (openflap_ctx.ir_tick_cnt >= ir_period) {
             openflap_ctx.ir_tick_cnt = 0;
             HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_SET);
         }

@@ -15,6 +15,7 @@ extern TIM_HandleTypeDef motorPwmHandle;
 typedef struct openflap_ctx_tag {
     uint8_t flap_setpoint;                /**< The desired position of flap wheel. */
     uint8_t flap_position;                /**< The current position of flap wheel. */
+    uint8_t flap_distance;                /**< The distance between the current and target flap. */
     openflap_config_t config;             /**< The configuration data. */
     chain_comm_ctx_t chain_ctx;           /**< The chain communication context. */
     bool store_config;                    /**< Flag to store the configuration. */
@@ -64,6 +65,13 @@ inline uint8_t flapIndexWrapCalc(int8_t index)
 void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data);
 
 /**
+ * \brief Update the distance between the current and target flap.
+ *
+ * \param[inout] ctx A pointer to the openflap context.
+ */
+void distanceUpdate(openflap_ctx_t *ctx);
+
+/**
  * \brief Generate a random seed based on the ADC data.
  *
  * \param[in] adc_data The ADC data of the IR sensors.
@@ -90,9 +98,8 @@ void updateCommsState(openflap_ctx_t *ctx);
  * \brief Set the motor speed based on the distance between the current and target flap.
  *
  * \param[inout] ctx A pointer to the openflap context.
- * \param[in] distance The distance between the current and target flap.
  */
-void setMotorFromDistance(openflap_ctx_t *ctx, uint8_t distance);
+void setMotorFromDistance(openflap_ctx_t *ctx);
 
 /**
  * \brief Set the motor mode and speed.

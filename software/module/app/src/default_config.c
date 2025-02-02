@@ -20,6 +20,6 @@ const openflap_config_t __attribute__((section(".config"))) config = {
             (uint32_t)',', (uint32_t)':', (uint32_t)'/', (uint32_t)'@', (uint32_t)'#', (uint32_t)'&',
         },
     .ota_completed    = false,
-    .minimum_distance = 10,
+    .minimum_distance = 1,
 };
 #endif

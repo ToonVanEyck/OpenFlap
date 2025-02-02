@@ -15,8 +15,10 @@
 
 #define CHAIN_COMM_STATE(GENERATOR)                                                                                    \
     GENERATOR(rxHeader, "rxHeader")                                                                                    \
+    GENERATOR(rxSize, "rxSize")                                                                                        \
     GENERATOR(readAll_rxCnt, "readAll_rxCnt")                                                                          \
     GENERATOR(readAll_rxData, "readAll_rxData")                                                                        \
+    GENERATOR(readAll_txSize, "readAll_txSize")                                                                        \
     GENERATOR(readAll_txData, "readAll_txData")                                                                        \
     GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
     GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
@@ -25,7 +27,14 @@
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } chain_comm_state_t;
 
-typedef void (*property_callback)(uint8_t *buf);
+/**
+ * \brief Chain communication property callback.
+ *
+ * \param[in] buf Pointer to the data buffer.
+ * \param[inout] size Pointer to the size of the data buffer. This must be set in the handler if the property has a
+ *      dynamic length.
+ */
+typedef void (*property_callback)(uint8_t *buf, uint16_t *size);
 
 typedef struct {
     property_callback get;
@@ -36,15 +45,16 @@ typedef struct {
  * \brief Chain-comm context object.
  */
 typedef struct {
-    uart_driver_ctx_t *uart;                  /**< Uart driver to be used by the protocol. */
-    chain_comm_state_t state;                 /**< The current state of the FSM managing the protocol. */
-    chainCommHeader_t header;                 /**< The header of the current message. */
-    uint8_t data_cnt;                         /**< The number of bytes handled in the current state. */
-    uint16_t index;                           /**< The index counter of the module in the display. */
-    uint8_t property_data[CHAIN_COM_MAX_LEN]; /**< The data of the current property to be written or read. */
-    property_handler_t property_handler[end_of_properties]; /**< The property handlers. */
+    uart_driver_ctx_t *uart;                             /**< Uart driver to be used by the protocol. */
+    chain_comm_state_t state;                            /**< The current state of the FSM managing the protocol. */
+    chain_comm_msg_header_t header;                      /**< The header of the current message. */
+    uint8_t data_cnt;                                    /**< The number of bytes handled in the current state. */
+    uint16_t index;                                      /**< The index counter of the module in the display. */
+    uint8_t property_data[CHAIN_COM_MAX_LEN];            /**< The data of the current property to be written or read. */
+    property_handler_t property_handler[PROPERTIES_MAX]; /**< The property handlers. */
     bool ack;                  /**< Flag indicating if the current message is waiting for an acknowledgment.  */
     uint32_t timeout_tick_cnt; /**< Counter for determining timeout. */
+    uint16_t property_size;    /**< The size of the current property. */
 } chain_comm_ctx_t;
 
 /**

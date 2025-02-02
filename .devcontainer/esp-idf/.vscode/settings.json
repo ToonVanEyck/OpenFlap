@@ -1,0 +1,75 @@
+{
+    "actionButtons": {
+        "commands": [
+            {
+                "name": "🔨 Build App",
+                "useVsCodeApi": true,
+                "command": "workbench.action.tasks.runTask",
+                "tooltip": "Build the esp-idf openflap controller application. This preforms an out-of-source build using `idf.py build`.",
+                "args": [
+                    "Build App"
+                ]
+            },
+            {
+                "name": "🚀 Run App",
+                "useVsCodeApi": true,
+                "command": "workbench.action.tasks.runTask",
+                "tooltip": "Flash and monitor the esp-idf openflap controller application.",
+                "args": [
+                    "Flash & Monitor App"
+                ]
+            },
+            {
+                "name": "🧯 Run Test",
+                "useVsCodeApi": true,
+                "command": "workbench.action.tasks.runTask",
+                "tooltip": "Flash and monitor a esp-idf openflap component test.",
+                "args": [
+                    "Component: Build, Flash & Monitor [target]"
+                ]
+            },
+            {
+                "name": "🖥️ Monitor",
+                "useVsCodeApi": true,
+                "command": "workbench.action.tasks.runTask",
+                "args": [
+                    "Monitor"
+                ]
+            },
+            {
+                "name": "🔧 Menu Config",
+                "command": "idf.py -B build/controller menuconfig -C software/controller_v2",
+                "tooltip": "idf.py menuconfig"
+            },
+            {
+                "name": "🧪 pyest component [qemu]",
+                "command": "${workspaceFolder}/software/controller_v2/bld_util.py pytest -s ${workspaceFolder}/software/controller_v2/ -b ${workspaceFolder}/build/controller/ --qemu  --component-from-path ${file} --rebuild",
+                "tooltip": "Run the pyest test suite for the component that contains the current file. This will rebuild the component and run the tests in the qemu environment.",
+                "singleInstance": true
+            },
+            {
+                "name": "⚗️ pyest component [target]",
+                "command": "${workspaceFolder}/software/controller_v2/bld_util.py pytest -s ${workspaceFolder}/software/controller_v2/ -b ${workspaceFolder}/build/controller/ --target --component-from-path ${file} --rebuild",
+                "tooltip": "Run the pyest test suite for the component that contains the current file. This will rebuild the component and run the tests on the target hardware.",
+                "singleInstance": true
+            }
+        ]
+    },
+    "idf.enableStatusBar": false,
+    "idf.showOnboardingOnInit": false,
+    "idf.espIdfPath": "/opt/esp/idf",
+    "idf.customExtraPaths": "",
+    "idf.pythonBinPath": "/opt/esp/python_env/idf5.3_py3.10_env/bin/python",
+    "idf.toolsPath": "/opt/esp",
+    "idf.gitPath": "/usr/bin/git",
+    "idf.port": "/dev/ttyUSB1",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32.cfg"
+    ],
+    "files.associations": {
+        "sdkconfig*": "kconfig"
+    },
+    "cmake.sourceDirectory": "/workspaces/OpenFlap/software/controller",
+    "livePreview.defaultPreviewPath": "/software/controller_v2/components/webserver/assets/index.html"
+}

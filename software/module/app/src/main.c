@@ -60,8 +60,8 @@ int main(void)
 
     configLoad(&openflap_ctx.config);
     openflap_ctx.flap_position = SYMBOL_CNT;
-    // apply the random offset to the IR Encoder tick count to prevent all sensors from drawing current at the same
-    // time.
+    /* Apply the random offset to the IR Encoder tick count to prevent all sensors from drawing current at the same
+     * time. */
     openflap_ctx.ir_tick_cnt = IR_ILLUMINATE_TIME_US + 1 +
                                (openflap_ctx.config.random_seed * 4 % (IR_ACTIVE_PERIOD_MS - IR_ILLUMINATE_TIME_US));
     openflap_ctx.ir_tick_cnt = UINT16_MAX - 1;
@@ -81,17 +81,18 @@ int main(void)
     property_handlers_init(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
-    debug_io_log_debug("Compilation Date: %s %s\n", __DATE__, __TIME__);
+    debug_io_log_info("Version: %s\n", GIT_VERSION);
+    debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
     debug_io_log_debug("Random seed: %d\n", openflap_ctx.config.random_seed);
 
-    // Set setpoint equal to position to prevent instant rotation.
+    /* Set setpoint equal to position to prevent instant rotation. */
     while (openflap_ctx.flap_position == SYMBOL_CNT) {
         HAL_Delay(10);
     }
     openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
 
-    // Get the random seed from the ADC data.
-    // If the seed was zero, we will store the new seed immediately.
+    /* Get the random seed from the ADC data. */
+    /* If the seed was zero, we will store the new seed immediately. */
     if (!openflap_ctx.config.random_seed) {
         openflap_ctx.store_config = true;
         // openflap_ctx.reboot = true;
@@ -100,10 +101,10 @@ int main(void)
 
     uint8_t new_position = 0;
     int rtt_key;
-    uint8_t speed = 0;
+    int16_t speed = 0;
     while (1) {
 
-        // Receive commands from debug_io.
+        /* Receive commands from debug_io. */
         rtt_key = debug_io_get();
         if (rtt_key > 0) {
             debug_io_log_debug("received command:  %c\n", (char)rtt_key);
@@ -127,13 +128,17 @@ int main(void)
             }
         }
 
-        // Run chain comm.
+        /* Run chain comm. */
         chain_comm(&openflap_ctx.chain_ctx);
 
-        // Print position.
+        /* Set debug pins based on flap position. */
+        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_1_PIN, openflap_ctx.flap_position & 1);
+        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_2_PIN, openflap_ctx.flap_position == 0);
+
+        /* Print position. */
         if (new_position != openflap_ctx.flap_position) {
             new_position = openflap_ctx.flap_position;
-            debug_io_log_info("Position: %d  %s\n", openflap_ctx.flap_position,
+            debug_io_log_info("Pos: %d  %s\n", openflap_ctx.flap_position,
                               &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
         }
 
@@ -148,22 +153,25 @@ int main(void)
                 }
             }
             /* Set the motor speed based on the distance between the current and target flap. */
-            if (distance > 0) {
-                motorForward(pwmDutyCycleCalc(distance));
+            setMotorFromDistance(&openflap_ctx, distance);
+
+        } else {
+            if (speed < 0) {
+                motorReverse(-speed);
+            } else if (speed > 0) {
+                motorForward(speed);
             } else {
                 motorBrake();
             }
-        } else {
-            setMotor(MOTOR_FORWARD, speed);
         }
 
-        // Communication status.
+        /* Communication status. */
         updateCommsState(&openflap_ctx);
 
-        // Motor status.
+        /* Motor status. */
         updateMotorState(&openflap_ctx);
 
-        // Idle logic
+        /* Idle logic. */
         if (!openflap_ctx.motor_active && !openflap_ctx.comms_active) {
             if (openflap_ctx.store_config) {
                 openflap_ctx.store_config = false;
@@ -206,29 +214,36 @@ static void APP_GpioConfig(void)
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(MOTOR_A_GPIO_PORT, &GPIO_InitStruct);
+
+    /* Configure debug pins, these pins can be used for pin wiggling during development. */
+    GPIO_InitStruct.Pin   = DEBUG_GPIO_1_PIN | DEBUG_GPIO_2_PIN;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(DEBUG_GPIO_PORT, &GPIO_InitStruct);
 }
 
 static void APP_AdcConfig(void)
 {
     __HAL_RCC_ADC_FORCE_RESET();
-    __HAL_RCC_ADC_RELEASE_RESET(); // Reset ADC
-    __HAL_RCC_ADC_CLK_ENABLE();    // Enable ADC clock
+    __HAL_RCC_ADC_RELEASE_RESET(); /* Reset ADC */
+    __HAL_RCC_ADC_CLK_ENABLE();    /* Enable ADC clock */
 
     AdcHandle.Instance = ADC1;
     if (HAL_ADCEx_Calibration_Start(&AdcHandle) != HAL_OK) {
         APP_ErrorHandler();
     }
-    AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV1;   // ADC clock no division
-    AdcHandle.Init.Resolution            = ADC_RESOLUTION_10B;         // 12bit
-    AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;        // Right alignment
-    AdcHandle.Init.ScanConvMode          = ADC_SCAN_DIRECTION_FORWARD; // Forward
-    AdcHandle.Init.EOCSelection          = ADC_EOC_SEQ_CONV;           // End flag
+    AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV1;   /* ADC clock no division */
+    AdcHandle.Init.Resolution            = ADC_RESOLUTION_10B;         /* 12bit */
+    AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;        /* Right alignment */
+    AdcHandle.Init.ScanConvMode          = ADC_SCAN_DIRECTION_FORWARD; /* Forward */
+    AdcHandle.Init.EOCSelection          = ADC_EOC_SEQ_CONV;           /* End flag */
     AdcHandle.Init.LowPowerAutoWait      = ENABLE;
     AdcHandle.Init.ContinuousConvMode    = DISABLE;
     AdcHandle.Init.DiscontinuousConvMode = DISABLE;
-    AdcHandle.Init.ExternalTrigConv      = ADC1_2_EXTERNALTRIG_T1_TRGO; // External trigger: TIM1_TRGO
+    AdcHandle.Init.ExternalTrigConv      = ADC1_2_EXTERNALTRIG_T1_TRGO; /* External trigger: TIM1_TRGO */
     AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
-    AdcHandle.Init.DMAContinuousRequests = ENABLE; // DMA
+    AdcHandle.Init.DMAContinuousRequests = ENABLE; /* DMA */
     AdcHandle.Init.Overrun               = ADC_OVR_DATA_OVERWRITTEN;
     AdcHandle.Init.SamplingTimeCommon    = ADC_SAMPLETIME_41CYCLES_5;
     if (HAL_ADC_Init(&AdcHandle) != HAL_OK) {
@@ -247,7 +262,7 @@ static void APP_AdcConfig(void)
 
 static void APP_TimerInit(void)
 {
-    // (240 * 10) / 24Mhz = 100us
+    /* (240 * 10) / 24Mhz = 100us */
     Tim1Handle.Instance               = TIM1;
     Tim1Handle.Init.Period            = 10 - 1;
     Tim1Handle.Init.Prescaler         = 240 - 1;
@@ -270,7 +285,7 @@ static void APP_TimerInit(void)
 
 static void APP_PwmInit(void)
 {
-    // (250 * 3) / 8Mhz = 32kHz
+    /* (250 * 3) / 8Mhz = 32kHz */
     motorPwmHandle.Instance           = TIM3;
     motorPwmHandle.Init.Period        = 255 - 1;
     motorPwmHandle.Init.Prescaler     = 3;
@@ -317,7 +332,7 @@ static void APP_UartInit(void)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    // Disable IR led.
+    /* Disable IR led. */
     HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_RESET);
 
     if (debug_mode) {
@@ -326,7 +341,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
                            aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
     }
 
-    // Update encoder position.
+    /* Update encoder position. */
     encoderPositionUpdate(&openflap_ctx, aADCxConvertedData);
 }
 
@@ -334,13 +349,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM1) {
         openflap_ctx.ir_tick_cnt++;
-        // Start ADC when IR led's have been on for 200us.
+        /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_RESOLUTION) != HAL_OK) {
                 APP_ErrorHandler();
             }
 
-            // Power IR led's every 50ms.
+            /* Power IR led's every 50ms. */
         } else if (openflap_ctx.ir_tick_cnt >= (openflap_ctx.motor_active ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS)) {
             openflap_ctx.ir_tick_cnt = 0;
             HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_SET);

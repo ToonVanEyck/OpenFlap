@@ -1,0 +1,220 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build App",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Monitor",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 monitor",
+            "problemMatcher": []
+        },
+        {
+            "label": "Flash & Monitor App",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "idf.py -B ${workspaceFolder}/build/controller -C ${workspaceFolder}/software/controller_v2 flash monitor",
+            "problemMatcher": []
+        },
+        {
+            "label": "Application: Build [qemu]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --qemu",
+        },
+        {
+            "label": "Application: Monitor [qemu]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --qemu",
+            "problemMatcher": [
+                {
+                    "pattern": [
+                        {
+                            "regexp": ".",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": "."
+                    }
+                }
+            ]
+        },
+        {
+            "label": "Application: Build & Monitor [qemu]",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Application: Build [qemu]",
+                "Application: Monitor [qemu]"
+            ]
+        },
+        {
+            "label": "Application: Build [target]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --target",
+            "problemMatcher": []
+        },
+        {
+            "label": "Application: Monitor [target]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --target",
+            "problemMatcher": [
+                {
+                    "pattern": [
+                        {
+                            "regexp": ".",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": "."
+                    }
+                }
+            ]
+        },
+        {
+            "label": "Application: Build & Monitor [target]",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Application: Build [target]",
+                "Application: Monitor [target]"
+            ]
+        },
+        {
+            "label": "Component: Build [qemu]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --qemu --component-from-path ${file}",
+        },
+        {
+            "label": "Component: Monitor [qemu]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --qemu --component-from-path ${file}",
+            "problemMatcher": [
+                {
+                    "pattern": [
+                        {
+                            "regexp": ".",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": "."
+                    }
+                }
+            ]
+        },
+        {
+            "label": "Component: Build & Monitor [qemu]",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Component: Build [qemu]",
+                "Component: Monitor [qemu]"
+            ]
+        },
+        {
+            "label": "Component: Build [target]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "./software/controller_v2/bld_util.py build -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Component: Flash [target]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "./software/controller_v2/bld_util.py flash -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Component: Monitor [target]",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "command": "./software/controller_v2/bld_util.py monitor -s software/controller_v2/ -b build/controller/ --target --component-from-path ${file}",
+            "problemMatcher": [
+                {
+                    "pattern": [
+                        {
+                            "regexp": ".",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": "."
+                    }
+                }
+            ]
+        },
+        {
+            "label": "Component: Build & Monitor [target]",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Component: Build [target]",
+                "Component: Monitor [target]"
+            ]
+        },
+        {
+            "label": "Component: Build, Flash & Monitor [target]",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Component: Build [target]",
+                "Component: Flash [target]",
+                "Component: Monitor [target]"
+            ]
+        },
+    ]
+}

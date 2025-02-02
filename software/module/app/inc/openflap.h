@@ -5,22 +5,27 @@
 #include "flash.h"
 #include "platform.h"
 
+#ifndef GIT_VERSION
+#define GIT_VERSION "undefined"
+#endif
+
 extern TIM_HandleTypeDef motorPwmHandle;
 
 /** Struct with helper variables. */
 typedef struct openflap_ctx_tag {
-    uint8_t flap_setpoint;              /**< The desired position of flap wheel. */
-    uint8_t flap_position;              /**< The current position of flap wheel. */
-    openflap_config_t config;           /**< The configuration data. */
-    chain_comm_ctx_t chain_ctx;         /**< The chain communication context. */
-    bool store_config;                  /**< Flag to store the configuration. */
-    bool reboot;                        /**< Flag to indicate the module must preform a system reboot. */
-    bool motor_active;                  /**< Flag to indicate if the motor is busy. */
-    bool extend_revolution;           /**< Flag to indicate if the motor must make at least on revolution. */
-    uint32_t motor_active_timeout_tick; /**< The time when the motor busy timeout will occur. */
-    bool comms_active;                  /**< Flag to indicate if the communication is busy. */
-    uint32_t comms_active_timeout_tick; /**< The time when the communication busy timeout will occur. */
-    uint16_t ir_tick_cnt;               /**< Counter for determining IR sensor state. */
+    uint8_t flap_setpoint;                /**< The desired position of flap wheel. */
+    uint8_t flap_position;                /**< The current position of flap wheel. */
+    openflap_config_t config;             /**< The configuration data. */
+    chain_comm_ctx_t chain_ctx;           /**< The chain communication context. */
+    bool store_config;                    /**< Flag to store the configuration. */
+    bool reboot;                          /**< Flag to indicate the module must preform a system reboot. */
+    bool motor_active;                    /**< Flag to indicate if the motor is busy. */
+    bool extend_revolution;               /**< Flag to indicate if the motor must make at least on revolution. */
+    uint32_t motor_active_timeout_tick;   /**< The time when the motor busy timeout will occur. */
+    bool comms_active;                    /**< Flag to indicate if the communication is busy. */
+    uint32_t comms_active_timeout_tick;   /**< The time when the communication busy timeout will occur. */
+    uint32_t motor_backspin_timeout_tick; /**< When the distance reaches 0, reverse motor until timeout. */
+    uint16_t ir_tick_cnt;                 /**< Counter for determining IR sensor state. */
 } openflap_ctx_t;
 
 /** Motor operation modes. */
@@ -80,6 +85,14 @@ void updateMotorState(openflap_ctx_t *ctx);
  * \param[inout] ctx A pointer to the openflap context.
  */
 void updateCommsState(openflap_ctx_t *ctx);
+
+/**
+ * \brief Set the motor speed based on the distance between the current and target flap.
+ *
+ * \param[inout] ctx A pointer to the openflap context.
+ * \param[in] distance The distance between the current and target flap.
+ */
+void setMotorFromDistance(openflap_ctx_t *ctx, uint8_t distance);
 
 /**
  * \brief Set the motor mode and speed.

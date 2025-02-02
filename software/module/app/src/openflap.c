@@ -4,13 +4,13 @@
 #define COMMS_IDLE_TIMEOUT_MS (75)
 
 /** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (50)
+#define MOTOR_BACKSPIN_DURATION_MS (100)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
-#define MOTOR_BACKSPIN_PWM (5)
+#define MOTOR_BACKSPIN_PWM (15)
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    const uint8_t min_pwm           = 40;
+    const uint8_t min_pwm           = 35;
     const uint8_t max_pwm           = 110; /* 110 = +/- 0.5 rps = 30 rpm */
     const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
     const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */

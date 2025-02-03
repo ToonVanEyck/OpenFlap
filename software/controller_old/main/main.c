@@ -1,4 +1,3 @@
-#define DO_GENERATE_PROPERTY_NAMES
 #include "Model.h"
 #include "board_io.h"
 #include "flap_firmware.h"
@@ -62,17 +61,21 @@ void app_main(void)
     // read Wi-Fi credentials from NVM
     char *STA_pwd, *STA_ssid, *AP_pwd, *AP_ssid;
     flap_nvs_get_string("STA_ssid", &STA_ssid);
-    if (!STA_ssid)
+    if (!STA_ssid) {
         asprintf(&STA_ssid, "%c", 0);
+    }
     flap_nvs_get_string("STA_pwd", &STA_pwd);
-    if (!STA_pwd)
+    if (!STA_pwd) {
         asprintf(&STA_pwd, "%c", 0);
+    }
     flap_nvs_get_string("AP_ssid", &AP_ssid);
-    if (!AP_ssid)
+    if (!AP_ssid) {
         asprintf(&AP_ssid, "OpenFlap");
+    }
     flap_nvs_get_string("AP_pwd", &AP_pwd);
-    if (!AP_pwd)
+    if (!AP_pwd) {
         asprintf(&AP_pwd, "myOpenFlap");
+    }
     // Set local hostname
     flap_mdns_init("openflap");
     // Start Wi-Fi

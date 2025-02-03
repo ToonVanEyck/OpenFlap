@@ -22,8 +22,8 @@ ExternalProject_Add(common_chain_comm_abi
     CMAKE_ARGS 
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} 
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DGENERATE_PROPERTY_NAMES=ON # Generate property names for chain comm properties
     INSTALL_COMMAND ""
+    UPDATE_COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/chain_comm_abi/timestamp
 )
 add_library(chain_comm_abi STATIC IMPORTED)
 set_property(TARGET chain_comm_abi PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/chain_comm_abi/libchain_comm_abi.a)

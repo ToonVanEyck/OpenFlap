@@ -1,4 +1,3 @@
-#define DO_GENERATE_PROPERTY_NAMES
 #include "flap_http_server.h"
 
 // #define MAX_WS_CONNECTIONS 3

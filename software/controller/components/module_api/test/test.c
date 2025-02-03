@@ -28,8 +28,10 @@ TEST_CASE("Test module http API post handler", "[module_api][qemu]")
 
     ESP_LOGI(TAG, "Webserver started");
 
+    /* Wait for pytest to send a character. */
     char dummy[16] = {0};
     unity_gets(dummy, sizeof(dummy));
+    /* Continue */
 
     ESP_LOGI(TAG, "Webserver stopped");
 

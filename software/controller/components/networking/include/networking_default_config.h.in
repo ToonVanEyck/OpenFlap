@@ -30,14 +30,19 @@
 #define NETWORKING_DEFAULT_WIFI_CONFIG                                                                                 \
     (networking_config_t)                                                                                              \
     {                                                                                                                  \
-        .wifi = {                                                                                                      \
-            .station =                                                                                                 \
-                {                                                                                                      \
-                    .enable   = true,                                                                                  \
-                    .ssid     = "@NETWORKING_DEFAULT_STA_SSID@", /**< Defined by env var OPENFLAP_DEFAULT_SSID */      \
-                    .password = "@NETWORKING_DEFAULT_STA_PASS@", /**< Defined by env var OPENFLAP_DEFAULT_PASS */      \
-                },                                                                                                     \
-        }                                                                                                              \
+        .wifi =                                                                                                        \
+            {                                                                                                          \
+                .station =                                                                                             \
+                    {                                                                                                  \
+                        .enable   = true,                                                                              \
+                        .ssid     = "@NETWORKING_DEFAULT_STA_SSID@", /**< Defined by env var OPENFLAP_DEFAULT_SSID */  \
+                        .password = "@NETWORKING_DEFAULT_STA_PASS@", /**< Defined by env var OPENFLAP_DEFAULT_PASS */  \
+                    },                                                                                                 \
+            },                                                                                                         \
+        .mdns = {                                                                                                      \
+            .enable   = true,                                                                                          \
+            .hostname = "openflap",                                                                                    \
+        },                                                                                                             \
     }
 
 /**

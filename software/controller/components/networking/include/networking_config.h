@@ -29,4 +29,8 @@ typedef struct {
     struct {
         bool enable; /**< Enable ethernet mode. */
     } ethernet;      /**< Config for ethernet. */
+    struct {
+        bool enable;    /**< Enable mDNS. */
+        char *hostname; /**< Hostname to use for mDNS. */
+    } mdns;             /**< Config for mDNS. */
 } networking_config_t;

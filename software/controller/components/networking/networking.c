@@ -6,6 +6,7 @@
 #include "esp_mac.h"
 #include "esp_wifi.h"
 #include "freertos/event_groups.h"
+#include "mdns.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
 #include <stdio.h>
@@ -55,6 +56,12 @@ esp_err_t networking_setup(const networking_config_t *config)
         ESP_RETURN_ON_ERROR(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &networking_event_handler, NULL),
                             TAG, "Failed to register ethernet event handler.");
         ESP_RETURN_ON_ERROR(networking_ethernet_setup(config), TAG, "Failed to setup ethernet.");
+    }
+
+    if (config->mdns.enable) {
+        ESP_RETURN_ON_ERROR(mdns_init(), TAG, "Failed to initialize mDNS.");
+        ESP_LOGI(TAG, "mdns hostname set to: [%s]", config->mdns.hostname);
+        ESP_RETURN_ON_ERROR(mdns_hostname_set(config->mdns.hostname), TAG, "Failed to set mDNS hostname.");
     }
     return ESP_OK;
 }

@@ -29,7 +29,7 @@
 #define STEPPER_B_PLUS  GPIOF, GPIO_PIN_1
 #define STEPPER_B_MINUS GPIOF, GPIO_PIN_0
 
-static uint8_t stepper_sequence[8]    = {0b0001, 0b0011, 0b0010, 0b0110, 0b0100, 0b1100, 0b1000, 0b1001};
+static uint8_t stepper_sequence[8]    = {0b0011, 0b0110, 0b1100, 0b1001};
 static int16_t stepper_step_period_us = 50;
 static bool stepper_enabled           = false;
 static bool stepper_direction_cw      = false;
@@ -383,13 +383,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             if (stepper_period_cnt == 0) {
                 if (stepper_direction_cw) {
                     stepper_sequence_idx++;
-                    if (stepper_sequence_idx >= 8) {
+                    if (stepper_sequence_idx >= 4) {
                         stepper_sequence_idx = 0;
                     }
                 } else {
                     stepper_sequence_idx--;
                     if (stepper_sequence_idx < 0) {
-                        stepper_sequence_idx = 7;
+                        stepper_sequence_idx = 3;
                     }
                 }
                 HAL_GPIO_WritePin(STEPPER_A_PLUS, stepper_sequence[stepper_sequence_idx] & 0x01);

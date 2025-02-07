@@ -24,6 +24,16 @@
 #define VERSION "not found"
 #endif
 
+#define STEPPER_A_PLUS  GPIOB, GPIO_PIN_5
+#define STEPPER_A_MINUS GPIOA, GPIO_PIN_6
+#define STEPPER_B_PLUS  GPIOF, GPIO_PIN_1
+#define STEPPER_B_MINUS GPIOF, GPIO_PIN_0
+
+static uint8_t stepper_sequence[8]    = {0b0001, 0b0011, 0b0010, 0b0110, 0b0100, 0b1100, 0b1000, 0b1001};
+static int16_t stepper_step_period_us = 50;
+static bool stepper_enabled           = false;
+static bool stepper_direction_cw      = false;
+
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
@@ -65,10 +75,10 @@ int main(void)
     debug_io_init(LOG_LVL_DEBUG);
 
     APP_GpioConfig();
-    APP_DmaInit();
-    APP_AdcConfig();
+    // APP_DmaInit();
+    // APP_AdcConfig();
     APP_UartInit();
-    APP_PwmInit();
+    // APP_PwmInit();
     APP_TimerInit();
 
     uart_driver_init(&uart_driver, &UartHandle, uart_rx_rb_buff, RB_BUFF_SIZE, uart_tx_rb_buff, RB_BUFF_SIZE);
@@ -77,7 +87,7 @@ int main(void)
     property_handlers_init(&openflap_ctx);
 
     debug_io_log_info("OpenFlap module has started!\n");
-    debug_io_log_info("Version: %s\n", GIT_VERSION);
+    debug_io_log_info("Version: %s (stepper)\n", GIT_VERSION);
     debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
 
     /* Start homing sequence at maximum speed. */
@@ -109,17 +119,37 @@ int main(void)
                     break;
                 case '8':
                     speed += 5;
-                    debug_io_log_info("Speed: %d\n", speed);
+                    stepper_step_period_us += 1;
+                    if (stepper_step_period_us > 50) {
+                        stepper_step_period_us = 50;
+                    }
+                    debug_io_log_info("Speed: %d\n", stepper_step_period_us);
                     break;
                 case '2':
                     speed -= 5;
-                    debug_io_log_info("Speed: %d\n", speed);
+                    stepper_step_period_us -= 1;
+                    if (stepper_step_period_us < 0) {
+                        stepper_step_period_us = 0;
+                    }
+                    debug_io_log_info("Speed: %d\n", stepper_step_period_us);
+                    break;
+                case '4':
+                    stepper_direction_cw = false;
+                    debug_io_log_info("Direction: CCW\n");
+                    break;
+                case '6':
+                    stepper_direction_cw = true;
+                    debug_io_log_info("Direction: CW\n");
+                    break;
+                case '5':
+                    stepper_enabled = !stepper_enabled;
+                    debug_io_log_info("%s Stepper\n", stepper_enabled ? "Enabling" : "Disabling");
                     break;
             }
         }
 
-        /* Run chain comm. */
-        chain_comm(&openflap_ctx.chain_ctx);
+        // /* Run chain comm. */
+        // chain_comm(&openflap_ctx.chain_ctx);
 
         /* Set debug pins based on flap position. */
         HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_1_PIN, flapPostionGet(&openflap_ctx) & 1);
@@ -150,24 +180,24 @@ int main(void)
             }
         }
 
-        /* Communication status. */
-        updateCommsState(&openflap_ctx);
+        // /* Communication status. */
+        // updateCommsState(&openflap_ctx);
 
-        /* Motor status. */
-        updateMotorState(&openflap_ctx);
+        // /* Motor status. */
+        // updateMotorState(&openflap_ctx);
 
         /* Idle logic. */
-        if (!openflap_ctx.motor_active && !openflap_ctx.comms_active) {
-            if (openflap_ctx.store_config) {
-                openflap_ctx.store_config = false;
-                configStore(&openflap_ctx.config);
-                debug_io_log_info(0, "Config stored!\n");
-            }
-            if (openflap_ctx.reboot) {
-                debug_io_log_info(0, "Rebooting module!\n");
-                NVIC_SystemReset();
-            }
-        }
+        // if (!openflap_ctx.motor_active && !openflap_ctx.comms_active) {
+        //     if (openflap_ctx.store_config) {
+        //         openflap_ctx.store_config = false;
+        //         configStore(&openflap_ctx.config);
+        //         debug_io_log_info(0, "Config stored!\n");
+        //     }
+        //     if (openflap_ctx.reboot) {
+        //         debug_io_log_info(0, "Rebooting module!\n");
+        //         NVIC_SystemReset();
+        //     }
+        // }
     }
 }
 
@@ -330,6 +360,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+    static int8_t stepper_sequence_idx = 0;
+    static int16_t stepper_period_cnt  = 0;
+
     if (htim->Instance == TIM1) {
         openflap_ctx.ir_tick_cnt++;
         uint16_t ir_period = (debug_mode || openflap_ctx.motor_active) ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS;
@@ -343,6 +376,35 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         } else if (openflap_ctx.ir_tick_cnt >= ir_period) {
             openflap_ctx.ir_tick_cnt = 0;
             HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_SET);
+        }
+
+        // motor drive
+        if (stepper_enabled) {
+            if (stepper_period_cnt == 0) {
+                if (stepper_direction_cw) {
+                    stepper_sequence_idx++;
+                    if (stepper_sequence_idx >= 8) {
+                        stepper_sequence_idx = 0;
+                    }
+                } else {
+                    stepper_sequence_idx--;
+                    if (stepper_sequence_idx < 0) {
+                        stepper_sequence_idx = 7;
+                    }
+                }
+                HAL_GPIO_WritePin(STEPPER_A_PLUS, stepper_sequence[stepper_sequence_idx] & 0x01);
+                HAL_GPIO_WritePin(STEPPER_B_PLUS, (stepper_sequence[stepper_sequence_idx] >> 1) & 0x01);
+                HAL_GPIO_WritePin(STEPPER_A_MINUS, (stepper_sequence[stepper_sequence_idx] >> 2) & 0x01);
+                HAL_GPIO_WritePin(STEPPER_B_MINUS, (stepper_sequence[stepper_sequence_idx] >> 3) & 0x01);
+                stepper_period_cnt = stepper_step_period_us;
+            } else {
+                stepper_period_cnt--;
+            }
+        } else {
+            HAL_GPIO_WritePin(STEPPER_A_PLUS, 0);
+            HAL_GPIO_WritePin(STEPPER_A_MINUS, 0);
+            HAL_GPIO_WritePin(STEPPER_B_PLUS, 0);
+            HAL_GPIO_WritePin(STEPPER_B_MINUS, 0);
         }
     }
 }

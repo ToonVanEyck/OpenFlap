@@ -10,7 +10,7 @@
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    const uint8_t min_pwm           = 60;
+    const uint8_t min_pwm           = 50;
     const uint8_t max_pwm           = 160; /* 110 = +/- 0.5 rps = 30 rpm */
     const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
     const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */

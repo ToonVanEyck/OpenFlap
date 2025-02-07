@@ -136,11 +136,11 @@ int main(void)
         HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_2_PIN, openflap_ctx.flap_position == 0);
 
         /* Print position. */
-        if (new_position != openflap_ctx.flap_position) {
-            new_position = openflap_ctx.flap_position;
-            debug_io_log_info("Pos: %d  %s\n", openflap_ctx.flap_position,
-                              &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
-        }
+        // if (new_position != openflap_ctx.flap_position) {
+        //     new_position = openflap_ctx.flap_position;
+        //     debug_io_log_info("Pos: %d  %s\n", openflap_ctx.flap_position,
+        //                       &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
+        // }
 
         if (!debug_mode) {
             /* Set the motor speed based on the distance between the current and target flap. */
@@ -341,6 +341,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         openflap_ctx.ir_tick_cnt++;
         uint16_t ir_period = IR_IDLE_PERIOD_MS;
         if (openflap_ctx.motor_active) {
+            /*if (openflap_ctx.flap_distance == 0) {
+                ir_period = IR_IDLE_PERIOD_MS;
+            } else*/
             if (openflap_ctx.flap_distance == 1) {
                 ir_period = IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS;
             } else if (openflap_ctx.flap_distance == 2) {
@@ -349,6 +352,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;
             }
         }
+        ir_period = 50;
         /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_RESOLUTION) != HAL_OK) {

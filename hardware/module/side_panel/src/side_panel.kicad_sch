@@ -8151,7 +8151,7 @@
 		)
 		(uuid "3e81f664-7686-4816-8a90-c143d7f0b812")
 	)
-	(label "IR Sens Ch 2"
+	(label "IR Sens Ch 6"
 		(at 34.29 44.45 0)
 		(fields_autoplaced yes)
 		(effects
@@ -8338,7 +8338,7 @@
 		)
 		(uuid "a8af2a6c-f597-4bdb-8a53-37f52058c5eb")
 	)
-	(label "IR Sens Ch 5"
+	(label "IR Sens Ch 1"
 		(at 34.29 36.83 0)
 		(fields_autoplaced yes)
 		(effects
@@ -8404,7 +8404,7 @@
 		)
 		(uuid "c6e78d9e-656c-4adc-8138-e7ac1b34fd61")
 	)
-	(label "IR Sens Ch 6"
+	(label "IR Sens Ch 2"
 		(at 34.29 49.53 0)
 		(fields_autoplaced yes)
 		(effects
@@ -8459,7 +8459,7 @@
 		)
 		(uuid "da871481-6a06-4a2a-801c-d2b55a55ec1a")
 	)
-	(label "IR Sens Ch 1"
+	(label "IR Sens Ch 5"
 		(at 34.29 41.91 0)
 		(fields_autoplaced yes)
 		(effects

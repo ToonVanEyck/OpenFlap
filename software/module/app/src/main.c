@@ -352,7 +352,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;
             }
         }
-        ir_period = 50;
         /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_RESOLUTION) != HAL_OK) {

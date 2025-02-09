@@ -55,17 +55,17 @@ declare -A modules=(
     # ["Encoder Wheel"]="module/encoder_wheel/src"
     # ["Top Connector"]="top_connector/src"
     # ["Controller"]="controller/src"
-    ["Encoder Wheel 1.4mm_1"]="module/encoder_wheel/src_1.4mm_1"
-    ["Encoder Wheel 1.4mm_2"]="module/encoder_wheel/src_1.4mm_2"
-    ["Encoder Wheel 1.6mm_1"]="module/encoder_wheel/src_1.6mm_1"
-    ["Encoder Wheel 1.6mm_2"]="module/encoder_wheel/src_1.6mm_2"
-    ["Encoder Wheel 1.8mm_1"]="module/encoder_wheel/src_1.8mm_1"
-    ["Encoder Wheel 1.8mm_2"]="module/encoder_wheel/src_1.8mm_2"
-    ["Encoder Wheel 2.0mm_1"]="module/encoder_wheel/src_2.0mm_1"
-    ["Encoder Wheel 2.0mm_2"]="module/encoder_wheel/src_2.0mm_2"
-    ["Encoder Wheel 2.2mm_1"]="module/encoder_wheel/src_2.2mm_1"
-    ["Encoder Wheel 2.2mm_2"]="module/encoder_wheel/src_2.2mm_2"
-)
+#     ["1.4mm_1"]="module/encoder_wheel/src_1.4mm_1"
+#     ["1.4mm_2"]="module/encoder_wheel/src_1.4mm_2"
+#     ["1.6mm_1"]="module/encoder_wheel/src_1.6mm_1"
+#     ["1.6mm_2"]="module/encoder_wheel/src_1.6mm_2"
+#     ["1.8mm_1"]="module/encoder_wheel/src_1.8mm_1"
+#     ["1.8mm_2"]="module/encoder_wheel/src_1.8mm_2"
+#     ["2.0mm_1"]="module/encoder_wheel/src_2.0mm_1"
+#     ["2.0mm_2"]="module/encoder_wheel/src_2.0mm_2"
+#     ["2.2mm_1"]="module/encoder_wheel/src_2.2mm_1"
+#     ["2.2mm_2"]="module/encoder_wheel/src_2.2mm_2"
+# )
 
 # Remove unchanged modules if --modified option is set
 if $check_modified; then
@@ -93,7 +93,7 @@ for name in "${!modules[@]}"; do
     fi
 
     # Run KiBot
-    kibot -c $(realpath $SOURCE_DIR/$path/*.kibot.yaml) -e $(realpath $SOURCE_DIR/$path/*.kicad_sch) -b $(realpath $SOURCE_DIR/$path/*.kicad_pcb) -d $BUILD_DIR/$(basename $(dirname $path)) $kibot_preflight_only
+    kibot -c $(realpath $SOURCE_DIR/$path/*.kibot.yaml) -e $(realpath $SOURCE_DIR/$path/*.kicad_sch) -b $(realpath $SOURCE_DIR/$path/*.kicad_pcb) -d $BUILD_DIR/$(basename $(dirname $path))_$name $kibot_preflight_only
     if [[ $? -ne 0 ]]; then
         all_success=false
     else

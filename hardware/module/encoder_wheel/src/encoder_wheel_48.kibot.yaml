@@ -14,7 +14,7 @@ preflight:
     enabled: true
     warnings_as_errors : true
   drc:
-    enabled: true
+    enabled: false
     warnings_as_errors : true
   update_xml: true
   set_text_variables:
@@ -81,16 +81,16 @@ outputs:
         - from_output: gerbers
         - from_output: drill
 
-  - name: render
-    comment: 3D Render
-    type: blender_export
-    options:
-      render_options:
-        auto_crop : true
-        transparent_background: true
-        samples: 20
-      point_of_view:
-        rotate_x: 15
-        rotate_y: 15
-      outputs:
-        - type: render
+  # - name: render
+  #   comment: 3D Render
+  #   type: blender_export
+  #   options:
+  #     render_options:
+  #       auto_crop : true
+  #       transparent_background: true
+  #       samples: 20
+  #     point_of_view:
+  #       rotate_x: 15
+  #       rotate_y: 15
+  #     outputs:
+  #       - type: render

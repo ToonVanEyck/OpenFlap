@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="E">
   <design>
-    <source>/workspaces/OpenFlap/hardware/module/encoder_wheel/src/encoder_wheel_48.kicad_sch</source>
-    <date>2025-02-02T21:56:42+0000</date>
+    <source>/workspaces/OpenFlap/hardware/module/encoder_wheel/src_1.6mm_1/encoder_wheel_48.kicad_sch</source>
+    <date>2025-02-09T17:51:09+0000</date>
     <tool>Eeschema 8.0.6+1</tool>
-    <textvar name="DATE">2025-02-02</textvar>
-    <textvar name="GIT_TAG">Commit: v0.0.0-unstable-104-g742cd07-dirty</textvar>
+    <textvar name="DATE">2025-02-09</textvar>
+    <textvar name="GIT_TAG">Commit: v0.0.0-unstable-113-g3e55b2e-dirty</textvar>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
         <title>Encoder Wheel 48</title>
         <company>OpenFlap</company>
         <rev>2.1.1</rev>
-        <date>2025-02-02</date>
+        <date>2025-02-09</date>
         <source>encoder_wheel_48.kicad_sch</source>
-        <comment number="1" value="Commit: v0.0.0-unstable-104-g742cd07-dirty"/>
+        <comment number="1" value="Commit: v0.0.0-unstable-113-g3e55b2e-dirty"/>
         <comment number="2" value="Repo: github.com/ToonVanEyck/OpenFlap"/>
         <comment number="3" value="Designer: Toon Van Eyck"/>
         <comment number="4" value=""/>

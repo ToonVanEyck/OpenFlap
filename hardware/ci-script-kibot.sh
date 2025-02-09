@@ -51,10 +51,20 @@ BUILD_DIR=${BASE_DIR}/build/hardware
 
 # Declare modules
 declare -A modules=(
-    ["Side Panel"]="module/side_panel/src"
-    ["Encoder Wheel"]="module/encoder_wheel/src"
-    ["Top Connector"]="top_connector/src"
-    ["Controller"]="controller/src"
+    # ["Side Panel"]="module/side_panel/src"
+    # ["Encoder Wheel"]="module/encoder_wheel/src"
+    # ["Top Connector"]="top_connector/src"
+    # ["Controller"]="controller/src"
+    ["Encoder Wheel 1.4mm_1"]="module/encoder_wheel/src_1.4mm_1"
+    ["Encoder Wheel 1.4mm_2"]="module/encoder_wheel/src_1.4mm_2"
+    ["Encoder Wheel 1.6mm_1"]="module/encoder_wheel/src_1.6mm_1"
+    ["Encoder Wheel 1.6mm_2"]="module/encoder_wheel/src_1.6mm_2"
+    ["Encoder Wheel 1.8mm_1"]="module/encoder_wheel/src_1.8mm_1"
+    ["Encoder Wheel 1.8mm_2"]="module/encoder_wheel/src_1.8mm_2"
+    ["Encoder Wheel 2.0mm_1"]="module/encoder_wheel/src_2.0mm_1"
+    ["Encoder Wheel 2.0mm_2"]="module/encoder_wheel/src_2.0mm_2"
+    ["Encoder Wheel 2.2mm_1"]="module/encoder_wheel/src_2.2mm_1"
+    ["Encoder Wheel 2.2mm_2"]="module/encoder_wheel/src_2.2mm_2"
 )
 
 # Remove unchanged modules if --modified option is set

@@ -134,7 +134,7 @@
 		)
 	)
 	(net 0 "")
-	(footprint "EncoderPattern:OpenFlapEncoderPattern48_2.2mm"
+	(footprint "EncoderPattern:OpenFlapEncoderPattern48_2.0mm"
 		(layer "F.Cu")
 		(uuid "acf9ccec-8925-4b15-b77b-076c7634377c")
 		(at 101 100)
@@ -151,7 +151,7 @@
 				)
 			)
 		)
-		(property "Value" "OpenFlapEncoderPattern48_2.2mm"
+		(property "Value" "OpenFlapEncoderPattern48_2.0mm"
 			(at 0 1 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -164,7 +164,7 @@
 				)
 			)
 		)
-		(property "Footprint" "EncoderPattern:OpenFlapEncoderPattern48_2.2mm"
+		(property "Footprint" "EncoderPattern:OpenFlapEncoderPattern48_2.0mm"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -849,7 +849,7 @@
 			)
 		)
 	)
-	(footprint "EncoderPattern:OpenFlapEncoderPattern48_2.2mm"
+	(footprint "EncoderPattern:OpenFlapEncoderPattern48_2.0mm"
 		(layer "B.Cu")
 		(uuid "318511c6-e423-4309-81a4-e4b7e7fb41b0")
 		(at 101 100 -176.25)
@@ -867,7 +867,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "OpenFlapEncoderPattern48_2.2mm"
+		(property "Value" "OpenFlapEncoderPattern48_2.0mm"
 			(at 0 -1 3.75)
 			(unlocked yes)
 			(layer "B.Fab")
@@ -881,7 +881,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" "EncoderPattern:OpenFlapEncoderPattern48_2.2mm"
+		(property "Footprint" "EncoderPattern:OpenFlapEncoderPattern48_2.0mm"
 			(at 0 0 3.75)
 			(unlocked yes)
 			(layer "B.Fab")
@@ -1640,7 +1640,7 @@
 		(layer "Edge.Cuts")
 		(uuid "fe6155e8-e6e2-49bb-b679-26b7df576cc3")
 	)
-	(gr_text "2.2mm \n3.75°"
+	(gr_text "2.0mm \n3.75°"
 		(at 88.427 97.333 90)
 		(layer "B.SilkS")
 		(uuid "5c7c09f4-6c0c-4a07-8630-323bcef85942")
@@ -1653,7 +1653,7 @@
 			(justify left bottom mirror)
 		)
 	)
-	(gr_text "2.2mm \n0°"
+	(gr_text "2.0mm \n0°"
 		(at 88.427 102.921 90)
 		(layer "F.SilkS")
 		(uuid "29b5f75e-c2ed-4dc9-9c6e-393c2490c3a5")

@@ -593,8 +593,5 @@
       "Root"
     ]
   ],
-  "text_variables": {
-    "DATE": "2025-02-09",
-    "GIT_TAG": "Commit: v0.0.0-unstable-111-g66c6d98-dirty"
-  }
+  "text_variables": {}
 }

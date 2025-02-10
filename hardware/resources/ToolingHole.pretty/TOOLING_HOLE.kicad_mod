@@ -1,0 +1,102 @@
+(footprint "TOOLING_HOLE"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" "TH"
+		(at 0 -1.397 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "8d6b511c-5004-4631-9906-f0a9e541f402")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "TOOLING_HOLE"
+		(at 0 1.397 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "cf85fb1f-e2b8-4b5b-8df0-9badccbc5b59")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "af9b1428-2525-40cf-83c9-e1ae20bab1b5")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "81390fdc-ae36-458d-a0fc-1d206a162a10")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "4f5699e3-8ca8-4443-8a31-24247e49f89b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_circle
+		(center 0 0)
+		(end 0.8 0)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(fill none)
+		(layer "F.CrtYd")
+		(uuid "3e1de6b1-e623-4707-8a8b-d55139f7950d")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 2.921 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "f41fa5b1-c70a-459d-895d-28bd26c9e573")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "" np_thru_hole circle
+		(at 0 0)
+		(size 1.152 1.152)
+		(drill 1.152)
+		(layers "F&B.Cu" "*.Mask")
+		(solder_mask_margin 0.148)
+		(clearance 0.16)
+		(uuid "344b32a4-726b-415f-9e41-85472fab8473")
+	)
+)

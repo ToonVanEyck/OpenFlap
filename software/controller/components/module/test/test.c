@@ -12,13 +12,12 @@
 
 TEST_CASE("Test module_character_set_index_of_character", "[module][qemu]")
 {
+
     module_t module = {
-        .character_set =
-            {
-                .size          = 3,
-                .character_set = (uint8_t *)((char *) {"A\0\0\0B\0\0\0€\0"}),
-            },
+        .character_set = character_set_new(3),
     };
+    memcmp(module.character_set->data, (uint8_t *)((char *) {"A\0\0\0B\0\0\0€\0"}), 12);
+
     uint8_t index;
     esp_err_t err;
     err = module_character_set_index_of_character(&module, &index, "A");

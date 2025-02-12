@@ -39,3 +39,17 @@ esp_err_t module_property_indicate_synchronized(module_t *module, property_id_t 
  * \retval false The property is synchronized.
  */
 bool module_property_is_desynchronized(module_t *module, property_id_t property_id);
+
+//---------------------------------------------------------------------------------------------------------------------
+
+firmware_update_property_t *firmware_update_new(void);
+
+void firmware_update_free(firmware_update_property_t *firmware_update);
+
+firmware_version_property_t *firmware_version_new(size_t size);
+
+void firmware_version_free(firmware_version_property_t *firmware_version);
+
+character_set_property_t *character_set_new(uint8_t size);
+
+void character_set_free(character_set_property_t *character_set);

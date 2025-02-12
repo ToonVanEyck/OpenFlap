@@ -18,11 +18,6 @@
 #include "board_io.h"
 
 typedef struct {
-    uint8_t offset;
-    uint8_t vtrim;
-} Calibration_t;
-
-typedef struct {
     uint8_t size;
     char *character; // UTF-8
     int reffCnt;
@@ -30,7 +25,7 @@ typedef struct {
 
 typedef struct {
     uint8_t characterIndex; // index of the current character in the characterMap
-    Calibration_t calibration;
+    uint8_t offset;
     characterMap_t *characterMap;
     uint8_t baseSpeed;
     char *firmwareVersion;

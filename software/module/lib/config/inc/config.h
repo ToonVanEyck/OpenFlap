@@ -15,7 +15,6 @@ typedef struct openflap_config_tag {
         uint16_t lower;              /**< Value for the lower threshold. */
         uint16_t upper;              /**< Value for the upper threshold. */
     } ir_threshold;                  /**< Sensor thresholds for IR sensors. */
-    uint8_t vtrim;                   /**< Virtual trim setting. */
     uint8_t base_speed;              /**< Base speed of the flap wheel. */
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
     bool ota_completed;              /**< Flag to indicate that the OTA process is completed. */

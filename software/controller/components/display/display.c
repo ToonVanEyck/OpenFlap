@@ -35,17 +35,12 @@ esp_err_t display_destroy(display_t *display)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
-    /* Free modules. */
-    if (display->module_count && display->modules != NULL) {
-        free(display->modules);
-        display->modules      = NULL;
-        display->module_count = 0;
-    }
-
+    /* Delete the event group. */
     vEventGroupDelete(display->event_handle);
     display->event_handle = 0;
 
-    return ESP_OK;
+    /* Free modules. */
+    return display_resize(display, 0);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -54,26 +49,29 @@ esp_err_t display_resize(display_t *display, uint16_t module_count)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
-    int32_t count_diff = module_count - display->module_count;
-
-    if (count_diff == 0) {
+    if (module_count == display->module_count) {
         return ESP_OK; /* No resize required. */
     }
 
     ESP_LOGI(TAG, "Resizing display from %d to %d modules", display->module_count, module_count);
 
+    /* Free the modules which will be removed by the realloc. */
+    for (uint16_t i = module_count; i < display->module_count; i++) {
+        module_free(display->modules[i]);
+    }
+
     /* Reallocate memory for the modules. */
-    module_t *new_modules = NULL;
+    module_t **new_modules = NULL;
     if (module_count == 0) {
         free(display->modules);
     } else {
-        new_modules = realloc(display->modules, module_count * sizeof(module_t));
+        new_modules = realloc(display->modules, module_count * sizeof(module_t *));
         ESP_RETURN_ON_FALSE(new_modules != NULL, ESP_ERR_NO_MEM, TAG, "Failed to reallocate memory for modules");
     }
 
-    /* If the display size has grown, zero the new modules. */
-    if (count_diff > 0) {
-        memset(&new_modules[display->module_count], 0, count_diff * sizeof(module_t));
+    /* Allocate the new modules after the realloc. */
+    for (uint16_t i = display->module_count; i < module_count; i++) {
+        new_modules[i] = module_new();
     }
 
     display->modules      = new_modules;
@@ -155,7 +153,7 @@ module_t *display_module_get(display_t *display, uint16_t module_index)
         ESP_LOGE(TAG, "Invalid display or module index: %d", module_index);
         return NULL;
     }
-    return &display->modules[module_index];
+    return display->modules[module_index];
 }
 
 //---------------------------------------------------------------------------------------------------------------------

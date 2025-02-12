@@ -84,7 +84,7 @@ RUN rm llvm.sh
 RUN . /opt/esp/idf/export.sh && pip install codespell
 
 # Install mkdocs
-RUN . /opt/esp/idf/export.sh && pip install mkdocs mkdocs-material mkdocs-same-dir
+RUN . /opt/esp/idf/export.sh && pip install mkdocs mkdocs-material mkdocs-same-dir mkdocs-glightbox
 
 # Setup user and home
 ENV USER=${USER_NAME}

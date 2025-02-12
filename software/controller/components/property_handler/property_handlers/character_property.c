@@ -41,7 +41,7 @@ static esp_err_t character_to_json(cJSON **json, const module_t *module)
 
     const uint8_t *character_index = &module->character_index;
 
-    *json = cJSON_CreateString((const char *)&module->character_set.character_set[4 * (*character_index)]);
+    *json = cJSON_CreateString((const char *)&module->character_set->data[4 * (*character_index)]);
     ESP_RETURN_ON_FALSE(*json != NULL, ESP_FAIL, PROPERTY_TAG, "Failed to create JSON string");
 
     return ESP_OK;

@@ -35,11 +35,11 @@ void app_main(void)
     ESP_LOGI(TAG, "Starting OpenFlap controller: %s", app_desc.version);
 
     /* Initialize the oled display. */
-    oled_disp_ctx_t oled_disp_ctx;
-    oled_disp_init(&oled_disp_ctx);
-    uint8_t major, minor, patch;
-    util_extract_version(app_desc.version, &major, &minor, &patch);
-    oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
+    // oled_disp_ctx_t oled_disp_ctx;
+    // oled_disp_init(&oled_disp_ctx);
+    // uint8_t major, minor, patch;
+    // util_extract_version(app_desc.version, &major, &minor, &patch);
+    // oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
 
     /* Connect to a network. */
     networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;

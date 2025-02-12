@@ -25,3 +25,4 @@ typedef struct {
     property_handler_compare_cb compare;
 } property_handler_t;
 
+// void *propert_unique_to_shared(const void *unique_property, );

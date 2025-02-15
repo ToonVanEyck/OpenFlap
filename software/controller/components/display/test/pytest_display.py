@@ -18,7 +18,6 @@ class OpenFlapModule:
         characterMapSize: int = 48,
         characterMap: List[str] = None,
         offset: int = 0,
-        vtrim: int = 0,
         character: str = " ",
     ):
         if moduleIndex is None:
@@ -37,7 +36,6 @@ class OpenFlapModule:
             )  # Only use ASCII characters because pytest cannot handle non-ASCII characters
         )
         self.offset = offset
-        self.vtrim = vtrim
         self.character = character
 
     def to_json(self) -> str:

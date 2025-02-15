@@ -41,11 +41,8 @@ function createModuleTable() {
         moduleProperties.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Properties:" }));
         let propertyList = moduleProperties.appendChild(elNew("div", { className: "contentWrapper" })).appendChild(elNew("div", { className: "moduleProperties__list" }));
         propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "columnEnd_" + i, innerHTML: "columnEnd" }), elNew("input", { id: "columnEnd_" + i, className: "propertyInput checkBox noclick", type: "checkbox", name: "columnEnd", checked: module.module_info.column_end }));
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "vtrim_" + i, innerHTML: "vtrim" }), elNew("input", { id: "vtrim_" + i, className: "propertyInput", type: "number", min: "0", max: "200", step: "5", name: "vtrim", defaultValue: module.calibration.vtrim }));
-        propertyList.lastChild.lastChild.onchange = function () { module.calibration.vtrim = parseInt(this.value) };
-        propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "offset_" + i, innerHTML: "offset" }), elNew("input", { id: "offset_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "offset", defaultValue: module.calibration.offset }));
-        propertyList.lastChild.lastChild.onchange = function () { module.calibration.offset = parseInt(this.value) };
+        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "offset_" + i, innerHTML: "offset" }), elNew("input", { id: "offset_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "offset", defaultValue: module.offset }));
+        propertyList.lastChild.lastChild.onchange = function () { module.offset = parseInt(this.value) };
         propertyList.lastChild.lastChild.onclick = function () { this.select(); };
         propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "baseSpeed_" + i, innerHTML: "baseSpeed" }), elNew("input", { id: "baseSpeed_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "baseSpeed", defaultValue: module.baseSpeed }));
         propertyList.lastChild.lastChild.onchange = function () { module.baseSpeed = parseInt(this.value) };
@@ -280,8 +277,7 @@ async function modulesSetProperties(properties) {
 function startCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
         trySetLetter(i, moduleObjects[i].character_set[0]);
-        moduleObjects[i].calibration.offset = 0;
-        moduleObjects[i].calibration.vtrim = 0;
+        moduleObjects[i].offset = 0;
     }
     modulesSetProperties(["character", "calibration"]);
     createModuleTable();
@@ -289,8 +285,8 @@ function startCalibration() {
 
 function doCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
-        moduleObjects[i].calibration.offset += moduleObjects[i].character_set.indexOf(moduleObjects[i].character);
-        if (moduleObjects[i].calibration.offset >= moduleObjects[i].character_set.length) moduleObjects[i].calibration.offset -= moduleObjects[i].character_set.length; 0
+        moduleObjects[i].offset += moduleObjects[i].character_set.indexOf(moduleObjects[i].character);
+        if (moduleObjects[i].offset >= moduleObjects[i].character_set.length) moduleObjects[i].offset -= moduleObjects[i].character_set.length; 0
         trySetLetter(i, moduleObjects[i].character_set[0]);
     }
     modulesSetProperties(["calibration"]);

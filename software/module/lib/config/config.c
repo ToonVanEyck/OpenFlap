@@ -26,8 +26,6 @@ void configPrint(openflap_config_t *config)
         debug_io_log_info("IR sensor %d:  %d\n", i, config->ir_limits[i]);
         HAL_Delay(d);
     }
-    debug_io_log_info("Vtrim: %d\n", config->vtrim);
-    HAL_Delay(d);
     debug_io_log_info("Base speed: %d\n", config->base_speed);
     HAL_Delay(d);
     debug_io_log_info("Symbol set:\n");

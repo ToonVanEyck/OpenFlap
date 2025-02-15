@@ -43,8 +43,7 @@ typedef struct {
     PROPERTY(PROPERTY_MODULE_INFO, "module_info", PROP_ATTR_STATIC(1), PROP_ATTR_NONE())                               \
     PROPERTY(PROPERTY_CHARACTER_SET, "character_set", PROP_ATTR_DYNAMIC(), PROP_ATTR_DYNAMIC())                        \
     PROPERTY(PROPERTY_CHARACTER, "character", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                                \
-    PROPERTY(PROPERTY_CALIBRATION /* Rename to offset, remove vtrim */, "calibration", PROP_ATTR_STATIC(1),            \
-             PROP_ATTR_STATIC(1))                                                                                      \
+    PROPERTY(PROPERTY_OFFSET, "offset", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                                      \
     PROPERTY(PROPERTY_COLOR, "color", PROP_ATTR_STATIC(2), PROP_ATTR_STATIC(2))                                        \
     PROPERTY(PROPERTY_MOTION, "motion", PROP_ATTR_STATIC(4), PROP_ATTR_STATIC(4))                                      \
     PROPERTY(PROPERTY_MINIMUM_ROTATION, "minimum_rotation", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                  \

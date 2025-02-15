@@ -40,6 +40,8 @@ esp_err_t module_property_indicate_synchronized(module_t *module, property_id_t 
  */
 bool module_property_is_desynchronized(module_t *module, property_id_t property_id);
 
+//---------------------------------------------------------------------------------------------------------------------
+
 firmware_update_property_t *firmware_update_new(void);
 
 void firmware_update_free(firmware_update_property_t *firmware_update);

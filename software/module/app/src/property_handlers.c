@@ -62,7 +62,7 @@ void property_character_set_get(uint8_t *buf, uint16_t *size)
     memcpy(buf, openflap_ctx->config.symbol_set, 4 * SYMBOL_CNT);
 }
 
-void property_calibration_set(uint8_t *buf, uint16_t *size)
+void property_offset_set(uint8_t *buf, uint16_t *size)
 {
     if (openflap_ctx->config.encoder_offset == buf[0]) {
         return;
@@ -70,7 +70,7 @@ void property_calibration_set(uint8_t *buf, uint16_t *size)
     openflap_ctx->config.encoder_offset = buf[0];
     openflap_ctx->store_config          = true;
 }
-void property_calibration_get(uint8_t *buf, uint16_t *size)
+void property_offset_get(uint8_t *buf, uint16_t *size)
 {
     buf[0] = openflap_ctx->config.encoder_offset;
 }
@@ -108,8 +108,11 @@ void property_handlers_init(openflap_ctx_t *ctx)
 {
     openflap_ctx = ctx;
 
-    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE].set = property_firmware_set;
-    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE].get = property_firmware_get;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE_VERSION].set = NULL;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE_VERSION].get = property_firmware_get;
+
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE_UPDATE].set = property_firmware_set;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_FIRMWARE_UPDATE].get = NULL;
 
     openflap_ctx->chain_ctx.property_handler[PROPERTY_COMMAND].set = property_command_set;
     openflap_ctx->chain_ctx.property_handler[PROPERTY_COMMAND].get = NULL;
@@ -117,8 +120,8 @@ void property_handlers_init(openflap_ctx_t *ctx)
     openflap_ctx->chain_ctx.property_handler[PROPERTY_MODULE_INFO].set = NULL;
     openflap_ctx->chain_ctx.property_handler[PROPERTY_MODULE_INFO].get = property_module_info_get;
 
-    openflap_ctx->chain_ctx.property_handler[PROPERTY_CALIBRATION].get = property_calibration_get;
-    openflap_ctx->chain_ctx.property_handler[PROPERTY_CALIBRATION].set = property_calibration_set;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_OFFSET].get = property_offset_get;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_OFFSET].set = property_offset_set;
 
     openflap_ctx->chain_ctx.property_handler[PROPERTY_CHARACTER_SET].set = property_character_set_set;
     openflap_ctx->chain_ctx.property_handler[PROPERTY_CHARACTER_SET].get = property_character_set_get;

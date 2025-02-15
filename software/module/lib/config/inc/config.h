@@ -12,7 +12,6 @@
 typedef struct openflap_config_tag {
     uint8_t encoder_offset;          /**< Offset of the encoder compared to the actual symbol index. */
     uint16_t ir_limits[SENS_CNT];    /**< Sensor thresholds for each IR sensor. */
-    uint8_t vtrim;                   /**< Virtual trim setting. */
     uint8_t base_speed;              /**< Base speed of the flap wheel. */
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
     bool ota_completed;              /**< Flag to indicate that the OTA process is completed. */

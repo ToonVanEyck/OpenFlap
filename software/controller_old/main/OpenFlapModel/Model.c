@@ -320,12 +320,12 @@ void module_setCharacterMap(module_t *module, characterMap_t *characterMap)
 
 uint8_t module_getOffset(module_t *module)
 {
-    return module->calibration.offset;
+    return module->offset;
 }
 void module_setOffset(module_t *module, uint8_t offset)
 {
-    module->calibration.offset = offset;
-    module->updatableProperties |= (1 << PROPERTY_CALIBRATION);
+    module->offset = offset;
+    module->updatableProperties |= (1 << PROPERTY_OFFSET);
 }
 
 uint8_t module_getVtrim(module_t *module)

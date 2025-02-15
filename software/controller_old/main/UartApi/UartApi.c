@@ -76,7 +76,7 @@ void uart_api_init()
     uart_addModulePropertyHandler(PROPERTY_CHARACTER, character_deserialize, character_serialize);
     uart_addModulePropertyHandler(characterMapSize_property, characterMapSize_deserialize, NULL);
     uart_addModulePropertyHandler(PROPERTY_CHARACTER_SET, characterMap_deserialize, characterMap_serialize);
-    uart_addModulePropertyHandler(PROPERTY_CALIBRATION, offset_deserialize, offset_serialize);
+    uart_addModulePropertyHandler(PROPERTY_OFFSET, offset_deserialize, offset_serialize);
     uart_addModulePropertyHandler(vtrim_property, vtrim_deserialize, vtrim_serialize);
     uart_addModulePropertyHandler(baseSpeed_property, baseSpeed_deserialize, baseSpeed_serialize);
 }

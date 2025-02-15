@@ -7,7 +7,6 @@
 const openflap_config_t __attribute__((section(".config"))) config = {
     .encoder_offset = 0,
     .ir_limits      = {400, 400, 400, 400, 400, 400},
-    .vtrim          = 0,
     .base_speed     = 0,
     .symbol_set =
         {

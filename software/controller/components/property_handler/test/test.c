@@ -8,7 +8,7 @@
 
 TEST_CASE("Test property_handler_get_by_id: ok", "[properties][qemu]")
 {
-    const property_handler_t *property = property_handler_get_by_id(PROPERTY_CALIBRATION);
+    const property_handler_t *property = property_handler_get_by_id(PROPERTY_OFFSET);
     TEST_ASSERT_NOT_NULL(property);
     TEST_ASSERT_EQUAL_STRING("calibration", chain_comm_property_name_by_id(property->id));
 }

@@ -24,18 +24,18 @@ esp_err_t module_character_set_index_of_character(module_t *module, uint8_t *ind
 
 module_t *module_new(void)
 {
-    module_t *module = malloc(sizeof(module));
+    module_t *module = malloc(sizeof(module_t));
     if (module == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for module");
         return NULL;
     }
 
-    memset(module, 0, sizeof(module));
+    memset(module, 0, sizeof(module_t));
 
     return module;
 }
 
-void module_destroy(module_t *module)
+void module_free(module_t *module)
 {
     if (module == NULL) {
         return;

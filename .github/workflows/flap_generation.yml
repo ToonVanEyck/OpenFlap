@@ -7,7 +7,7 @@ on:
     paths:
       - hardware/module/flaps/**
       - .devcontainer/ecad-mcad/**
-      - .github/workflows/hardware_validation.yml
+      - .github/workflows/flap_generation.yml
   
 env:
   CI_ARG: ${{ github.ref == 'refs/heads/main' && '' || '--dry-run' }}  # Full run on main brach, dry-run on other branches
@@ -38,5 +38,12 @@ jobs:
           cacheFrom: ghcr.io/toonvaneyck/openflap-ecad-mcad-devcontainer
           push: always
           runCmd: |
-            cd hardware
-            ./ci-script-flaps.sh ${CI_ARG} --3d --pcb
+            ./hardware/ci-script-flaps.sh ${CI_ARG} --3d --pcb
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaps
+          path: |
+            build/flaps/pcb/
+            build/flaps/3d/

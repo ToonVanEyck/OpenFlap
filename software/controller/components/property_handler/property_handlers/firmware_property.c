@@ -104,6 +104,11 @@ static bool firmware_compare(const module_t *module_a, const module_t *module_b)
     const firmware_property_t *firmware_a = &module_a->firmware;
     const firmware_property_t *firmware_b = &module_b->firmware;
 
+    /* Check if the firmware data has been initialized before. */
+    if (firmware_a->data == NULL || firmware_b->data == NULL) {
+        return false;
+    }
+
     /* Check if the sizes are the same. */
     if (firmware_a->index != firmware_b->index) {
         return false;

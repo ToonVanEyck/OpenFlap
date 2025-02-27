@@ -15,11 +15,11 @@
 /** The period of the encoder readings when the system is idle. */
 #define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
 /** The period of the encoder readings when the system is active and the distance to the setpoint flap is large. */
-#define IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
+#define IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(10)
 /** The period of the encoder readings when the system is active and the distance to the setpoint flap is small. */
-#define IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(10)
+#define IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(5)
 /** The period of the encoder readings when the system is active and the distance to the setpoint flap is very small. */
-#define IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(5)
+#define IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(3)
 
 /** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
@@ -31,7 +31,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
-uint32_t aADCxConvertedData[ENCODER_RESOLUTION] = {0};
+uint32_t aADCxConvertedData[ENCODER_CHANNEL_CNT] = {0};
 
 TIM_HandleTypeDef Tim1Handle; // ADC/IR timer
 
@@ -45,7 +45,8 @@ static openflap_ctx_t openflap_ctx = {0};
 static uint8_t uart_rx_rb_buff[RB_BUFF_SIZE];
 static uint8_t uart_tx_rb_buff[RB_BUFF_SIZE];
 static uart_driver_ctx_t uart_driver;
-static bool debug_mode = false;
+static bool debug_mode        = false;
+static bool print_encoder_adc = false;
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -83,21 +84,12 @@ int main(void)
     debug_io_log_info("OpenFlap module has started!\n");
     debug_io_log_info("Version: %s\n", GIT_VERSION);
     debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
-    debug_io_log_debug("Random seed: %d\n", openflap_ctx.config.random_seed);
 
     /* Set setpoint equal to position to prevent instant rotation. */
-    while (openflap_ctx.flap_position == SYMBOL_CNT) {
-        HAL_Delay(10);
-    }
-    openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
-
-    /* Get the random seed from the ADC data. */
-    /* If the seed was zero, we will store the new seed immediately. */
-    if (!openflap_ctx.config.random_seed) {
-        openflap_ctx.store_config = true;
-        // openflap_ctx.reboot = true;
-    }
-    openflap_ctx.config.random_seed = getAdcBasedRandSeed(aADCxConvertedData);
+    // while (openflap_ctx.flap_position == SYMBOL_CNT) {
+    //     HAL_Delay(10);
+    // }
+    // openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
 
     uint8_t new_position = 0;
     int rtt_key;
@@ -112,7 +104,10 @@ int main(void)
                 case '\n':
                     configPrint(&openflap_ctx.config);
                     break;
-
+                case 'a':
+                    print_encoder_adc = !print_encoder_adc;
+                    debug_io_log_info("%s Encoder ADC\n", print_encoder_adc ? "Printing" : "Not printing");
+                    break;
                 case 'd':
                     debug_mode = !debug_mode;
                     debug_io_log_info("%s Debug Mode\n", debug_mode ? "Entering" : "Exiting");
@@ -137,14 +132,19 @@ int main(void)
 
         /* Print position. */
         if (new_position != openflap_ctx.flap_position) {
-            new_position = openflap_ctx.flap_position;
-            debug_io_log_info("Pos: %d  %s\n", openflap_ctx.flap_position,
-                              &openflap_ctx.config.symbol_set[openflap_ctx.flap_position]);
+            new_position                              = openflap_ctx.flap_position;
+            static uint32_t last_position_change_time = 0;
+            uint32_t current_time                     = HAL_GetTick();
+            uint32_t time_since_last_change           = current_time - last_position_change_time;
+            last_position_change_time                 = current_time;
+            debug_io_log_info("Pos: %d  %s (%ld ms)\n", openflap_ctx.flap_position,
+                              &openflap_ctx.config.symbol_set[openflap_ctx.flap_position], time_since_last_change);
         }
 
         if (!debug_mode) {
             /* Set the motor speed based on the distance between the current and target flap. */
             setMotorFromDistance(&openflap_ctx);
+            // motorIdle();
         } else {
             if (speed < 0) {
                 motorReverse(-speed);
@@ -192,11 +192,11 @@ static void APP_GpioConfig(void)
     HAL_GPIO_Init(COLEND_GPIO_PORT, &GPIO_InitStruct);
 
     /* Configure IR LED */
-    GPIO_InitStruct.Pin   = IR_LED_GPIO_PIN;
+    GPIO_InitStruct.Pin   = ENCODER_LED_GPIO_PIN;
     GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(IR_LED_GPIO_PORT, &GPIO_InitStruct);
+    HAL_GPIO_Init(ENCODER_LED_GPIO_PORT, &GPIO_InitStruct);
 
     /* Configure MOTOR A output. (motor direction) */
     GPIO_InitStruct.Pin   = MOTOR_A_GPIO_PIN;
@@ -242,8 +242,8 @@ static void APP_AdcConfig(void)
 
     sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
     /* Configure the ADC channels. */
-    for (uint8_t i = 0; i < ENCODER_RESOLUTION; i++) {
-        sConfig.Channel = ADC_CHANNEL_LIST[i];
+    for (uint8_t i = 0; i < ENCODER_CHANNEL_CNT; i++) {
+        sConfig.Channel = ENCODER_ADC_CHANNEL_LIST[i];
         if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK) {
             APP_ErrorHandler();
         }
@@ -323,12 +323,11 @@ static void APP_UartInit(void)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     /* Disable IR led. */
-    HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_RESET);
 
-    if (debug_mode) {
-        debug_io_log_debug("ADC: %04ld  %04ld  %04ld  %04ld  %04ld  %04ld\n", aADCxConvertedData[IR_MAP[0]],
-                           aADCxConvertedData[IR_MAP[1]], aADCxConvertedData[IR_MAP[2]], aADCxConvertedData[IR_MAP[3]],
-                           aADCxConvertedData[IR_MAP[4]], aADCxConvertedData[IR_MAP[5]]);
+    if (print_encoder_adc) {
+        debug_io_log_debug("ABZ: %04ld %04ld %04ld\n", aADCxConvertedData[ENCODER_CHANNEL_A],
+                           aADCxConvertedData[ENCODER_CHANNEL_B], aADCxConvertedData[ENCODER_CHANNEL_Z]);
     }
 
     /* Update encoder position. */
@@ -343,22 +342,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (openflap_ctx.motor_active) {
             if (openflap_ctx.flap_distance == 1) {
                 ir_period = IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS;
-            } else if (openflap_ctx.flap_distance == 2) {
+            } else if (openflap_ctx.flap_distance <= 3) {
                 ir_period = IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS;
             } else {
                 ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;
             }
         }
+        ir_period = IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS;
         /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
-            if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_RESOLUTION) != HAL_OK) {
+            if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_CHANNEL_CNT) != HAL_OK) {
                 APP_ErrorHandler();
             }
 
-            /* Power IR led's every 50ms. */
+            /* Power IR led's. */
         } else if (openflap_ctx.ir_tick_cnt >= ir_period) {
             openflap_ctx.ir_tick_cnt = 0;
-            HAL_GPIO_WritePin(IR_LED_GPIO_PORT, IR_LED_GPIO_PIN, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_SET);
         }
     }
 }

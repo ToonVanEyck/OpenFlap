@@ -1,4 +1,6 @@
 (fp_lib_table
   (version 7)
   (lib (name "GA12-N20")(type "KiCad")(uri "${KIPRJMOD}/../../../resources/GA12-N20.pretty")(options "")(descr ""))
+  (lib (name "EncoderPattern")(type "KiCad")(uri "${KIPRJMOD}/../../../resources/EncoderPattern.pretty")(options "")(descr ""))
+  (lib (name "ToolingHole")(type "KiCad")(uri "${KIPRJMOD}/../../../resources/ToolingHole.pretty")(options "")(descr ""))
 )

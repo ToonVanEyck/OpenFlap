@@ -23,7 +23,7 @@ void configPrint(openflap_config_t *config)
     debug_io_log_info("IR limits:\n");
     HAL_Delay(d);
     for (int i = 0; i < SENS_CNT; i++) {
-        debug_io_log_info("IR sensor %d:  %d\n", i, config->ir_limits[i]);
+        debug_io_log_info("IR thresholds: %d %d\n", config->ir_threshold.lower, config->ir_threshold.upper);
         HAL_Delay(d);
     }
     debug_io_log_info("Vtrim: %d\n", config->vtrim);

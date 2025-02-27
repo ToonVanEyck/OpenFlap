@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -x
+
 # Parse options
 check_modified=false
 dry_run=false
@@ -51,8 +54,9 @@ BUILD_DIR=${BASE_DIR}/build/hardware
 
 # Declare modules
 declare -A modules=(
-    ["Side Panel"]="module/side_panel/src"
+    ["Side_Panel"]="module/side_panel/src"
     ["Encoder Wheel"]="module/encoder_wheel/src"
+    # ["Encoder Wheel 2"]="module/encoder_wheel/src_2"
     ["Top Connector"]="top_connector/src"
     ["Controller"]="controller/src"
 )
@@ -88,9 +92,9 @@ for name in "${!modules[@]}"; do
         all_success=false
     else
         # Copy the generated files to the source directory
-        cp $BUILD_DIR/$(basename $(dirname $path))/*.png $SOURCE_DIR/$path/../ > /dev/null 2>&1
-        cp $BUILD_DIR/$(basename $(dirname $path))/*.pdf $SOURCE_DIR/$path/../ > /dev/null 2>&1
-        cp $BUILD_DIR/$(basename $(dirname $path))/*ibom.html $SOURCE_DIR/$path/../ > /dev/null 2>&1
+        cp $BUILD_DIR/$(basename $(dirname $path))/*.png $SOURCE_DIR/$path/../ > /dev/null 2>&1 || true
+        cp $BUILD_DIR/$(basename $(dirname $path))/*.pdf $SOURCE_DIR/$path/../ > /dev/null 2>&1 || true
+        cp $BUILD_DIR/$(basename $(dirname $path))/*ibom.html $SOURCE_DIR/$path/../ > /dev/null 2>&1 || true
     fi
     [[ $? -ne 0 ]] && all_success=false
 done

@@ -4,13 +4,13 @@
 #define COMMS_IDLE_TIMEOUT_MS (75)
 
 /** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (75)
+#define MOTOR_BACKSPIN_DURATION_MS (0)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
 #define MOTOR_BACKSPIN_PWM (15)
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    const uint8_t min_pwm           = 60;
+    const uint8_t min_pwm           = 50;
     const uint8_t max_pwm           = 160; /* 110 = +/- 0.5 rps = 30 rpm */
     const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
     const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */
@@ -28,38 +28,44 @@ uint8_t pwmDutyCycleCalc(uint8_t distance)
 
 void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
 {
-    static uint8_t old_position = SYMBOL_CNT;
-    uint8_t encoder_graycode    = 0;
+    static const uint8_t QEM[16]   = {0, -1, 1, 2, 1, 0, 2, -1, -1, 2, 0, 1, 2, 1, -1, 0};
+    static const uint8_t IR_MAP[2] = {ENCODER_CHANNEL_A, ENCODER_CHANNEL_B};
 
-    for (uint8_t i = 0; i < ENCODER_RESOLUTION; i++) {
-        if (adc_data[IR_MAP[i]] > ctx->config.ir_limits[i]) {
-            encoder_graycode &= ~(1 << i);
-        } else if (adc_data[IR_MAP[i]] < ctx->config.ir_limits[i]) {
-            encoder_graycode |= (1 << i);
+    /* Encoder increment/decrement is determined based on the old and new pattern. */
+    static uint8_t old_pattern = 0x00;
+    uint8_t new_pattern        = old_pattern;
+
+    /* Digitize the ADC signals using the configured IR thresholds. */
+    bool zero = adc_data[ENCODER_CHANNEL_Z] < ctx->config.ir_threshold.lower;
+    for (uint8_t i = 0; i < 2; i++) {
+        if (adc_data[IR_MAP[i]] > ctx->config.ir_threshold.upper) {
+            new_pattern &= ~(1 << i);
+        } else if (adc_data[IR_MAP[i]] < ctx->config.ir_threshold.lower) {
+            new_pattern |= (1 << i);
         }
     }
 
-    // Convert grey code into decimal.
-    uint8_t encoder_decimal = 0;
-    for (encoder_decimal = 0; encoder_graycode; encoder_graycode = encoder_graycode >> 1) {
-        encoder_decimal ^= encoder_graycode;
+    int8_t qem = QEM[(old_pattern << 2) | new_pattern];
+
+    /* Update the old_pattern. */
+    old_pattern = new_pattern;
+
+    if (qem == 0) {
+        return;
     }
 
-    /* TODO: an issue occurs when encoder_decimal is 48. */
-
-    // Reverse encoder direction.
-    uint8_t new_position = (uint8_t)SYMBOL_CNT - encoder_decimal - 1;
-
-    // Ignore erroneous reading.
-    if (new_position < SYMBOL_CNT) {
-        new_position = flapIndexWrapCalc(new_position + ctx->config.encoder_offset);
-        // Ignore sensor backspin.
-        if (flapIndexWrapCalc(new_position + 1) != old_position) {
-            old_position       = new_position;
-            ctx->flap_position = new_position;
-            distanceUpdate(ctx);
-        }
+    if (qem == 2) {
+        debug_io_log_error("Invalid QEM value: %d\n", qem);
+        return;
     }
+
+    /* Check if we have a zero or full pattern. */
+    if (zero) {
+        ctx->flap_position = flapIndexWrapCalc(ctx->config.encoder_offset);
+    } else {
+        ctx->flap_position = flapIndexWrapCalc(ctx->flap_position + SYMBOL_CNT + qem);
+    }
+    distanceUpdate(ctx);
 }
 
 void distanceUpdate(openflap_ctx_t *ctx)
@@ -74,17 +80,6 @@ void distanceUpdate(openflap_ctx_t *ctx)
         }
     }
     ctx->flap_distance = distance;
-}
-
-uint8_t getAdcBasedRandSeed(uint32_t *adc_data)
-{
-    /* Use ADC noise to generate a random number. */
-    uint8_t rand_seed = 0;
-    for (uint8_t i = 0; i < ENCODER_RESOLUTION; i++) {
-        rand_seed <<= 1;
-        rand_seed ^= (adc_data[i] & 0x03);
-    }
-    return rand_seed;
 }
 
 void updateMotorState(openflap_ctx_t *ctx)
@@ -110,7 +105,7 @@ void updateCommsState(openflap_ctx_t *ctx)
             ctx->comms_active = true;
             debug_io_log_info("Comms Active\n");
 #if !CHAIN_COMM_DEBUG
-            debug_io_log_disable(); // Writing to RTT may fuck up the UART RX interrupt...
+            debug_io_log_disable(); /* Writing to RTT may fuck up the UART RX interrupt... */
 #endif
         }
     } else if (ctx->comms_active && HAL_GetTick() > ctx->comms_active_timeout_tick) {
@@ -131,7 +126,8 @@ void setMotorFromDistance(openflap_ctx_t *ctx)
         if (ctx->motor_backspin_timeout_tick == 0) {
             ctx->motor_backspin_timeout_tick = HAL_GetTick() + MOTOR_BACKSPIN_DURATION_MS;
             motorReverse(MOTOR_BACKSPIN_PWM);
-        } else if (HAL_GetTick() > ctx->motor_backspin_timeout_tick) {
+        }
+        if (HAL_GetTick() >= ctx->motor_backspin_timeout_tick) {
             motorBrake();
         }
     }

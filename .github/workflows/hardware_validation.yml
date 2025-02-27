@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - hardware/module/side_panel/src/**
+      - hardware/module/encoder_wheel/src/**
       - hardware/top_connector/src/**
       - hardware/controller/src/**
       - .devcontainer/ecad-mcad/**
@@ -40,5 +41,21 @@ jobs:
           cacheFrom: ghcr.io/toonvaneyck/openflap-ecad-mcad-devcontainer
           push: always
           runCmd: |
-            cd hardware
-            ./ci-script-kibot.sh ${CI_ARG}
+            ./hardware/ci-script-kibot.sh ${CI_ARG}
+
+      # - name: Commit changes
+      #   run: |
+      #     git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      #     git config --global user.name "github-actions[bot]"
+      #     git add hardware/module/side_panel/*
+      #     git add hardware/module/encoder_wheel/*
+      #     git add hardware/top_connector/*
+      #     git add hardware/controller/*
+      #     git commit -m "Github Actions: Update schematic pdfs and pcb renders."
+      #     git push
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardware
+          path: build/hardware/

@@ -48,12 +48,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
     __HAL_RCC_DMA_CLK_ENABLE();   /* Enable DMA clock */
     __HAL_RCC_ADC_CLK_ENABLE();   /* Enable ADC clock */
 
-    /* ADC channel: PA0 - PA5  */
+    /* Configure ADC channels. */
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin  = IR_ADC_GPIO_PINS;
+    GPIO_InitStruct.Pin  = ENCODER_ADC_GPIO_PINS;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(IR_ADC_GPIO_PORT, &GPIO_InitStruct);
+    HAL_GPIO_Init(ENCODER_ADC_GPIO_PORT, &GPIO_InitStruct);
 
     // HAL_NVIC_SetPriority(ADC_COMP_IRQn, 0, 0);
     // HAL_NVIC_EnableIRQ(ADC_COMP_IRQn);
@@ -79,7 +79,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef *hadc)
     __HAL_RCC_DMA_FORCE_RESET();
     __HAL_RCC_DMA_RELEASE_RESET();
 
-    HAL_GPIO_DeInit(IR_ADC_GPIO_PORT, IR_ADC_GPIO_PINS);
+    HAL_GPIO_DeInit(ENCODER_ADC_GPIO_PORT, ENCODER_ADC_GPIO_PINS);
     HAL_DMA_DeInit(hadc->DMA_Handle);
 }
 

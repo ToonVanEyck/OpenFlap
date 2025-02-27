@@ -65,20 +65,19 @@ inline uint8_t flapIndexWrapCalc(int8_t index)
 void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data);
 
 /**
+ * \brief Calibrate the encoder thresholds based on the ADC data.
+ *
+ * \param[inout] ctx A pointer to the openflap context.
+ * \param[in] adc_data The ADC data of the IR sensors.
+ */
+void encoderCalibration(openflap_ctx_t *ctx, uint32_t *adc_data);
+
+/**
  * \brief Update the distance between the current and target flap.
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
 void distanceUpdate(openflap_ctx_t *ctx);
-
-/**
- * \brief Generate a random seed based on the ADC data.
- *
- * \param[in] adc_data The ADC data of the IR sensors.
- *
- * \return The generated random seed.
- */
-uint8_t getAdcBasedRandSeed(uint32_t *adc_data);
 
 /**
  * \brief Update the internal state variable that is monitoring the motor state.

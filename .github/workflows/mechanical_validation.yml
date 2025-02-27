@@ -38,6 +38,10 @@ jobs:
           cacheFrom: ghcr.io/toonvaneyck/openflap-ecad-mcad-devcontainer
           push: always
           runCmd: |
-            cd mechanical
-            mkdir -p build
-            ./ci-script-freecad.sh ${CI_ARG}
+            ./mechanical/ci-script-freecad.sh ${CI_ARG}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanical
+          path: build/mechanical/

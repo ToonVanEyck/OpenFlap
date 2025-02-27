@@ -7,7 +7,7 @@
 	(title_block
 		(title "Encoder Wheel 48")
 		(date "${DATE}")
-		(rev "3.0.0.a")
+		(rev "3.0.0.b")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")

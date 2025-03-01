@@ -29,6 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/toonvaneyck/ecad-mcad:latest
+      options: --user openflap
     steps:
       - name: Checkout (GitHub)
         uses: actions/checkout@v4
@@ -52,6 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/toonvaneyck/ecad-mcad:latest
+      options: --user openflap
     steps:
       - name: Checkout (GitHub)
         uses: actions/checkout@v4
@@ -75,6 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/toonvaneyck/ecad-mcad:latest
+      options: --user openflap
     steps:
       - name: Checkout (GitHub)
         uses: actions/checkout@v4

@@ -42,6 +42,6 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           configFile: .devcontainer/ecad-mcad/devcontainer.json
-          imageName: ghcr.io/toonvaneyck/${{ inputs.container }}:${{ inputs.tag }}
-          cacheFrom: ghcr.io/toonvaneyck/${{ inputs.container }}:${{ inputs.tag }}
+          imageName: ghcr.io/toonvaneyck/${{ inputs.container }}
+          cacheFrom: ghcr.io/toonvaneyck/${{ inputs.container }}
           push: always

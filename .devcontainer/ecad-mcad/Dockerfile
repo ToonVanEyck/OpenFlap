@@ -1,9 +1,11 @@
 # FROM ghcr.io/inti-cmnb/kicad8_auto:1.8.0
 FROM ghcr.io/inti-cmnb/kicad_auto_full:dev_k8_1.8.3-6506638_k8.0.6_d_sid_b3.5.1
 
-ARG NEW_USER=openflap
+ARG USER_NAME=openflap
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
+ARG CI_USER_NAME=openflap_ci
+ARG CI_USER_UID=1001
 
 # Install additional packages
 RUN apt update && apt install -y \
@@ -27,20 +29,25 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
 
 # Create a non-root user with sudo rights
-RUN useradd -ms /bin/bash ${NEW_USER} -u ${USER_UID} -U -G sudo && \
-    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER} && \
-    chmod 0440 /etc/sudoers.d/${NEW_USER}
+RUN useradd -ms /bin/bash ${USER_NAME} -u ${USER_UID} -U -G sudo && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME} && \
+    chmod 0440 /etc/sudoers.d/${USER_NAME}
+
+# Create a non-root user with sudo rights
+RUN useradd -ms /bin/bash ${CI_USER_NAME} -u ${CI_USER_UID} -U -G sudo,${USER_NAME} && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${CI_USER_NAME} && \
+    chmod 0440 /etc/sudoers.d/${CI_USER_NAME}
 
 # Setup user and home
-ENV USER=${NEW_USER}
-ENV HOME=/home/${NEW_USER}
+ENV USER=${USER_NAME}
+ENV HOME=/home/${USER_NAME}
 WORKDIR ${HOME}
 
 # Set the locale
 ENV LC_ALL=C
 
 # Install the bashrc addons
-COPY --chown=${NEW_USER} .bashrc_devcontainer_addons ${HOME}/.bashrc_devcontainer_addons
+COPY --chown=${USER_NAME} .bashrc_devcontainer_addons ${HOME}/.bashrc_devcontainer_addons
 
 # Don't display message about how to use sudo...
 RUN touch ${HOME}/.sudo_as_admin_successful
@@ -72,7 +79,7 @@ RUN unzip espressif-kicad-addon.zip
 RUN mkdir -p  $KICAD8_3RD_PARTY/footprints/com_github_espressif_kicad-libraries && cp -r footprints/Espressif.pretty $KICAD8_3RD_PARTY/footprints/com_github_espressif_kicad-libraries/
 RUN mkdir -p  $KICAD8_3RD_PARTY/symbols/com_github_espressif_kicad-libraries && cp -r symbols/Espressif.kicad_sym $KICAD8_3RD_PARTY/symbols/com_github_espressif_kicad-libraries/
 RUN mkdir -p  $KICAD8_3RD_PARTY/3dmodels/com_github_espressif_kicad-libraries && cp -r 3dmodels/espressif.3dshapes $KICAD8_3RD_PARTY/3dmodels/com_github_espressif_kicad-libraries/
-RUN chown -R ${NEW_USER}:${NEW_USER} ${HOME}
+RUN chown -R ${USER_NAME}:${USER_NAME} ${HOME}
 
 # Remove broken .wrl files
 RUN rm $KICAD8_3RD_PARTY/3dmodels/com_github_espressif_kicad-libraries/espressif.3dshapes/*.wrl
@@ -134,5 +141,5 @@ RUN rm -rf /tmp/*
 WORKDIR ${HOME}
 
 # Set user and start bash
-USER ${NEW_USER}
+USER ${USER_NAME}
 CMD ["/bin/bash", "-c"]

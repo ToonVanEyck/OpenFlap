@@ -1,0 +1,96 @@
+name: 'Mechanical and Electronics Validation' 
+on:
+  # Runs on pull_requests targeting the default branch
+  pull_request:
+    branches:
+      - master
+    paths:
+      - hardware/**
+      - mechanical/**
+      - .devcontainer/ecad-mcad/**
+      - .github/workflows/ecad_mcad_ci.yml
+      
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+jobs:
+  update_container:
+    uses: ./.github/workflows/update_container.yml
+    with:
+      container: ecad-mcad
+      tag: latest
+
+  build_hardware_designs:
+    if: ${{ success() || cancelled() }}
+    needs: update_container
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/toonvaneyck/ecad-mcad:latest
+      options: --user openflap_ci
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          fetch-depth: 0 # fetch all history for tags
+          fetch-tags: true
+
+      - name: Run KiBot
+        run: ./hardware/ci-script-kibot.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardware
+          path: build/hardware/
+
+  export_stl_files:
+    if: ${{ success() || cancelled() }}
+    needs: update_container
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/toonvaneyck/ecad-mcad:latest
+      options: --user openflap_ci
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          fetch-depth: 0 # fetch all history for tags
+          fetch-tags: true
+
+      - name: Run STL generation script
+        run: ./mechanical/ci-script-freecad.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanical
+          path: build/mechanical/
+
+  build_flaps:
+    if: ${{ success() || cancelled() }}
+    needs: update_container
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/toonvaneyck/ecad-mcad:latest
+      options: --user openflap_ci
+    steps:
+      - run: ls -lah
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          fetch-depth: 0 # fetch all history for tags
+          fetch-tags: true
+
+      - name: Run flap generator script
+        run: ./hardware/ci-script-flaps.sh --3d --pcb
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaps
+          path: |
+            build/flaps/pcb/
+            build/flaps/3d/

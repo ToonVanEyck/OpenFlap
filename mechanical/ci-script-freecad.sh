@@ -6,8 +6,8 @@ if [[ "$1" == "--dry-run" ]]; then
     dry_run="--dry-run"
 fi
 
-# Check if the script is being ran in the correct container.
-if [ "$(hostname)" != "ecad-mcad" ]; then
+# Check if the script is being run in the correct container or in GitHub Actions.
+if [ "$(hostname)" != "ecad-mcad" ] && [ -z "$GITHUB_ACTIONS" ]; then
     echo -e "\e[31mError: This script is meant to be ran in the ecad-mcad container.\e[0m"
     exit 1
 fi

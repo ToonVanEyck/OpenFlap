@@ -71,5 +71,8 @@
         "sdkconfig*": "kconfig"
     },
     "cmake.sourceDirectory": "/workspaces/OpenFlap/software/controller",
-    "livePreview.defaultPreviewPath": "/software/controller/components/webserver/assets/index.html"
+    "livePreview.defaultPreviewPath": "/software/controller/components/webserver/assets/index.html",
+    "editor.formatOnSave": true,
+    "C_Cpp.clang_format_path": "/usr/bin/clang-format",
+    "C_Cpp.formatting": "clangFormat"
 }

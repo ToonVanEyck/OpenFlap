@@ -24,4 +24,3 @@ typedef struct {
     property_handler_to_binary_handler_cb to_binary;
     property_handler_compare_cb compare;
 } property_handler_t;
-

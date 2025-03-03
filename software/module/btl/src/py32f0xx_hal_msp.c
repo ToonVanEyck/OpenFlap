@@ -50,7 +50,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
 
     /* ADC channel: PA0 - PA5  */
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5;
+    GPIO_InitStruct.Pin  = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -58,14 +58,14 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
     // HAL_NVIC_SetPriority(ADC_COMP_IRQn, 0, 0);
     // HAL_NVIC_EnableIRQ(ADC_COMP_IRQn);
     HAL_SYSCFG_DMA_Req(DMA_CHANNEL_MAP_ADC); /* DMA1_MAP Set to ADC */
-    HdmaCh1.Instance = DMA1_Channel1;
-    HdmaCh1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    HdmaCh1.Init.PeriphInc = DMA_PINC_DISABLE;
-    HdmaCh1.Init.MemInc = DMA_MINC_ENABLE;
+    HdmaCh1.Instance                 = DMA1_Channel1;
+    HdmaCh1.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+    HdmaCh1.Init.PeriphInc           = DMA_PINC_DISABLE;
+    HdmaCh1.Init.MemInc              = DMA_MINC_ENABLE;
     HdmaCh1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    HdmaCh1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    HdmaCh1.Init.Mode = DMA_CIRCULAR;
-    HdmaCh1.Init.Priority = DMA_PRIORITY_LOW;
+    HdmaCh1.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
+    HdmaCh1.Init.Mode                = DMA_CIRCULAR;
+    HdmaCh1.Init.Priority            = DMA_PRIORITY_LOW;
 
     HAL_DMA_DeInit(&HdmaCh1);
     HAL_DMA_Init(&HdmaCh1);
@@ -114,10 +114,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
     __HAL_RCC_USART1_CLK_ENABLE(); /* Enable UART clock */
 
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Pin       = GPIO_PIN_6 | GPIO_PIN_7;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull      = GPIO_PULLUP;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF0_USART1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -137,10 +137,10 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
     __HAL_RCC_TIM3_CLK_ENABLE(); /* Enable TIM clock */
 
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Pin       = GPIO_PIN_6;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull      = GPIO_PULLUP;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 

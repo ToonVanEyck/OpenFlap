@@ -49,7 +49,7 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
 
             /* Check if the property can be converted to a JSON. */
             if ((property_handler == NULL) || (property_handler->to_json == NULL)) {
-                /* Property is not suported for reading. */
+                /* Property is not supported for reading. */
                 continue;
             }
 

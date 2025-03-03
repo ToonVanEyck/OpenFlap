@@ -10,10 +10,10 @@ void flashRead(uint32_t address, uint8_t *data, uint32_t size)
 
 void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
 {
-    uint32_t flash_addr = address;
-    uint32_t flash_end = (address + size);
+    uint32_t flash_addr     = address;
+    uint32_t flash_end      = (address + size);
     uint32_t size_remaining = flash_end - flash_addr;
-    flashPage_t *src = (flashPage_t *)data;
+    flashPage_t *src        = (flashPage_t *)data;
     flashPage_t data_page;
 
     HAL_FLASH_Unlock();

@@ -6,8 +6,8 @@
 #include <string.h>
 
 static bool format_ended_in_newline = true;
-static log_lvl_t active_log_lvl = LOG_DISBALED;
-static log_lvl_t prev_log_lvl = LOG_DISBALED;
+static log_lvl_t active_log_lvl     = LOG_DISBALED;
+static log_lvl_t prev_log_lvl       = LOG_DISBALED;
 
 static inline bool format_end_in_newline(const char *fmt)
 {
@@ -17,7 +17,7 @@ static inline bool format_end_in_newline(const char *fmt)
 void debug_io_init(log_lvl_t log_lvl)
 {
     active_log_lvl = log_lvl;
-    prev_log_lvl = log_lvl;
+    prev_log_lvl   = log_lvl;
     SEGGER_RTT_Init();
 }
 
@@ -86,7 +86,7 @@ void debug_io_log_error(const char *fmt, ...)
 void debug_io_log_set_level(log_lvl_t log_lvl)
 {
     active_log_lvl = log_lvl;
-    prev_log_lvl = log_lvl;
+    prev_log_lvl   = log_lvl;
 }
 
 log_lvl_t debug_io_log_get_level(void)

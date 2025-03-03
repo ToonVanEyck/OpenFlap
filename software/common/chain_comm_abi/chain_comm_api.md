@@ -2,7 +2,7 @@
 
 The cain communication is the communication interface between a controller and a daisy chained string of OpenFlap modules.
 
-The protocol uses UART as the data link layer. The UART is cofigured to 115200 baud, 8 data bits, 1 stop bit and no parity.
+The protocol uses UART as the data link layer. The UART is configured to 115200 baud, 8 data bits, 1 stop bit and no parity.
 
 ## Message Format
 

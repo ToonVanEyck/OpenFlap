@@ -102,14 +102,14 @@ extern "C" {
 /**
  * @brief This is the HAL system configuration section
  */
-#define VDD_VALUE ((uint32_t)5000) /*!< Value of VDD in mv */
-#define PRIORITY_HIGHEST 0
-#define PRIORITY_HIGH 1
-#define PRIORITY_LOW 2
-#define PRIORITY_LOWEST 3
+#define VDD_VALUE         ((uint32_t)5000) /*!< Value of VDD in mv */
+#define PRIORITY_HIGHEST  0
+#define PRIORITY_HIGH     1
+#define PRIORITY_LOW      2
+#define PRIORITY_LOWEST   3
 #define TICK_INT_PRIORITY ((uint32_t)PRIORITY_LOWEST) /*!< tick interrupt priority (lowest by default)  */
-#define USE_RTOS 0
-#define PREFETCH_ENABLE 0
+#define USE_RTOS          0
+#define PREFETCH_ENABLE   0
 
 /* ########################## Assert Selection ############################## */
 /**

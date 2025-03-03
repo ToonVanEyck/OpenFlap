@@ -8,9 +8,9 @@
 typedef esp_err_t (*webserver_api_handler)(httpd_req_t *req);
 
 /**
- * \brief callback function to use for handling chuncked data.
+ * \brief callback function to use for handling chunked data.
  *
- * \param[in] data A chunck of data.
+ * \param[in] data A chunk of data.
  * \param[in] data_len The length of the current data chuck.
  * \param[in] data_offset The offset of the current data chunk.
  * \param[in] total_data_len The total length of the data.

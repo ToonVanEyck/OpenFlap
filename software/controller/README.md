@@ -5,7 +5,7 @@ Building all tests:
 python software/controller/build_test.py -s software/controller/ -b build/controller/
 ```
 
-Runing all tests with pytest:
+Running all tests with pytest:
 ```
 pytest software/controller/ --build-dir build/controller/ -m esp32
 ```

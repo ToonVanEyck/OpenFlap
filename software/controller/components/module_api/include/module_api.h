@@ -9,6 +9,6 @@
  * \brief Initialize the module HTTP API.
  *
  * \param[in] webserver_ctx The webserver context.
- * \param[in] display The display witch contains the modules we want to controle.
+ * \param[in] display The display witch contains the modules we want to control.
  */
 esp_err_t module_api_init(webserver_ctx_t *webserver_ctx, display_t *display);

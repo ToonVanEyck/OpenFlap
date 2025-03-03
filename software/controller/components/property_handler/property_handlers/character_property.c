@@ -118,8 +118,7 @@ static bool character_compare(const module_t *module_a, const module_t *module_b
 /**
  * The character property handler.
  *
- * The character property is used to store the character data for the modules. The character data is used to
- * adjust the offset between the character set and the encoder postion.
+ * The character property is used to store the character data for the modules.
  */
 const property_handler_t PROPERTY_HANDLER_CHARACTER = {
     .id          = PROPERTY_CHARACTER,

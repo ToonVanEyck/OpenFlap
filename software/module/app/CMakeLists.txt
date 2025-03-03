@@ -13,7 +13,7 @@ add_executable(${App}
 # Add custom command to touch main.c to force recompilation to update date and time
 add_custom_target(compile_time 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Updateing Compile Time"
+    COMMENT "Updating Compile Time"
     COMMAND ${CMAKE_COMMAND} -E touch_nocreate src/main.c
 )
 

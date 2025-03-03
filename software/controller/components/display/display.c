@@ -11,7 +11,7 @@
 #define DISPLAY_EVENT_DESYNCHRONIZED (1u << 0)
 /** Indicates that the model and actual modules are back in sync. */
 #define DISPLAY_EVENT_SYNCHRONIZED (1u << 1)
-/** Indicates that the action preformed on the display has failed. */
+/** Indicates that the action performed on the display has failed. */
 #define DISPLAY_EVENT_FAILED (1u << 2)
 
 //---------------------------------------------------------------------------------------------------------------------

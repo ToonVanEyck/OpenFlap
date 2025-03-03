@@ -338,7 +338,7 @@ Revision: $Rev: 24316 $
         unsigned int _SEGGER_RTT__LockState;                                                                           \
         register unsigned char _SEGGER_RTT__PRIMASK __asm("primask");                                                  \
         _SEGGER_RTT__LockState = _SEGGER_RTT__PRIMASK;                                                                 \
-        _SEGGER_RTT__PRIMASK = 1u;                                                                                     \
+        _SEGGER_RTT__PRIMASK   = 1u;                                                                                   \
         __schedule_barrier();
 
 #define SEGGER_RTT_UNLOCK()                                                                                            \
@@ -354,7 +354,7 @@ Revision: $Rev: 24316 $
         unsigned int _SEGGER_RTT__LockState;                                                                           \
         register unsigned char BASEPRI __asm("basepri");                                                               \
         _SEGGER_RTT__LockState = BASEPRI;                                                                              \
-        BASEPRI = SEGGER_RTT_MAX_INTERRUPT_PRIORITY;                                                                   \
+        BASEPRI                = SEGGER_RTT_MAX_INTERRUPT_PRIORITY;                                                    \
         __schedule_barrier();
 
 #define SEGGER_RTT_UNLOCK()                                                                                            \

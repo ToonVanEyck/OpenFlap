@@ -136,7 +136,7 @@ static bool calibration_compare(const module_t *module_a, const module_t *module
  * The calibration property handler.
  *
  * The calibration property is used to store the calibration data for the modules. The calibration data is used to
- * adjust the offset between the character set and the encoder postion.
+ * adjust the offset between the character set and the encoder position.
  */
 const property_handler_t PROPERTY_HANDLER_CALIBRATION = {
     .id          = PROPERTY_CALIBRATION,

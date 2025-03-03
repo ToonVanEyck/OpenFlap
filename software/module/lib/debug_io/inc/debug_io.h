@@ -1,10 +1,10 @@
 #pragma once
 
 typedef enum log_lvl_tag {
-    LOG_DISBALED = 0,
+    LOG_DISBALED  = 0,
     LOG_LVL_ERROR = 1,
-    LOG_LVL_WARN = 2,
-    LOG_LVL_INFO = 3,
+    LOG_LVL_WARN  = 2,
+    LOG_LVL_INFO  = 3,
     LOG_LVL_DEBUG = 4,
 } log_lvl_t;
 

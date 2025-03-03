@@ -19,7 +19,7 @@ typedef struct openflap_ctx_tag {
     openflap_config_t config;             /**< The configuration data. */
     chain_comm_ctx_t chain_ctx;           /**< The chain communication context. */
     bool store_config;                    /**< Flag to store the configuration. */
-    bool reboot;                          /**< Flag to indicate the module must preform a system reboot. */
+    bool reboot;                          /**< Flag to indicate the module must perform a system reboot. */
     bool motor_active;                    /**< Flag to indicate if the motor is busy. */
     bool extend_revolution;               /**< Flag to indicate if the motor must make at least on revolution. */
     uint32_t motor_active_timeout_tick;   /**< The time when the motor busy timeout will occur. */

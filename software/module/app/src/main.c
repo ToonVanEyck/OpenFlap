@@ -7,7 +7,7 @@
 
 /* Private define ------------------------------------------------------------*/
 
-/** Convert a miliseconds value into a counter value for the IR/Encoder timer. */
+/** Convert a milliseconds value into a counter value for the IR/Encoder timer. */
 #define IR_TIMER_TICKS_FROM_MS(ms) ((ms) * 10)
 /** Convert a microsecond value into a counter value for the IR/Encoder timer. */
 #define IR_TIMER_TICKS_FROM_US(us) ((us) / 100)

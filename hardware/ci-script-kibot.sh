@@ -1,8 +1,5 @@
 #!/bin/bash
 
-set -e
-set -x
-
 # Parse options
 check_modified=false
 dry_run=false

@@ -3,7 +3,7 @@
 #define SYMBOL_€ (0x00ac82e2) // € symbol
 
 #ifdef SET_DEFAULT_CONFIG
-/* When SET_DEFAULT_CONFIG is not defined, the default configuration wil not be included in the final binary. */
+/* When SET_DEFAULT_CONFIG is not defined, the default configuration will not be included in the final binary. */
 const openflap_config_t __attribute__((section(".config"))) config = {
     .encoder_offset = 7,
     .ir_threshold   = {400, 500},

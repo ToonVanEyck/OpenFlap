@@ -1,5 +1,7 @@
 # OpenFlap
 
+[![Mechanical and Electronics Validation](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/ecad_mcad_ci.yml/badge.svg)](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/ecad_mcad_ci.yml)
+
 **🚨 This is still a work in progress. Using the the code and files in this repository to create your own display is not recommended at the moment! 🚨**
 
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.

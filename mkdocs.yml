@@ -1,0 +1,43 @@
+site_name: OpenFlap
+repo_url: https://github.com/ToonVanEyck/OpenFlap
+
+theme:
+  name: material
+  palette: 
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+docs_dir: .
+
+exclude_docs: |
+    software/
+    mechanical/
+    docs/README_old.md
+
+plugins:
+  - search
+  - same-dir
+
+markdown_extensions:
+  - attr_list
+  - admonition
+
+nav:
+  - Home: README.md
+  - Technical: 
+      - Overview: docs/architecture.md
+      - Controller: docs/controller.md 
+      - Module: docs/module.md
+      - Wiring: docs/wiring.md
+      - Communication: docs/chain_com.md
+  - Licence: LICENCE.md

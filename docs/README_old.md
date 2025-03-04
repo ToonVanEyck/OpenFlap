@@ -11,7 +11,7 @@ Currently we only support rectangular display configurations. Each display modul
 
 In this document I will layout the steps required to build an exemplary 5 wide, 2 high display. 
 
-## Requirments (E.g.: 5x2 display)
+## Requirements (E.g.: 5x2 display)
 
 ### Tools:
 - soldering iron
@@ -105,7 +105,7 @@ The _modules_ and _top_con_ boards feature a smart switching mechanism that auto
 
 ![OpenFlap Signalpath][uart_signalpath]
 
-Each _module_ and _top-con_ board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in red (interruped signal path) and green (not interrupted signal path). 
+Each _module_ and _top-con_ board contains an input that when pulled low, interrupts the default data return path and continues the data path to the next module instead. This is shown in the image above in red (interrupted signal path) and green (not interrupted signal path). 
 
 ### Construction
 
@@ -113,7 +113,7 @@ The construction of the OpenFlap _module_ consist of PCB's and 3D-printed parts.
 
 ### Power
 
-Each _module_ requires 5V for the micro controller and other low voltage components and 12V to power the motor. The *top connector* boards contain a 12V to 5V buck convertor to power each column. In this way, the modules don't need their own power circuit.
+Each _module_ requires 5V for the micro controller and other low voltage components and 12V to power the motor. The *top connector* boards contain a 12V to 5V buck converter to power each column. In this way, the modules don't need their own power circuit.
 
 ### Local Webpage
 

@@ -42,7 +42,7 @@ int main(void)
     HAL_Init();
 
     bool main_app_valid = false;
-    bool new_app_valid = false;
+    bool new_app_valid  = false;
 
     // Load config.
     configLoad(&config);

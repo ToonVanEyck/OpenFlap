@@ -1,8 +1,12 @@
 FROM espressif/idf:v5.3.1
 
 ARG DEBIAN_FRONTEND=nointeractive
-ARG NEW_USER=openflap
+
+ARG USER_NAME=openflap
 ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG CI_USER_NAME=openflap_ci
+ARG CI_USER_UID=1001
 
 # Install additional packages
 RUN apt update && apt install -y \
@@ -47,11 +51,16 @@ RUN wget --no-verbose ${QEMU_URL} && \
 ENV PATH=/opt/qemu/bin:${PATH}
 
 # Create openflap user 
-RUN groupadd --gid ${USER_UID} ${NEW_USER} && \
-    adduser --uid ${USER_UID} --gid ${USER_UID} --disabled-password --gecos "" ${NEW_USER} && \
-    usermod -a -G dialout,plugdev,sudo ${NEW_USER} && \
-    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${NEW_USER} && \
-    chmod 0440 /etc/sudoers.d/${NEW_USER}
+RUN groupadd --gid ${USER_UID} ${USER_NAME} && \
+    adduser --uid ${USER_UID} --gid ${USER_UID} --disabled-password --gecos "" ${USER_NAME} && \
+    usermod -a -G dialout,plugdev,sudo ${USER_NAME} && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME} && \
+    chmod 0440 /etc/sudoers.d/${USER_NAME}
+
+# Create a non-root user with sudo rights
+RUN useradd -ms /bin/bash ${CI_USER_NAME} -u ${CI_USER_UID} -U -G sudo,${USER_NAME} && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${CI_USER_NAME} && \
+    chmod 0440 /etc/sudoers.d/${CI_USER_NAME}
 
 # Install ESP-IDF packages
 RUN $IDF_PATH/install.sh --enable-ci --enable-pytest
@@ -59,13 +68,26 @@ RUN wget https://raw.githubusercontent.com/espressif/esp-idf/master/tools/idf_py
 RUN python $IDF_PATH/tools/idf_tools.py install qemu-xtensa
 
 # Make /opt/esp/ writable
-RUN chown -R ${NEW_USER}:${NEW_USER} /opt/esp/
+RUN chown -R ${USER_NAME}:${USER_NAME} /opt/esp/
+
+# Install clang-format-18
+WORKDIR /tmp
+RUN apt update && apt install -y lsb-release software-properties-common gnupg 
+RUN wget https://apt.llvm.org/llvm.sh
+RUN chmod +x llvm.sh
+RUN ./llvm.sh 18 clang-format
+RUN apt install -y clang-format-18
+RUN ln -s /usr/bin/clang-format-18 /usr/bin/clang-format
+RUN rm llvm.sh
+
+# Install codespell
+RUN . /opt/esp/idf/export.sh && pip install codespell
 
 # Setup user and home
-ENV USER=${NEW_USER}
-ENV HOME=/home/${NEW_USER}
+ENV USER=${USER_NAME}
+ENV HOME=/home/${USER_NAME}
 WORKDIR ${HOME}
-USER ${NEW_USER}
+USER ${USER_NAME}
 
 # Install the bashrc addons
 COPY .bashrc_devcontainer_addons ${HOME}/.bashrc_devcontainer_addons

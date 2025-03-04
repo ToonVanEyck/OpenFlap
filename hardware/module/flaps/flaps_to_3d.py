@@ -68,7 +68,7 @@ def combine_extrudes(doc, originalPaths):
     # When importing an svg into freecad, freecad imports sub-paths as a separate object.
     # For example, an "O" character will be imported as 2 separate paths. One for the outer circle and one for the inner circle.
     # The same is the case for characters like "?", "!" etc.
-    # We need to combine the paths into a single path. But we need to determine wether to combine or cut the paths.
+    # We need to combine the paths into a single path. But we need to determine whether to combine or cut the paths.
     bp = BOPFeatures.BOPFeatures(doc)
     combineObjs = set()
     cutObjs = set()

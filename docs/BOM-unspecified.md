@@ -1,4 +1,4 @@
-List of miscellaneous components required for the project. This file will be cleand up and organized later.
+List of miscellaneous components required for the project. This file will be cleaned up and organized later.
 
 ## Module:
 - [60 RPM 12V GA12-N20 DC Gear Motor](http://aliexpress.com/item/33022320164.html)

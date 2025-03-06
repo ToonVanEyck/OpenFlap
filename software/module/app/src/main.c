@@ -85,11 +85,7 @@ int main(void)
     debug_io_log_info("Version: %s\n", GIT_VERSION);
     debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
 
-    /* Set setpoint equal to position to prevent instant rotation. */
-    // while (openflap_ctx.flap_position == SYMBOL_CNT) {
-    //     HAL_Delay(10);
-    // }
-    // openflap_ctx.flap_setpoint = openflap_ctx.flap_position;
+    openflap_ctx.flap_setpoint = 0;
 
     uint8_t new_position = 0;
     int rtt_key;
@@ -127,18 +123,18 @@ int main(void)
         chain_comm(&openflap_ctx.chain_ctx);
 
         /* Set debug pins based on flap position. */
-        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_1_PIN, openflap_ctx.flap_position & 1);
-        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_2_PIN, openflap_ctx.flap_position == 0);
+        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_1_PIN, flapPostionGet(&openflap_ctx) & 1);
+        HAL_GPIO_WritePin(DEBUG_GPIO_PORT, DEBUG_GPIO_2_PIN, flapPostionGet(&openflap_ctx) == 0);
 
         /* Print position. */
-        if (new_position != openflap_ctx.flap_position) {
-            new_position                              = openflap_ctx.flap_position;
+        if (new_position != flapPostionGet(&openflap_ctx)) {
+            new_position                              = flapPostionGet(&openflap_ctx);
             static uint32_t last_position_change_time = 0;
             uint32_t current_time                     = HAL_GetTick();
             uint32_t time_since_last_change           = current_time - last_position_change_time;
             last_position_change_time                 = current_time;
-            debug_io_log_info("Pos: %d  %s (%ld ms)\n", openflap_ctx.flap_position,
-                              &openflap_ctx.config.symbol_set[openflap_ctx.flap_position], time_since_last_change);
+            debug_io_log_info("Pos: %d  %s (%ld ms)\n", flapPostionGet(&openflap_ctx),
+                              &openflap_ctx.config.symbol_set[flapPostionGet(&openflap_ctx)], time_since_last_change);
         }
 
         if (!debug_mode) {
@@ -198,8 +194,8 @@ static void APP_GpioConfig(void)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ENCODER_LED_GPIO_PORT, &GPIO_InitStruct);
 
-    /* Configure MOTOR A output. (motor direction) */
-    GPIO_InitStruct.Pin   = MOTOR_A_GPIO_PIN;
+    /* Configure MOTOR B output. (motor direction) */
+    GPIO_InitStruct.Pin   = MOTOR_B_GPIO_PIN;
     GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -348,7 +344,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;
             }
         }
-        ir_period = IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS;
         /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_CHANNEL_CNT) != HAL_OK) {

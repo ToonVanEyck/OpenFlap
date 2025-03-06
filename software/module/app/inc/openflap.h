@@ -143,3 +143,26 @@ inline void motorBrake(void)
 {
     setMotor(MOTOR_BRAKE, 0);
 }
+
+/**
+ * \brief Increment the encoder position.
+ *
+ * \param[inout] ctx A pointer to the openflap context.
+ */
+void encoderIncrement(openflap_ctx_t *ctx);
+
+/**
+ * \brief Zero the encoder position.
+ *
+ * \param[inout] ctx A pointer to the openflap context.
+ */
+void encoderZero(openflap_ctx_t *ctx);
+
+/**
+ * \brief Get the position determined by the encoder taking in to account the encoder offset.
+ *
+ * \param[in] ctx A pointer to the openflap context.
+ *
+ * \return The position.
+ */
+uint8_t flapPostionGet(openflap_ctx_t *ctx);

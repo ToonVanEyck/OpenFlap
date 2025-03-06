@@ -5,8 +5,8 @@
 #ifdef SET_DEFAULT_CONFIG
 /* When SET_DEFAULT_CONFIG is not defined, the default configuration will not be included in the final binary. */
 const openflap_config_t __attribute__((section(".config"))) config = {
-    .encoder_offset = 7,
-    .ir_threshold   = {400, 500},
+    .encoder_offset = 0,
+    .ir_threshold   = {475, 575},
     .vtrim          = 0,
     .base_speed     = 0,
     .symbol_set =

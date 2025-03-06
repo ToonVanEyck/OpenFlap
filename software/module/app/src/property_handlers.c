@@ -87,7 +87,7 @@ void property_character_set(uint8_t *buf, uint16_t *size)
 
 void property_character_get(uint8_t *buf, uint16_t *size)
 {
-    buf[0] = openflap_ctx->flap_position;
+    buf[0] = flapPostionGet(openflap_ctx);
 }
 
 void baseSpeed_property_set(uint8_t *buf, uint16_t *size)

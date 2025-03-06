@@ -4,14 +4,14 @@
 #define COMMS_IDLE_TIMEOUT_MS (75)
 
 /** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (0)
+#define MOTOR_BACKSPIN_DURATION_MS (100)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
-#define MOTOR_BACKSPIN_PWM (15)
+#define MOTOR_BACKSPIN_PWM (70)
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    const uint8_t min_pwm           = 50;
-    const uint8_t max_pwm           = 160; /* 110 = +/- 0.5 rps = 30 rpm */
+    const uint8_t min_pwm           = 40;
+    const uint8_t max_pwm           = 200; /* 110 = +/- 0.5 rps = 30 rpm */
     const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
     const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */
 
@@ -31,6 +31,8 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
     static const uint8_t QEM[16]   = {0, -1, 1, 2, 1, 0, 2, -1, -1, 2, 0, 1, 2, 1, -1, 0};
     static const uint8_t IR_MAP[2] = {ENCODER_CHANNEL_A, ENCODER_CHANNEL_B};
 
+    /* Prevent decrementing the flap position, instead wind up the backspin prevention counter. */
+    static int8_t backspin_prevention = -SYMBOL_CNT;
     /* Encoder increment/decrement is determined based on the old and new pattern. */
     static uint8_t old_pattern = 0x00;
     uint8_t new_pattern        = old_pattern;
@@ -61,16 +63,18 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
 
     /* Check if we have a zero or full pattern. */
     if (zero) {
-        ctx->flap_position = flapIndexWrapCalc(ctx->config.encoder_offset);
+        encoderZero(ctx);
+        backspin_prevention = 0;
+    } else if (backspin_prevention < 0 || qem != 1) {
+        backspin_prevention += qem; /* Only increment the flap postion once the backspin prevention reaches 0. */
     } else {
-        ctx->flap_position = flapIndexWrapCalc(ctx->flap_position + SYMBOL_CNT + qem);
+        encoderIncrement(ctx);
     }
-    distanceUpdate(ctx);
 }
 
 void distanceUpdate(openflap_ctx_t *ctx)
 {
-    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - ctx->flap_position);
+    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - flapPostionGet(ctx));
     /* Check if a short rotation needs to be extended. */
     if (ctx->extend_revolution) {
         if (distance < ctx->config.minimum_distance) {
@@ -84,8 +88,7 @@ void distanceUpdate(openflap_ctx_t *ctx)
 
 void updateMotorState(openflap_ctx_t *ctx)
 {
-    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - ctx->flap_position);
-    if (distance > 0) {
+    if (ctx->flap_distance > 0) {
         ctx->motor_active_timeout_tick = HAL_GetTick() + MOTOR_IDLE_TIMEOUT_MS;
         if (!ctx->motor_active) {
             ctx->motor_active = true;
@@ -140,23 +143,40 @@ void setMotor(motorMode_t mode, uint8_t speed)
             /* Use with caution, this might cause damage to the system.
              * The mechanism is designed to locks up in reverse direction. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_RESET);
             break;
         case MOTOR_FORWARD:
             speed = 0xff - speed; /* Invert Duty-Cycle. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_SET);
             break;
         case MOTOR_BRAKE:
             /* Set MOTOR A & B high, braking the motor. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0xff);
-            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_SET);
             break;
         case MOTOR_IDLE:
         default:
             /* Set MOTOR A & B low, let the motor freewheel. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0x00);
-            HAL_GPIO_WritePin(MOTOR_A_GPIO_PORT, MOTOR_A_GPIO_PIN, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_RESET);
             break;
     }
+}
+
+void encoderIncrement(openflap_ctx_t *ctx)
+{
+    ctx->flap_position = flapIndexWrapCalc(ctx->flap_position + 1);
+    distanceUpdate(ctx);
+}
+
+void encoderZero(openflap_ctx_t *ctx)
+{
+    ctx->flap_position = 0;
+    distanceUpdate(ctx);
+}
+
+uint8_t flapPostionGet(openflap_ctx_t *ctx)
+{
+    return flapIndexWrapCalc(ctx->flap_position + ctx->config.encoder_offset);
 }

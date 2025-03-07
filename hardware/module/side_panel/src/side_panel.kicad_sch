@@ -7,7 +7,7 @@
 	(title_block
 		(title "Side Panel")
 		(date "${DATE}")
-		(rev "5.0.0")
+		(rev "5.0.1")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
@@ -4853,6 +4853,12 @@
 		(uuid "1535981d-bf3a-44e7-bbcd-0955fa8b2be2")
 	)
 	(junction
+		(at 156.21 48.26)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "1d654c02-39bc-4895-a06c-a9b6dc4069bd")
+	)
+	(junction
 		(at 41.91 119.38)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4973,16 +4979,16 @@
 		(uuid "96f0fdef-7e53-4fbc-8ae7-9acb3e181e16")
 	)
 	(junction
+		(at 156.21 60.96)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "98eea915-f67c-41ec-b9c8-e1d6b695530f")
+	)
+	(junction
 		(at 58.42 121.92)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ae6f928f-a97e-4e86-8c71-a4fce11db994")
-	)
-	(junction
-		(at 156.21 76.2)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "b64690ec-42fd-4ea9-8681-d53802b3a49e")
 	)
 	(junction
 		(at 31.75 204.47)
@@ -5045,12 +5051,6 @@
 		(uuid "ea27e2b9-12c0-44a5-8748-634b14156834")
 	)
 	(junction
-		(at 149.86 60.96)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "ed4b3c92-8988-4564-88be-c07da8d4ad7a")
-	)
-	(junction
 		(at 41.91 121.92)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -5102,16 +5102,6 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 62.23) (xy 156.21 60.96)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "02435b8f-7497-4af3-a4e0-e4c8686be28a")
-	)
-	(wire
-		(pts
 			(xy 17.78 204.47) (xy 19.05 204.47)
 		)
 		(stroke
@@ -5119,6 +5109,16 @@
 			(type default)
 		)
 		(uuid "02964561-90a7-4fa0-b32d-7776d68b158d")
+	)
+	(wire
+		(pts
+			(xy 156.21 48.26) (xy 168.91 48.26)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "040b68dd-a9dd-4cff-ab92-1256977a5c02")
 	)
 	(wire
 		(pts
@@ -5272,6 +5272,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 60.96) (xy 168.91 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "19e9f72a-7269-47fd-b671-c1f087c46860")
+	)
+	(wire
+		(pts
 			(xy 39.37 129.54) (xy 41.91 129.54)
 		)
 		(stroke
@@ -5412,16 +5422,6 @@
 	)
 	(wire
 		(pts
-			(xy 161.29 76.2) (xy 156.21 76.2)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "285b664d-0838-416c-bb52-97be893916a9")
-	)
-	(wire
-		(pts
 			(xy 125.73 185.42) (xy 125.73 179.07)
 		)
 		(stroke
@@ -5459,6 +5459,16 @@
 			(type default)
 		)
 		(uuid "2add378c-0dea-40f7-8171-b830f5676c5e")
+	)
+	(wire
+		(pts
+			(xy 156.21 57.15) (xy 156.21 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2bd249a5-5273-48a1-be7c-159975751ce8")
 	)
 	(wire
 		(pts
@@ -5532,16 +5542,6 @@
 	)
 	(wire
 		(pts
-			(xy 161.29 48.26) (xy 161.29 76.2)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "31af85b8-48c8-4014-a585-e5199eda0542")
-	)
-	(wire
-		(pts
 			(xy 74.93 130.81) (xy 74.93 140.97)
 		)
 		(stroke
@@ -5579,16 +5579,6 @@
 			(type default)
 		)
 		(uuid "38d0cd37-a878-4493-a8c7-dbf994dd7622")
-	)
-	(wire
-		(pts
-			(xy 143.51 60.96) (xy 149.86 60.96)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3934a6da-f694-4dc8-8d26-c264cd847f4a")
 	)
 	(wire
 		(pts
@@ -5832,16 +5822,6 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 76.2) (xy 156.21 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5825cf51-b6da-42bb-b096-aa83571efca6")
-	)
-	(wire
-		(pts
 			(xy 58.42 148.59) (xy 58.42 151.13)
 		)
 		(stroke
@@ -5932,6 +5912,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 48.26) (xy 156.21 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "632c178c-9303-4e66-a917-cdca09be0b96")
+	)
+	(wire
+		(pts
 			(xy 73.66 201.93) (xy 73.66 204.47)
 		)
 		(stroke
@@ -5969,16 +5959,6 @@
 			(type default)
 		)
 		(uuid "69cf6ea8-2d29-4502-b974-dab71f695e8f")
-	)
-	(wire
-		(pts
-			(xy 156.21 60.96) (xy 149.86 60.96)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6a3c9a3f-a178-4cab-b906-6943e8da0ba3")
 	)
 	(wire
 		(pts
@@ -6072,7 +6052,7 @@
 	)
 	(wire
 		(pts
-			(xy 148.59 48.26) (xy 161.29 48.26)
+			(xy 148.59 48.26) (xy 156.21 48.26)
 		)
 		(stroke
 			(width 0)
@@ -6472,16 +6452,6 @@
 	)
 	(wire
 		(pts
-			(xy 143.51 71.12) (xy 143.51 76.2)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b95d7bec-f9df-41d9-8469-bd7b3f8050f5")
-	)
-	(wire
-		(pts
 			(xy 19.05 248.92) (xy 38.1 248.92)
 		)
 		(stroke
@@ -6622,6 +6592,16 @@
 	)
 	(wire
 		(pts
+			(xy 149.86 60.96) (xy 156.21 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cd35a605-d717-4bbd-bd5e-717310b7427d")
+	)
+	(wire
+		(pts
 			(xy 19.05 246.38) (xy 38.1 246.38)
 		)
 		(stroke
@@ -6649,16 +6629,6 @@
 			(type default)
 		)
 		(uuid "cfff7697-ece2-46dc-ab37-0fdf2c2bcfca")
-	)
-	(wire
-		(pts
-			(xy 143.51 76.2) (xy 156.21 76.2)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d06c4043-b4c4-44ff-b5b6-f5a9d4512c29")
 	)
 	(wire
 		(pts
@@ -6719,16 +6689,6 @@
 			(type default)
 		)
 		(uuid "d72e9e14-5ba5-4304-9790-e9c46dac1c3d")
-	)
-	(wire
-		(pts
-			(xy 143.51 66.04) (xy 143.51 60.96)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d855995c-9a8a-46bc-ba4d-f916c0ff6088")
 	)
 	(wire
 		(pts
@@ -8657,7 +8617,7 @@
 	)
 	(symbol
 		(lib_id "Motor:Motor_DC")
-		(at 156.21 67.31 0)
+		(at 168.91 53.34 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -8665,7 +8625,7 @@
 		(dnp no)
 		(uuid "3f1a4985-4bd4-4752-989c-412a99738467")
 		(property "Reference" "M1"
-			(at 163.068 67.31 0)
+			(at 175.768 53.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8674,7 +8634,7 @@
 			)
 		)
 		(property "Value" "GA12-N20 12V 60rpm"
-			(at 162.814 69.85 0)
+			(at 175.514 55.88 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8683,7 +8643,7 @@
 			)
 		)
 		(property "Footprint" "GA12-N20:GA12-N20 Motor Vertical"
-			(at 156.21 69.596 0)
+			(at 168.91 55.626 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8692,7 +8652,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 156.21 69.596 0)
+			(at 168.91 55.626 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8701,7 +8661,7 @@
 			)
 		)
 		(property "Description" "DC Motor"
-			(at 156.21 67.31 0)
+			(at 168.91 53.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12219,7 +12179,7 @@
 	)
 	(symbol
 		(lib_id "Device:C_Small")
-		(at 143.51 68.58 0)
+		(at 156.21 54.61 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -12227,7 +12187,7 @@
 		(dnp no)
 		(uuid "fed041d2-519a-4ba7-823f-ef86f7470411")
 		(property "Reference" "C2"
-			(at 146.05 67.3163 0)
+			(at 158.75 53.3463 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12236,7 +12196,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 146.05 69.8563 0)
+			(at 158.75 55.8863 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12245,7 +12205,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 143.51 68.58 0)
+			(at 156.21 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12254,7 +12214,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 143.51 68.58 0)
+			(at 156.21 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12263,7 +12223,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
-			(at 143.51 68.58 0)
+			(at 156.21 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)

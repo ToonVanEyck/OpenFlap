@@ -36,7 +36,7 @@ jobs:
           fetch-tags: true
 
       - name: Run KiBot
-        run: ./hardware/ci-script-kibot.sh
+        run: ./hardware/ci-script-kibot.sh --dry-run
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

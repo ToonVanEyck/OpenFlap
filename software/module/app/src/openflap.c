@@ -33,6 +33,8 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
 
     /* Prevent decrementing the flap position, instead wind up the backspin prevention counter. */
     static int8_t backspin_prevention = -SYMBOL_CNT;
+    /* Prevent jumping back from 1 to zero. */
+    static bool zero_lockout = false;
     /* Encoder increment/decrement is determined based on the old and new pattern. */
     static uint8_t old_pattern = 0x00;
     uint8_t new_pattern        = old_pattern;
@@ -62,13 +64,17 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
     }
 
     /* Check if we have a zero or full pattern. */
-    if (zero) {
+    if (zero & !zero_lockout) {
         encoderZero(ctx);
         backspin_prevention = 0;
+        zero_lockout        = true;
     } else if (backspin_prevention < 0 || qem != 1) {
         backspin_prevention += qem; /* Only increment the flap position once the backspin prevention reaches 0. */
     } else {
         encoderIncrement(ctx);
+        if (ctx->flap_position > 5) { /* Make sure we are well past 1 so wid dont flipper between 1 and 0. */
+            zero_lockout = false;
+        }
     }
 }
 

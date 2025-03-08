@@ -63,7 +63,6 @@ int main(void)
     BSP_HSI_24MHzClockConfig();
 
     configLoad(&openflap_ctx.config);
-    openflap_ctx.flap_position = SYMBOL_CNT;
 
     debug_io_init(LOG_LVL_DEBUG);
 
@@ -83,7 +82,11 @@ int main(void)
     debug_io_log_info("Version: %s\n", GIT_VERSION);
     debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
 
-    openflap_ctx.flap_setpoint = 0;
+    /* Start homing sequence at maximum speed. */
+    openflap_ctx.flap_position = SYMBOL_CNT; /* Invalid position. */
+    openflap_ctx.flap_setpoint = 0;          /* Setpoint zero means, go to the first character in the character map. */
+    openflap_ctx.flap_distance = SYMBOL_CNT; /* Speed is based on distance between setpoint and position. We initialize
+                                                it with the maximum value. */
 
     uint8_t new_position = 0;
     int rtt_key;

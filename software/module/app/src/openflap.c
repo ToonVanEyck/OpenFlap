@@ -10,10 +10,10 @@
 
 uint8_t pwmDutyCycleCalc(uint8_t distance)
 {
-    const uint8_t min_pwm           = 40;
+    const uint8_t min_pwm           = 35;
     const uint8_t max_pwm           = 200; /* 110 = +/- 0.5 rps = 30 rpm */
     const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
-    const uint8_t max_ramp_distance = 8;   /* Go max speed when distance is above this. */
+    const uint8_t max_ramp_distance = 7;   /* Go max speed when distance is above this. */
 
     if (distance <= min_ramp_distance) {
         return min_pwm;
@@ -66,7 +66,7 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
         encoderZero(ctx);
         backspin_prevention = 0;
     } else if (backspin_prevention < 0 || qem != 1) {
-        backspin_prevention += qem; /* Only increment the flap postion once the backspin prevention reaches 0. */
+        backspin_prevention += qem; /* Only increment the flap position once the backspin prevention reaches 0. */
     } else {
         encoderIncrement(ctx);
     }

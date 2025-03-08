@@ -15,11 +15,9 @@
 /** The period of the encoder readings when the system is idle. */
 #define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
 /** The period of the encoder readings when the system is active and the distance to the setpoint flap is large. */
-#define IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(10)
+#define IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(5)
 /** The period of the encoder readings when the system is active and the distance to the setpoint flap is small. */
-#define IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(5)
-/** The period of the encoder readings when the system is active and the distance to the setpoint flap is very small. */
-#define IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(3)
+#define IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1)
 
 /** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
@@ -336,9 +334,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         openflap_ctx.ir_tick_cnt++;
         uint16_t ir_period = IR_IDLE_PERIOD_MS;
         if (openflap_ctx.motor_active) {
-            if (openflap_ctx.flap_distance == 1) {
-                ir_period = IR_ACTIVE_DISTANCE_VERY_SMALL_PERIOD_MS;
-            } else if (openflap_ctx.flap_distance <= 3) {
+            if (openflap_ctx.flap_distance <= 3) {
                 ir_period = IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS;
             } else {
                 ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;

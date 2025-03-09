@@ -12,6 +12,7 @@ This repository houses all the required files to build, program and modify your 
 ## Specifications
 
 - 48 Flaps per module.
+- 49mm x 70mm Character size.
 - Compact design.
 - Plug and play.
 - Daisy chain communication.
@@ -34,8 +35,8 @@ The OpenFlap system can connect to your local WiFi network or host it's own netw
 
 ## I want to ...
 
-... know more about how the OpenFlap system works.
+[... know more about how the OpenFlap system works.](todo)
 
-... build my own OpenFlap display.
+[... build my own OpenFlap display.](todo)
 
-... contribute to the OpenFlap project.
+[... contribute to the OpenFlap project.](todo)

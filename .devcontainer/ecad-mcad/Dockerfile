@@ -20,6 +20,7 @@ RUN apt update && apt install -y \
     python3-pip \
     llvm \
     build-essential \
+    libc6-dev \
     sudo
 
 # Install git-lfs
@@ -58,7 +59,7 @@ RUN wget https://github.com/RedHatOfficial/RedHatFont/raw/4.0.3/fonts/mono/RedHa
 ###### Install FreeCAD ######
 
 WORKDIR /tmp
-RUN wget https://github.com/FreeCAD/FreeCAD/releases/download/1.0rc2/FreeCAD_1.0.0RC2-conda-Linux-x86_64-py311.AppImage
+RUN wget https://github.com/FreeCAD/FreeCAD/releases/download/1.0.0/FreeCAD_1.0.0-conda-Linux-x86_64-py311.AppImage
 RUN chmod +x FreeCAD*.AppImage && ./FreeCAD*.AppImage --appimage-extract
 RUN mv squashfs-root /opt/FreeCAD && rm -rf FreeCAD*.AppImage
 RUN pip install colorama --target /opt/FreeCAD/usr/lib/python3.11/site-packages

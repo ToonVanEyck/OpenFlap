@@ -327,7 +327,7 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
                         "Failed to receive ack");
     ESP_RETURN_ON_FALSE(rx_ack == ack, ESP_FAIL, TAG, "Ack mismatch");
 
-    /* Sequential writes must wait for at least the timeout in order for the modules to execute the  */
+    /* Sequential writes must wait for at least the timeout in order for the modules to process the data. */
     vTaskDelay(pdMS_TO_TICKS(CHAIN_COMM_TIMEOUT_MS * 12 / 10));
 
     /* Indicate success. */

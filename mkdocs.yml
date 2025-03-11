@@ -16,6 +16,8 @@ theme:
       toggle:
         icon: material/brightness-7 
         name: Switch to dark mode
+  features:
+    - navigation.footer
 
 docs_dir: .
 
@@ -27,6 +29,7 @@ exclude_docs: |
 plugins:
   - search
   - same-dir
+  - glightbox
 
 markdown_extensions:
   - attr_list

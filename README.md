@@ -35,7 +35,7 @@ The OpenFlap system can connect to your local WiFi network or host it's own netw
 
 ## I want to ...
 
-[... know more about how the OpenFlap system works.](todo)
+[... know more about how the OpenFlap system works.](docs/architecture.md)
 
 [... build my own OpenFlap display.](todo)
 

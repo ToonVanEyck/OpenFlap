@@ -56,3 +56,16 @@ Initially the flaps were designed to be PCB's. But due to the increased accessib
 A software tool to generate a custom flap set is included in this repository. As well as script to generate the gerber files or STL files for the flaps. ( TODO: Add link to the tool )
 
 ![Flap Dimensions](images/flap_dimensions.svg)
+
+## Shell 
+
+The shell is designed to be 3D printed. Its features include:
+
+- **Mounting holes**: The shell has mounting holes for the side panel PCBs and the top connector.
+- **Flap retainer**: The flap retainer, retains the upper flap without covering it up entirely. 
+- **Dovetails**: The shell has 2 dovetail cutouts on the back, allowing for flexible mounting options.
+- **Ratchet notch**: A notch on the inside of the shell prevents the flap wheel from spinning in the wrong direction.
+
+![Openflap Shell Ratchet Notch](images/ratchet_notch.png)
+
+When the flap wheel spins and finally reaches its setpoint, the motor will spin in reverse for a short pulse. Because the flaps will lock up against the ratchet notch, all modules will end up at the same position height wise. Additionally, this action will take up the backlash in the gearbox, preventing the flaps from sagging.

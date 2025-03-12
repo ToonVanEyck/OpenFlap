@@ -83,7 +83,7 @@ void distanceUpdate(openflap_ctx_t *ctx)
     uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - flapPostionGet(ctx));
     /* Check if a short rotation needs to be extended. */
     if (ctx->extend_revolution) {
-        if (distance < ctx->config.minimum_distance) {
+        if (distance < ctx->config.minimum_rotation) {
             distance += SYMBOL_CNT;
         } else {
             ctx->extend_revolution = false;

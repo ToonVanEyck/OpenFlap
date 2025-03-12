@@ -47,7 +47,7 @@ TEST_CASE("Test web api", "[webserver][qemu]")
     ESP_LOGI(TAG, "Webserver started");
 
     TEST_ASSERT_EQUAL(
-        ESP_OK, webserver_api_endpoint_add(&webserver_ctx, "/firmware/controller", &web_api_handlers, true, NULL));
+        ESP_OK, webserver_api_endpoint_add(&webserver_ctx, "/controller/firmware", &web_api_handlers, true, NULL));
 
     char dummy[16] = {0};
     unity_gets(dummy, sizeof(dummy));

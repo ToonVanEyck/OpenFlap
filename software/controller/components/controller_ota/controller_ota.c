@@ -9,7 +9,7 @@
 /** OTA chunk size. The firmware PUT request is read and handled in chunks of this size.  */
 #define CONTROLLER_OTA_CHUNK_SIZE (2048)
 
-#define CONTROLLER_OTA_URI "/firmware/controller" /**< Controller OTA endpoint. */
+#define CONTROLLER_OTA_URI "/controller/firmware" /**< Controller OTA endpoint. */
 
 static esp_err_t controller_ota_handler(httpd_req_t *req);
 static esp_err_t controller_ota_chunk_handler(void *ctx, char *data, size_t data_len, size_t data_offset,

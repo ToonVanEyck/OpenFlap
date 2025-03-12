@@ -21,6 +21,8 @@ const openflap_config_t __attribute__((section(".config"))) config = {
             (uint32_t)',', (uint32_t)':', (uint32_t)'/', (uint32_t)'@', (uint32_t)'#', (uint32_t)'&',
         },
     .ota_completed    = false,
-    .minimum_distance = 1,
+    .minimum_rotation = 1,
+    .color            = {0xFFFFFF, 0x000000}, // White on black
+    .motion           = {35, 200, 1, 7},
 };
 #endif

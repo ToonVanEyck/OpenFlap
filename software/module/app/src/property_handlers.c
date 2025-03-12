@@ -79,7 +79,7 @@ void property_character_set(uint8_t *buf, uint16_t *size)
 {
     openflap_ctx->flap_setpoint = buf[0];
     distanceUpdate(openflap_ctx);
-    if (openflap_ctx->flap_distance < openflap_ctx->config.minimum_distance) {
+    if (openflap_ctx->flap_distance < openflap_ctx->config.minimum_rotation) {
         openflap_ctx->extend_revolution = true;
         openflap_ctx->flap_distance += SYMBOL_CNT;
     }
@@ -90,18 +90,62 @@ void property_character_get(uint8_t *buf, uint16_t *size)
     buf[0] = flapPostionGet(openflap_ctx);
 }
 
-void baseSpeed_property_set(uint8_t *buf, uint16_t *size)
+void minimum_rotation_property_set(uint8_t *buf, uint16_t *size)
 {
-    if (openflap_ctx->config.base_speed == buf[0]) {
+    if (openflap_ctx->config.minimum_rotation == buf[0]) {
         return;
     }
-    openflap_ctx->config.base_speed = buf[0];
-    openflap_ctx->store_config      = true;
+    openflap_ctx->config.minimum_rotation = (buf[0] < SYMBOL_CNT ? buf[0] : SYMBOL_CNT);
+    openflap_ctx->store_config            = true;
 }
 
-void baseSpeed_property_get(uint8_t *buf, uint16_t *size)
+void minimum_rotation_property_get(uint8_t *buf, uint16_t *size)
 {
-    buf[0] = openflap_ctx->config.base_speed;
+    buf[0] = openflap_ctx->config.minimum_rotation;
+}
+
+void color_property_set(uint8_t *buf, uint16_t *size)
+{
+    uint32_t foreground = buf[0] << 16 | buf[1] << 8 | buf[2];
+    uint32_t background = buf[3] << 16 | buf[4] << 8 | buf[5];
+    if (openflap_ctx->config.color.foreground == foreground && openflap_ctx->config.color.background == background) {
+        return;
+    }
+    openflap_ctx->config.color.foreground = foreground;
+    openflap_ctx->config.color.background = background;
+    openflap_ctx->store_config            = true;
+}
+
+void color_property_get(uint8_t *buf, uint16_t *size)
+{
+    buf[0] = openflap_ctx->config.color.foreground >> 16;
+    buf[1] = openflap_ctx->config.color.foreground >> 8;
+    buf[2] = openflap_ctx->config.color.foreground;
+    buf[3] = openflap_ctx->config.color.background >> 16;
+    buf[4] = openflap_ctx->config.color.background >> 8;
+    buf[5] = openflap_ctx->config.color.background;
+}
+
+void motion_property_set(uint8_t *buf, uint16_t *size)
+{
+    if (openflap_ctx->config.motion.min_pwm == buf[0] && openflap_ctx->config.motion.max_pwm == buf[1] &&
+        openflap_ctx->config.motion.min_ramp_distance == buf[2] &&
+        openflap_ctx->config.motion.max_ramp_distance == buf[3]) {
+        return;
+    }
+    openflap_ctx->config.motion.min_pwm           = (buf[0] >= ABS_MIN_PWM ? buf[0] : ABS_MIN_PWM);
+    openflap_ctx->config.motion.max_pwm           = (buf[1] <= ABS_MAX_PWM ? buf[1] : ABS_MAX_PWM);
+    openflap_ctx->config.motion.min_ramp_distance = buf[2];
+    openflap_ctx->config.motion.max_ramp_distance = buf[3];
+    openflap_ctx->store_config                    = true;
+}
+
+void motion_property_get(uint8_t *buf, uint16_t *size)
+{
+    buf[0] = openflap_ctx->config.motion.min_pwm;
+    buf[1] = openflap_ctx->config.motion.max_pwm;
+    buf[2] = openflap_ctx->config.motion.min_ramp_distance;
+    buf[3] = openflap_ctx->config.motion.max_ramp_distance;
 }
 
 void property_handlers_init(openflap_ctx_t *ctx)
@@ -128,4 +172,13 @@ void property_handlers_init(openflap_ctx_t *ctx)
 
     openflap_ctx->chain_ctx.property_handler[PROPERTY_CHARACTER].set = property_character_set;
     openflap_ctx->chain_ctx.property_handler[PROPERTY_CHARACTER].get = property_character_get;
+
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_MINIMUM_ROTATION].set = minimum_rotation_property_set;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_MINIMUM_ROTATION].get = minimum_rotation_property_get;
+
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_COLOR].set = color_property_set;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_COLOR].get = color_property_get;
+
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_MOTION].set = motion_property_set;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_MOTION].get = motion_property_get;
 }

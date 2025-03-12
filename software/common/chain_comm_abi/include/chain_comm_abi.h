@@ -44,7 +44,7 @@ typedef struct {
     PROPERTY(PROPERTY_CHARACTER_SET, "character_set", PROP_ATTR_DYNAMIC(), PROP_ATTR_DYNAMIC())                        \
     PROPERTY(PROPERTY_CHARACTER, "character", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                                \
     PROPERTY(PROPERTY_OFFSET, "offset", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                                      \
-    PROPERTY(PROPERTY_COLOR, "color", PROP_ATTR_STATIC(2), PROP_ATTR_STATIC(2))                                        \
+    PROPERTY(PROPERTY_COLOR, "color", PROP_ATTR_STATIC(6), PROP_ATTR_STATIC(6))                                        \
     PROPERTY(PROPERTY_MOTION, "motion", PROP_ATTR_STATIC(4), PROP_ATTR_STATIC(4))                                      \
     PROPERTY(PROPERTY_MINIMUM_ROTATION, "minimum_rotation", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                  \
     PROPERTY(PROPERTIES_MAX, NULL, PROP_ATTR_NONE(), PROP_ATTR_NONE())

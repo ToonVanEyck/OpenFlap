@@ -1,6 +1,8 @@
 [submodule "software/controller/components/u8g2"]
 	path = software/controller/components/u8g2
 	url = git@github.com:olikraus/u8g2.git
+	ignore = dirty
 [submodule "software/controller/components/u8g2-hal-esp-idf"]
 	path = software/controller/components/u8g2-hal-esp-idf
 	url = git@github.com:mkfrey/u8g2-hal-esp-idf.git
+	ignore = dirty

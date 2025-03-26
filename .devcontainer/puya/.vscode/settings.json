@@ -32,4 +32,7 @@
     "C_Cpp.default.includePath": [
         "{workspaceFolder}/software/module/**",
     ],
+    "cSpell.words": [
+        "openflap"
+    ],
 }

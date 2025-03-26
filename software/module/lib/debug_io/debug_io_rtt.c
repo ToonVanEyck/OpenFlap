@@ -99,7 +99,7 @@ void debug_io_log_disable(void)
     active_log_lvl = LOG_DISBALED;
 }
 
-void debug_io_log_enable(void)
+void debug_io_log_restore(void)
 {
     active_log_lvl = prev_log_lvl;
 }

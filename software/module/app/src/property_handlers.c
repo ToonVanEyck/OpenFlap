@@ -67,6 +67,7 @@ void property_offset_set(uint8_t *buf, uint16_t *size)
     if (openflap_ctx->config.encoder_offset == buf[0]) {
         return;
     }
+    distanceUpdate(openflap_ctx);
     openflap_ctx->config.encoder_offset = buf[0];
     openflap_ctx->store_config          = true;
 }
@@ -106,8 +107,8 @@ void minimum_rotation_property_get(uint8_t *buf, uint16_t *size)
 
 void color_property_set(uint8_t *buf, uint16_t *size)
 {
-    uint32_t foreground = buf[0] << 16 | buf[1] << 8 | buf[2];
-    uint32_t background = buf[3] << 16 | buf[4] << 8 | buf[5];
+    uint32_t foreground = (uint32_t)buf[0] << 16 | (uint32_t)buf[1] << 8 | (uint32_t)buf[2];
+    uint32_t background = (uint32_t)buf[3] << 16 | (uint32_t)buf[4] << 8 | (uint32_t)buf[5];
     if (openflap_ctx->config.color.foreground == foreground && openflap_ctx->config.color.background == background) {
         return;
     }

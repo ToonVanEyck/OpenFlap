@@ -4,26 +4,23 @@
 #define COMMS_IDLE_TIMEOUT_MS (75)
 
 /** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (100)
+#define MOTOR_BACKSPIN_DURATION_MS (50)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
-#define MOTOR_BACKSPIN_PWM (70)
+#define MOTOR_BACKSPIN_PWM (125)
 
-uint8_t pwmDutyCycleCalc(uint8_t distance)
+uint8_t pwmDutyCycleCalc(const openflap_motion_config_t *cfg, uint8_t distance)
 {
-    const uint8_t min_pwm           = 35;
-    const uint8_t max_pwm           = 200; /* 110 = +/- 0.5 rps = 30 rpm */
-    const uint8_t min_ramp_distance = 1;   /* Go min speed when distance is below this. */
-    const uint8_t max_ramp_distance = 7;   /* Go max speed when distance is above this. */
-
-    if (distance <= min_ramp_distance) {
-        return min_pwm;
+    if (distance <= cfg->min_ramp_distance) {
+        return cfg->min_pwm;
     }
 
-    if (distance >= max_ramp_distance) {
-        return max_pwm;
+    if (distance >= cfg->max_ramp_distance) {
+        return cfg->max_pwm;
     }
 
-    return (distance - min_ramp_distance) * (max_pwm - min_pwm) / (max_ramp_distance - min_ramp_distance) + min_pwm;
+    return (distance - cfg->min_ramp_distance) * (cfg->max_pwm - cfg->min_pwm) /
+               (cfg->max_ramp_distance - cfg->min_ramp_distance) +
+           cfg->min_pwm;
 }
 
 void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
@@ -114,13 +111,13 @@ void updateCommsState(openflap_ctx_t *ctx)
             ctx->comms_active = true;
             debug_io_log_info("Comms Active\n");
 #if !CHAIN_COMM_DEBUG
-            debug_io_log_disable(); /* Writing to RTT may fuck up the UART RX interrupt... */
+            debug_io_log_set_level(LOG_LVL_WARN); /* Writing to RTT may fuck up the UART RX interrupt... */
 #endif
         }
     } else if (ctx->comms_active && HAL_GetTick() > ctx->comms_active_timeout_tick) {
         ctx->comms_active = false;
 #if !CHAIN_COMM_DEBUG
-        debug_io_log_enable();
+        debug_io_log_restore();
 #endif
         debug_io_log_info("Comms Idle\n");
     }
@@ -129,7 +126,7 @@ void updateCommsState(openflap_ctx_t *ctx)
 void setMotorFromDistance(openflap_ctx_t *ctx)
 {
     if (ctx->flap_distance > 0) {
-        motorForward(pwmDutyCycleCalc(ctx->flap_distance));
+        motorForward(pwmDutyCycleCalc(&ctx->config.motion, ctx->flap_distance));
         ctx->motor_backspin_timeout_tick = 0;
     } else {
         if (ctx->motor_backspin_timeout_tick == 0) {
@@ -149,23 +146,22 @@ void setMotor(motorMode_t mode, uint8_t speed)
             /* Use with caution, this might cause damage to the system.
              * The mechanism is designed to locks up in reverse direction. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_RESET);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0x00);
             break;
         case MOTOR_FORWARD:
-            speed = 0xff - speed; /* Invert Duty-Cycle. */
-            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_SET);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0x00);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, speed);
             break;
         case MOTOR_BRAKE:
             /* Set MOTOR A & B high, braking the motor. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0xff);
-            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_SET);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0xff);
             break;
         case MOTOR_IDLE:
         default:
             /* Set MOTOR A & B low, let the motor freewheel. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0x00);
-            HAL_GPIO_WritePin(MOTOR_B_GPIO_PORT, MOTOR_B_GPIO_PIN, GPIO_PIN_RESET);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0x00);
             break;
     }
 }

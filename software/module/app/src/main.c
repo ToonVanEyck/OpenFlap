@@ -12,12 +12,10 @@
 /** Convert a microsecond value into a counter value for the IR/Encoder timer. */
 #define IR_TIMER_TICKS_FROM_US(us) ((us) / 100)
 
-/** The period of the encoder readings when the system is idle. */
-#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1000)
-/** The period of the encoder readings when the system is active and the distance to the setpoint flap is large. */
-#define IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(5)
-/** The period of the encoder readings when the system is active and the distance to the setpoint flap is small. */
-#define IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1)
+/** The period of the encoder readings when the motor is idle. */
+#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
+/** The period of the encoder readings when the motor is active. */
+#define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1)
 
 /** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
@@ -195,13 +193,6 @@ static void APP_GpioConfig(void)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ENCODER_LED_GPIO_PORT, &GPIO_InitStruct);
 
-    /* Configure MOTOR B output. (motor direction) */
-    GPIO_InitStruct.Pin   = MOTOR_B_GPIO_PIN;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(MOTOR_A_GPIO_PORT, &GPIO_InitStruct);
-
     /* Configure debug pins, these pins can be used for pin wiggling during development. */
     GPIO_InitStruct.Pin   = DEBUG_GPIO_1_PIN | DEBUG_GPIO_2_PIN;
     GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
@@ -272,11 +263,11 @@ static void APP_TimerInit(void)
 
 static void APP_PwmInit(void)
 {
-    /* (250 * 3) / 8Mhz = 32kHz */
+    /* 24MHz / ( 255 x 466 x 2 ) = +/- 100Hz */
     motorPwmHandle.Instance           = TIM3;
     motorPwmHandle.Init.Period        = 255 - 1;
-    motorPwmHandle.Init.Prescaler     = 3;
-    motorPwmHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    motorPwmHandle.Init.Prescaler     = 466 - 1;
+    motorPwmHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
     motorPwmHandle.Init.CounterMode   = TIM_COUNTERMODE_UP;
     if (HAL_TIM_PWM_Init(&motorPwmHandle) != HAL_OK) {
         APP_ErrorHandler();
@@ -292,8 +283,14 @@ static void APP_PwmInit(void)
     sConfigOC.Pulse      = 0;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+
+    // Configure channel 1
     HAL_TIM_PWM_ConfigChannel(&motorPwmHandle, &sConfigOC, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&motorPwmHandle, TIM_CHANNEL_1);
+
+    // Configure channel 2
+    HAL_TIM_PWM_ConfigChannel(&motorPwmHandle, &sConfigOC, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&motorPwmHandle, TIM_CHANNEL_2);
 }
 
 static void APP_DmaInit(void)
@@ -335,14 +332,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM1) {
         openflap_ctx.ir_tick_cnt++;
-        uint16_t ir_period = IR_IDLE_PERIOD_MS;
-        if (openflap_ctx.motor_active) {
-            if (openflap_ctx.flap_distance <= 3) {
-                ir_period = IR_ACTIVE_DISTANCE_SMALL_PERIOD_MS;
-            } else {
-                ir_period = IR_ACTIVE_DISTANCE_LARGE_PERIOD_MS;
-            }
-        }
+        uint16_t ir_period = (debug_mode || openflap_ctx.motor_active) ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS;
         /* Start ADC when IR led's have been on for 200us. */
         if (openflap_ctx.ir_tick_cnt == IR_ILLUMINATE_TIME_US) {
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_CHANNEL_CNT) != HAL_OK) {

@@ -77,4 +77,4 @@ void debug_io_log_disable(void);
  * \brief Enable the debug IO.
  * The last configured log level will be used.
  */
-void debug_io_log_enable(void);
+void debug_io_log_restore(void);

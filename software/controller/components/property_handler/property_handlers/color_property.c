@@ -173,7 +173,8 @@ static esp_err_t json_to_color(color_t *color, const cJSON *json)
     ESP_RETURN_ON_FALSE(color_str[0] == '#', ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Invalid color string format");
 
     uint32_t color_value = 0;
-    ESP_RETURN_ON_ERROR(sscanf(color_str + 1, "%lx", &color_value), PROPERTY_TAG, "Failed to convert color string");
+    ESP_RETURN_ON_FALSE(sscanf(color_str + 1, "%lx", &color_value), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Failed to convert color string");
 
     color->red   = (color_value >> 16) & 0xFF;
     color->green = (color_value >> 8) & 0xFF;

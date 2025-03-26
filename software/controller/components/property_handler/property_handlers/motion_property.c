@@ -22,10 +22,14 @@ static esp_err_t motion_from_json(module_t *module, const cJSON *json)
     cJSON *ramp_start_json = cJSON_GetObjectItem(json, "ramp_start");
     cJSON *ramp_stop_json  = cJSON_GetObjectItem(json, "ramp_stop");
 
-    ESP_RETURN_ON_ERROR(cJSON_IsNumber(speed_min_json), PROPERTY_TAG, "Expected a number for speed_min");
-    ESP_RETURN_ON_ERROR(cJSON_IsNumber(speed_max_json), PROPERTY_TAG, "Expected a number for speed_max");
-    ESP_RETURN_ON_ERROR(cJSON_IsNumber(ramp_start_json), PROPERTY_TAG, "Expected a number for ramp_start");
-    ESP_RETURN_ON_ERROR(cJSON_IsNumber(ramp_stop_json), PROPERTY_TAG, "Expected a number for ramp_stop");
+    ESP_RETURN_ON_FALSE(cJSON_IsNumber(speed_min_json), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Expected a number for speed_min");
+    ESP_RETURN_ON_FALSE(cJSON_IsNumber(speed_max_json), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Expected a number for speed_max");
+    ESP_RETURN_ON_FALSE(cJSON_IsNumber(ramp_start_json), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Expected a number for ramp_start");
+    ESP_RETURN_ON_FALSE(cJSON_IsNumber(ramp_stop_json), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Expected a number for ramp_stop");
 
     ESP_RETURN_ON_FALSE(speed_min_json->valueint >= 0 && speed_min_json->valueint <= 255, ESP_ERR_INVALID_ARG,
                         PROPERTY_TAG, "Value speed_min out of range");

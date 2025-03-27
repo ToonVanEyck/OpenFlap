@@ -1,6 +1,6 @@
 
 const moduleEndpoint = "/api/module"
-// const moduleEndpoint = "http://192.168.0.43:80/api/module" // enable this line for local development
+// const moduleEndpoint = "http://192.168.0.45:80/api/module" // enable this line for local development
 
 var moduleObjects = [];
 var dimensions = { width: 0, height: 0 };
@@ -18,47 +18,143 @@ const elNew = (tag, prop) => Object.assign(document.createElement(tag), prop);
 
 var activeDisplayIndex = () => [...document.querySelectorAll(".displayCharacter")].indexOf(document.activeElement)
 var displayCharacterAt = (index) => [...document.querySelectorAll(".displayCharacter")][index]
-var activePropertyIndex = () => [...document.querySelectorAll(".propertyCharacter")].indexOf(document.activeElement)
-var propertyCharacterAt = (index) => [...document.querySelectorAll(".propertyCharacter")][index]
-var activeAnyIndex = () => activeDisplayIndex() + activePropertyIndex() + 1;
-var activecharacterSetEntry = () => document.activeElement.id.split('_').map(Number).slice(1, 3);
+var activeAnyIndex = () => activeDisplayIndex();
+var activeCharacterSetEntry = () => document.activeElement.id.split('_').map(Number).slice(1, 3);
 var characterSetEntryAt = (m_index, c_index) => document.getElementById("characterSetMember_" + m_index + "_" + c_index);
+
+function getCheckboxFromSetting(setting) {
+    let node = setting.parentNode;
+    let checkbox = node.querySelector('input[type="checkbox"]');
+    while (!checkbox && node.previousElementSibling) {
+        node = node.previousElementSibling;
+        checkbox = node.querySelector('input[type="checkbox"]');
+    }
+    return checkbox;
+}
+
+function moduleSettingsFromModule(template, module) {
+    let module_settings = template.cloneNode(true);
+    const i = module.module;
+    module_settings.id = "module_settings_" + i;
+    module_settings.style.display = "";
+    module_settings.querySelectorAll("[id]").forEach(el => {
+        el.id = el.id.replace("#", i);
+    });
+    module_settings.children[0].innerText = "Module " + i;
+
+    const updateSettingsField = (input, cnt) => {
+        const checkbox = getCheckboxFromSetting(input);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+
+        if (cnt) {
+            cnt.innerText = input.value.length;
+        }
+    };
+
+    let info_column_end_element = module_settings.querySelector("#module_info_column_end_" + i)
+    let info_type_element = module_settings.querySelector("#module_info_type_" + i)
+    let version_element = module_settings.querySelector("#module_version_" + i)
+    let encoder_offset_element = module_settings.querySelector("#module_encoder_offset_" + i)
+    let character_element = module_settings.querySelector("#module_character_" + i)
+    let character_set_element = module_settings.querySelector("#module_character_set_" + i)
+    let character_set_cnt_element = module_settings.querySelector("#module_character_set_cnt_" + i)
+    let character_set_max_element = module_settings.querySelector("#module_character_set_max_" + i)
+    let motion_minimum_speed_element = module_settings.querySelector("#module_motion_minimum_speed_" + i)
+    let motion_maximum_speed_element = module_settings.querySelector("#module_motion_maximum_speed_" + i)
+    let motion_ramp_start_element = module_settings.querySelector("#module_motion_ramp_start_" + i)
+    let motion_ramp_stop_element = module_settings.querySelector("#module_motion_ramp_stop_" + i)
+    let minimum_rotation_element = module_settings.querySelector("#module_minimum_rotation_" + i)
+    let color_foreground_element = module_settings.querySelector("#module_color_foreground_" + i)
+    let color_background_element = module_settings.querySelector("#module_color_background_" + i)
+
+    info_column_end_element.innerText = module.module_info.column_end ? "True" : "False";
+    info_type_element.innerText = module.module_info.type;
+    version_element.innerText = module.firmware_version.match(/^v\d+\.\d+\.\d+/)[0];
+    encoder_offset_element.value = module.offset;
+    character_element.value = module.character;
+    character_set_element.innerText = module.character_set.join("").replace(/ /g, '\u00A0');
+    character_set_element.maxLength = module.character_set.length;
+    character_set_cnt_element.innerText = module.character_set.length;
+    character_set_max_element.innerText = module.character_set.length;
+    motion_minimum_speed_element.value = module.motion.speed_min;
+    motion_maximum_speed_element.value = module.motion.speed_max;
+    motion_ramp_start_element.value = module.motion.ramp_start;
+    motion_ramp_stop_element.value = module.motion.ramp_stop;
+    minimum_rotation_element.value = module.minimum_rotation;
+    color_foreground_element.value = module.color.foreground;
+    color_background_element.value = module.color.background;
+
+    // Add onchange event listeners
+    encoder_offset_element.onchange = () => updateSettingsField(encoder_offset_element);
+    character_element.onchange = () => updateSettingsField(character_element);
+    character_set_element.onchange = () => updateSettingsField(character_set_element, character_set_cnt_element);
+    motion_minimum_speed_element.onchange = () => updateSettingsField(motion_minimum_speed_element);
+    motion_maximum_speed_element.onchange = () => updateSettingsField(motion_maximum_speed_element);
+    motion_ramp_start_element.onchange = () => updateSettingsField(motion_ramp_start_element);
+    motion_ramp_stop_element.onchange = () => updateSettingsField(motion_ramp_stop_element);
+    minimum_rotation_element.onchange = () => updateSettingsField(minimum_rotation_element);
+    color_foreground_element.onchange = () => updateSettingsField(color_foreground_element);
+    color_background_element.onchange = () => updateSettingsField(color_background_element);
+    return module_settings;
+}
+
+function moduleSettingsToModule(i) {
+    module_settings = document.getElementById("module_settings_" + i);
+    let json = {
+        module: i
+    };
+
+    let encoder_offset_element = module_settings.querySelector("#module_encoder_offset_" + i);
+    if (getCheckboxFromSetting(encoder_offset_element).checked) {
+        json.offset = parseInt(encoder_offset_element.value);
+    }
+    let character_element = module_settings.querySelector("#module_character_" + i);
+    if (getCheckboxFromSetting(character_element).checked) {
+        json.character = character_element.value;
+    }
+    let character_set_element = module_settings.querySelector("#module_character_set_" + i);
+    if (character_set_element.checked) {
+        json.character_set = character_set_element.innerText.split("");
+    }
+    let motion_minimum_speed_element = module_settings.querySelector("#module_motion_minimum_speed_" + i)
+    let motion_maximum_speed_element = module_settings.querySelector("#module_motion_maximum_speed_" + i)
+    let motion_ramp_start_element = module_settings.querySelector("#module_motion_ramp_start_" + i)
+    let motion_ramp_stop_element = module_settings.querySelector("#module_motion_ramp_stop_" + i)
+    if (getCheckboxFromSetting(motion_minimum_speed_element).checked) {
+        json.motion = json.motion || {};
+        json.motion.speed_min = parseInt(motion_minimum_speed_element.value);
+        json.motion.speed_max = parseInt(motion_maximum_speed_element.value);
+        json.motion.ramp_start = parseInt(motion_ramp_start_element.value);
+        json.motion.ramp_stop = parseInt(motion_ramp_stop_element.value);
+    }
+    let minimum_rotation_element = module_settings.querySelector("#module_minimum_rotation_" + i)
+    if (getCheckboxFromSetting(minimum_rotation_element).checked) {
+        json.minimum_rotation = parseInt(minimum_rotation_element.value);
+    }
+    let color_foreground_element = module_settings.querySelector("#module_color_foreground_" + i)
+    let color_background_element = module_settings.querySelector("#module_color_background_" + i)
+    if (getCheckboxFromSetting(color_foreground_element).checked) {
+        json.color = json.color || {};
+        json.color.foreground = color_foreground_element.value;
+        json.color.background = color_background_element.value;
+    }
+
+    return json;
+}
 
 function createModuleTable() {
     let table = document.getElementById("moduleTable");
-    table.children[0].remove();
-    table = table.appendChild(elNew("tbody"));
+    let module_settings_template = document.getElementById("module_settings_#")
+    module_settings_template.style.display = "none";
+    while (module_settings_template.nextSibling) {
+        module_settings_template.parentNode.removeChild(module_settings_template.nextSibling);
+    }
     for (let i = 0; i < moduleObjects.length; i++) {
         const module = moduleObjects[i];
-        let row = table.appendChild(elNew("tr")).appendChild(elNew("td")).appendChild(elNew("div", { className: "moduleConfig" }));
-        // module character
-        let moduleCharacter = row.appendChild(elNew("div", { className: "moduleCharacter" }));
-        moduleCharacter.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Module " + i + ":" }));
-        moduleCharacter.appendChild(elNew("div", { className: "contentWrapper" })).append(elNew("input", { type: "text", className: "propertyCharacter characterInput", pattern: "^ $", maxLength: "1", defaultValue: module.character }));
-        moduleCharacter.lastChild.lastChild.onclick = function () { this.select(); };
-        // module properties
-        let moduleProperties = row.appendChild(elNew("div", { className: "moduleProperties" }));
-        moduleProperties.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Properties:" }));
-        let propertyList = moduleProperties.appendChild(elNew("div", { className: "contentWrapper" })).appendChild(elNew("div", { className: "moduleProperties__list" }));
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "columnEnd_" + i, innerHTML: "columnEnd" }), elNew("input", { id: "columnEnd_" + i, className: "propertyInput checkBox noclick", type: "checkbox", name: "columnEnd", checked: module.module_info.column_end }));
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "vtrim_" + i, innerHTML: "vtrim" }), elNew("input", { id: "vtrim_" + i, className: "propertyInput", type: "number", min: "0", max: "200", step: "5", name: "vtrim", defaultValue: module.calibration.vtrim }));
-        propertyList.lastChild.lastChild.onchange = function () { module.calibration.vtrim = parseInt(this.value) };
-        propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "offset_" + i, innerHTML: "offset" }), elNew("input", { id: "offset_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "offset", defaultValue: module.calibration.offset }));
-        propertyList.lastChild.lastChild.onchange = function () { module.calibration.offset = parseInt(this.value) };
-        propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        propertyList.appendChild(elNew("div", { className: "moduleProperties__entry" })).append(elNew("label", { htmlFor: "baseSpeed_" + i, innerHTML: "baseSpeed" }), elNew("input", { id: "baseSpeed_" + i, className: "propertyInput", type: "number", min: "0", max: module.character_set.length - 1, name: "baseSpeed", defaultValue: module.baseSpeed }));
-        propertyList.lastChild.lastChild.onchange = function () { module.baseSpeed = parseInt(this.value) };
-        propertyList.lastChild.lastChild.onclick = function () { this.select(); };
-        // module characterSet
-        let moduleCharaterMap = row.appendChild(elNew("div", { className: "modulecharacterSet" }));
-        moduleCharaterMap.appendChild(elNew("div", { className: "moduleConfigTitle" })).append(elNew("div", { innerHTML: "Supported Characters:" }));
-        let characterSet = moduleCharaterMap.appendChild(elNew("div", { className: "contentWrapper" })).appendChild(elNew("div", { className: "characterSet" }));
-        for (let j = 0; j < module.character_set.length; j++) {
-            characterSet.appendChild(elNew("input", { id: "characterSetMember_" + i + "_" + j, className: "characterSetMember characterInput", pattern: "^ $", type: "text", maxLength: "1", defaultValue: module.character_set[j] }));
-            characterSet.onbeforeinput = inputChanged;
-            characterSet.lastChild.onclick = function () { this.select(); };
-        }
+        let module_settings = moduleSettingsFromModule(module_settings_template, module);
+        module_settings_template.parentElement.appendChild(module_settings);
     }
 }
 
@@ -101,21 +197,16 @@ async function initialize() {
 function trySetLetter(index, letter) {
     letter = letter.toUpperCase();
     let displayElement = displayCharacterAt(index);
-    let propertyElement = propertyCharacterAt(index);
     console.log(letter + " in module " + index + " : " + moduleObjects[index].character_set.includes(letter));
     if (letter.length == 1 && moduleObjects[index].character_set.includes(letter)) {
         moduleObjects[index].character = letter;
         displayElement.value = letter;
         if (['/', '@', ',', ':', ';'].includes(letter)) displayElement.classList.add("characterRaised");
         else displayElement.classList.remove("characterRaised");
-        propertyElement.value = letter;
-        if (['/', '@', ',', ':', ';'].includes(letter)) propertyElement.classList.add("characterRaised");
-        else propertyElement.classList.remove("characterRaised");
         return true;
     }
     //animate
     displayElement.animate([{ color: "#eb3464" }, { color: "" }], 500);
-    propertyElement.animate([{ color: "#eb3464" }, { color: "" }], 500);
     return false;
 }
 
@@ -124,12 +215,12 @@ function inputChanged(e) {
     switch (e.inputType) {
         case "deleteContentBackward":
         case "deleteWordBackward":
-            trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1, ' ');
+            trySetLetter(activeDisplayIndex(), ' ');
             displayCharacterAt(modulePrev(activeDisplayIndex())).select();
             break;
         case "deleteContentForward":
         case "deleteWordForward":
-            trySetLetter(activeDisplayIndex() + activePropertyIndex() + 1, ' ');
+            trySetLetter(activeDisplayIndex(), ' ');
             displayCharacterAt(moduleNext(activeDisplayIndex())).select();
             break;
         case "insertText":
@@ -144,7 +235,7 @@ function inputChanged(e) {
                 };
                 displayCharacterAt(index).select();
             } else {
-                let acme = activecharacterSetEntry();
+                let acme = activeCharacterSetEntry();
                 moduleObjects[acme[0]].character_set[acme[1]] = e.data[0].toUpperCase();
                 characterSetEntryAt(acme[0], acme[1]).value = moduleObjects[acme[0]].character_set[acme[1]];
                 let nextEntry = characterSetEntryAt(acme[0], acme[1] + 1);
@@ -201,7 +292,7 @@ function keydownHandler(event) {
     if (event.defaultPrevented) {
         return;
     }
-    if (activeDisplayIndex() + activePropertyIndex() + 1 >= 0 && preventDefaultActionKeys.includes(event.key)) {
+    if (activeDisplayIndex() + 1 >= 0 && preventDefaultActionKeys.includes(event.key)) {
         event.preventDefault();
     }
     switch (event.key) {
@@ -277,23 +368,49 @@ async function modulesSetProperties(properties) {
     });
 }
 
+async function writeNewSetting() {
+    json = [];
+    for (let i = 0; i < moduleObjects.length; i++) {
+        json[i] = moduleSettingsToModule(i);
+    }
+    const response = await fetch(moduleEndpoint, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(json)
+    });
+    initialize();
+}
+
+async function writeNewSettingBulk() {
+    json = [];
+    for (let i = 0; i < moduleObjects.length; i++) {
+        json[i] = moduleSettingsToModule(0);
+        json[i].module = i;
+    }
+    const response = await fetch(moduleEndpoint, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(json)
+    });
+    initialize();
+}
+
 function startCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
         trySetLetter(i, moduleObjects[i].character_set[0]);
-        moduleObjects[i].calibration.offset = 0;
-        moduleObjects[i].calibration.vtrim = 0;
+        moduleObjects[i].offset = 0;
     }
-    modulesSetProperties(["character", "calibration"]);
+    modulesSetProperties(["character", "offset"]);
     createModuleTable();
 }
 
 function doCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
-        moduleObjects[i].calibration.offset += moduleObjects[i].character_set.indexOf(moduleObjects[i].character);
-        if (moduleObjects[i].calibration.offset >= moduleObjects[i].character_set.length) moduleObjects[i].calibration.offset -= moduleObjects[i].character_set.length; 0
+        moduleObjects[i].offset += moduleObjects[i].character_set.indexOf(moduleObjects[i].character);
+        if (moduleObjects[i].offset >= moduleObjects[i].character_set.length) moduleObjects[i].offset -= moduleObjects[i].character_set.length; 0
         trySetLetter(i, moduleObjects[i].character_set[0]);
     }
-    modulesSetProperties(["calibration"]);
+    modulesSetProperties(["offset"]);
 }
 
 async function setAccessPoint(type) {

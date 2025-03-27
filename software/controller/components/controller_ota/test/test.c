@@ -10,7 +10,7 @@
 #define TAG "CONTROLLER_OTA_TEST"
 
 /* Test Command:
-curl -T build/controller/openflap-controller.bin http://openflap.local/api/firmware/controller
+curl -T build/controller/openflap-controller.bin http://openflap.local/api/controller/firmware
 */
 
 TEST_CASE("Test controller OTA post handler", "[controller_ota][qemu]")

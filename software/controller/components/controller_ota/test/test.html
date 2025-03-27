@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
             border: 1px solid #ccc;
             margin-top: 10px;
         }
+
         #progressBar {
             width: 0%;
             height: 20px;
@@ -19,6 +21,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Upload a File using PUT</h1>
     <form id="uploadForm">
@@ -51,7 +54,7 @@
                 progressBar.style.width = "0%";
 
                 const xhr = new XMLHttpRequest();
-                xhr.open("PUT", "http://192.168.0.43/api/firmware/controller", true);
+                xhr.open("PUT", "http://192.168.0.43/api/controller/firmware", true);
 
                 // Update progress bar
                 xhr.upload.addEventListener("progress", (event) => {
@@ -85,4 +88,5 @@
         });
     </script>
 </body>
+
 </html>

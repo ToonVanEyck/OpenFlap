@@ -26,8 +26,6 @@ void configPrint(openflap_config_t *config)
         debug_io_log_info("IR thresholds: %d %d\n", config->ir_threshold.lower, config->ir_threshold.upper);
         HAL_Delay(d);
     }
-    debug_io_log_info("Vtrim: %d\n", config->vtrim);
-    HAL_Delay(d);
     debug_io_log_info("Base speed: %d\n", config->base_speed);
     HAL_Delay(d);
     debug_io_log_info("Symbol set:\n");

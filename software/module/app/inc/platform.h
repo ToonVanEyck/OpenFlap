@@ -48,10 +48,8 @@
  * \defgroup Motor pin definitions.
  * @{
  */
-#define MOTOR_A_GPIO_PIN  (GPIO_PIN_6) /**< Motor PMW pin. */
-#define MOTOR_A_GPIO_PORT (GPIOA)      /**< Motor PMW port. */
-#define MOTOR_B_GPIO_PIN  (GPIO_PIN_7) /**< Motor direction pin. */
-#define MOTOR_B_GPIO_PORT (GPIOA)      /**< Motor direction port. */
+#define MOTOR_GPIO_PORT (GPIOA)                   /**< Motor GPIO port. */
+#define MOTOR_GPIO_PINS (GPIO_PIN_6 | GPIO_PIN_7) /**< Motor GPIO pins. */
 /**
  * @}
  */

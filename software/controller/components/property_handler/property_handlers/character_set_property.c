@@ -18,13 +18,6 @@ static esp_err_t character_set_from_json(module_t *module, const cJSON *json)
     assert(module != NULL);
     assert(json != NULL);
 
-    character_set_property_t *character_set = &module->character_set;
-
-    /* Check if the character set has been initialized before. */
-    ESP_RETURN_ON_FALSE(character_set->size > 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set size is 0");
-    ESP_RETURN_ON_FALSE(character_set->character_set != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
-                        "Character set is NULL");
-
     /* Validate json. */
     ESP_RETURN_ON_FALSE(cJSON_IsArray(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected an array of strings");
 
@@ -36,19 +29,25 @@ static esp_err_t character_set_from_json(module_t *module, const cJSON *json)
     }
 
     /* Get the character set size and allocate memory. */
-    ESP_RETURN_ON_FALSE(character_set->size == cJSON_GetArraySize(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
-                        "Expected a character set of size %d", character_set->size);
+    ESP_RETURN_ON_FALSE(module->character_set->size == cJSON_GetArraySize(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+                        "Expected a character set of size %d", module->character_set->size);
 
-    character_set->character_set = (uint8_t *)malloc(character_set->size * 4);
-    ESP_RETURN_ON_FALSE(character_set->character_set != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Memory allocation failed");
+    /* Allocate memory for the new character set. */
+    character_set_property_t *new_character_set = character_set_new(module->character_set->size);
+    ESP_RETURN_ON_FALSE(new_character_set != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Memory allocation failed");
 
-    for (int i = 0; i < character_set->size; i++) {
+    /* Free the old character set. */
+    character_set_free(module->character_set);
+
+    /* Update the module with the new character set. */
+    module->character_set = new_character_set;
+
+    /* Copy the character set from the json object. */
+    for (int i = 0; i < module->character_set->size; i++) {
         /* Get new entry from json. */
         character_set_entry = cJSON_GetArrayItem(json, i);
-        /* Clear old entry. */
-        memset((char *)(&character_set->character_set[i * 4]), 0, 4);
         /* Copy new entry. */
-        strncpy((char *)(&character_set->character_set[i * 4]), character_set_entry->valuestring, 4);
+        strncpy((char *)(&module->character_set->data[i * 4]), character_set_entry->valuestring, 4);
     }
 
     return ESP_OK;
@@ -67,15 +66,13 @@ static esp_err_t character_set_to_json(cJSON **json, const module_t *module)
     assert(json != NULL);
     assert(module != NULL);
 
-    const character_set_property_t *character_set = &module->character_set;
-
-    ESP_RETURN_ON_FALSE(character_set->size > 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set size is 0");
+    ESP_RETURN_ON_FALSE(module->character_set->size > 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set size is 0");
 
     *json = cJSON_CreateArray();
     ESP_RETURN_ON_FALSE(*json != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Memory allocation failed");
 
-    for (int i = 0; i < character_set->size; i++) {
-        cJSON *character_entry = cJSON_CreateString((char *)(&character_set->character_set[i * 4]));
+    for (int i = 0; i < module->character_set->size; i++) {
+        cJSON *character_entry = cJSON_CreateString((char *)(&module->character_set->data[i * 4]));
         ESP_RETURN_ON_FALSE(character_entry != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Memory allocation failed");
         cJSON_AddItemToArray(*json, character_entry);
     }
@@ -97,26 +94,21 @@ static esp_err_t character_set_from_binary(module_t *module, const uint8_t *bin,
     assert(module != NULL);
     assert(bin != NULL);
 
-    character_set_property_t *character_set = &module->character_set;
-
     ESP_RETURN_ON_FALSE(bin_size % 4 == 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Invalid binary size, expected multiple of 4.");
 
     /* Allocate memory for the character set. */
-    uint8_t *new_character_set = (uint8_t *)malloc(bin_size);
+    character_set_property_t *new_character_set = character_set_new(bin_size / 4);
     ESP_RETURN_ON_FALSE(new_character_set != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Memory allocation failed");
 
     /* Free old character set. */
-    if (character_set->character_set != NULL) {
-        free(character_set->character_set);
-        character_set->character_set = NULL;
-    }
+    character_set_free(module->character_set);
 
-    character_set->size          = bin_size / 4;
-    character_set->character_set = new_character_set;
+    /* Update the module with the new character set. */
+    module->character_set = new_character_set;
 
     /* Copy the binary array to the character set. */
-    memcpy(character_set->character_set, bin, character_set->size * 4);
+    memcpy(module->character_set->data, bin, module->character_set->size * 4);
 
     return ESP_OK;
 }
@@ -136,20 +128,18 @@ static esp_err_t character_set_to_binary(uint8_t **bin, uint16_t *bin_size, cons
     assert(bin_size != NULL);
     assert(module != NULL);
 
-    const character_set_property_t *character_set = &module->character_set;
-
     /* Check if the character set has been initialized before. */
-    ESP_RETURN_ON_FALSE(character_set->size > 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set size is 0");
-    ESP_RETURN_ON_FALSE(character_set->character_set != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
+    ESP_RETURN_ON_FALSE(module->character_set->size > 0, ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Character set size is 0");
+    ESP_RETURN_ON_FALSE(module->character_set->data != NULL, ESP_ERR_INVALID_ARG, PROPERTY_TAG,
                         "Character set is NULL");
 
-    *bin_size = character_set->size * 4;
+    *bin_size = module->character_set->size * 4;
 
     *bin = malloc(*bin_size);
     ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
     /* Copy the character set to the binary array. */
-    memcpy(*bin, character_set->character_set, *bin_size);
+    memcpy(*bin, module->character_set->data, *bin_size);
 
     return ESP_OK;
 }
@@ -167,8 +157,18 @@ static bool character_set_compare(const module_t *module_a, const module_t *modu
     assert(module_a != NULL);
     assert(module_b != NULL);
 
-    const character_set_property_t *character_set_a = &module_a->character_set;
-    const character_set_property_t *character_set_b = &module_b->character_set;
+    const character_set_property_t *character_set_a = module_a->character_set;
+    const character_set_property_t *character_set_b = module_b->character_set;
+
+    /* Check if they have a value. */
+    if (character_set_a == NULL || character_set_b == NULL) {
+        return false;
+    }
+
+    /* Check if the pointers are the same. */
+    if (character_set_a == character_set_b) {
+        return true;
+    }
 
     /* Check if the sizes are the same. */
     if (character_set_a->size != character_set_b->size) {
@@ -176,7 +176,7 @@ static bool character_set_compare(const module_t *module_a, const module_t *modu
     }
 
     /* Compare the character sets. */
-    return memcmp(character_set_a->character_set, character_set_b->character_set, character_set_a->size * 4) == 0;
+    return memcmp(character_set_a->data, character_set_b->data, character_set_a->size * 4) == 0;
 }
 
 /**

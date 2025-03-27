@@ -117,7 +117,7 @@ void http_moduleEndpointInit()
     http_addModulePropertyHandler(PROPERTY_CHARACTER, character_toJson, character_fromJson);
     http_addModulePropertyHandler(characterMapSize_property, characterMapSize_toJson, NULL);
     http_addModulePropertyHandler(PROPERTY_CHARACTER_SET, characterMap_toJson, characterMap_fromJson);
-    http_addModulePropertyHandler(PROPERTY_CALIBRATION, offset_toJson, offset_fromJson);
+    http_addModulePropertyHandler(PROPERTY_OFFSET, offset_toJson, offset_fromJson);
     http_addModulePropertyHandler(vtrim_property, vtrim_toJson, vtrim_fromJson);
     http_addModulePropertyHandler(baseSpeed_property, baseSpeed_toJson, baseSpeed_fromJson);
 }

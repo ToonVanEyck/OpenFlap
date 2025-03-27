@@ -41,20 +41,138 @@
             </div>
         </div>
         <div class="card" style="display:none" id="modules_card">
-            <div class="cardTitle">Module Configuration</div>
+            <div class="cardTitle">
+                <div style="flex-grow: 1;">Module Configuration</div>
+                <input type="button" class="button" value="Bulk Update" onclick="writeNewSettingBulk();" />
+                <input type="button" class="button" value="Update All" onclick="writeNewSetting();" />
+            </div>
             <table id="moduleTable">
                 <tbody>
+                    <tr>
+                        <td class="module_settings" id="module_settings_#">
+                            <div class="module_settings_index module_settings_card">Module #</div>
+                            <div class="module_settings_data">
+                                <div class="module_settings_info module_settings_card">
+                                    <div class="module_settings_title">Info</div>
+                                    <div class="module_settings_section">
+                                        <div class="module_settings_info_entry">
+                                            <div class="module_settings_entry_title">Column End</div>
+                                            <div class="module_settings_entry_value" id="module_info_column_end_#">
+                                            </div>
+                                        </div>
+                                        <div class="module_settings_info_entry">
+                                            <div class="module_settings_entry_title">Type</div>
+                                            <div class="module_settings_entry_value" id="module_info_type_#"></div>
+                                        </div>
+                                        <div class="module_settings_info_entry">
+                                            <div class="module_settings_entry_title">Version</div>
+                                            <div class="module_settings_entry_value" id="module_version_#"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="module_settings_properties module_settings_card">
+                                    <div class="module_settings_title">Settings</div>
+                                    <div class="row">
+                                        <div class="module_settings_section">
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox">
+                                                    <input type="checkbox" />
+                                                </div>
+                                                <div class="module_settings_entry_title">Encoder Offset</div>
+                                                <input class="module_setting_entry_number" id="module_encoder_offset_#"
+                                                    type="number" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox">
+                                                    <input type="checkbox" />
+                                                </div>
+                                                <div class="module_settings_entry_title">Character</div>
+                                                <input class="module_settings_entry_char" id="module_character_#"
+                                                    maxlength="1" type="text" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox">
+                                                    <input type="checkbox" />
+                                                </div>
+                                                <div class="module_settings_entry_multiline">
+                                                    <div class="module_settings_entry_title_appendix">
+                                                        <div class="module_settings_entry_title">Character Set</div>
+                                                        <div id="module_character_set_cnt_#">0</div>
+                                                        <div>/</div>
+                                                        <div id="module_character_set_max_#">0</div>
+                                                    </div>
+                                                    <textarea class="module_setting_entry_multiline_text"
+                                                        id="module_character_set_#" name="Text1" rows="2"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="module_settings_section">
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox">
+                                                    <input type="checkbox" />
+                                                </div>
+                                                <div class="module_settings_entry_title">Motion</div>
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox"></div>
+                                                <div class="module_settings_entry_subtitle">Minimum Speed</div>
+                                                <input class="module_setting_entry_number"
+                                                    id="module_motion_minimum_speed_#" type="number" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox"></div>
+                                                <div class="module_settings_entry_subtitle">Maximum Speed</div>
+                                                <input class="module_setting_entry_number"
+                                                    id="module_motion_maximum_speed_#" type="number" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox"></div>
+                                                <div class="module_settings_entry_subtitle">Ramp Start</div>
+                                                <input class="module_setting_entry_number"
+                                                    id="module_motion_ramp_start_#" type="number" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox"></div>
+                                                <div class="module_settings_entry_subtitle">Ramp Stop</div>
+                                                <input class="module_setting_entry_number"
+                                                    id="module_motion_ramp_stop_#" type="number" />
+                                            </div>
+                                        </div>
+                                        <div class="module_settings_section">
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox">
+                                                    <input type="checkbox" />
+                                                </div>
+                                                <div class="module_settings_entry_title">Minimum Rotation</div>
+                                                <input class="module_setting_entry_number"
+                                                    id="module_minimum_rotation_#" type="number" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox">
+                                                    <input type="checkbox" />
+                                                </div>
+                                                <div class="module_settings_entry_title">Color</div>
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox"></div>
+                                                <div class="module_settings_entry_subtitle">Foreground</div>
+                                                <input class="module_setting_entry_color" id="module_color_foreground_#"
+                                                    type="color" />
+                                            </div>
+                                            <div class="module_settings_info_entry">
+                                                <div class="module_settings_info_entry_checkbox"></div>
+                                                <div class="module_settings_entry_subtitle">Background</div>
+                                                <input class="module_setting_entry_color" id="module_color_background_#"
+                                                    type="color" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
-            <div class="cardButtonRow">
-                <div class="cardButtonRowTitle">
-                    Update Properties:
-                </div>
-                <input type="button" class="button" value="offset & vtrim"
-                    onclick="modulesSetProperties(['offset', 'vtrim', 'baseSpeed']);" />
-                <input type="button" class="button" value="supported characters"
-                    onclick="modulesSetProperties(['characterMap']);" />
-            </div>
         </div>
         <div class="card" style="display:none" id="calibration_card">
             <div class="cardTitle">Calibration Wizard</div>
@@ -91,16 +209,16 @@
                 <div class="cardButtonRowTitle">
                     Join Access Point:
                 </div>
-                <input class="" id="join_ssid" placeholder="Wi-Fi SSID" />
-                <input class="" id="join_pwd" placeholder="Wi-Fi Password" type="password" />
+                <input id="join_ssid" placeholder="Wi-Fi SSID" />
+                <input id="join_pwd" placeholder="Wi-Fi Password" type="password" />
                 <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('join')">
             </div>
             <div class="cardButtonRow">
                 <div class="cardButtonRowTitle">
                     Host Access Point:
                 </div>
-                <input class="" id="host_ssid" placeholder="Wi-Fi SSID" />
-                <input class="" id="host_pwd" placeholder="Wi-Fi Password" type="password" />
+                <input id="host_ssid" placeholder="Wi-Fi SSID" />
+                <input id="host_pwd" placeholder="Wi-Fi Password" type="password" />
                 <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('host')">
             </div>
         </div>

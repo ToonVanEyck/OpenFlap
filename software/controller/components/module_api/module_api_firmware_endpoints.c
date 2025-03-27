@@ -3,9 +3,9 @@
 #include "display.h"
 #include "esp_check.h"
 #include "esp_log.h"
+#include "firmware_update_property.h"
 #include "module.h"
 #include "property_handler_command.h"
-#include "property_handler_firmware.h"
 #include "webserver.h"
 
 #define TAG "MODULE_FIRMWARE_ENDPOINTS"
@@ -18,7 +18,7 @@ esp_err_t module_api_firmware_handler(httpd_req_t *req)
     display_t *display = (display_t *)req->user_ctx;
 
     const chain_comm_binary_attributes_t *firmware_write_attr =
-        chain_comm_property_write_attributes_get(PROPERTY_FIRMWARE);
+        chain_comm_property_write_attributes_get(PROPERTY_FIRMWARE_UPDATE);
 
     /* Get the chunk size. The chain comm message prefixes 2 bytes to send the address of the send flash chunk.  */
     size_t chunk_size = firmware_write_attr->static_property_size - 2;
@@ -44,10 +44,10 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
         module_t *module = display_module_get(display, i);
 
         /* Set the firmware page. */
-        property_handler_firmware_set(module, data_offset / data_len, (uint8_t *)data, data_len);
+        firmware_update_property_set(module, data_offset / data_len, (uint8_t *)data);
 
         /* Indicate that the firmware property has changed and needs to be written. */
-        module_property_indicate_desynchronized(module, PROPERTY_FIRMWARE);
+        module_property_indicate_desynchronized(module, PROPERTY_FIRMWARE_UPDATE);
 
         /* All data has been transmitted, reboot the modules. */
         if (data_offset + data_len == total_data_len) {

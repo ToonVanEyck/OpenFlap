@@ -13,7 +13,7 @@
  * \brief Display structure.
  */
 typedef struct {
-    module_t *modules;               /**< Array of modules. */
+    module_t **modules;              /**< Array of modules. */
     uint16_t module_count;           /**< Number of modules. */
     EventGroupHandle_t event_handle; /**< Display event group handle. */
     /** Indicates witch properties need to be synchronized by reading actual modules. */

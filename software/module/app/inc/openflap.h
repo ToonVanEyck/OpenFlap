@@ -40,10 +40,11 @@ typedef enum motorMode_tag {
 /**
  * \brief Calculate a PWM duty cycle based on the distance between the setpoint and the encoder position.
  *
+ * \param[in] cfg The motion configuration parameters.
  * \param[in] distance The distance between the setpoint and the encoder position.
  * \return The calculated PWM duty cycle.
  */
-uint8_t pwmDutyCycleCalc(uint8_t distance);
+uint8_t pwmDutyCycleCalc(const openflap_motion_config_t *cfg, uint8_t distance);
 
 /**
  * \brief Map the index to a range between 0 and #SYMBOL_CNT.

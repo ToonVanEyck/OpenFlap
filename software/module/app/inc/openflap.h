@@ -31,10 +31,11 @@ typedef struct openflap_ctx_tag {
 
 /** Motor operation modes. */
 typedef enum motorMode_tag {
-    MOTOR_IDLE,    /**< Let the motor idle / freewheel. */
-    MOTOR_BRAKE,   /**< Actively brake the motor. */
-    MOTOR_FORWARD, /**< Run the motor forwards. */
-    MOTOR_REVERSE, /**< Run the motor in reverse. */
+    MOTOR_IDLE,               /**< Let the motor idle / freewheel. */
+    MOTOR_BRAKE,              /**< Actively brake the motor. */
+    MOTOR_FORWARD,            /**< Run the motor forwards. */
+    MOTOR_REVERSE,            /**< Run the motor in reverse. */
+    MOTOR_FORWARD_WITH_BREAK, /**< Run the motor forwards. But add a percentage of braking to allow slowing down. */
 } motorMode_t;
 
 /**

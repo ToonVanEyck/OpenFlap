@@ -69,11 +69,6 @@ void debug_io_log_set_level(log_lvl_t log_lvl);
 log_lvl_t debug_io_log_get_level(void);
 
 /**
- * \brief Disable the debug IO.
- */
-void debug_io_log_disable(void);
-
-/**
  * \brief Enable the debug IO.
  * The last configured log level will be used.
  */

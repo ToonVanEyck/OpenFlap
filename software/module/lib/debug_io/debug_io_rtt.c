@@ -85,18 +85,13 @@ void debug_io_log_error(const char *fmt, ...)
 
 void debug_io_log_set_level(log_lvl_t log_lvl)
 {
+    prev_log_lvl   = active_log_lvl;
     active_log_lvl = log_lvl;
-    prev_log_lvl   = log_lvl;
 }
 
 log_lvl_t debug_io_log_get_level(void)
 {
     return active_log_lvl;
-}
-
-void debug_io_log_disable(void)
-{
-    active_log_lvl = LOG_DISBALED;
 }
 
 void debug_io_log_restore(void)

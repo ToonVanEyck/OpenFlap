@@ -192,7 +192,8 @@ void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx)
                 chain_comm_state_change(ctx, rxSize);
                 break;
             case property_writeSequential:
-                chain_comm_state_change(ctx, rxSize);
+                /* Skip to transparent mode when no property is defined. */
+                chain_comm_state_change(ctx, ctx->header.property ? rxSize : writeSeq_rxToTx);
                 break;
             default:
                 chain_comm_state_change(ctx, rxHeader);

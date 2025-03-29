@@ -5,18 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "py32 Debug",
+            "name": "py32 Debug Clean",
             "cwd": "${workspaceFolder}/software/module",
             "loadFiles": [
-                "${workspaceFolder}/build/module/bin/OpenFlap_Module_BtlAppCfg.hex"
+                "${workspaceFolder}/build/module/bin/OpenFlap_Module_App.hex"
             ],
             "symbolFiles": [
                 "${workspaceFolder}/build/module/app/OpenFlap_Module_App.elf",
                 "${workspaceFolder}/build/module/btl/OpenFlap_Module_Btl.elf",
             ],
-            // "sourceFileMap": {
-            //     "/workspace/software/common/chain_comm_abi/src": "${workspaceFolder}/../common/chain_comm_abi/src"
-            // }
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "pyocd",
@@ -25,9 +22,26 @@
             "svdFile": "${workspaceFolder}/software/module/py32f003xx.svd",
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
-            // "postLaunchCommands": [
-            // "set substitute-path ${workspaceFolder}/software/common/chain_comm_abi/src ${workspaceFolder}/../common/chain_comm_abi/src",
-            // ] 
+            "preLaunchTask": "build",
+        },
+        {
+            "name": "py32 Debug Keep Cfg",
+            "cwd": "${workspaceFolder}/software/module",
+            "loadFiles": [
+                "${workspaceFolder}/build/module/bin/OpenFlap_Module_BtlAppCfg.hex"
+            ],
+            "symbolFiles": [
+                "${workspaceFolder}/build/module/app/OpenFlap_Module_App.elf",
+                "${workspaceFolder}/build/module/btl/OpenFlap_Module_Btl.elf",
+            ],
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "pyocd",
+            "targetId": "PY32F003x8",
+            "cmsisPack": "${workspaceFolder}/software/module/Puya.PY32F0xx_DFP.1.1.7.pack",
+            "svdFile": "${workspaceFolder}/software/module/py32f003xx.svd",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
             "preLaunchTask": "build",
         },
         {

@@ -81,7 +81,7 @@ int main(void)
     debug_io_log_info("Compilation Date: %s %s\n", __DATE__, __TIME__);
 
     /* Start homing sequence at maximum speed. */
-    openflap_ctx.flap_position = SYMBOL_CNT; /* Invalid position. */
+    openflap_ctx.flap_position = 0;          /* Invalid position. */
     openflap_ctx.flap_setpoint = 0;          /* Setpoint zero means, go to the first character in the character map. */
     openflap_ctx.flap_distance = SYMBOL_CNT; /* Speed is based on distance between setpoint and position. We initialize
                                                 it with the maximum value. */

@@ -34,5 +34,14 @@ void configPrint(openflap_config_t *config)
         debug_io_log_info("%s ", &config->symbol_set[i]);
         HAL_Delay(d);
     }
+    debug_io_log_info("Minimum rotation: %d\n", config->minimum_rotation);
+    HAL_Delay(d);
+    debug_io_log_info("Foreground Color: %d\n", config->color.foreground);
+    HAL_Delay(d);
+    debug_io_log_info("Background Color: %d\n", config->color.background);
+    HAL_Delay(d);
+    debug_io_log_info("Motion config: %d %d %d %d\n", config->motion.min_pwm, config->motion.max_pwm,
+                      config->motion.min_ramp_distance, config->motion.max_ramp_distance);
+    HAL_Delay(d);
     debug_io_log_info("\n");
 }

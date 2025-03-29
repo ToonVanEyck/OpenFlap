@@ -51,10 +51,6 @@ void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
     /* Update the old_pattern. */
     old_pattern = new_pattern;
 
-    if (qem == 0) {
-        return;
-    }
-
     if (qem == 2) {
         debug_io_log_error("Invalid QEM value: %d\n", qem);
         return;
@@ -157,7 +153,7 @@ void setMotor(motorMode_t mode, uint8_t speed)
             /* This PWM scheme actively breaks (HH) for one part of the period, rotates forward (HL) for an equal part
              * of the period and then remains idle (LL) for the rest of the period. */
             __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 2*speed;
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 2 * speed);
             break;
         case MOTOR_BRAKE:
             /* Set MOTOR A & B high, braking the motor. */

@@ -51,7 +51,6 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
 
         /* All data has been transmitted, reboot the modules. */
         if (data_offset + data_len == total_data_len) {
-            ESP_LOGI(TAG, "Module OTA complete. Rebooting modules...");
             property_handler_command_set(module, CMD_REBOOT);
             module_property_indicate_desynchronized(module, PROPERTY_COMMAND);
         }
@@ -60,5 +59,23 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
     /* Notify that we have updated the display modules. */
     display_event_desynchronized(display);
     /* Wait for synchronisation event. */
-    return display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000));
+    ESP_RETURN_ON_ERROR(display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000)), TAG,
+                        "Failed to wait for synchronisation event");
+
+    if (data_offset + data_len == total_data_len) {
+        ESP_LOGI(TAG, "Module OTA complete. Rebooting modules...");
+        for (uint16_t i = 0; i < display_size; i++) {
+            module_t *module = display_module_get(display, i);
+            /* All data has been transmitted, reboot the modules. */
+            property_handler_command_set(module, CMD_REBOOT);
+            module_property_indicate_desynchronized(module, PROPERTY_COMMAND);
+        }
+        /* Notify that we have updated the display modules. */
+        display_event_desynchronized(display);
+        /* Wait for synchronisation event. */
+        ESP_RETURN_ON_ERROR(display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000)), TAG,
+                            "Failed to wait for synchronisation event");
+    }
+
+    return ESP_OK;
 }

@@ -23,6 +23,6 @@ const openflap_config_t __attribute__((section(".config"))) config = {
     .ota_completed    = false,
     .minimum_rotation = 1,
     .color            = {0xFFFFFF, 0x000000}, // White on black
-    .motion           = {40, 150, 4, 15},
+    .motion           = {70, 150, 5, 10},
 };
 #endif

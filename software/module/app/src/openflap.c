@@ -123,8 +123,7 @@ void setMotorFromDistance(openflap_ctx_t *ctx)
 {
     if (ctx->flap_distance > 0) {
         ctx->motor_backspin_timeout_tick = 0;
-        setMotor((ctx->flap_distance == 1) ? MOTOR_FORWARD_WITH_BREAK : MOTOR_FORWARD,
-                 pwmDutyCycleCalc(&ctx->config.motion, ctx->flap_distance));
+        setMotor(MOTOR_FORWARD_WITH_BREAK, pwmDutyCycleCalc(&ctx->config.motion, ctx->flap_distance));
     } else {
         if (ctx->motor_backspin_timeout_tick == 0) {
             ctx->motor_backspin_timeout_tick = HAL_GetTick() + MOTOR_BACKSPIN_DURATION_MS;
@@ -152,8 +151,8 @@ void setMotor(motorMode_t mode, uint8_t speed)
         case MOTOR_FORWARD_WITH_BREAK:
             /* This PWM scheme actively breaks (HH) for one part of the period, rotates forward (HL) for an equal part
              * of the period and then remains idle (LL) for the rest of the period. */
-            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 2 * speed);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0xff - speed);
+            __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0xff);
             break;
         case MOTOR_BRAKE:
             /* Set MOTOR A & B high, braking the motor. */

@@ -64,6 +64,11 @@ def extrude_path(doc, pathObj, length, reversed=False, offset=0):
     return extrudeObj
 
 
+def shapes_are_equalish(shape1, shape2):
+    # Check if the shapes are equalish (i.e., they have the same volume)
+    return abs(shape1.Volume - shape2.Volume) < 0.000001
+
+
 def combine_extrudes(doc, originalPaths):
     # When importing an svg into freecad, freecad imports sub-paths as a separate object.
     # For example, an "O" character will be imported as 2 separate paths. One for the outer circle and one for the inner circle.
@@ -78,18 +83,18 @@ def combine_extrudes(doc, originalPaths):
 
     # Get the non intersecting and intersecting objects.
     for obj1, obj2 in combinations(originalPaths, 2):
-        intersectVolume = obj1.Shape.common(obj2.Shape).Volume
-        if intersectVolume > 0:
-            if intersectVolume == obj1.Shape.Volume:
+        intersectShape = obj1.Shape.common(obj2.Shape)
+        if intersectShape.Volume > 0:
+            if shapes_are_equalish(intersectShape, obj1.Shape):
                 combineObjs.add(obj2)
                 cutObjs.add(obj1)
-            elif intersectVolume == obj2.Shape.Volume:
+            elif shapes_are_equalish(intersectShape, obj2.Shape):
                 combineObjs.add(obj1)
                 cutObjs.add(obj2)
             else:
                 print(
                     Fore.RED
-                    + "ERROR: intersectVolume is not equal to any of the volumes"
+                    + "ERROR: IntersectShape is not equal to any of the original shapes."
                     + Style.RESET_ALL
                 )
                 exit(1)

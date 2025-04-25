@@ -20,7 +20,7 @@ BUILD_DIR=${BASE_DIR}/build/mechanical
 model="$SOURCE_DIR/openflap_cad_model.FCStd"
 
 # Declare bodies
-bodies=("shell" "core" "short_hub" "long_hub" "flap_assembly_tool" "flap_assembly_guide")
+bodies=("shell" "core" "short_hub" "long_hub" "flap_assembly_tool" "flap_assembly_guide" "french_cleat_mount")
 
 # Run the export python script
 $SOURCE_DIR/export_stl.py ${model} ${bodies[@]} --output-dir $BUILD_DIR ${dry_run}

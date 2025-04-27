@@ -65,6 +65,8 @@ function moduleSettingsFromModule(template, module) {
     let motion_maximum_speed_element = module_settings.querySelector("#module_motion_maximum_speed_" + i)
     let motion_ramp_start_element = module_settings.querySelector("#module_motion_ramp_start_" + i)
     let motion_ramp_stop_element = module_settings.querySelector("#module_motion_ramp_stop_" + i)
+    let ir_threshold_upper_element = module_settings.querySelector("#module_ir_threshold_upper_" + i)
+    let ir_threshold_lower_element = module_settings.querySelector("#module_ir_threshold_lower_" + i)
     let minimum_rotation_element = module_settings.querySelector("#module_minimum_rotation_" + i)
     let color_foreground_element = module_settings.querySelector("#module_color_foreground_" + i)
     let color_background_element = module_settings.querySelector("#module_color_background_" + i)
@@ -82,6 +84,8 @@ function moduleSettingsFromModule(template, module) {
     motion_maximum_speed_element.value = module.motion.speed_max;
     motion_ramp_start_element.value = module.motion.ramp_start;
     motion_ramp_stop_element.value = module.motion.ramp_stop;
+    ir_threshold_upper_element.value = module.ir_threshold.upper;
+    ir_threshold_lower_element.value = module.ir_threshold.lower;
     minimum_rotation_element.value = module.minimum_rotation;
     color_foreground_element.value = module.color.foreground;
     color_background_element.value = module.color.background;
@@ -94,6 +98,8 @@ function moduleSettingsFromModule(template, module) {
     motion_maximum_speed_element.onchange = () => updateSettingsField(motion_maximum_speed_element);
     motion_ramp_start_element.onchange = () => updateSettingsField(motion_ramp_start_element);
     motion_ramp_stop_element.onchange = () => updateSettingsField(motion_ramp_stop_element);
+    ir_threshold_upper_element.onchange = () => updateSettingsField(ir_threshold_upper_element);
+    ir_threshold_lower_element.onchange = () => updateSettingsField(ir_threshold_lower_element);
     minimum_rotation_element.onchange = () => updateSettingsField(minimum_rotation_element);
     color_foreground_element.onchange = () => updateSettingsField(color_foreground_element);
     color_background_element.onchange = () => updateSettingsField(color_background_element);
@@ -128,6 +134,13 @@ function moduleSettingsToModule(i) {
         json.motion.speed_max = parseInt(motion_maximum_speed_element.value);
         json.motion.ramp_start = parseInt(motion_ramp_start_element.value);
         json.motion.ramp_stop = parseInt(motion_ramp_stop_element.value);
+    }
+    let ir_threshold_upper_element = module_settings.querySelector("#module_ir_threshold_upper_" + i)
+    let ir_threshold_lower_element = module_settings.querySelector("#module_ir_threshold_lower_" + i)
+    if (getCheckboxFromSetting(ir_threshold_upper_element).checked) {
+        json.ir_threshold = json.ir_threshold || {};
+        json.ir_threshold.upper = parseInt(ir_threshold_upper_element.value);
+        json.ir_threshold.lower = parseInt(ir_threshold_lower_element.value);
     }
     let minimum_rotation_element = module_settings.querySelector("#module_minimum_rotation_" + i)
     if (getCheckboxFromSetting(minimum_rotation_element).checked) {

@@ -47,6 +47,7 @@ typedef struct {
     PROPERTY(PROPERTY_COLOR, "color", PROP_ATTR_STATIC(6), PROP_ATTR_STATIC(6))                                        \
     PROPERTY(PROPERTY_MOTION, "motion", PROP_ATTR_STATIC(4), PROP_ATTR_STATIC(4))                                      \
     PROPERTY(PROPERTY_MINIMUM_ROTATION, "minimum_rotation", PROP_ATTR_STATIC(1), PROP_ATTR_STATIC(1))                  \
+    PROPERTY(PROPERTY_IR_THRESHOLD, "ir_threshold", PROP_ATTR_STATIC(4), PROP_ATTR_STATIC(4))                          \
     PROPERTY(PROPERTIES_MAX, NULL, PROP_ATTR_NONE(), PROP_ATTR_NONE())
 
 typedef enum __attribute__((__packed__)) { MODULE_PROPERTY(GENERATE_PROPERTY_ENUM) } property_id_t;

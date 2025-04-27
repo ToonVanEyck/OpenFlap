@@ -11,6 +11,7 @@ idf_component_register(
         "property_handlers/minimum_rotation_property.c"
         "property_handlers/color_property.c"
         "property_handlers/motion_property.c"
+        "property_handlers/ir_threshold_property.c"
     INCLUDE_DIRS "include"
     REQUIRES json chain_comm_abi module)
 

@@ -61,6 +61,12 @@ typedef struct {
     uint8_t distance_ramp_stop;  /**< Use maximum speed when distance is equal or above the value. */
 } motion_property_t;
 
+/** IR threshold property. */
+typedef struct {
+    int16_t lower; /**< Lower limit of the IR threshold. */
+    int16_t upper; /**< Upper limit of the IR threshold. */
+} ir_threshold_property_t;
+
 /** Minimum rotation property. */
 typedef uint8_t minimum_rotation_property_t;
 
@@ -78,6 +84,7 @@ typedef struct {
     color_property_t color;                        /**< Color property. */
     motion_property_t motion;                      /**< Motion property. */
     minimum_rotation_property_t minimum_rotation;  /**< Minimum rotation property. */
+    ir_threshold_property_t ir_threshold;          /**< IR threshold property. */
     /** Indicates witch properties need to be synchronized by writing to actual modules. */
     uint64_t sync_properties_write_seq_required;
 } module_t;

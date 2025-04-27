@@ -11,6 +11,7 @@ extern const property_handler_t PROPERTY_HANDLER_FIRMWARE_UPDATE;
 extern const property_handler_t PROPERTY_HANDLER_MINIMUM_ROTATION;
 extern const property_handler_t PROPERTY_HANDLER_COLOR;
 extern const property_handler_t PROPERTY_HANDLER_MOTION;
+extern const property_handler_t PROPERTY_HANDLER_IR_THRESHOLD;
 
 const property_handler_t *property_handler_get_by_id(property_id_t id)
 {
@@ -18,7 +19,7 @@ const property_handler_t *property_handler_get_by_id(property_id_t id)
         &PROPERTY_HANDLER_OFFSET,          &PROPERTY_HANDLER_CHARACTER,        &PROPERTY_HANDLER_CHARACTER_SET,
         &PROPERTY_HANDLER_COMMAND,         &PROPERTY_HANDLER_MODULE_INFO,      &PROPERTY_HANDLER_FIRMWARE_VERSION,
         &PROPERTY_HANDLER_FIRMWARE_UPDATE, &PROPERTY_HANDLER_MINIMUM_ROTATION, &PROPERTY_HANDLER_COLOR,
-        &PROPERTY_HANDLER_MOTION,
+        &PROPERTY_HANDLER_MOTION,          &PROPERTY_HANDLER_IR_THRESHOLD,
     };
 
     for (size_t i = 0; i < sizeof(PROPERTY_HANDLERS) / sizeof(PROPERTY_HANDLERS[0]); i++) {

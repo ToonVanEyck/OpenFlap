@@ -149,6 +149,29 @@ void motion_property_get(uint8_t *buf, uint16_t *size)
     buf[3] = openflap_ctx->config.motion.max_ramp_distance;
 }
 
+void ir_threshold_property_set(uint8_t *buf, uint16_t *size)
+{
+    uint16_t lower = (uint16_t)buf[0] << 8 | (uint16_t)buf[1];
+    uint16_t upper = (uint16_t)buf[2] << 8 | (uint16_t)buf[3];
+    if (openflap_ctx->config.ir_threshold.lower == lower && openflap_ctx->config.ir_threshold.upper == upper) {
+        return;
+    }
+    if (lower > upper) {
+        return;
+    }
+    openflap_ctx->config.ir_threshold.lower = lower;
+    openflap_ctx->config.ir_threshold.upper = upper;
+    openflap_ctx->store_config              = true;
+}
+
+void ir_threshold_property_get(uint8_t *buf, uint16_t *size)
+{
+    buf[0] = openflap_ctx->config.ir_threshold.lower >> 8;
+    buf[1] = openflap_ctx->config.ir_threshold.lower;
+    buf[2] = openflap_ctx->config.ir_threshold.upper >> 8;
+    buf[3] = openflap_ctx->config.ir_threshold.upper;
+}
+
 void property_handlers_init(openflap_ctx_t *ctx)
 {
     openflap_ctx = ctx;
@@ -182,4 +205,7 @@ void property_handlers_init(openflap_ctx_t *ctx)
 
     openflap_ctx->chain_ctx.property_handler[PROPERTY_MOTION].set = motion_property_set;
     openflap_ctx->chain_ctx.property_handler[PROPERTY_MOTION].get = motion_property_get;
+
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_IR_THRESHOLD].set = ir_threshold_property_set;
+    openflap_ctx->chain_ctx.property_handler[PROPERTY_IR_THRESHOLD].get = ir_threshold_property_get;
 }

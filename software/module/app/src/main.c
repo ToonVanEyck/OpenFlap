@@ -3,6 +3,7 @@
 #include "config.h"
 #include "openflap.h"
 #include "property_handlers.h"
+#include "stepper_driver.h"
 #include "uart_driver.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -17,6 +18,9 @@
 /** The period of the encoder readings when the motor is active. */
 #define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1)
 
+#define STEPPER_PULE_MIN_MS  (2)  /**< The minimum duration of a stepper pulse. */
+#define STEPPER_PULSE_MAX_MS (10) /**< The maximum duration of a stepper pulse. */
+
 /** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
 #define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
 
@@ -24,24 +28,12 @@
 #define VERSION "not found"
 #endif
 
-#define STEPPER_A_PLUS  GPIOB, GPIO_PIN_5
-#define STEPPER_A_MINUS GPIOA, GPIO_PIN_6
-#define STEPPER_B_PLUS  GPIOF, GPIO_PIN_1
-#define STEPPER_B_MINUS GPIOF, GPIO_PIN_0
-
-static uint8_t stepper_sequence[8]    = {0b0011, 0b0110, 0b1100, 0b1001};
-static int16_t stepper_step_period_us = 50;
-static bool stepper_enabled           = false;
-static bool stepper_direction_cw      = false;
-
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef AdcHandle;
 ADC_ChannelConfTypeDef sConfig;
 uint32_t aADCxConvertedData[ENCODER_CHANNEL_CNT] = {0};
 
 TIM_HandleTypeDef Tim1Handle; // ADC/IR timer
-
-TIM_HandleTypeDef motorPwmHandle; // PWM
 
 UART_HandleTypeDef UartHandle;
 
@@ -54,6 +46,10 @@ static uart_driver_ctx_t uart_driver;
 static bool debug_mode        = false;
 static bool print_encoder_adc = false;
 
+static stepper_driver_ctx_t stepper_ctx;
+static uint32_t stepper_rps_x10 = 0;
+static bool stepper_enabled     = false;
+
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,6 +60,8 @@ static void APP_PwmInit(void);
 static void APP_AdcConfig(void);
 static void APP_DmaInit(void);
 static void APP_UartInit(void);
+
+static void stepper_set_pins(stepper_driver_ctx_t *ctx, bool a_p, bool a_n, bool b_p, bool b_n);
 
 int main(void)
 {
@@ -83,6 +81,10 @@ int main(void)
 
     uart_driver_init(&uart_driver, &UartHandle, uart_rx_rb_buff, RB_BUFF_SIZE, uart_tx_rb_buff, RB_BUFF_SIZE);
 
+    stepper_driver_init(&stepper_ctx, 100, 192, stepper_set_pins, NULL);
+    stepper_driver_degrees_rotate(&stepper_ctx, STEPPER_DRIVER_DEGREES_INFINITY);
+    stepper_driver_speed_set(&stepper_ctx, 50);
+
     chain_comm_init(&openflap_ctx.chain_ctx, &uart_driver);
     property_handlers_init(&openflap_ctx);
 
@@ -98,11 +100,15 @@ int main(void)
 
     uint8_t new_position = 0;
     int rtt_key;
-    int16_t speed = 0;
+    volatile int override_key = 0;
     while (1) {
 
         /* Receive commands from debug_io. */
         rtt_key = debug_io_get();
+        if (override_key > 0) {
+            rtt_key      = override_key;
+            override_key = 0;
+        }
         if (rtt_key > 0) {
             debug_io_log_debug("received command:  %c\n", (char)rtt_key);
             switch (rtt_key) {
@@ -118,31 +124,30 @@ int main(void)
                     debug_io_log_info("%s Debug Mode\n", debug_mode ? "Entering" : "Exiting");
                     break;
                 case '8':
-                    speed += 5;
-                    stepper_step_period_us += 1;
-                    if (stepper_step_period_us > 50) {
-                        stepper_step_period_us = 50;
+                    if (stepper_rps_x10 < 20) {
+                        stepper_rps_x10++;
                     }
-                    debug_io_log_info("Speed: %d\n", stepper_step_period_us);
+                    stepper_driver_speed_set(&stepper_ctx, stepper_rps_x10);
+                    debug_io_log_info("rps: %d,%d\n", stepper_rps_x10 / 10, stepper_rps_x10 % 10);
                     break;
                 case '2':
-                    speed -= 5;
-                    stepper_step_period_us -= 1;
-                    if (stepper_step_period_us < 0) {
-                        stepper_step_period_us = 0;
+                    if (stepper_rps_x10 > 0) {
+                        stepper_rps_x10--;
                     }
-                    debug_io_log_info("Speed: %d\n", stepper_step_period_us);
+                    stepper_driver_speed_set(&stepper_ctx, stepper_rps_x10);
+                    debug_io_log_info("rps: %d,%d\n", stepper_rps_x10 / 10, stepper_rps_x10 % 10);
                     break;
                 case '4':
-                    stepper_direction_cw = false;
+                    stepper_driver_dir_set(&stepper_ctx, STEPPER_DRIVER_DIR_CCW);
                     debug_io_log_info("Direction: CCW\n");
                     break;
                 case '6':
-                    stepper_direction_cw = true;
+                    stepper_driver_dir_set(&stepper_ctx, STEPPER_DRIVER_DIR_CW);
                     debug_io_log_info("Direction: CW\n");
                     break;
                 case '5':
                     stepper_enabled = !stepper_enabled;
+                    stepper_driver_degrees_rotate(&stepper_ctx, stepper_enabled ? STEPPER_DRIVER_DEGREES_INFINITY : 0);
                     debug_io_log_info("%s Stepper\n", stepper_enabled ? "Enabling" : "Disabling");
                     break;
             }
@@ -168,16 +173,16 @@ int main(void)
 
         if (!debug_mode) {
             /* Set the motor speed based on the distance between the current and target flap. */
-            setMotorFromDistance(&openflap_ctx);
+            // setMotorFromDistance(&openflap_ctx);
             // motorIdle();
         } else {
-            if (speed < 0) {
-                motorReverse(-speed);
-            } else if (speed > 0) {
-                motorForward(speed);
-            } else {
-                motorBrake();
-            }
+            // if (speed < 0) {
+            //     motorReverse(-speed);
+            // } else if (speed > 0) {
+            //     motorForward(speed);
+            // } else {
+            //     motorBrake();
+            // }
         }
 
         // /* Communication status. */
@@ -229,6 +234,16 @@ static void APP_GpioConfig(void)
     GPIO_InitStruct.Pull  = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(DEBUG_GPIO_PORT, &GPIO_InitStruct);
+
+    /* Configure stepper motor pins. */
+    GPIO_InitStruct.Pin   = STEPPER_GPIO_A_P_PIN | STEPPER_GPIO_A_N_PIN | STEPPER_GPIO_B_P_PIN | STEPPER_GPIO_B_N_PIN;
+    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull  = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(STEPPER_GPIO_PORT, &GPIO_InitStruct);
+    HAL_GPIO_WritePin(STEPPER_GPIO_PORT,
+                      STEPPER_GPIO_A_P_PIN | STEPPER_GPIO_A_N_PIN | STEPPER_GPIO_B_P_PIN | STEPPER_GPIO_B_N_PIN,
+                      GPIO_PIN_RESET); /* Disable stepper motor. */
 }
 
 static void APP_AdcConfig(void)
@@ -291,38 +306,6 @@ static void APP_TimerInit(void)
     }
 }
 
-static void APP_PwmInit(void)
-{
-    /* 24MHz / ( 255 x 466 x 2 ) = +/- 100Hz */
-    motorPwmHandle.Instance           = TIM3;
-    motorPwmHandle.Init.Period        = 255 - 1;
-    motorPwmHandle.Init.Prescaler     = 466 - 1;
-    motorPwmHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
-    motorPwmHandle.Init.CounterMode   = TIM_COUNTERMODE_UP;
-    if (HAL_TIM_PWM_Init(&motorPwmHandle) != HAL_OK) {
-        APP_ErrorHandler();
-    }
-
-    TIM_MasterConfigTypeDef sMasterConfig;
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
-    HAL_TIMEx_MasterConfigSynchronization(&motorPwmHandle, &sMasterConfig);
-
-    TIM_OC_InitTypeDef sConfigOC;
-    sConfigOC.OCMode     = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse      = 0;
-    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-
-    // Configure channel 1
-    HAL_TIM_PWM_ConfigChannel(&motorPwmHandle, &sConfigOC, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&motorPwmHandle, TIM_CHANNEL_1);
-
-    // Configure channel 2
-    HAL_TIM_PWM_ConfigChannel(&motorPwmHandle, &sConfigOC, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&motorPwmHandle, TIM_CHANNEL_2);
-}
-
 static void APP_DmaInit(void)
 {
     HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 3, 0);
@@ -350,19 +333,15 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_RESET);
 
     if (print_encoder_adc) {
-        debug_io_log_debug("ABZ: %04ld %04ld %04ld\n", aADCxConvertedData[ENCODER_CHANNEL_A],
-                           aADCxConvertedData[ENCODER_CHANNEL_B], aADCxConvertedData[ENCODER_CHANNEL_Z]);
+        debug_io_log_debug("Z: %04ld\n", aADCxConvertedData[ENCODER_CHANNEL_Z]);
     }
 
     /* Update encoder position. */
-    encoderPositionUpdate(&openflap_ctx, aADCxConvertedData);
+    // encoderPositionUpdate(&openflap_ctx, aADCxConvertedData);
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) /* 100us timer. */
 {
-    static int8_t stepper_sequence_idx = 0;
-    static int16_t stepper_period_cnt  = 0;
-
     if (htim->Instance == TIM1) {
         openflap_ctx.ir_tick_cnt++;
         uint16_t ir_period = (debug_mode || openflap_ctx.motor_active) ? IR_ACTIVE_PERIOD_MS : IR_IDLE_PERIOD_MS;
@@ -371,41 +350,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             if (HAL_ADC_Start_DMA(&AdcHandle, aADCxConvertedData, ENCODER_CHANNEL_CNT) != HAL_OK) {
                 APP_ErrorHandler();
             }
-
             /* Power IR led's. */
         } else if (openflap_ctx.ir_tick_cnt >= ir_period) {
             openflap_ctx.ir_tick_cnt = 0;
             HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_SET);
         }
 
-        // motor drive
-        if (stepper_enabled) {
-            if (stepper_period_cnt == 0) {
-                if (stepper_direction_cw) {
-                    stepper_sequence_idx++;
-                    if (stepper_sequence_idx >= 4) {
-                        stepper_sequence_idx = 0;
-                    }
-                } else {
-                    stepper_sequence_idx--;
-                    if (stepper_sequence_idx < 0) {
-                        stepper_sequence_idx = 3;
-                    }
-                }
-                HAL_GPIO_WritePin(STEPPER_A_PLUS, stepper_sequence[stepper_sequence_idx] & 0x01);
-                HAL_GPIO_WritePin(STEPPER_B_PLUS, (stepper_sequence[stepper_sequence_idx] >> 1) & 0x01);
-                HAL_GPIO_WritePin(STEPPER_A_MINUS, (stepper_sequence[stepper_sequence_idx] >> 2) & 0x01);
-                HAL_GPIO_WritePin(STEPPER_B_MINUS, (stepper_sequence[stepper_sequence_idx] >> 3) & 0x01);
-                stepper_period_cnt = stepper_step_period_us;
-            } else {
-                stepper_period_cnt--;
-            }
-        } else {
-            HAL_GPIO_WritePin(STEPPER_A_PLUS, 0);
-            HAL_GPIO_WritePin(STEPPER_A_MINUS, 0);
-            HAL_GPIO_WritePin(STEPPER_B_PLUS, 0);
-            HAL_GPIO_WritePin(STEPPER_B_MINUS, 0);
-        }
+        /* Do stepper tick. */
+        stepper_driver_tick(&stepper_ctx);
     }
 }
 
@@ -429,4 +381,13 @@ void APP_ErrorHandler(void)
 {
     while (1)
         ;
+}
+
+/* Callback for the stepper driver. */
+void stepper_set_pins(stepper_driver_ctx_t *ctx, bool a_p, bool a_n, bool b_p, bool b_n)
+{
+    HAL_GPIO_WritePin(STEPPER_GPIO_PORT, STEPPER_GPIO_A_P_PIN, a_p);
+    HAL_GPIO_WritePin(STEPPER_GPIO_PORT, STEPPER_GPIO_A_N_PIN, a_n);
+    HAL_GPIO_WritePin(STEPPER_GPIO_PORT, STEPPER_GPIO_B_P_PIN, b_p);
+    HAL_GPIO_WritePin(STEPPER_GPIO_PORT, STEPPER_GPIO_B_N_PIN, b_n);
 }

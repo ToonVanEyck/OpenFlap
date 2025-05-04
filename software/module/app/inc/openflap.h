@@ -9,8 +9,6 @@
 #define GIT_VERSION "undefined"
 #endif
 
-extern TIM_HandleTypeDef motorPwmHandle;
-
 /** Struct with helper variables. */
 typedef struct openflap_ctx_tag {
     uint8_t flap_setpoint;                /**< The desired position of flap wheel. */

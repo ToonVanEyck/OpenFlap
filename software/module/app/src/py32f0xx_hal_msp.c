@@ -123,26 +123,4 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
     HAL_GPIO_DeInit(UART_GPIO_PORT, UART_TX_GPIO_PIN | UART_RX_GPIO_PIN);
 }
 
-void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
-{
-    __HAL_RCC_TIM3_CLK_ENABLE(); /* Enable TIM clock */
-
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin       = MOTOR_GPIO_PINS;
-    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull      = GPIO_PULLUP;
-    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
-    HAL_GPIO_Init(MOTOR_GPIO_PORT, &GPIO_InitStruct);
-
-    // HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0); //Not using PWM interrupt
-    // HAL_NVIC_EnableIRQ(TIM3_IRQn);
-}
-
-void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef *htim)
-{
-    __HAL_RCC_TIM3_FORCE_RESET();
-    __HAL_RCC_TIM3_RELEASE_RESET();
-    HAL_GPIO_DeInit(MOTOR_GPIO_PORT, MOTOR_GPIO_PINS);
-}
 /************************ (C) COPYRIGHT Puya *****END OF FILE******************/

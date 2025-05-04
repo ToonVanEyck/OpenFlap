@@ -35,7 +35,7 @@ target_compile_definitions(${App} PUBLIC
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 
-target_link_libraries(${App} PUBLIC debug_io config flash config chain_comm_abi uart_driver) 
+target_link_libraries(${App} PUBLIC debug_io config flash config chain_comm_abi uart_driver stepper_driver) 
 target_link_libraries(${App} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
 target_include_directories(${App} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
 

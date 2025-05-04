@@ -22,22 +22,18 @@
  * \defgroup Absolute encoder IR definitions.
  * @{
  */
-#define ENCODER_CHANNEL_CNT (3) /**< Number of tracks on the encoder. */
+#define ENCODER_CHANNEL_CNT (1) /**< Number of tracks on the encoder. */
 
-#define ENCODER_CHANNEL_A (0) /**< Encoder Channel A. */
-#define ENCODER_CHANNEL_B (2) /**< Encoder Channel B. */
-#define ENCODER_CHANNEL_Z (1) /**< Encoder Channel Z. */
+#define ENCODER_CHANNEL_Z (0) /**< Encoder Channel Z. */
 
 /** List of ADC channels used by the encoder. */
 #define ENCODER_ADC_CHANNEL_LIST                                                                                       \
     ((uint32_t[ENCODER_CHANNEL_CNT]) {                                                                                 \
         ADC_CHANNEL_3,                                                                                                 \
-        ADC_CHANNEL_4,                                                                                                 \
-        ADC_CHANNEL_5,                                                                                                 \
     })
 
-#define ENCODER_ADC_GPIO_PINS (GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5) /**< The pins used for ADC by the encoder. */
-#define ENCODER_ADC_GPIO_PORT (GPIOA)                                /**< ADC port. */
+#define ENCODER_ADC_GPIO_PINS (GPIO_PIN_3) /**< The pins used for ADC by the encoder. */
+#define ENCODER_ADC_GPIO_PORT (GPIOA)      /**< ADC port. */
 #define ENCODER_LED_GPIO_PIN  (GPIO_PIN_2) /**< Single pin driving the IR emitters of the IR sensors. */
 #define ENCODER_LED_GPIO_PORT (GPIOA)      /**< IR emitter GPIO port. */
 /**
@@ -48,8 +44,11 @@
  * \defgroup Motor pin definitions.
  * @{
  */
-#define MOTOR_GPIO_PORT (GPIOA)                   /**< Motor GPIO port. */
-#define MOTOR_GPIO_PINS (GPIO_PIN_6 | GPIO_PIN_7) /**< Motor GPIO pins. */
+#define STEPPER_GPIO_PORT    (GPIOA)    /**< Motor GPIO port. */
+#define STEPPER_GPIO_A_P_PIN GPIO_PIN_4 /**< Stepper Motor Coil A Positive. */
+#define STEPPER_GPIO_A_N_PIN GPIO_PIN_5 /**< Stepper Motor Coil A Negative. */
+#define STEPPER_GPIO_B_P_PIN GPIO_PIN_6 /**< Stepper Motor Coil B Positive. */
+#define STEPPER_GPIO_B_N_PIN GPIO_PIN_7 /**< Stepper Motor Coil B Negative. */
 /**
  * @}
  */

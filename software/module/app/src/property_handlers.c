@@ -3,6 +3,7 @@
 #include "debug_io.h"
 #include "flash.h"
 #include "memory_map.h"
+#include "stepper_driver.h"
 
 static openflap_ctx_t *openflap_ctx = NULL; /* Set during initialization. */
 
@@ -67,9 +68,10 @@ void property_offset_set(uint8_t *buf, uint16_t *size)
     if (openflap_ctx->config.encoder_offset == buf[0]) {
         return;
     }
-    distanceUpdate(openflap_ctx);
     openflap_ctx->config.encoder_offset = buf[0];
     openflap_ctx->store_config          = true;
+    stepper_driver_virtual_step_offset_set(&openflap_ctx->stepper_ctx, openflap_ctx->config.encoder_offset *
+                                                                           STEPPER_STEPS_PER_REVOLUTION / SYMBOL_CNT);
 }
 void property_offset_get(uint8_t *buf, uint16_t *size)
 {
@@ -78,17 +80,17 @@ void property_offset_get(uint8_t *buf, uint16_t *size)
 
 void property_character_set(uint8_t *buf, uint16_t *size)
 {
-    openflap_ctx->flap_setpoint = buf[0];
-    distanceUpdate(openflap_ctx);
-    if (openflap_ctx->flap_distance < openflap_ctx->config.minimum_rotation) {
-        openflap_ctx->extend_revolution = true;
-        openflap_ctx->flap_distance += SYMBOL_CNT;
+    int16_t current_position = stepper_driver_position_get(&openflap_ctx->stepper_ctx);
+    uint16_t distance        = wrapNumberAroundBase(buf[0] - current_position, SYMBOL_CNT);
+    if (distance < openflap_ctx->config.minimum_rotation) {
+        distance += SYMBOL_CNT;
     }
+    stepper_driver_rotate(&openflap_ctx->stepper_ctx, distance);
 }
 
 void property_character_get(uint8_t *buf, uint16_t *size)
 {
-    buf[0] = flapPostionGet(openflap_ctx);
+    buf[0] = (uint8_t)stepper_driver_position_get(&openflap_ctx->stepper_ctx);
 }
 
 void minimum_rotation_property_set(uint8_t *buf, uint16_t *size)

@@ -36,6 +36,7 @@ typedef struct openflap_config_tag {
         uint32_t background;         /**< The background color of the flaps. */
     } color;                         /**< The color of the flaps. */
     openflap_motion_config_t motion; /**< The motion parameters of the flaps. */
+    uint8_t stepper_step_offset;     /**< The offset between the homing mark and a flap position in steps. */
 } openflap_config_t;
 
 /** Load the config form NVM. */

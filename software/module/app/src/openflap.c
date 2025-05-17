@@ -1,12 +1,6 @@
 #include "openflap.h"
 
-#define MOTOR_IDLE_TIMEOUT_MS (500)
 #define COMMS_IDLE_TIMEOUT_MS (75)
-
-/** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (50)
-/** The motor will revers direction with this pwm value after reaching the desired flap. */
-#define MOTOR_BACKSPIN_PWM (125)
 
 uint8_t pwmDutyCycleCalc(const openflap_motion_config_t *cfg, uint8_t distance)
 {
@@ -23,79 +17,19 @@ uint8_t pwmDutyCycleCalc(const openflap_motion_config_t *cfg, uint8_t distance)
            cfg->min_pwm;
 }
 
-// void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data)
-// {
-//     static const uint8_t QEM[16]   = {0, -1, 1, 2, 1, 0, 2, -1, -1, 2, 0, 1, 2, 1, -1, 0};
-//     static const uint8_t IR_MAP[2] = {ENCODER_CHANNEL_A, ENCODER_CHANNEL_B};
-
-//     /* Prevent decrementing the flap position, instead wind up the backspin prevention counter. */
-//     static int8_t backspin_prevention = -SYMBOL_CNT;
-//     /* Prevent jumping back from 1 to zero. */
-//     static bool zero_lockout = false;
-//     /* Encoder increment/decrement is determined based on the old and new pattern. */
-//     static uint8_t old_pattern = 0x00;
-//     uint8_t new_pattern        = old_pattern;
-
-//     /* Digitize the ADC signals using the configured IR thresholds. */
-//     bool zero = adc_data[ENCODER_CHANNEL_Z] < ctx->config.ir_threshold.lower;
-//     for (uint8_t i = 0; i < 2; i++) {
-//         if (adc_data[IR_MAP[i]] > ctx->config.ir_threshold.upper) {
-//             new_pattern &= ~(1 << i);
-//         } else if (adc_data[IR_MAP[i]] < ctx->config.ir_threshold.lower) {
-//             new_pattern |= (1 << i);
-//         }
-//     }
-
-//     int8_t qem = QEM[(old_pattern << 2) | new_pattern];
-
-//     /* Update the old_pattern. */
-//     old_pattern = new_pattern;
-
-//     if (qem == 2) {
-//         debug_io_log_error("Invalid QEM value: %d\n", qem);
-//         return;
-//     }
-
-//     /* Check if we have a zero or full pattern. */
-//     if (zero & !zero_lockout) {
-//         encoderZero(ctx);
-//         backspin_prevention = 0;
-//         zero_lockout        = true;
-//     } else if (backspin_prevention < 0 || qem != 1) {
-//         backspin_prevention += qem; /* Only increment the flap position once the backspin prevention reaches 0. */
-//     } else {
-//         encoderIncrement(ctx);
-//         if (ctx->flap_position > 5) { /* Make sure we are well past 1 so wid dont flipper between 1 and 0. */
-//             zero_lockout = false;
-//         }
-//     }
-// }
-
-void distanceUpdate(openflap_ctx_t *ctx)
+void homingPositionDecode(openflap_ctx_t *ctx, uint32_t *adc_data)
 {
-    uint8_t distance = flapIndexWrapCalc(SYMBOL_CNT + ctx->flap_setpoint - flapPostionGet(ctx));
-    /* Check if a short rotation needs to be extended. */
-    if (ctx->extend_revolution) {
-        if (distance < ctx->config.minimum_rotation) {
-            distance += SYMBOL_CNT;
-        } else {
-            ctx->extend_revolution = false;
+    static uint32_t thresh_hold_cnt = 0;
+    if (adc_data[0] > 200) {
+        if (thresh_hold_cnt > 60) {
+            /* White to Black transition. */
+            ctx->home_found = true;
+            stepper_driver_home_set(&ctx->stepper_ctx);
+            debug_io_log_info("Home!\n");
         }
-    }
-    ctx->flap_distance = distance;
-}
-
-void updateMotorState(openflap_ctx_t *ctx)
-{
-    if (ctx->flap_distance > 0) {
-        ctx->motor_active_timeout_tick = HAL_GetTick() + MOTOR_IDLE_TIMEOUT_MS;
-        if (!ctx->motor_active) {
-            ctx->motor_active = true;
-            debug_io_log_info("Motor Active\n");
-        }
-    } else if (ctx->motor_active && HAL_GetTick() > ctx->motor_active_timeout_tick) {
-        ctx->motor_active = false;
-        debug_io_log_info("Motor Idle\n");
+        thresh_hold_cnt = 0;
+    } else {
+        thresh_hold_cnt++;
     }
 }
 
@@ -119,52 +53,7 @@ void updateCommsState(openflap_ctx_t *ctx)
     }
 }
 
-void setMotorFromDistance(openflap_ctx_t *ctx)
+int32_t wrapNumberAroundBase(int32_t number, int32_t base)
 {
-    if (ctx->flap_distance > 0) {
-        ctx->motor_backspin_timeout_tick = 0;
-        setMotor(MOTOR_FORWARD_WITH_BREAK, pwmDutyCycleCalc(&ctx->config.motion, ctx->flap_distance));
-    } else {
-        if (ctx->motor_backspin_timeout_tick == 0) {
-            ctx->motor_backspin_timeout_tick = HAL_GetTick() + MOTOR_BACKSPIN_DURATION_MS;
-            setMotor(MOTOR_REVERSE, MOTOR_BACKSPIN_PWM);
-        }
-        if (HAL_GetTick() >= ctx->motor_backspin_timeout_tick) {
-            motorBrake();
-        }
-    }
-}
-
-void setMotor(motorMode_t mode, uint8_t speed)
-{
-    switch (mode) {
-        case MOTOR_REVERSE:
-            break;
-        case MOTOR_FORWARD:
-            break;
-        case MOTOR_FORWARD_WITH_BREAK:
-            break;
-        case MOTOR_BRAKE:
-            break;
-        case MOTOR_IDLE:
-        default:
-            break;
-    }
-}
-
-void encoderIncrement(openflap_ctx_t *ctx)
-{
-    ctx->flap_position = flapIndexWrapCalc(ctx->flap_position + 1);
-    distanceUpdate(ctx);
-}
-
-void encoderZero(openflap_ctx_t *ctx)
-{
-    ctx->flap_position = 0;
-    distanceUpdate(ctx);
-}
-
-uint8_t flapPostionGet(openflap_ctx_t *ctx)
-{
-    return flapIndexWrapCalc(ctx->flap_position + ctx->config.encoder_offset);
+    return (((number % base) + base) % base);
 }

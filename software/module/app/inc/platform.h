@@ -49,6 +49,8 @@
 #define STEPPER_GPIO_A_N_PIN GPIO_PIN_5 /**< Stepper Motor Coil A Negative. */
 #define STEPPER_GPIO_B_P_PIN GPIO_PIN_6 /**< Stepper Motor Coil B Positive. */
 #define STEPPER_GPIO_B_N_PIN GPIO_PIN_7 /**< Stepper Motor Coil B Negative. */
+
+#define STEPPER_STEPS_PER_REVOLUTION ((48 * 4) - 4) /**< Number of steps per revolution. */
 /**
  * @}
  */

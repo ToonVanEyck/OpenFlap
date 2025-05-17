@@ -14,6 +14,17 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(DEBUG_IO_RTT_BACKEND 1 CACHE BOOL "Use RTT as debug input output backend")
 
+# Install unity
+# include(FetchContent)
+# set(FETCHCONTENT_QUIET FALSE)
+# FetchContent_Declare(
+#   	unity
+#   	GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
+#   	GIT_TAG cbcd08f # v2.6.1
+# 	GIT_PROGRESS TRUE
+# )
+# FetchContent_MakeAvailable(unity)
+
 # Include the external chain_comm_abi library
 include(ExternalProject)
 ExternalProject_Add(common_chain_comm_abi
@@ -36,6 +47,8 @@ add_subdirectory(lib)
 # Include Puya BSP
 target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
 target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/btl/inc)
+
+# enable_testing()
 
 set(App ${PROJECT_NAME}_App)
 set(Btl ${PROJECT_NAME}_Btl)

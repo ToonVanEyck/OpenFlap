@@ -15,6 +15,7 @@ RUN apt update && apt install -y \
     ruby-full \
     figlet \
     libdbus-1-dev \
+    python3-dev \
     libbsd-dev \
     libglib2.0-0 \
     libsdl2-dev \
@@ -80,8 +81,8 @@ RUN apt install -y clang-format-18
 RUN ln -s /usr/bin/clang-format-18 /usr/bin/clang-format
 RUN rm llvm.sh
 
-# Install codespell
-RUN . /opt/esp/idf/export.sh && pip install codespell
+# Install varouse python packages
+RUN . /opt/esp/idf/export.sh && pip install codespell requests_toolbelt tqdm tabulate
 
 # Install mkdocs
 RUN . /opt/esp/idf/export.sh && pip install mkdocs mkdocs-material mkdocs-same-dir mkdocs-glightbox

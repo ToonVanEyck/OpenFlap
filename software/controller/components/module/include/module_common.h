@@ -75,6 +75,7 @@ typedef uint8_t minimum_rotation_property_t;
  */
 typedef struct {
     firmware_version_property_t *firmware_version; /**< Firmware version property. */
+    uint32_t firmware_crc;                         /**< CRC of the firmware. */
     firmware_update_property_t *firmware_update;   /**< Firmware update property. */
     command_property_t command;                    /**< Command property. */
     module_info_property_t module_info;            /**< Module info property. */

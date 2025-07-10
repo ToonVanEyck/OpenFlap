@@ -73,7 +73,7 @@ function moduleSettingsFromModule(template, module) {
 
     info_column_end_element.innerText = module.module_info.column_end ? "True" : "False";
     info_type_element.innerText = module.module_info.type;
-    version_element.innerText = module.firmware_version.match(/^v\d+\.\d+\.\d+/)[0];
+    version_element.innerText = module.firmware_version.description.match(/^v\d+\.\d+\.\d+/)[0];
     encoder_offset_element.value = module.offset;
     character_element.value = module.character;
     character_set_element.innerText = module.character_set.join("").replace(/ /g, '\u00A0');

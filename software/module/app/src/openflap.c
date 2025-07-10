@@ -123,7 +123,7 @@ void setMotorFromDistance(openflap_ctx_t *ctx)
 {
     if (ctx->flap_distance > 0) {
         ctx->motor_backspin_timeout_tick = 0;
-        setMotor(MOTOR_FORWARD_WITH_BREAK, pwmDutyCycleCalc(&ctx->config.motion, ctx->flap_distance));
+        setMotor(MOTOR_FORWARD /*_WITH_BREAK*/, pwmDutyCycleCalc(&ctx->config.motion, ctx->flap_distance));
     } else {
         if (ctx->motor_backspin_timeout_tick == 0) {
             ctx->motor_backspin_timeout_tick = HAL_GetTick() + MOTOR_BACKSPIN_DURATION_MS;

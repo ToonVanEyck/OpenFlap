@@ -8,17 +8,22 @@
             },
             {
                 "name": "🔨 Build",
-                "command": "cmake --build ${workspaceFolder}/build/module",
+                "command": "cmake --build ${workspaceFolder}/build/module && echo -e \"New firmware CRC: \\\\033[1;35m$(tail -c 4 build/module/bin/OpenFlap_Module_App.bin | xxd -p)\\\\033[0m\"",
                 "terminalName": "bash",
             },
             {
                 "name": "⚡ Flash All",
-                "command": "cmake --build ${workspaceFolder}/build/module --target flash_target",
+                "command": "cmake --build ${workspaceFolder}/build/module --target flash_target && echo -e \"New firmware CRC: \\\\033[1;35m$(tail -c 4 build/module/bin/OpenFlap_Module_App.bin | xxd -p)\\\\033[0m\"",
                 "terminalName": "bash"
             },
             {
                 "name": "⚡ Flash App",
-                "command": "cmake --build ${workspaceFolder}/build/module --target flash_app",
+                "command": "cmake --build ${workspaceFolder}/build/module --target flash_app && echo -e \"New firmware CRC: \\\\033[1;35m$(tail -c 4 build/module/bin/OpenFlap_Module_App.bin | xxd -p)\\\\033[0m\"",
+                "terminalName": "bash"
+            },
+            {
+                "name": " 📡 OTA",
+                "command": "${workspaceFolder}/software/module/local_ota.py ${workspaceFolder}/build/module/bin/OpenFlap_Module_App.bin",
                 "terminalName": "bash"
             },
             {

@@ -20,8 +20,13 @@ static esp_err_t firmware_version_to_json(cJSON **json, const module_t *module)
     assert(json != NULL);
     assert(module != NULL);
 
-    *json = cJSON_CreateString(module->firmware_version->str);
-    ESP_RETURN_ON_FALSE(*json != NULL, ESP_FAIL, PROPERTY_TAG, "Failed to create JSON string");
+    ESP_RETURN_ON_FALSE(cJSON_AddStringToObject(*json, "description", module->firmware_version->str) != NULL, ESP_FAIL,
+                        PROPERTY_TAG, "Failed to create JSON string");
+
+    char crc_str[9] = {0};
+    snprintf(crc_str, sizeof(crc_str), "%08lX", module->firmware_crc);
+    ESP_RETURN_ON_FALSE(cJSON_AddStringToObject(*json, "crc", crc_str) != NULL, ESP_FAIL, PROPERTY_TAG,
+                        "Failed to create JSON string");
 
     return ESP_OK;
 }
@@ -41,7 +46,7 @@ static esp_err_t firmware_version_from_binary(module_t *module, const uint8_t *b
     assert(bin != NULL);
 
     /* Create new firmware version property. */
-    firmware_version_property_t *new_firmware_version = firmware_version_new(bin_size);
+    firmware_version_property_t *new_firmware_version = firmware_version_new(bin_size - 4); /* 4 bytes for the CRC. */
     ESP_RETURN_ON_FALSE(new_firmware_version != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
     /* Free the old data. */
@@ -51,7 +56,16 @@ static esp_err_t firmware_version_from_binary(module_t *module, const uint8_t *b
     module->firmware_version = new_firmware_version;
 
     /* Copy the binary array to the firmware version. */
-    memcpy(module->firmware_version->str, bin, bin_size);
+    memcpy(module->firmware_version->str, bin, bin_size - 4);
+
+    /* Read the CRC from the last 4 bytes of the binary array. */
+    module->firmware_crc = 0;
+    for (size_t i = 0; i < 4; i++) {
+        module->firmware_crc |= (uint32_t)bin[bin_size - 4 + i] << (i * 8);
+    }
+
+    ESP_LOGI(PROPERTY_TAG, "Firmware version set to: %s, CRC: %08lX", module->firmware_version->str,
+             module->firmware_crc);
 
     return ESP_OK;
 }

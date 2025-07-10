@@ -317,7 +317,7 @@ static void APP_UartInit(void)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     /* Disable IR led. */
-    HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_RESET);
+    // HAL_GPIO_WritePin(ENCODER_LED_GPIO_PORT, ENCODER_LED_GPIO_PIN, GPIO_PIN_RESET);
 
     if (print_encoder_adc) {
         debug_io_log_debug("ABZ: %04ld %04ld %04ld\n", aADCxConvertedData[ENCODER_CHANNEL_A],

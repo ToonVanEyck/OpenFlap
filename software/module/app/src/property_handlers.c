@@ -4,7 +4,12 @@
 #include "flash.h"
 #include "memory_map.h"
 
+#include <stdint.h>
+#include <string.h>
+
 static openflap_ctx_t *openflap_ctx = NULL; /* Set during initialization. */
+
+extern uint32_t checksum;
 
 void property_firmware_set(uint8_t *buf, uint16_t *size)
 {
@@ -21,7 +26,12 @@ void property_firmware_set(uint8_t *buf, uint16_t *size)
 void property_firmware_get(uint8_t *buf, uint16_t *size)
 {
     *size = strlen(GIT_VERSION);
-    strncpy((char *)buf, GIT_VERSION, CHAIN_COM_MAX_LEN - 1);
+    strncpy((char *)buf, GIT_VERSION, CHAIN_COM_MAX_LEN - 5); // Reserve 4 bytes for checksum
+    // append checksum bytes
+    buf[(*size)++] = (checksum >> 24) & 0xFF;
+    buf[(*size)++] = (checksum >> 16) & 0xFF;
+    buf[(*size)++] = (checksum >> 8) & 0xFF;
+    buf[(*size)++] = checksum & 0xFF;
 }
 
 void property_command_set(uint8_t *buf, uint16_t *size)

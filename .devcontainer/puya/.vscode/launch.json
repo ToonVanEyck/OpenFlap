@@ -47,7 +47,10 @@
         {
             "name": "py32 Attach",
             "cwd": "${workspaceFolder}/software/module",
-            "executable": "${workspaceFolder}/build/module/app/OpenFlap_Module_App.elf",
+            "symbolFiles": [
+                "${workspaceFolder}/build/module/app/OpenFlap_Module_App.elf",
+                "${workspaceFolder}/build/module/btl/OpenFlap_Module_Btl.elf",
+            ],
             "request": "attach",
             "type": "cortex-debug",
             "servertype": "pyocd",

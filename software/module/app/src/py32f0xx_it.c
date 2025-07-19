@@ -22,7 +22,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "py32f0xx_it.h"
-#include "py32f0xx_hal.h"
+#include "peripherals.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -32,9 +32,9 @@
 /* Private function prototypes -----------------------------------------------*/
 /* Private user code ---------------------------------------------------------*/
 /* External variables --------------------------------------------------------*/
-extern ADC_HandleTypeDef AdcHandle;
-extern TIM_HandleTypeDef Tim1Handle;
-extern UART_HandleTypeDef UartHandle;
+extern uint32_t systick_1ms_cnt;
+extern uint32_t pwm_timer_tick_cnt;
+extern peripherals_ctx_t peripherals_ctx;
 
 /******************************************************************************/
 /*          Cortex-M0+ Processor Interruption and Exception Handlers          */
@@ -74,7 +74,7 @@ void PendSV_Handler(void)
  */
 void SysTick_Handler(void)
 {
-    HAL_IncTick();
+    systick_1ms_cnt++; // Increment the tick count on each update event
 }
 
 /******************************************************************************/
@@ -84,24 +84,59 @@ void SysTick_Handler(void)
 /* please refer to the startup file.                                          */
 /******************************************************************************/
 
-void ADC_COMP_IRQHandler(void)
+// void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
+// {
+//     /* Clear the TIM1 update interrupt flag */
+//     if (LL_TIM_IsActiveFlag_UPDATE(TIM1)) {
+//         LL_TIM_ClearFlag_UPDATE(TIM1);
+//     }
+// }
+
+// void TIM1_CC_IRQHandler(void)
+// {
+//     /* Clear the TIM1 capture/compare interrupt flag */
+//     if (LL_TIM_IsActiveFlag_CC1(TIM1)) {
+//         LL_TIM_ClearFlag_CC1(TIM1);
+//     }
+// }
+
+void TIM3_IRQHandler(void)
 {
-    HAL_ADC_IRQHandler(&AdcHandle);
+    /* Clear the TIM3 UPDATE interrupt flag */
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM3)) {
+        LL_TIM_ClearFlag_UPDATE(TIM3);
+        pwm_timer_tick_cnt++; // Increment the PWM timer tick count
+    }
 }
 
-void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
-{
-    HAL_TIM_IRQHandler(&Tim1Handle);
-}
+// void DMA1_Channel1_IRQHandler(void)
+// {
+//     /* Clear the transfer complete flag */
+//     if (LL_DMA_IsActiveFlag_TC1(DMA1)) {
+//         LL_DMA_ClearFlag_TC1(DMA1);
+//     }
+// }
 
-void DMA1_Channel1_IRQHandler(void)
-{
-    HAL_DMA_IRQHandler(AdcHandle.DMA_Handle);
-}
+// void ADC_COMP_IRQHandler(void)
+// {
+//     /* Clear the ADC1 end-of-conversion flag */
+//     if (LL_ADC_IsActiveFlag_EOC(ADC1)) {
+//         LL_ADC_ClearFlag_EOC(ADC1);
+//     }
+// }
 
-void USART1_IRQHandler(void)
+void DMA1_Channel2_3_IRQHandler(void)
 {
-    HAL_UART_IRQHandler(&UartHandle);
+    /* Clear the DMA1 Channel 2 transfer complete flag */
+    if (LL_DMA_IsActiveFlag_TC2(DMA1)) {
+        LL_DMA_ClearFlag_TC2(DMA1);
+        uart_driver_tx_dma_transfer_complete(&peripherals_ctx.uart_driver);
+    }
+
+    /* Clear the DMA1 Channel 3 transfer complete flag */
+    if (LL_DMA_IsActiveFlag_TC3(DMA1)) {
+        LL_DMA_ClearFlag_TC3(DMA1);
+    }
 }
 
 /************************ (C) COPYRIGHT Puya *****END OF FILE******************/

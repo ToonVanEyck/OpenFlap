@@ -33,10 +33,6 @@ add_dependencies(chain_comm_abi common_chain_comm_abi)
 # Include the libraries
 add_subdirectory(lib)
 
-# Include Puya BSP
-target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/app/inc)
-target_include_directories(PuyaBSP PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/btl/inc)
-
 set(App ${PROJECT_NAME}_App)
 set(Btl ${PROJECT_NAME}_Btl)
 add_subdirectory(app)

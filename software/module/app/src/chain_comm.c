@@ -101,12 +101,12 @@ const char *get_state_name(uint8_t state)
 
 void chain_comm_timer_start(chain_comm_ctx_t *ctx)
 {
-    ctx->timeout_tick_cnt = HAL_GetTick() + CHAIN_COMM_TIMEOUT_MS;
+    ctx->timeout_tick_cnt = get_tick_count() + CHAIN_COMM_TIMEOUT_MS;
 }
 
 bool chain_comm_timer_elapsed(chain_comm_ctx_t *ctx)
 {
-    return HAL_GetTick() > ctx->timeout_tick_cnt;
+    return get_tick_count() > ctx->timeout_tick_cnt;
 }
 
 bool chain_comm_is_busy(chain_comm_ctx_t *ctx)

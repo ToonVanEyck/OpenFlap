@@ -3,13 +3,14 @@
 #include "chain_comm.h"
 #include "config.h"
 #include "flash.h"
+#include "peripherals.h"
 #include "platform.h"
+
+#include <stdint.h>
 
 #ifndef GIT_VERSION
 #define GIT_VERSION "undefined"
 #endif
-
-extern TIM_HandleTypeDef motorPwmHandle;
 
 /** Struct with helper variables. */
 typedef struct openflap_ctx_tag {
@@ -29,15 +30,6 @@ typedef struct openflap_ctx_tag {
     uint16_t ir_tick_cnt;                 /**< Counter for determining IR sensor state. */
 } openflap_ctx_t;
 
-/** Motor operation modes. */
-typedef enum motorMode_tag {
-    MOTOR_IDLE,               /**< Let the motor idle / freewheel. */
-    MOTOR_BRAKE,              /**< Actively brake the motor. */
-    MOTOR_FORWARD,            /**< Run the motor forwards. */
-    MOTOR_REVERSE,            /**< Run the motor in reverse. */
-    MOTOR_FORWARD_WITH_BREAK, /**< Run the motor forwards. But add a percentage of braking to allow slowing down. */
-} motorMode_t;
-
 /**
  * \brief Calculate a PWM duty cycle based on the distance between the setpoint and the encoder position.
  *
@@ -45,7 +37,7 @@ typedef enum motorMode_tag {
  * \param[in] distance The distance between the setpoint and the encoder position.
  * \return The calculated PWM duty cycle.
  */
-uint8_t pwmDutyCycleCalc(const openflap_motion_config_t *cfg, uint8_t distance);
+uint8_t pwm_duty_cycle_calc(const openflap_motion_config_t *cfg, uint8_t distance);
 
 /**
  * \brief Map the index to a range between 0 and #SYMBOL_CNT.
@@ -53,7 +45,7 @@ uint8_t pwmDutyCycleCalc(const openflap_motion_config_t *cfg, uint8_t distance);
  * \param index the index.
  * \return The wrapped index.
  */
-inline uint8_t flapIndexWrapCalc(int8_t index)
+inline uint8_t flapIndex_wrap_calc(int8_t index)
 {
     return (((index % SYMBOL_CNT) + SYMBOL_CNT) % SYMBOL_CNT);
 }
@@ -62,45 +54,37 @@ inline uint8_t flapIndexWrapCalc(int8_t index)
  * \brief Calculate the encoder position based on the ADC data. The updated position is stored in the context.
  *
  * \param[inout] ctx A pointer to the openflap context.
- * \param[in] adc_data The ADC data of the IR sensors.
+ * \param[in] encoder_states The current states of the encoder inputs.
  */
-void encoderPositionUpdate(openflap_ctx_t *ctx, uint32_t *adc_data);
-
-/**
- * \brief Calibrate the encoder thresholds based on the ADC data.
- *
- * \param[inout] ctx A pointer to the openflap context.
- * \param[in] adc_data The ADC data of the IR sensors.
- */
-void encoderCalibration(openflap_ctx_t *ctx, uint32_t *adc_data);
+void encoder_position_update(openflap_ctx_t *ctx, const encoder_states_t *encoder_reading);
 
 /**
  * \brief Update the distance between the current and target flap.
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
-void distanceUpdate(openflap_ctx_t *ctx);
+void distance_update(openflap_ctx_t *ctx);
 
 /**
  * \brief Update the internal state variable that is monitoring the motor state.
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
-void updateMotorState(openflap_ctx_t *ctx);
+void motor_state_update(openflap_ctx_t *ctx);
 
 /**
  * \brief Update the internal state variable that is monitoring the communication state.
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
-void updateCommsState(openflap_ctx_t *ctx);
+void comms_state_update(openflap_ctx_t *ctx);
 
 /**
  * \brief Set the motor speed based on the distance between the current and target flap.
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
-void setMotorFromDistance(openflap_ctx_t *ctx);
+void from_distance_motor_set(openflap_ctx_t *ctx);
 
 /**
  * \brief Set the motor mode and speed.
@@ -108,16 +92,16 @@ void setMotorFromDistance(openflap_ctx_t *ctx);
  * \param[in] mode The motor mode.
  * \param[in] speed The motor speed, unused when \p mode is #MOTOR_FORWARD or #MOTOR_REVERSE.
  */
-void setMotor(motorMode_t mode, uint8_t speed);
+void motor_set(motor_mode_t mode, uint8_t speed);
 
 /**
  * \brief Run the motor forwards.
  *
  * \param[in] speed The speed of the motor.
  */
-inline void motorForward(uint8_t speed)
+inline void motor_forward(uint8_t speed)
 {
-    setMotor(MOTOR_FORWARD, speed);
+    motor_set(MOTOR_FORWARD, speed);
 }
 
 /**
@@ -125,25 +109,25 @@ inline void motorForward(uint8_t speed)
  *
  * \param[in] speed The speed of the motor.
  */
-inline void motorReverse(uint8_t speed)
+inline void motor_reverse(uint8_t speed)
 {
-    setMotor(MOTOR_REVERSE, speed);
+    motor_set(MOTOR_REVERSE, speed);
 }
 
 /**
  * \brief Let the motor idle / freewheel.
  */
-inline void motorIdle(void)
+inline void motor_idle(void)
 {
-    setMotor(MOTOR_IDLE, 0);
+    motor_set(MOTOR_IDLE, 0);
 }
 
 /**
  * \brief Actively brake the motor.
  */
-inline void motorBrake(void)
+inline void motor_brake(void)
 {
-    setMotor(MOTOR_BRAKE, 0);
+    motor_set(MOTOR_BRAKE, 0);
 }
 
 /**
@@ -151,14 +135,14 @@ inline void motorBrake(void)
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
-void encoderIncrement(openflap_ctx_t *ctx);
+void encoder_increment(openflap_ctx_t *ctx);
 
 /**
  * \brief Zero the encoder position.
  *
  * \param[inout] ctx A pointer to the openflap context.
  */
-void encoderZero(openflap_ctx_t *ctx);
+void encoder_zero(openflap_ctx_t *ctx);
 
 /**
  * \brief Get the position determined by the encoder taking in to account the encoder offset.
@@ -167,4 +151,4 @@ void encoderZero(openflap_ctx_t *ctx);
  *
  * \return The position.
  */
-uint8_t flapPostionGet(openflap_ctx_t *ctx);
+uint8_t flap_postion_get(openflap_ctx_t *ctx);

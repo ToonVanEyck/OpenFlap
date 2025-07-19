@@ -1,6 +1,6 @@
 #pragma once
 
-#include "py32f0xx_hal.h"
+#include "py32f0xx.h"
 #include <stdint.h>
 
 typedef struct flashPage_t {

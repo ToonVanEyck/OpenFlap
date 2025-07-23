@@ -52,6 +52,8 @@ void peripherals_init(peripherals_ctx_t *peripherals_ctx)
 
     LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_SYSCFG);
 
+    LL_SYSTICK_EnableIT(); // Enable SysTick interrupt
+
     uart_driver_init(&peripherals_ctx->uart_driver, uart_rx_dma_buf, UART_DMA_BUF_LEN, uart_tx_buffer, UART_DMA_BUF_LEN,
                      uart_tx_dma_buf, UART_DMA_BUF_LEN, peripheral_uart_dma_w_ptr_get, peripheral_uart_tx_dma_start);
 

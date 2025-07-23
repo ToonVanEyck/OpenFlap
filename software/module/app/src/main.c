@@ -3,9 +3,7 @@
 #include "config.h"
 #include "openflap.h"
 #include "peripherals.h"
-#include "pid.h"
 #include "property_handlers.h"
-#include "uart_driver.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,14 +27,31 @@
 #define VERSION "not found"
 #endif
 
+/* Type definitions ---------------------------------------------------------*/
+
+/* Debug IO scope struct */
+typedef struct {
+    // uint32_t setpoint;
+    // uint32_t actual;
+    // int32_t p;
+    // int32_t i;
+    // int32_t d;
+    // int32_t error;
+    uint32_t pwm;
+    uint32_t ticks_ps;
+} debug_io_scope_t;
+
 /* Private variables ---------------------------------------------------------*/
 
 static openflap_ctx_t openflap_ctx = {0};
 peripherals_ctx_t peripherals_ctx  = {0}; /**< The context for peripherals. */
 
-static bool adc_values_print = false; /** Flag to indicate if the ADC values should be printed. */
+static bool adc_values_print = false; /**< Flag to indicate if the ADC values should be printed. */
 
-extern uint32_t checksum; /** The checksum of the firmware, used for versioning. */
+extern uint32_t checksum; /**< The checksum of the firmware, used for versioning. */
+
+static debug_io_scope_t debug_io_scope = {0}; /**< The debug IO scope for PID debugging. */
+
 /* Private macro -------------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
@@ -46,6 +61,9 @@ void debug_term_config_dump(const char *input, void *arg);
 void debug_term_test_uart(const char *input, void *arg);
 void debug_term_test_motor(const char *input, void *arg);
 void debug_term_test_adc(const char *input, void *arg);
+void debug_term_setpoint_set(const char *input, void *arg);
+void debug_term_pid_tune(const char *input, void *arg);
+void debug_term_ir_lims_set(const char *input, void *arg);
 
 int main(void)
 {
@@ -55,15 +73,23 @@ int main(void)
 
     /* Initialize debugging features.*/
     debug_io_init(LOG_LVL_DEBUG);
+    debug_io_scope_init("u4u4" /*i4i4i4i4*/);
 
     debug_io_term_register_keyword("config", debug_term_config_dump, &openflap_ctx.config);
     debug_io_term_register_keyword("uart", debug_term_test_uart, NULL);
     debug_io_term_register_keyword("motor", debug_term_test_motor, NULL);
     debug_io_term_register_keyword("adc", debug_term_test_adc, NULL);
+    debug_io_term_register_keyword("sp", debug_term_setpoint_set, NULL);
+    debug_io_term_register_keyword("pid", debug_term_pid_tune, NULL);
+    debug_io_term_register_keyword("ir", debug_term_ir_lims_set, NULL);
 
     /* Initialize chain communication and property handlers. */
     chain_comm_init(&openflap_ctx.chain_ctx, &peripherals_ctx.uart_driver);
     property_handlers_init(&openflap_ctx);
+
+    /* Initialize the PID controller. */
+    pid_init(&openflap_ctx.pid_ctx, 70000, 40, 0);
+    pid_o_lim_update(&openflap_ctx.pid_ctx, 175, 700);
 
     /* Print boot messages. */
     uint32_t checksum_be = ((checksum & 0x000000FF) << 24) | ((checksum & 0x0000FF00) << 8) |
@@ -78,9 +104,10 @@ int main(void)
     openflap_ctx.flap_distance = SYMBOL_CNT; /* Speed is based on distance between setpoint and position. We initialize
                                                 it with the maximum value. */
 
-    uint32_t pwm_ticker_prev = 0, pwm_ticker_curr = 0;
+    uint32_t pwm_ticker_prev = 0, pwm_ticker_curr = 0, pwm_ticker_prev_pos_change = 0;
     encoder_states_t encoder_states = {false, false, false};
     uint8_t flap_position_prev = 0, flap_position_curr = 0;
+    uint32_t ticks_ps = 0;
     while (1) {
         /* Handle the RTT terminal. */
         debug_io_term_process();
@@ -93,9 +120,12 @@ int main(void)
         if (pwm_ticker_curr != pwm_ticker_prev) {
             pwm_ticker_prev = pwm_ticker_curr;
 
+            /* Calculate the new position. */
             encoder_states_get(&encoder_states, openflap_ctx.config.ir_threshold.lower,
                                openflap_ctx.config.ir_threshold.upper);
             encoder_position_update(&openflap_ctx, &encoder_states);
+
+            // from_distance_motor_set(&openflap_ctx, &peripherals_ctx.motor);
 
             if (pwm_ticker_curr % 25 == 0 && adc_values_print) {
                 debug_io_log_info("raw: %s%04ld\x1b[0m %s%04ld\x1b[0m %s%04ld\x1b[0m\n",
@@ -103,22 +133,40 @@ int main(void)
                                   encoder_states.enc_b ? "\x1b[7m" : "\x1b[27m", encoder_states.enc_raw_b,
                                   encoder_states.enc_z ? "\x1b[7m" : "\x1b[27m", encoder_states.enc_raw_z);
             }
+
+            flap_position_curr = flap_position_get(&openflap_ctx);
+            if (flap_position_curr != flap_position_prev) {
+                flap_position_prev         = flap_position_curr;
+                ticks_ps                   = pwm_ticker_curr - pwm_ticker_prev_pos_change;
+                pwm_ticker_prev_pos_change = pwm_ticker_curr;
+                // debug_io_log_info("fp: %d (%s)\n", flap_position_curr,
+                // &openflap_ctx.config.symbol_set[flap_position_curr]);
+            }
+
+            if (pwm_ticker_curr % 25 == 1) {
+                // debug_io_scope.setpoint = openflap_ctx.flap_setpoint;
+                // debug_io_scope.actual   = openflap_ctx.flap_position;
+                // debug_io_scope.p        = openflap_ctx.pid_ctx.p_error;
+                // debug_io_scope.i        = openflap_ctx.pid_ctx.i_error;
+                // debug_io_scope.d        = openflap_ctx.pid_ctx.d_error;
+                // debug_io_scope.error    = openflap_ctx.pid_ctx.output;
+                debug_io_scope.pwm      = peripherals_ctx.motor.speed;
+                debug_io_scope.ticks_ps = ticks_ps;
+                debug_io_scope_push(&debug_io_scope, sizeof(debug_io_scope));
+            }
         }
 
         /* Update the flap position. */
-        flap_position_curr = flap_postion_get(&openflap_ctx);
-        if (flap_position_curr != flap_position_prev) {
-            flap_position_prev = flap_position_curr;
-            debug_io_log_info("Flap Position: %d (%s)\n", flap_position_curr,
-                              &openflap_ctx.config.symbol_set[flap_position_curr]);
-        }
+        // flap_position_curr = flap_position_get(&openflap_ctx);
+        // if (flap_position_curr != flap_position_prev) {
+        //     flap_position_prev = flap_position_curr;
+        //     debug_io_log_info("fp: %d (%s)\n", flap_position_curr,
+        //     &openflap_ctx.config.symbol_set[flap_position_curr]);
+        // }
 
         /* Set debug pins based on flap position. */
-        debug_pin_set(0, flap_postion_get(&openflap_ctx) & 1);
-        debug_pin_set(1, flap_postion_get(&openflap_ctx) == 0);
-
-        /* Control the motor. */
-        // TODO
+        debug_pin_set(0, flap_position_get(&openflap_ctx) & 1);
+        debug_pin_set(1, flap_position_get(&openflap_ctx) == 0);
 
         /* Communication status. */
         comms_state_update(&openflap_ctx);
@@ -207,4 +255,59 @@ void debug_term_test_adc(const char *input, void *arg)
     (void)input; // Unused argument
 
     adc_values_print = !adc_values_print; // Toggle ADC values printing
+}
+
+void debug_term_setpoint_set(const char *input, void *arg)
+{
+    (void)arg; // Unused argument
+
+    if (input && strlen(input) > 0) {
+        int setpoint = atoi(input);
+        if (setpoint >= 0 && setpoint < SYMBOL_CNT) {
+            openflap_ctx.flap_setpoint = setpoint;
+            distance_update(&openflap_ctx);
+            if (openflap_ctx.flap_distance < openflap_ctx.config.minimum_rotation) {
+                openflap_ctx.extend_revolution = true;
+                openflap_ctx.flap_distance += SYMBOL_CNT;
+            }
+            debug_io_log_info("Setpoint updated to %d\n", setpoint);
+        } else {
+            debug_io_log_error("Invalid setpoint value. Must be between 0 and %d.\n", SYMBOL_CNT - 1);
+        }
+    } else {
+        debug_io_log_error("No input provided for setpoint.\n");
+    }
+}
+
+void debug_term_pid_tune(const char *input, void *arg)
+{
+    (void)arg; // Unused argument
+
+    int32_t kp = 0, ki = 0, kd = 0;
+    if (input && sscanf(input, "%ld %ld %ld", &kp, &ki, &kd) == 3) {
+        openflap_ctx.pid_ctx.kp = kp;
+        openflap_ctx.pid_ctx.ki = ki;
+        openflap_ctx.pid_ctx.kd = kd;
+        debug_io_log_info("PID updated: kp=%d, ki=%d, kd=%d\n", kp, ki, kd);
+    } else {
+        debug_io_log_error("Invalid input. Usage: pid <kp> <ki> <kd>\n");
+    }
+}
+
+void debug_term_ir_lims_set(const char *input, void *arg)
+{
+    (void)arg; // Unused argument
+
+    if (input && strlen(input) > 0) {
+        uint16_t base = 0, range = 0;
+        if (sscanf(input, "%hu %hu", &base, &range) == 2) {
+            openflap_ctx.config.ir_threshold.lower = base - range;
+            openflap_ctx.config.ir_threshold.upper = base + range;
+            debug_io_log_info("IR thresholds updated: lower=%d, upper=%d\n", base - range, base + range);
+        } else {
+            debug_io_log_error("Invalid input format. Expected: <lower> <upper>\n");
+        }
+    } else {
+        debug_io_log_error("No input provided for IR thresholds.\n");
+    }
 }

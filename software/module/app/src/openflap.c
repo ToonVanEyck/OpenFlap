@@ -4,9 +4,9 @@
 #define COMMS_IDLE_TIMEOUT_MS (75)
 
 /** The motor will reverse direction for this duration after reaching the desired flap. */
-#define MOTOR_BACKSPIN_DURATION_MS (50)
+#define MOTOR_BACKSPIN_DURATION_MS (250)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
-#define MOTOR_BACKSPIN_PWM (125)
+#define MOTOR_BACKSPIN_PWM (300)
 
 uint8_t pwm_duty_cycle_calc(const openflap_motion_config_t *cfg, uint8_t distance)
 {
@@ -65,7 +65,7 @@ void encoder_position_update(openflap_ctx_t *ctx, const encoder_states_t *encode
 
 void distance_update(openflap_ctx_t *ctx)
 {
-    uint8_t distance = flapIndex_wrap_calc(SYMBOL_CNT + ctx->flap_setpoint - flap_postion_get(ctx));
+    uint8_t distance = flapIndex_wrap_calc(SYMBOL_CNT + ctx->flap_setpoint - flap_position_get(ctx));
     /* Check if a short rotation needs to be extended. */
     if (ctx->extend_revolution) {
         if (distance < ctx->config.minimum_rotation) {
@@ -111,54 +111,42 @@ void comms_state_update(openflap_ctx_t *ctx)
     }
 }
 
-void from_distance_motor_set(openflap_ctx_t *ctx)
+void from_distance_motor_set(openflap_ctx_t *ctx, motor_ctx_t *motor_ctx)
 {
-    if (ctx->flap_distance > 0) {
+    if (ctx->flap_distance > 5) {
+        pid_i_lim_update(&ctx->pid_ctx, 0, 0);
+    } else {
+        pid_i_lim_update(&ctx->pid_ctx, 0, 105000);
+    }
+
+    int16_t pid_output = pid_compute(&ctx->pid_ctx, ctx->flap_distance);
+
+    if (ctx->flap_distance == 0) {
+        ctx->pid_ctx.integral = 0;
+        pid_output            = 0;
+    }
+
+    /* Set the motor speed based on the PID output. */
+    if (pid_output < 0) {
         ctx->motor_backspin_timeout_tick = 0;
-        motor_set(MOTOR_FORWARD /*_WITH_BREAK*/, pwm_duty_cycle_calc(&ctx->config.motion, ctx->flap_distance));
+        motor_ctx->mode                  = MOTOR_REVERSE;
+        motor_ctx->speed                 = -pid_output;
+    } else if (pid_output > 0) {
+        ctx->motor_backspin_timeout_tick = 0;
+        motor_ctx->mode                  = MOTOR_FORWARD;
+        motor_ctx->speed                 = pid_output;
     } else {
         if (ctx->motor_backspin_timeout_tick == 0) {
             ctx->motor_backspin_timeout_tick = get_tick_count() + MOTOR_BACKSPIN_DURATION_MS;
-            motor_set(MOTOR_REVERSE, MOTOR_BACKSPIN_PWM);
+            motor_ctx->mode                  = MOTOR_REVERSE;
+            motor_ctx->speed                 = MOTOR_BACKSPIN_PWM;
         }
         if (get_tick_count() >= ctx->motor_backspin_timeout_tick) {
-            motor_brake();
+            motor_ctx->mode  = MOTOR_BRAKE; // Set to brake if speed is zero
+            motor_ctx->speed = 0;
         }
     }
-}
-
-void motor_set(motor_mode_t mode, uint8_t speed)
-{
-    // switch (mode) {
-    //     case MOTOR_REVERSE:
-    //         /* Use with caution, this might cause damage to the system.
-    //          * The mechanism is designed to locks up in reverse direction. */
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, speed);
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0x00);
-    //         break;
-    //     case MOTOR_FORWARD:
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0x00);
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, speed);
-    //         break;
-    //     case MOTOR_FORWARD_WITH_BREAK:
-    //         /* This PWM scheme actively breaks (HH) for one part of the period, rotates forward (HL) for an equal
-    //         part
-    //          * of the period and then remains idle (LL) for the rest of the period. */
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0xff - speed);
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0xff);
-    //         break;
-    //     case MOTOR_BRAKE:
-    //         /* Set MOTOR A & B high, braking the motor. */
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0xff);
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0xff);
-    //         break;
-    //     case MOTOR_IDLE:
-    //     default:
-    //         /* Set MOTOR A & B low, let the motor freewheel. */
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_1, 0x00);
-    //         __HAL_TIM_SET_COMPARE(&motorPwmHandle, TIM_CHANNEL_2, 0x00);
-    //         break;
-    // }
+    motor_control(motor_ctx);
 }
 
 void encoder_increment(openflap_ctx_t *ctx)
@@ -173,7 +161,7 @@ void encoder_zero(openflap_ctx_t *ctx)
     distance_update(ctx);
 }
 
-uint8_t flap_postion_get(openflap_ctx_t *ctx)
+uint8_t flap_position_get(openflap_ctx_t *ctx)
 {
     return flapIndex_wrap_calc(ctx->flap_position + ctx->config.encoder_offset);
 }

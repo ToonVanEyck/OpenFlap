@@ -10,14 +10,13 @@ void pid_init(pid_ctx_t *pid, int32_t kp, int32_t ki, int32_t kd)
     pid->previous_error = 0;
     pid->i_min          = -100000;
     pid->i_max          = 100000;
+    pid->o_min          = -100000; // Set default min output
+    pid->o_max          = 100000;  // Set default max output
 }
 
 int32_t pid_compute(pid_ctx_t *pid, int32_t error)
 {
     // Calculate new integral with error
-    if (error == 0) {
-        pid->integral = pid->integral * 99 / 100; // Natural decay of integral term
-    }
     pid->integral += error;
 
     int32_t derivative  = error - pid->previous_error;
@@ -39,6 +38,13 @@ int32_t pid_compute(pid_ctx_t *pid, int32_t error)
 
     pid->output = (pid->p_error + pid->i_error + pid->d_error) / 1000;
 
+    // Clamp output to min/max limits
+    if (pid->output < pid->o_min) {
+        pid->output = pid->o_min;
+    } else if (pid->output > pid->o_max) {
+        pid->output = pid->o_max;
+    }
+
     return pid->output;
 }
 
@@ -55,5 +61,18 @@ void pid_i_lim_update(pid_ctx_t *pid, int32_t i_min, int32_t i_max)
     } else if (pid->i_error < pid->i_min) {
         // Back-calculate the raw integral value that would produce min
         pid->integral = pid->i_min / pid->ki;
+    }
+}
+
+void pid_o_lim_update(pid_ctx_t *pid, int32_t o_min, int32_t o_max)
+{
+    pid->o_min = o_min;
+    pid->o_max = o_max;
+
+    // Ensure the output is within the new limits
+    if (pid->output < pid->o_min) {
+        pid->output = pid->o_min;
+    } else if (pid->output > pid->o_max) {
+        pid->output = pid->o_max;
     }
 }

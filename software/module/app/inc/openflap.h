@@ -4,6 +4,7 @@
 #include "config.h"
 #include "flash.h"
 #include "peripherals.h"
+#include "pid.h"
 #include "platform.h"
 
 #include <stdint.h>
@@ -19,6 +20,7 @@ typedef struct openflap_ctx_tag {
     uint8_t flap_distance;                /**< The distance between the current and target flap. */
     openflap_config_t config;             /**< The configuration data. */
     chain_comm_ctx_t chain_ctx;           /**< The chain communication context. */
+    pid_ctx_t pid_ctx;                    /**< The PID controller context. */
     bool store_config;                    /**< Flag to store the configuration. */
     bool reboot;                          /**< Flag to indicate the module must perform a system reboot. */
     bool motor_active;                    /**< Flag to indicate if the motor is busy. */
@@ -83,52 +85,9 @@ void comms_state_update(openflap_ctx_t *ctx);
  * \brief Set the motor speed based on the distance between the current and target flap.
  *
  * \param[inout] ctx A pointer to the openflap context.
+ * \param[inout] motor_ctx A pointer to the motor context.
  */
-void from_distance_motor_set(openflap_ctx_t *ctx);
-
-/**
- * \brief Set the motor mode and speed.
- *
- * \param[in] mode The motor mode.
- * \param[in] speed The motor speed, unused when \p mode is #MOTOR_FORWARD or #MOTOR_REVERSE.
- */
-void motor_set(motor_mode_t mode, uint8_t speed);
-
-/**
- * \brief Run the motor forwards.
- *
- * \param[in] speed The speed of the motor.
- */
-inline void motor_forward(uint8_t speed)
-{
-    motor_set(MOTOR_FORWARD, speed);
-}
-
-/**
- * \brief Run the motor in reverse.
- *
- * \param[in] speed The speed of the motor.
- */
-inline void motor_reverse(uint8_t speed)
-{
-    motor_set(MOTOR_REVERSE, speed);
-}
-
-/**
- * \brief Let the motor idle / freewheel.
- */
-inline void motor_idle(void)
-{
-    motor_set(MOTOR_IDLE, 0);
-}
-
-/**
- * \brief Actively brake the motor.
- */
-inline void motor_brake(void)
-{
-    motor_set(MOTOR_BRAKE, 0);
-}
+void from_distance_motor_set(openflap_ctx_t *ctx, motor_ctx_t *motor_ctx);
 
 /**
  * \brief Increment the encoder position.
@@ -151,4 +110,4 @@ void encoder_zero(openflap_ctx_t *ctx);
  *
  * \return The position.
  */
-uint8_t flap_postion_get(openflap_ctx_t *ctx);
+uint8_t flap_position_get(openflap_ctx_t *ctx);

@@ -145,9 +145,6 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
         free(rx_buff);
     }
 
-    /* Indicate that the property has been synchronized. */
-    display_property_indicate_synchronized(display, property_id);
-
     return ESP_OK;
 }
 
@@ -241,9 +238,6 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
                       exit_cleanup_rx_buff, TAG, "Failed to receive ack");
     ESP_GOTO_ON_FALSE(rx_ack == ack, ESP_FAIL, exit_cleanup_rx_buff, TAG, "Ack mismatch");
 
-    /* Indicate success. */
-    display_property_indicate_synchronized(display, property_id);
-
     /*Cleanup. */
 exit_cleanup_rx_buff:
     free(rx_buff);
@@ -330,9 +324,6 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
     /* Sequential writes must wait for at least the timeout in order for the modules to process the data. */
     vTaskDelay(pdMS_TO_TICKS(CHAIN_COMM_TIMEOUT_MS * 12 / 10));
 
-    /* Indicate success. */
-    display_property_indicate_synchronized(display, property_id);
-
     return ESP_OK;
 }
 
@@ -351,13 +342,18 @@ static void chain_comm_task(void *arg)
         for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
             if (display_property_is_desynchronized(ctx->display, property, PROPERTY_SYNC_METHOD_READ)) {
                 esp_err_t err = chain_comm_property_read_all(ctx->display, property);
-                if (err == ESP_ERR_NOT_SUPPORTED) {
+                if (err == ESP_OK || err == ESP_ERR_NOT_SUPPORTED) {
                     display_property_indicate_synchronized(ctx->display, property);
                 }
             } else if (display_property_is_desynchronized(ctx->display, property, PROPERTY_SYNC_METHOD_WRITE)) {
-                esp_err_t err = chain_comm_property_write_all(ctx->display, property);
-                if (err == ESP_ERR_NOT_SUPPORTED) {
-                    display_property_indicate_synchronized(ctx->display, property);
+                for (int attempt_cnt = 3; attempt_cnt > 0; attempt_cnt--) {
+                    esp_err_t err = chain_comm_property_write_all(ctx->display, property);
+                    if (err == ESP_OK || err == ESP_ERR_NOT_SUPPORTED) {
+                        display_property_indicate_synchronized(ctx->display, property);
+                        break;
+                    } else {
+                        ESP_LOGW(TAG, "Failed to write property, attempting %d more time", attempt_cnt - 1);
+                    }
                 }
             } else {
                 uint16_t display_size = display_size_get(ctx->display);

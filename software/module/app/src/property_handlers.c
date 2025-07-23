@@ -99,7 +99,7 @@ void property_character_set(uint8_t *buf, uint16_t *size)
 
 void property_character_get(uint8_t *buf, uint16_t *size)
 {
-    buf[0] = flap_postion_get(openflap_ctx);
+    buf[0] = flap_position_get(openflap_ctx);
 }
 
 void minimum_rotation_property_set(uint8_t *buf, uint16_t *size)

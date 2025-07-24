@@ -47,3 +47,4 @@ fp-info-cache
 ##############################################
 __pycache__
 networking_default_config.h
+software/module/rtt-scope-config.json

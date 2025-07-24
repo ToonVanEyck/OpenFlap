@@ -1,43 +1,60 @@
-project(PuyaBSP  LANGUAGES  C ASM)
+project(puya  LANGUAGES  C ASM)
 
-add_library(${PROJECT_NAME} OBJECT 
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Source/system_py32f0xx.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_rcc.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_irda.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_dma.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_crc.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_led.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_adc.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_rcc_ex.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_lptim.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_comp.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_adc_ex.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_tim_ex.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_wwdg.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_rtc.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_pwr.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_gpio.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_usart.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_iwdg.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_cortex.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_spi.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_tim.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_exti.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_rtc_ex.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_flash.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_uart.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/py32f0xx_hal_i2c.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/BSP/Src/py32f0xx_bsp_printf.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/BSP/Src/py32f0xx_bsp_led.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/BSP/Src/py32f0xx_bsp_clock.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f003.s
+file(GLOB HAL_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Src/*.c
+)
+file(GLOB LL_DRIVER_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_LL_Driver/Src/*.c
+)
+file(GLOB BSP_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/BSP/Src/*.c
+)
+file(GLOB BSP_LL_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/BSP_LL/Src/*.c
+)
+file(GLOB CMSIS_DEVICE_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Source/*.c
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Inc
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/BSP/Inc
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Include
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Core/Include
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Core/Include
-    )
+# Convert PUYA_CHIP to lowercase and strip last 2 characters
+string(TOLOWER "${PUYA_CHIP}" PUYA_CHIP_LOWER)
+string(LENGTH "${PUYA_CHIP_LOWER}" PUYA_CHIP_LEN)
+math(EXPR PUYA_CHIP_BASENAME_LEN "${PUYA_CHIP_LEN} - 2")
+string(SUBSTRING "${PUYA_CHIP_LOWER}" 0 ${PUYA_CHIP_BASENAME_LEN} PUYA_CHIP_BASENAME)
+
+file(GLOB CMSIS_STARTUP_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Source/gcc/startup_${PUYA_CHIP_BASENAME}.s
+)
+
+# add_library("${PROJECT_NAME}_hal" OBJECT 
+#     ${HAL_DRIVER_SRCS}
+#     ${BSP_SRCS}
+#     ${CMSIS_DEVICE_SRCS}
+#     ${CMSIS_STARTUP_SRCS}
+# )
+
+# target_include_directories("${PROJECT_NAME}_HAL" PUBLIC
+#     ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_HAL_Driver/Inc
+#     ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_LL_Driver/Inc
+#     ${CMAKE_CURRENT_SOURCE_DIR}/BSP/Inc
+#     ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Core/Include
+# )
+
+add_library("${PROJECT_NAME}_ll" OBJECT
+    ${LL_DRIVER_SRCS}
+    ${BSP_LL_SRCS}
+    ${CMSIS_DEVICE_SRCS}
+    ${CMSIS_STARTUP_SRCS}
+)
+
+target_include_directories("${PROJECT_NAME}_ll" PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/PY32F0xx_LL_Driver/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/BSP_LL/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Device/PY32F0xx/Include
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/Core/Include
+)
+
+target_compile_definitions("${PROJECT_NAME}_ll" PUBLIC
+    USE_FULL_LL_DRIVER
+)

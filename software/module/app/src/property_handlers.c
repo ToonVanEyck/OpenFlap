@@ -3,6 +3,7 @@
 #include "debug_io.h"
 #include "flash.h"
 #include "memory_map.h"
+#include "peripherals.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -49,7 +50,7 @@ void property_command_set(uint8_t *buf, uint16_t *size)
 void property_module_info_get(uint8_t *buf, uint16_t *size)
 {
     module_info_property_t module_info = {0};
-    module_info.column_end             = HAL_GPIO_ReadPin(COLEND_GPIO_PORT, COLEND_GPIO_PIN);
+    module_info.column_end             = is_column_end();
     module_info.type                   = MODULE_TYPE_SPLITFLAP;
     buf[0]                             = module_info.raw;
 }
@@ -77,7 +78,7 @@ void property_offset_set(uint8_t *buf, uint16_t *size)
     if (openflap_ctx->config.encoder_offset == buf[0]) {
         return;
     }
-    distanceUpdate(openflap_ctx);
+    distance_update(openflap_ctx);
     openflap_ctx->config.encoder_offset = buf[0];
     openflap_ctx->store_config          = true;
 }
@@ -89,7 +90,7 @@ void property_offset_get(uint8_t *buf, uint16_t *size)
 void property_character_set(uint8_t *buf, uint16_t *size)
 {
     openflap_ctx->flap_setpoint = buf[0];
-    distanceUpdate(openflap_ctx);
+    distance_update(openflap_ctx);
     if (openflap_ctx->flap_distance < openflap_ctx->config.minimum_rotation) {
         openflap_ctx->extend_revolution = true;
         openflap_ctx->flap_distance += SYMBOL_CNT;
@@ -98,7 +99,7 @@ void property_character_set(uint8_t *buf, uint16_t *size)
 
 void property_character_get(uint8_t *buf, uint16_t *size)
 {
-    buf[0] = flapPostionGet(openflap_ctx);
+    buf[0] = flap_position_get(openflap_ctx);
 }
 
 void minimum_rotation_property_set(uint8_t *buf, uint16_t *size)

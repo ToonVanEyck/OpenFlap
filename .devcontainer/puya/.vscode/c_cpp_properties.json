@@ -7,7 +7,9 @@
                 "${workspaceFolder}/software/common/**",
                 "${workspaceFolder}/software/module/**",
             ],
-            "defines": [],
+            "defines": [
+                "__STATIC_INLINE=static inline"
+            ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "gnu++17",

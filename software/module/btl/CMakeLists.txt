@@ -1,13 +1,12 @@
 
 add_executable(${Btl}
-    src/py32f0xx_it.c 
-    src/py32f0xx_hal_msp.c 
     src/bootloader.c
+    src/py32f0xx_it.c 
 )
 
-target_link_libraries(${Btl} PUBLIC config flash)
-target_link_libraries(${Btl} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
-target_include_directories(${Btl} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(${Btl} PUBLIC puya_ll config flash)
+
+target_include_directories(${Btl} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
 set_target_properties(${Btl} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker_script_btl.ld")
 

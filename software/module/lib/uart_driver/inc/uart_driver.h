@@ -3,43 +3,37 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "py32f0xx_hal.h"
 #include "rbuff.h"
 
+typedef void (*uart_tx_dma_start_cb)(size_t length);
+
 typedef struct uart_driver_ctx_tag {
-    UART_HandleTypeDef *huart;
     rbuff_t rx_rbuff;
     rbuff_t tx_rbuff;
-    uint8_t rx_tmp_buff;
-    uint8_t tx_tmp_buff;
+    bool tx_dma_busy;                     /** Flag indicating if the TX DMA is busy. */
+    volatile uint8_t *tx_dma_buffer;      /**< Pointer to the TX DMA buffer used for writing data. */
+    size_t tx_dma_buffer_size;            /**< Size of the TX DMA buffer. */
+    uart_tx_dma_start_cb tx_dma_start_cb; /**< Callback to start the DMA transfer for TX. */
 } uart_driver_ctx_t;
 
 /**
  * \brief Initialize the UART driver.
  *
- * \param[inout] uart_driver The UART driver.
- * \param[in] rx_buff The raw array to be used by the driver RX ringbuffer.
- * \param[in] rx_buff_size The size of the raw array \p rx_buff.
- * \param[in] tx_buff The raw array to be used by the driver TX ringbuffer.
- * \param[in] tx_buff_size The size of the raw array \p tx_buff.
+ * \param[inout] uart_driver The UART driver context to be initialized.
+ * \param[in] rx_rbuff The RX ringbuffer to be used by the driver.
+ * \param[in] rx_buff_size The size of the RX buffer.
+ * \param[in] tx_rbuff The TX ringbuffer to be used by the driver.
+ * \param[in] tx_buff_size The size of the TX buffer.
+ * \param[in] tx_dma_buffer Pointer to the TX DMA buffer.
+ * \param[in] tx_dma_buffer_size The size of the TX DMA buffer.
+ * \param[in] dma_r_ptr_get Callback to get the DMA read pointer for the TX buffer.
+ * \param[in] tx_dma_start_cb Callback to start the DMA transfer for TX, this function will be called when data is
+ *                            placed in \p tx_dma_buffer. The callback function must start the DMA transfer of that
+ *                            buffer with the size provided in the callback.
  */
-void uart_driver_init(uart_driver_ctx_t *uart_driver, UART_HandleTypeDef *huart, uint8_t *rx_buff, uint8_t rx_buff_size,
-                      uint8_t *tx_buff, uint8_t tx_buff_size);
-
-/**
- * \brief The RX interrupt service routine to be used for the UART driver RX interrupt.
- *
- * \param[inout] uart_driver The UART driver.
- */
-void uart_driver_rx_isr(uart_driver_ctx_t *uart_driver);
-
-/**
- * \brief The TX interrupt service routine to be used for the UART driver TX interrupt.
- *
- * \param[inout] uart_driver The UART driver.
- */
-void uart_driver_ctx_tx_isr(uart_driver_ctx_t *uart_driver);
-
+void uart_driver_init(uart_driver_ctx_t *uart_driver, volatile uint8_t *rx_buff, uint8_t rx_buff_size, uint8_t *tx_buff,
+                      uint8_t tx_buff_size, volatile uint8_t *tx_dma_buffer, size_t tx_dma_buffer_size,
+                      dma_rw_ptr_get_cb dma_w_ptr_get, uart_tx_dma_start_cb tx_dma_start_cb);
 /**
  * \brief Read data from the UART driver.
  *
@@ -94,3 +88,10 @@ uint8_t uart_driver_cnt_written(uart_driver_ctx_t *uart_driver);
  * \return True if the driver is busy, otherwise false.
  */
 bool uart_driver_is_busy(uart_driver_ctx_t *uart_driver);
+
+/**
+ * \brief Callback function to handle the completion of a TX DMA transfer.
+ *
+ * Call ths function when the DMA transfer for TX is complete.
+ */
+void uart_driver_tx_dma_transfer_complete(uart_driver_ctx_t *uart_driver);

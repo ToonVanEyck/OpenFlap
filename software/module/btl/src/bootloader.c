@@ -1,7 +1,12 @@
+#include "py32f0xx.h"
+#include "py32f0xx_bsp_clock.h"
+#include "py32f0xx_ll_bus.h"
+#include "py32f0xx_ll_crc.h"
+
 #include "config.h"
 #include "flash.h"
 #include "memory_map.h"
-#include "py32f0xx_hal.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -30,7 +35,14 @@ void jump_to_app(void)
     app_vector_table->reset_handler();
 }
 
-CRC_HandleTypeDef CrcHandle;
+uint32_t calculate_crc(uint32_t *data, size_t size)
+{
+    LL_CRC_ResetCRCCalculationUnit(CRC);
+    for (size_t i = 0; i < size; ++i) {
+        LL_CRC_FeedData32(CRC, data[i]);
+    }
+    return LL_CRC_ReadData32(CRC);
+}
 
 /**
  * The bootloader checks if a new app has been written in the flash memory. If there is, and it's CRC is valid, it is
@@ -39,7 +51,8 @@ CRC_HandleTypeDef CrcHandle;
  */
 int main(void)
 {
-    HAL_Init();
+    BSP_RCC_HSI_8MConfig();                            // Initialize the system clock to 8 MHz
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_CRC); // Enable CRC clock
 
     bool main_app_valid = false;
     bool new_app_valid  = false;
@@ -47,13 +60,8 @@ int main(void)
     // Load config.
     configLoad(&config);
 
-    // Init CRC peripheral.
-    CrcHandle.Instance = CRC;
-    if (HAL_CRC_Init(&CrcHandle) != HAL_OK) {
-    }
-
     if (config.ota_completed) {
-        new_app_valid = (CRC_VALID == HAL_CRC_Calculate(&CrcHandle, APP_N_START_PTR(NEW_APP), APP_SIZE / 4));
+        new_app_valid = (CRC_VALID == calculate_crc(APP_N_START_PTR(NEW_APP), APP_SIZE / 4));
         // Copy new app to main app.
         if (new_app_valid) {
             flashWrite((uint32_t)APP_N_START_PTR(MAIN_APP), (uint8_t *)APP_N_START_PTR(NEW_APP), APP_SIZE);
@@ -62,7 +70,7 @@ int main(void)
         configStore(&config);
     }
 
-    main_app_valid = (CRC_VALID == HAL_CRC_Calculate(&CrcHandle, APP_N_START_PTR(MAIN_APP), APP_SIZE / 4));
+    main_app_valid = (CRC_VALID == calculate_crc(APP_N_START_PTR(MAIN_APP), APP_SIZE / 4));
     // Jump to app.
     if (main_app_valid) {
         jump_to_app();

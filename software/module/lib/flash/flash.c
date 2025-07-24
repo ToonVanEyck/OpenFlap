@@ -1,4 +1,7 @@
 #include "flash.h"
+
+#include "py32f0xx_ll_flash.h"
+
 #include <string.h>
 
 static void flashErase(uint32_t address);
@@ -16,9 +19,11 @@ void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
     flashPage_t *src        = (flashPage_t *)data;
     flashPage_t data_page;
 
-    HAL_FLASH_Unlock();
+    // Unlock Flash for write access
+    LL_FLASH_Unlock();
+
     while (size_remaining) {
-        // Erase when starting a new flashg sector
+        // Erase when starting a new flash sector
         if (!(flash_addr % FLASH_SECTOR_SIZE)) {
             flashErase(flash_addr);
         }
@@ -27,7 +32,7 @@ void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
         memset(&data_page, UINT32_MAX, sizeof(flashPage_t));
         memcpy(&data_page, src, write_size);
         // Write to flash
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, flash_addr, (uint32_t *)&data_page) == HAL_OK) {
+        if (LL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, flash_addr, (uint32_t *)&data_page) == SUCCESS) {
             // Move flash point to next page
             flash_addr += write_size;
             size_remaining -= write_size;
@@ -35,7 +40,7 @@ void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
             src++;
         }
     }
-    HAL_FLASH_Lock();
+    LL_FLASH_Lock();
 }
 
 static void flashErase(uint32_t address)
@@ -49,5 +54,5 @@ static void flashErase(uint32_t address)
     // Number of sectors
     EraseInitStruct.NbSectors = 1;
     // Erase
-    HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
+    LL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
 }

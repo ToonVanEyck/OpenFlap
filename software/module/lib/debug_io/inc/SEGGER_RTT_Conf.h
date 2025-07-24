@@ -81,7 +81,7 @@ Revision: $Rev: 24316 $
 // Up-channel 1: SystemView
 //
 #ifndef SEGGER_RTT_MAX_NUM_UP_BUFFERS
-#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (1) // Max. number of up-buffers (T->H) available on this target    (Default: 3)
+#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (2) // Max. number of up-buffers (T->H) available on this target    (Default: 3)
 #endif
 //
 // Most common case:
@@ -98,7 +98,7 @@ Revision: $Rev: 24316 $
 
 #ifndef BUFFER_SIZE_DOWN
 #define BUFFER_SIZE_DOWN                                                                                               \
-    (8) // Size of the buffer for terminal input to target from host (Usually keyboard input) (Default: 16)
+    (32) // Size of the buffer for terminal input to target from host (Usually keyboard input) (Default: 16)
 #endif
 
 #ifndef SEGGER_RTT_PRINTF_BUFFER_SIZE

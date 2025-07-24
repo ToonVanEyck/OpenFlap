@@ -1,20 +1,13 @@
 # Set executable sources
 add_executable(${App} 
     src/py32f0xx_it.c 
-    src/py32f0xx_hal_msp.c 
     src/main.c 
     src/chain_comm.c
     src/property_handlers.c
     src/openflap.c
     src/default_config.c
     src/checksum.c
-)
-
-# Add custom command to touch main.c to force recompilation to update date and time
-add_custom_target(compile_time 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Updating Compile Time"
-    COMMAND ${CMAKE_COMMAND} -E touch_nocreate src/main.c
+    src/peripherals.c
 )
 
 # Get the version using git describe
@@ -25,19 +18,22 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+if(NOT GIT_VERSION)
+    set(GIT_VERSION "undefined")
+endif()
+
+
 # Add the version as a compile definition
 target_compile_definitions(${App} PUBLIC GIT_VERSION="${GIT_VERSION}")
-
-add_dependencies(${App} compile_time)
 
 target_compile_definitions(${App} PUBLIC
     # CHAIN_COMM_DEBUG=1          # Print debug info for chain communication.
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 
-target_link_libraries(${App} PUBLIC debug_io config flash config chain_comm_abi uart_driver) 
-target_link_libraries(${App} PUBLIC $<TARGET_OBJECTS:PuyaBSP>)
-target_include_directories(${App} PRIVATE $<TARGET_PROPERTY:PuyaBSP,INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(${App} PUBLIC puya_ll debug_io config flash config pid rbuff chain_comm_abi uart_driver) 
+
+target_include_directories(${App} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
 set_target_properties(${App} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker_script_app.ld")
 

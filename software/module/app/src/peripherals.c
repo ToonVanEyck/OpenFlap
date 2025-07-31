@@ -35,7 +35,8 @@ volatile uint8_t uart_tx_dma_buf[UART_DMA_BUF_LEN] = {0}; /**< UART TX DMA buffe
 //======================================================================================================================
 
 static void peripheral_gpio_init(void);  /**< GPIO initialization. */
-static void peripheral_tim3_init(void);  /**< TIM3 initialization. (Motor PWM) */
+static void peripheral_tim1_init(void);  /**< TIM1 initialization. (IR LED / Master) */
+static void peripheral_tim3_init(void);  /**< TIM3 initialization. (Motor PWM / Slave) */
 static void peripheral_adc1_init(void);  /**< ADC1 initialization. (IR sensors) */
 static void peripheral_uart1_init(void); /**< UART1 initialization. (chain comm) */
 
@@ -58,7 +59,10 @@ void peripherals_init(peripherals_ctx_t *peripherals_ctx)
                      uart_tx_dma_buf, UART_DMA_BUF_LEN, peripheral_uart_dma_w_ptr_get, peripheral_uart_tx_dma_start);
 
     peripheral_gpio_init();
-    peripheral_tim3_init();
+    peripheral_tim1_init(); // Initialize master timer first
+    peripheral_tim3_init(); // Initialize slave timer after master
+    while (1)
+        ;
     peripheral_adc1_init();
     peripheral_uart1_init();
 }
@@ -229,7 +233,56 @@ static void peripheral_gpio_init(void)
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
+ * @brief Initializes TIM1 for IR LED control.
+ * TIMER 1 is configure as master at 1kHz.
+ */
+
+static void peripheral_tim1_init(void)
+{
+    // Enable TIM1 Clock
+    LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM1);
+
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Mode                = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed               = LL_GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Pull                = LL_GPIO_PULL_DOWN;
+
+    // Configure PA0 (TIM1_CH3) as alternate function for PWM.
+    GPIO_InitStruct.Pin       = LL_GPIO_PIN_0;
+    GPIO_InitStruct.Alternate = LL_GPIO_AF_13; // TIM1_CH3
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // Configure TIM1 base: 24MHz / (1000 * 24) ≈ 1000Hz (1000 counts of 1us)
+    LL_TIM_SetPrescaler(TIM1, 24 - 1);
+    LL_TIM_SetAutoReload(TIM1, 1000 - 1);
+    LL_TIM_SetCounterMode(TIM1, LL_TIM_COUNTERMODE_UP);
+
+    // Configure PWM mode for Channel 3 (IR LED)
+    LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1);
+    LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCPOLARITY_HIGH);
+    LL_TIM_OC_SetCompareCH3(TIM1, 100); // Start with IR LED off
+    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH3);
+    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
+
+    LL_TIM_EnableAllOutputs(TIM1);
+
+    // Configure TIM1 as master - trigger output on update event
+    LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_UPDATE);
+
+    // Enable interrupt for TIM1 Update
+    // LL_TIM_EnableIT_UPDATE(TIM1);
+    // NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 2);
+    // NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+
+    // Enable the timer (master timer starts first)
+    LL_TIM_EnableCounter(TIM1);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+/**
  * @brief Initializes TIM3 for PWM on channel 1 and 2.
+ * TIM3 is configured as a slave at 100Hz.
  */
 static void peripheral_tim3_init(void)
 {
@@ -251,44 +304,52 @@ static void peripheral_tim3_init(void)
     GPIO_InitStruct.Alternate = LL_GPIO_AF_13; // TIM3_CH3
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    // Configure TIM3 base: 24MHz / (1000 * 24) ≈ 1000Hz (0000 counts of 1µS)
-    LL_TIM_SetPrescaler(TIM3, 24 - 1);
+    // Configure TIM3 base: 24MHz / (1000 * 240) ≈ 100Hz (1000 counts of 10us)
+    LL_TIM_SetPrescaler(TIM3, 240 - 1);
     LL_TIM_SetAutoReload(TIM3, 1000 - 1);
     LL_TIM_SetCounterMode(TIM3, LL_TIM_COUNTERMODE_UP);
+
+    // Configure TIM3 as slave to TIM1
+    // Set TIM3 to be triggered by TIM1 TRGO (Internal Trigger 0 = ITR0 = TIM1)
+    // LL_TIM_SetTriggerInput(TIM3, LL_TIM_TS_ITR0);
+    // LL_TIM_SetSlaveMode(TIM3, LL_TIM_SLAVEMODE_TRIGGER);
 
     // Configure PWM mode for Channel 1 and 2 (motor)
     LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1);
     LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_OCPOLARITY_HIGH);
     LL_TIM_OC_SetCompareCH1(TIM3, 0);
+    LL_TIM_OC_SetCompareCH1(TIM3, 100);
     LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH1);
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
 
     LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_OCMODE_PWM1);
     LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_OCPOLARITY_HIGH);
     LL_TIM_OC_SetCompareCH2(TIM3, 0);
+    LL_TIM_OC_SetCompareCH2(TIM3, 100);
     LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH2);
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH2);
 
-    // Configure PWM mode for Channel 3 (IR led)
-    LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1);
-    LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH3, LL_TIM_OCPOLARITY_LOW);
-    LL_TIM_OC_SetCompareCH3(TIM3, 1000 - 220); /* IR LED should be on for 220us each cycle. */
-    LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH3);
-    LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH3);
+    // // Configure PWM mode for Channel 3 (IR led)
+    // LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1);
+    // LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH3, LL_TIM_OCPOLARITY_LOW);
+    // LL_TIM_OC_SetCompareCH3(TIM3, 1000 - 220); /* IR LED should be on for 220us each cycle. */
+    // LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH3);
+    // LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH3);
 
-    // Configure Channel 4 as output compare for external trigger (ADC trigger) Not connected to physical pin.
-    LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH4, LL_TIM_OCMODE_PWM2); /* Generates a rising edge after 200us. */
-    LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH4, LL_TIM_OCPOLARITY_LOW);
-    LL_TIM_OC_SetCompareCH4(TIM3, 1000 - 20); /* ADC should start 200us after IR LED goes on. */
-    LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH4);
-    LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
-    LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_OC4REF);
+    // // Configure Channel 4 as output compare for external trigger (ADC trigger) Not connected to physical pin.
+    // LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH4, LL_TIM_OCMODE_PWM2); /* Generates a rising edge after 200us. */
+    // LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH4, LL_TIM_OCPOLARITY_LOW);
+    // LL_TIM_OC_SetCompareCH4(TIM3, 1000 - 20); /* ADC should start 200us after IR LED goes on. */
+    // LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH4);
+    // LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
+    // LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_OC4REF);
 
     // Enable interrupt for TIM3 Update
     LL_TIM_EnableIT_UPDATE(TIM3);
     NVIC_SetPriority(TIM3_IRQn, 2);
     NVIC_EnableIRQ(TIM3_IRQn);
 
+    // Enable TIM3 counter but don't start it - it will be started by TIM1 trigger
     LL_TIM_EnableCounter(TIM3);
 }
 

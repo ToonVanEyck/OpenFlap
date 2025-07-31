@@ -119,7 +119,7 @@ void from_distance_motor_set(openflap_ctx_t *ctx, motor_ctx_t *motor_ctx)
         pid_i_lim_update(&ctx->pid_ctx, 0, 105000);
     }
 
-    int16_t pid_output = pid_compute(&ctx->pid_ctx, ctx->flap_distance);
+    int16_t pid_output = pid_compute(&ctx->pid_ctx, ctx->flap_distance, 1000);
 
     if (ctx->flap_distance == 0) {
         ctx->pid_ctx.integral = 0;

@@ -22,7 +22,7 @@ typedef struct {
 
 void pid_init(pid_ctx_t *pid, int32_t kp, int32_t ki, int32_t kd);
 
-int32_t pid_compute(pid_ctx_t *pid, int32_t error);
+int32_t pid_compute(pid_ctx_t *pid, int32_t error, int32_t dt_us);
 
 void pid_i_lim_update(pid_ctx_t *pid, int32_t i_min, int32_t i_max);
 

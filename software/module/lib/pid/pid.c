@@ -1,5 +1,7 @@
 #include "pid.h"
 
+#define GAIN_SCALE 1000 // Scale factor for gains to avoid floating point operations
+
 void pid_init(pid_ctx_t *pid, int32_t kp, int32_t ki, int32_t kd)
 {
     pid->kp             = kp;
@@ -14,7 +16,7 @@ void pid_init(pid_ctx_t *pid, int32_t kp, int32_t ki, int32_t kd)
     pid->o_max          = 100000;  // Set default max output
 }
 
-int32_t pid_compute(pid_ctx_t *pid, int32_t error)
+int32_t pid_compute(pid_ctx_t *pid, int32_t error, int32_t dt_us)
 {
     // Calculate new integral with error
     pid->integral += error;
@@ -36,7 +38,7 @@ int32_t pid_compute(pid_ctx_t *pid, int32_t error)
     }
     pid->i_error = (pid->ki * pid->integral);
 
-    pid->output = (pid->p_error + pid->i_error + pid->d_error) / 1000;
+    pid->output = (pid->p_error + pid->i_error + pid->d_error) / GAIN_SCALE;
 
     // Clamp output to min/max limits
     if (pid->output < pid->o_min) {
@@ -50,8 +52,8 @@ int32_t pid_compute(pid_ctx_t *pid, int32_t error)
 
 void pid_i_lim_update(pid_ctx_t *pid, int32_t i_min, int32_t i_max)
 {
-    pid->i_min = i_min;
-    pid->i_max = i_max;
+    pid->i_min = i_min * GAIN_SCALE;
+    pid->i_max = i_max * GAIN_SCALE;
 
     pid->i_error = (pid->ki * pid->integral);
     // Anti-windup: Check scaled integral value against limits

@@ -31,7 +31,7 @@ target_compile_definitions(${App} PUBLIC
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 
-target_link_libraries(${App} PUBLIC puya_ll debug_io config flash config pid rbuff chain_comm_abi uart_driver) 
+target_link_libraries(${App} PUBLIC puya_ll debug_io config flash config pid rbuff chain_comm_abi uart_driver interpolation) 
 
 target_include_directories(${App} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 

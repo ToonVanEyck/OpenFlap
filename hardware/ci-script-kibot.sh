@@ -53,7 +53,6 @@ BUILD_DIR=${BASE_DIR}/build/hardware
 declare -A modules=(
     ["Side_Panel"]="module/side_panel/src"
     ["Encoder Wheel"]="module/encoder_wheel/src"
-    # ["Encoder Wheel 2"]="module/encoder_wheel/src_2"
     ["Top Connector"]="top_connector/src"
     ["Controller"]="controller/src"
 )

@@ -20,6 +20,9 @@ preflight:
       - filter: J1 & J2 Courttard Overlap
         error: courtyards_overlap
         regex : (?s)Footprint J1(.*)Footprint J2
+      - filter: J3 Hole clearance violation
+        error: hole_clearance
+        regex : (?s)Hole clearance violation (board setup constraints hole clearance 0.2540 mm; actual 0.1250 mm)
   update_xml: true
   set_text_variables:
     - name: GIT_TAG

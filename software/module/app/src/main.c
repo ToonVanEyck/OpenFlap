@@ -59,13 +59,13 @@ static uint32_t speed_sp = 0;
 
 /** Interpolation table to get PWM value based on desired motor speed. Used for feed forward control. */
 static const interp_point_t speed_pwm_table[] = {
-    {0, 0}, {15, 180}, {20, 200}, {63, 400}, {81, 600}, {90, 800}, {100, 1000},
+    {0, 0}, {1, 100}, {20, 120}, {34, 150}, {50, 200}, {75, 400}, {88, 600}, {100, 1000}, /* {100x_RPS , PWM}, ... */
 };
 static interp_ctx_t speed_pwm_interp_ctx = {0}; /**< Interpolation context for motor speed control */
 
 static const interp_point_t distance_speed_table[] = {
-    {4, 20},
-    {10, 60},
+    {4, 20}, {10, 60},
+    /* {Distance , 100x_RPS}, ... */
 };
 static interp_ctx_t distance_speed_interp_ctx = {0}; /**< Interpolation context for motor distance control */
 
@@ -109,7 +109,7 @@ int main(void)
     property_handlers_init(&openflap_ctx);
 
     /* Initialize the PID controller. */
-    pid_init(&openflap_ctx.pid_ctx, 1000, 1, 0);
+    pid_init(&openflap_ctx.pid_ctx, 1200, 6, 0);
     pid_o_lim_update(&openflap_ctx.pid_ctx, -1000, 1000);
     pid_i_lim_update(&openflap_ctx.pid_ctx, -75, 75);
 
@@ -136,11 +136,16 @@ int main(void)
     uint32_t pwm_ticker_prev = 0, pwm_ticker_curr = 0, pwm_ticker_prev_pos_change = 0;
     encoder_states_t encoder_states = {false, false, false};
     uint8_t flap_position_prev = 0, flap_position_curr = 0;
-    uint32_t ticks_ps     = 0;
-    uint32_t rps_x100_avg = 0;
+    uint32_t ticks_per_rev = 0; /* Ticks per revolution. */
+    uint32_t rps_x100_avg  = 0; /* Rotations per 100 seconds. */
+
     while (1) {
         /* Handle the RTT terminal. */
         debug_io_term_process();
+
+        /* If the module is the last module in a column, a secondary uart TX will route this modules data back to the
+         * module above it. Normally this data would come from the module below it. */
+        uart_tx_pin_update(is_column_end());
 
         /* Run chain comm. */
         chain_comm(&openflap_ctx.chain_ctx);
@@ -157,7 +162,7 @@ int main(void)
 
             // from_distance_motor_set(&openflap_ctx, &peripherals_ctx.motor);
 
-            if (pwm_ticker_curr % 25 == 0 && adc_values_print) {
+            if (pwm_ticker_curr % 4 == 0 && adc_values_print) {
                 debug_io_log_info("raw: %s%04ld\x1b[0m %s%04ld\x1b[0m %s%04ld\x1b[0m\n",
                                   encoder_states.enc_a ? "\x1b[7m" : "\x1b[27m", encoder_states.enc_raw_a,
                                   encoder_states.enc_b ? "\x1b[7m" : "\x1b[27m", encoder_states.enc_raw_b,
@@ -171,13 +176,16 @@ int main(void)
 
             flap_position_curr = flap_position_get(&openflap_ctx);
             if (flap_position_curr != flap_position_prev) {
+                int distance = flap_position_curr - flap_position_prev;
+                distance     = distance < 0 ? distance + SYMBOL_CNT : distance;
+
                 flap_position_prev         = flap_position_curr;
-                ticks_ps                   = 48 * (pwm_ticker_curr - pwm_ticker_prev_pos_change);
-                rps_x100_avg               = (rps_x100_avg * 7 + (100000 / ticks_ps)) / 8;
+                ticks_per_rev              = SYMBOL_CNT * (pwm_ticker_curr - pwm_ticker_prev_pos_change) / distance;
+                rps_x100_avg               = (rps_x100_avg * 7 + (20000 / ticks_per_rev)) / 8;
                 pwm_ticker_prev_pos_change = pwm_ticker_curr;
                 // debug_io_log_info("fp: %d (%s)\n", flap_position_curr,
                 // &openflap_ctx.config.symbol_set[flap_position_curr]);
-            } else if (pwm_ticker_curr >= pwm_ticker_prev_pos_change + 150) {
+            } else if (pwm_ticker_curr >= pwm_ticker_prev_pos_change + 30) {
                 // If no position change for a while, reset the average speed
                 rps_x100_avg = 0;
             }
@@ -203,9 +211,9 @@ int main(void)
                 peripherals_ctx.motor.mode  = MOTOR_BRAKE; // Set to brake if speed is zero
                 peripherals_ctx.motor.speed = 0;
             }
-            // motor_control(&peripherals_ctx.motor);
+            motor_control(&peripherals_ctx.motor);
 
-            if (pwm_ticker_curr % 25 == 1) {
+            if (pwm_ticker_curr % 8 == 1) {
                 debug_io_scope.setpoint     = speed_sp;
                 debug_io_scope.actual       = rps_x100_avg;
                 debug_io_scope.p            = openflap_ctx.pid_ctx.p_error;

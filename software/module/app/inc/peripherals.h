@@ -138,3 +138,10 @@ bool is_column_end(void);
  * @return The current encoder states.
  */
 void encoder_states_get(encoder_states_t *states, uint16_t adc_lower_threshold, uint16_t adc_upper_threshold);
+
+/**
+ * @brief Enables or disables a secondary uart TX pin.
+ *
+ * @param enable_secondary_tx true to enable the secondary TX pin, false to disable it.
+ */
+void uart_tx_pin_update(bool enable_secondary_tx);

@@ -84,21 +84,23 @@ void SysTick_Handler(void)
 /* please refer to the startup file.                                          */
 /******************************************************************************/
 
-// void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
-// {
-//     /* Clear the TIM1 update interrupt flag */
-//     if (LL_TIM_IsActiveFlag_UPDATE(TIM1)) {
-//         LL_TIM_ClearFlag_UPDATE(TIM1);
-//     }
-// }
+void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
+{
+    /* Clear the TIM1 update interrupt flag */
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM1)) {
+        LL_TIM_ClearFlag_UPDATE(TIM1);
+        LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_4); /* Do interrupt driven PWM for now. */
+    }
+}
 
-// void TIM1_CC_IRQHandler(void)
-// {
-//     /* Clear the TIM1 capture/compare interrupt flag */
-//     if (LL_TIM_IsActiveFlag_CC1(TIM1)) {
-//         LL_TIM_ClearFlag_CC1(TIM1);
-//     }
-// }
+void TIM1_CC_IRQHandler(void)
+{
+    /* Clear the TIM1 capture/compare interrupt flag */
+    if (LL_TIM_IsActiveFlag_CC3(TIM1)) {
+        LL_TIM_ClearFlag_CC3(TIM1);
+        LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_4); /* Do interrupt driven PWM for now. */
+    }
+}
 
 void TIM3_IRQHandler(void)
 {

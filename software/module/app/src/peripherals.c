@@ -7,11 +7,11 @@
 //======================================================================================================================
 
 /** Number of debug GPIO pins. */
-#define DEBUG_GPIO_PINS_COUNT (2)
+#define DEBUG_GPIO_PINS_COUNT (1)
 /** Debug GPIO pins. */
-const uint32_t DEBUG_GPIO_PINS[DEBUG_GPIO_PINS_COUNT] = {LL_GPIO_PIN_0, LL_GPIO_PIN_1};
+const uint32_t DEBUG_GPIO_PINS[DEBUG_GPIO_PINS_COUNT] = {LL_GPIO_PIN_0};
 /** Debug GPIO ports. */
-GPIO_TypeDef *const DEBUG_GPIO_PORTS[DEBUG_GPIO_PINS_COUNT] = {GPIOF, GPIOF};
+GPIO_TypeDef *const DEBUG_GPIO_PORTS[DEBUG_GPIO_PINS_COUNT] = {GPIOF};
 
 //======================================================================================================================
 //                                                   GLOBAL VARIABLES
@@ -59,10 +59,8 @@ void peripherals_init(peripherals_ctx_t *peripherals_ctx)
                      uart_tx_dma_buf, UART_DMA_BUF_LEN, peripheral_uart_dma_w_ptr_get, peripheral_uart_tx_dma_start);
 
     peripheral_gpio_init();
-    peripheral_tim1_init(); // Initialize master timer first
-    peripheral_tim3_init(); // Initialize slave timer after master
-    while (1)
-        ;
+    peripheral_tim1_init();
+    peripheral_tim3_init();
     peripheral_adc1_init();
     peripheral_uart1_init();
 }
@@ -186,6 +184,18 @@ void encoder_states_get(encoder_states_t *states, uint16_t adc_lower_threshold, 
         (states->enc_z) ? (states->enc_raw_z < adc_upper_threshold) : (states->enc_raw_z < adc_lower_threshold);
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void uart_tx_pin_update(bool enable_secondary_tx)
+{
+    static bool secondary_tx_enabled = false;
+
+    if (enable_secondary_tx != secondary_tx_enabled) {
+        secondary_tx_enabled = enable_secondary_tx;
+        LL_GPIO_SetPinMode(GPIOF, LL_GPIO_PIN_1, enable_secondary_tx ? LL_GPIO_MODE_ALTERNATE : LL_GPIO_MODE_INPUT);
+    }
+}
+
 //======================================================================================================================
 //                                                         PRIVATE FUNCTIONS
 //======================================================================================================================
@@ -193,8 +203,10 @@ void encoder_states_get(encoder_states_t *states, uint16_t adc_lower_threshold, 
 /**
  * @brief Initializes GPIOs used for debugging.
  *
- * This function configures 2 GPIO pins as outputs for debugging purposes.
- * The pins are set to high speed and pull-up mode.
+ * Configured pins:
+ * - PA12: Column end detection (input)
+ * - PB5: Power OK detection (input)
+ * - PF0: Debug pin 0 (output)
  */
 static void peripheral_gpio_init(void)
 {
@@ -205,21 +217,21 @@ static void peripheral_gpio_init(void)
     LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
     LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOF);
 
-    /* Initialize the column end detection pin. (PA1) */
-    GPIO_InitStruct.Pin   = LL_GPIO_PIN_1;
+    /* Initialize the "column-end" detection pin. (PA12) */
+    GPIO_InitStruct.Pin   = LL_GPIO_PIN_12;
     GPIO_InitStruct.Mode  = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull  = LL_GPIO_PULL_UP;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* Initialize the IR sense enable pin. (PA2) */
-    GPIO_InitStruct.Pin   = LL_GPIO_PIN_2;
-    GPIO_InitStruct.Mode  = LL_GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Pull  = LL_GPIO_PULL_UP;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    /* Initialize the "power-ok" detection pin. (PB5) */
+    // GPIO_InitStruct.Pin   = LL_GPIO_PIN_5;
+    // GPIO_InitStruct.Mode  = LL_GPIO_MODE_INPUT;
+    // GPIO_InitStruct.Pull  = LL_GPIO_NO_PULL;
+    // GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
+    // LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    /* Initialize the 2 debug pins. */
+    /* Initialize the 1 debug pins. */
     GPIO_InitStruct.Mode       = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
@@ -243,13 +255,14 @@ static void peripheral_tim1_init(void)
     LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM1);
 
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Mode                = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Mode                = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.OutputType          = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull                = LL_GPIO_PULL_NO;
     GPIO_InitStruct.Speed               = LL_GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Pull                = LL_GPIO_PULL_DOWN;
 
-    // Configure PA0 (TIM1_CH3) as alternate function for PWM.
-    GPIO_InitStruct.Pin       = LL_GPIO_PIN_0;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_13; // TIM1_CH3
+    // TODO: PWM pin is disabled due to hardware changes, using interrupt for now.
+    // Configure PA4 as output.
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_4;
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // Configure TIM1 base: 24MHz / (1000 * 24) ≈ 1000Hz (1000 counts of 1us)
@@ -259,10 +272,18 @@ static void peripheral_tim1_init(void)
 
     // Configure PWM mode for Channel 3 (IR LED)
     LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1);
-    LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCPOLARITY_HIGH);
-    LL_TIM_OC_SetCompareCH3(TIM1, 100); // Start with IR LED off
+    LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH3, LL_TIM_OCPOLARITY_LOW);
+    LL_TIM_OC_SetCompareCH3(TIM1, 1000 - 220); /* IR LED should be on for 220us each cycle. */
     LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH3);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
+
+    // Configure Channel 4 as output compare for external trigger (ADC trigger) Not connected to physical pin.
+    LL_TIM_OC_SetMode(TIM1, LL_TIM_CHANNEL_CH4, LL_TIM_OCMODE_PWM2); /* Generates a rising edge after 200us. */
+    LL_TIM_OC_SetPolarity(TIM1, LL_TIM_CHANNEL_CH4, LL_TIM_OCPOLARITY_LOW);
+    LL_TIM_OC_SetCompareCH4(TIM1, 1000 - 20); /* ADC should start 200us after IR LED goes on. */
+    LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH4);
+    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH4);
+    LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_OC4REF);
 
     LL_TIM_EnableAllOutputs(TIM1);
 
@@ -270,9 +291,12 @@ static void peripheral_tim1_init(void)
     LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_UPDATE);
 
     // Enable interrupt for TIM1 Update
-    // LL_TIM_EnableIT_UPDATE(TIM1);
-    // NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 2);
-    // NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    LL_TIM_EnableIT_UPDATE(TIM1);
+    LL_TIM_EnableIT_CC3(TIM1);
+    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 2);
+    NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    NVIC_SetPriority(TIM1_CC_IRQn, 2);
+    NVIC_EnableIRQ(TIM1_CC_IRQn);
 
     // Enable the timer (master timer starts first)
     LL_TIM_EnableCounter(TIM1);
@@ -282,7 +306,7 @@ static void peripheral_tim1_init(void)
 
 /**
  * @brief Initializes TIM3 for PWM on channel 1 and 2.
- * TIM3 is configured as a slave at 100Hz.
+ * TIM3 is configured as a slave at 200Hz.
  */
 static void peripheral_tim3_init(void)
 {
@@ -299,58 +323,36 @@ static void peripheral_tim3_init(void)
     GPIO_InitStruct.Pin       = LL_GPIO_PIN_6 | LL_GPIO_PIN_7;
     GPIO_InitStruct.Alternate = LL_GPIO_AF_1; // TIM3_CH1 & TIM3_CH2
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-    // Configure PA4 (TIM3_CH3) as alternate function for PWM.
-    GPIO_InitStruct.Pin       = LL_GPIO_PIN_4;
-    GPIO_InitStruct.Alternate = LL_GPIO_AF_13; // TIM3_CH3
-    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    // Configure TIM3 base: 24MHz / (1000 * 240) ≈ 100Hz (1000 counts of 10us)
-    LL_TIM_SetPrescaler(TIM3, 240 - 1);
+    // Configure TIM3 base: 24MHz / (1000 * 120) ≈ 200Hz (1000 counts of 5us)
+    LL_TIM_SetPrescaler(TIM3, 120 - 1);
     LL_TIM_SetAutoReload(TIM3, 1000 - 1);
     LL_TIM_SetCounterMode(TIM3, LL_TIM_COUNTERMODE_UP);
 
-    // Configure TIM3 as slave to TIM1
-    // Set TIM3 to be triggered by TIM1 TRGO (Internal Trigger 0 = ITR0 = TIM1)
-    // LL_TIM_SetTriggerInput(TIM3, LL_TIM_TS_ITR0);
-    // LL_TIM_SetSlaveMode(TIM3, LL_TIM_SLAVEMODE_TRIGGER);
+    // Configure TIM3 as slave to TIM1 Set TIM3 to be triggered by TIM1 TRGO(Internal Trigger 0 = ITR0 = TIM1)
+    LL_TIM_SetTriggerInput(TIM3, LL_TIM_TS_ITR0);
+    LL_TIM_SetSlaveMode(TIM3, LL_TIM_SLAVEMODE_TRIGGER);
 
     // Configure PWM mode for Channel 1 and 2 (motor)
     LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1);
     LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_OCPOLARITY_HIGH);
     LL_TIM_OC_SetCompareCH1(TIM3, 0);
-    LL_TIM_OC_SetCompareCH1(TIM3, 100);
     LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH1);
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH1);
 
     LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_OCMODE_PWM1);
     LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH2, LL_TIM_OCPOLARITY_HIGH);
     LL_TIM_OC_SetCompareCH2(TIM3, 0);
-    LL_TIM_OC_SetCompareCH2(TIM3, 100);
     LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH2);
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH2);
-
-    // // Configure PWM mode for Channel 3 (IR led)
-    // LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1);
-    // LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH3, LL_TIM_OCPOLARITY_LOW);
-    // LL_TIM_OC_SetCompareCH3(TIM3, 1000 - 220); /* IR LED should be on for 220us each cycle. */
-    // LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH3);
-    // LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH3);
-
-    // // Configure Channel 4 as output compare for external trigger (ADC trigger) Not connected to physical pin.
-    // LL_TIM_OC_SetMode(TIM3, LL_TIM_CHANNEL_CH4, LL_TIM_OCMODE_PWM2); /* Generates a rising edge after 200us. */
-    // LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH4, LL_TIM_OCPOLARITY_LOW);
-    // LL_TIM_OC_SetCompareCH4(TIM3, 1000 - 20); /* ADC should start 200us after IR LED goes on. */
-    // LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH4);
-    // LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH4);
-    // LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_OC4REF);
 
     // Enable interrupt for TIM3 Update
     LL_TIM_EnableIT_UPDATE(TIM3);
     NVIC_SetPriority(TIM3_IRQn, 2);
     NVIC_EnableIRQ(TIM3_IRQn);
 
-    // Enable TIM3 counter but don't start it - it will be started by TIM1 trigger
-    LL_TIM_EnableCounter(TIM3);
+    // Timer started by TIM1 trigger
+    // LL_TIM_EnableCounter(TIM3);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -391,7 +393,7 @@ static void peripheral_adc1_init(void)
     LL_ADC_SetLowPowerMode(ADC1, LL_ADC_LP_MODE_NONE);
     LL_ADC_REG_SetContinuousMode(ADC1, LL_ADC_REG_CONV_SINGLE);
     LL_ADC_REG_SetSequencerDiscont(ADC1, LL_ADC_REG_SEQ_DISCONT_DISABLE);
-    LL_ADC_REG_SetTriggerSource(ADC1, LL_ADC_REG_TRIG_EXT_TIM3_TRGO);
+    LL_ADC_REG_SetTriggerSource(ADC1, LL_ADC_REG_TRIG_EXT_TIM1_TRGO); // TODO: change to TIM3_TRGO for new hardware
     LL_ADC_REG_SetTriggerEdge(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
     LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_UNLIMITED);
     LL_ADC_REG_SetOverrun(ADC1, LL_ADC_REG_OVR_DATA_OVERWRITTEN);
@@ -449,6 +451,13 @@ static void peripheral_uart1_init(void)
     GPIO_InitStruct.Pin       = LL_GPIO_PIN_6 | LL_GPIO_PIN_7; // UART1_TX, UART1_RX
     GPIO_InitStruct.Alternate = LL_GPIO_AF_0;                  // UART1
     LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // Configure PF1 (UART1_TX) as input. This pin can be used as a secondary TX when the module is at a column end.
+    GPIO_InitStruct.Pin  = LL_GPIO_PIN_1; // alternate UART1_TX,
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+    LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+    // Set PF1 to AF8 (UART1_TX) (Can't be done through struct because it's input)
+    LL_GPIO_SetAFPin_0_7(GPIOF, LL_GPIO_PIN_1, LL_GPIO_AF_8);
 
     // Configure UART1
     LL_USART_InitTypeDef UART_InitStruct = {0};
@@ -512,24 +521,6 @@ static void peripheral_uart1_init(void)
     // LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_3);
     // NVIC_SetPriority(DMA1_Channel3_IRQn, 2);
     // NVIC_EnableIRQ(DMA1_Channel3_IRQn);
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-/**
- * @brief Gets the write pointer for the TIM1 input capture DMA buffer.
- *
- * This function calculates the number of bytes written to the DMA buffer
- * and returns the write pointer, which is the current position in the buffer.
- *
- * @return Pointer to the current write position in the TIM1 input capture DMA buffer.
- */
-void *peripheral_tim1_dma_w_ptr_get(void)
-{
-    // uint32_t remaining = LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_1);
-    // uint32_t written   = TIM1_IC_DMA_BUF_LEN - remaining;
-    // return (void *)(tim1_ic_dma_buf + written);
-    return NULL;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------

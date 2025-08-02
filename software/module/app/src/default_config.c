@@ -2,8 +2,8 @@
 
 #define SYMBOL_€ (0x00ac82e2) // € symbol
 
-#define IR_HYSTERESIS (25)
-#define IT_THRESHOLD  (200)
+#define IR_HYSTERESIS (10)
+#define IT_THRESHOLD  (400)
 
 #ifdef SET_DEFAULT_CONFIG
 /* When SET_DEFAULT_CONFIG is not defined, the default configuration will not be included in the final binary. */

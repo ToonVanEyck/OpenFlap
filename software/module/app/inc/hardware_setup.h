@@ -15,16 +15,14 @@
 #define SYMBOL_CNT (48)
 
 /** The number of pulses generated per symbol. */
-#define ENCODER_PULSES_PER_SYMBOL (3)
+#define ENCODER_PULSES_PER_SYMBOL (1)
 
 /** The number of pulses generated per revolution. */
 #define ENCODER_PULSES_PER_REVOLUTION (ENCODER_PULSES_PER_SYMBOL * SYMBOL_CNT)
 
 /** The number of encoder channels. */
-#define ENCODER_CHANNEL_COUNT (5)
+#define ENCODER_CHANNEL_COUNT (3)
 
 #define ENC_CH_A (0) /* Array index for encoder channel A. */
 #define ENC_CH_B (1) /* Array index for encoder channel B. */
-#define ENC_CH_C (2) /* Array index for encoder channel C. */
-#define ENC_CH_D (3) /* Array index for encoder channel D. */
-#define ENC_CH_Z (4) /* Array index for encoder channel Z. */
+#define ENC_CH_Z (2) /* Array index for encoder channel Z. */

@@ -7,7 +7,6 @@
 //                                                  FUNCTION PROTOTYPES
 //======================================================================================================================
 
-void *rbuff_r_ptr_current(rbuff_t *rbuff);
 void *rbuff_r_ptr_next(rbuff_t *rbuff);
 void *rbuff_w_ptr_current(rbuff_t *rbuff);
 void *rbuff_w_ptr_next(rbuff_t *rbuff);
@@ -24,7 +23,7 @@ void rbuff_init(rbuff_t *rbuff, void *buff, size_t capacity, size_t element_size
     rbuff->w_ptr        = buff;
     rbuff->r_ptr        = buff;
     rbuff->dma_ro       = false;
-    rbuff->buffer_end   = (char *)buff + capacity * element_size;
+    rbuff->buff_end     = (char *)buff + capacity * element_size;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -71,7 +70,6 @@ bool rbuff_is_empty(rbuff_t *rbuff)
     volatile void *current_w_ptr = rbuff_w_ptr_current(rbuff);
     bool val                     = (rbuff->r_ptr == current_w_ptr);
     return val;
-    // return (rbuff->r_ptr == rbuff_w_ptr_current(rbuff));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -131,7 +129,7 @@ size_t rbuff_peek(rbuff_t *rbuff, void *data, size_t size)
 void *rbuff_r_ptr_next(rbuff_t *rbuff)
 {
     void *new_r_ptr = (char *)rbuff->r_ptr + rbuff->element_size;
-    if (new_r_ptr == rbuff->buffer_end) {
+    if (new_r_ptr == rbuff->buff_end) {
         new_r_ptr = rbuff->buff;
     }
     return new_r_ptr;
@@ -165,7 +163,7 @@ void *rbuff_w_ptr_current(rbuff_t *rbuff)
 void *rbuff_w_ptr_next(rbuff_t *rbuff)
 {
     void *new_w_ptr = (char *)rbuff_w_ptr_current(rbuff) + rbuff->element_size;
-    if (new_w_ptr == rbuff->buffer_end) {
+    if (new_w_ptr == rbuff->buff_end) {
         new_w_ptr = rbuff->buff;
     }
     return new_w_ptr;

@@ -19,7 +19,6 @@ static void debug_term_pid_tune(const char *input, void *arg);
 static void debug_term_ir_lims_set(const char *input, void *arg);
 static void debug_term_i_lim_update(const char *input, void *arg);
 static void debug_term_control_loop_toggle(const char *input, void *arg);
-static void debug_term_encoder_calibration(const char *input, void *arg);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
@@ -28,7 +27,7 @@ static void debug_term_encoder_calibration(const char *input, void *arg);
 void debug_term_init(of_ctx_t *of_ctx)
 {
     debug_io_init(LOG_LVL_DEBUG);
-    debug_io_scope_init("u4u4i4i4i4i4i4i4");
+    debug_io_scope_init("u4u4i4i4i4i4i4i4i4");
 
     debug_io_term_register_keyword("config", debug_term_config_dump, of_ctx);
     debug_io_term_register_keyword("uart", debug_term_test_uart, of_ctx);
@@ -40,7 +39,6 @@ void debug_term_init(of_ctx_t *of_ctx)
     debug_io_term_register_keyword("ir", debug_term_ir_lims_set, of_ctx);
     debug_io_term_register_keyword("i_lim", debug_term_i_lim_update, of_ctx);
     debug_io_term_register_keyword("cl", debug_term_control_loop_toggle, of_ctx);
-    debug_io_term_register_keyword("enc_cal", debug_term_encoder_calibration, of_ctx);
 }
 
 //======================================================================================================================
@@ -58,10 +56,6 @@ static void debug_term_config_dump(const char *input, void *arg)
     of_config_t *config = (of_config_t *)arg;
     debug_io_log_info("Config:\n");
     debug_io_log_info("Encoder offset: %d\n", config->encoder_offset);
-    debug_io_log_info("Encoder calibration:\n");
-    for (int i = 0; i < ENCODER_CHANNEL_COUNT; i++) {
-        debug_io_log_info("  Channel %d: %d %d\n", i, config->enc_cal[i].min, config->enc_cal[i].max);
-    }
     debug_io_log_info("IR thresholds: %d %d\n", config->ir_threshold.lower, config->ir_threshold.upper);
     debug_io_log_info("Base speed: %d\n", config->base_speed);
     debug_io_log_info("Symbol set:\n");
@@ -104,47 +98,22 @@ static void debug_term_test_motor(const char *input, void *arg)
     of_ctx_t *of_ctx = (of_ctx_t *)arg;
 
     // Parse speed and decay mode
-    int speed  = 0;
-    char decay = 0; // Default to fast decay
+    int speed = 0;
+    int decay = 0;
 
-    // Expect input format: "<speed> <decay s/f>"
+    // Expect input format: "<speed> <mode s/f>"
     if (input) {
-        // Try to parse speed and decay
-        int parsed = sscanf(input, "%d %c", &speed, &decay);
+        // Try to parse speed and mode
+        int parsed = sscanf(input, "%d %d", &speed, &decay);
         if (parsed < 1) {
-            debug_io_log_error("Invalid input format. Expected: <speed> <decay s/f>\n");
+            debug_io_log_error("Invalid input format. Expected: <speed [-1000;+1000]> <decay [0;+1000]>\n");
             return;
         }
     }
 
-    if (speed < 0) {
-        of_ctx->of_hal.motor.mode  = MOTOR_REVERSE;
-        of_ctx->of_hal.motor.speed = -speed;
-    } else if (speed > 0) {
-        of_ctx->of_hal.motor.mode  = MOTOR_FORWARD;
-        of_ctx->of_hal.motor.speed = speed;
-    } else {
-        of_ctx->of_hal.motor.mode  = MOTOR_IDLE; // Set to idle if speed is zero
-        of_ctx->of_hal.motor.speed = 0;
-    }
+    of_ctx->debug_flags.motor_control_override = true; // Override motor control to use fixed speeds.
 
-    if (decay == 's' || decay == 'S') {
-        debug_io_log_debug("Motor mode set to SLOW_DECAY\n");
-        of_ctx->of_hal.motor.decay_mode = MOTOR_DECAY_SLOW;
-    } else if (decay == 'f' || decay == 'F') {
-        debug_io_log_debug("Motor mode set to FAST_DECAY\n");
-        of_ctx->of_hal.motor.decay_mode = MOTOR_DECAY_FAST;
-    } else if (decay == 'b' || decay == 'B') {
-        debug_io_log_debug("Motor mode set to BRAKE\n");
-        of_ctx->of_hal.motor.mode = MOTOR_BRAKE; // Special case for brake mode
-    } else if (decay == 'i' || decay == 'I') {
-        debug_io_log_debug("Motor mode set to IDLE\n");
-        of_ctx->of_hal.motor.mode = MOTOR_IDLE; // Special case for idle mode
-    }
-
-    of_ctx->debug_flags.motor_control_override = true; /* Indicate that the motor pwm is fixed. */
-
-    of_hal_motor_control(&of_ctx->of_hal.motor);
+    of_hal_motor_control(speed, decay);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -304,13 +273,4 @@ static void debug_term_control_loop_toggle(const char *input, void *arg)
     of_ctx->debug_flags.rps_x100_setpoint_override = false;
 
     debug_io_log_debug("Motor control loop enabled\n");
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-static void debug_term_encoder_calibration(const char *input, void *arg)
-{
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
-
-    of_encoder_sensor_calibration_start(of_ctx);
 }

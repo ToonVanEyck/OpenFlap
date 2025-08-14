@@ -8,7 +8,7 @@ typedef void *(*dma_rw_ptr_get_cb)(void);
 
 typedef struct rbuff_tag {
     void *buff;                       /**< Pointer to the raw array used by the ringbuffer. */
-    void *buffer_end;                 /**< Pointer to the end of the raw array used by the ringbuffer. */
+    void *buff_end;                   /**< Pointer to the end of the raw array used by the ringbuffer. */
     void *w_ptr;                      /**< Pointer to the write pointer in the ringbuffer. */
     void *r_ptr;                      /**< Pointer to the read pointer in the ringbuffer. */
     size_t capacity;                  /**< Number of elements that fit in the buffer. */

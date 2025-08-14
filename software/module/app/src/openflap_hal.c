@@ -135,42 +135,33 @@ bool of_hal_debug_pin_get(uint8_t pin)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void of_hal_motor_control(of_hal_motor_ctx_t *motor)
+void of_hal_motor_control(int16_t speed, int16_t decay)
 {
-    if (motor->speed > 1000) {
-        motor->speed = 1000; // Clamp speed to maximum value
-    } else if (motor->speed < 0) {
-        motor->speed = 0; // Clamp speed to minimum value
-    }
+    /* Clamp input values */
+    speed = (speed < -1000) ? -1000 : (speed > 1000) ? 1000 : speed; // Clamp speed to [-1000, 1000]
+    decay = (decay < 0) ? 0 : (decay > 1000) ? 1000 : decay;         // Clamp decay to [0, 1000]
 
-    switch (motor->mode) {
-        case MOTOR_FORWARD:
-            if (motor->decay_mode == MOTOR_DECAY_FAST) {
-                LL_TIM_OC_SetCompareCH1(TIM3, 0);
-                LL_TIM_OC_SetCompareCH2(TIM3, motor->speed * 1);
-            } else {
-                LL_TIM_OC_SetCompareCH1(TIM3, 1000 - (motor->speed * 1));
-                LL_TIM_OC_SetCompareCH2(TIM3, 1000);
-            }
-            break;
-        case MOTOR_REVERSE:
-            if (motor->decay_mode == MOTOR_DECAY_FAST) {
-                LL_TIM_OC_SetCompareCH1(TIM3, motor->speed * 1);
-                LL_TIM_OC_SetCompareCH2(TIM3, 0);
-            } else {
-                LL_TIM_OC_SetCompareCH1(TIM3, 1000);
-                LL_TIM_OC_SetCompareCH2(TIM3, 1000 - (motor->speed * 1));
-            }
-            break;
-        case MOTOR_IDLE:
-            LL_TIM_OC_SetCompareCH1(TIM3, 0);
-            LL_TIM_OC_SetCompareCH2(TIM3, 0);
-            break;
-        case MOTOR_BRAKE:
-            LL_TIM_OC_SetCompareCH1(TIM3, 1000);
-            LL_TIM_OC_SetCompareCH2(TIM3, 1000);
-            break;
-    }
+    /* Convert speed to pwm, scalar might be needed for different timer configurations. */
+    uint16_t pwm_value = (speed >= 0) ? speed : -speed;
+
+    /* Select correct register based on direction. */
+    volatile uint32_t *pwm_reg_1 = (speed >= 0) ? &TIM3->CCR1 : &TIM3->CCR2;
+    volatile uint32_t *pwm_reg_2 = (speed >= 0) ? &TIM3->CCR2 : &TIM3->CCR1;
+
+    /* Calculate pwm values based on speed and decay. */
+    uint16_t pwm_1 = (uint32_t)(1000 - pwm_value) * decay / 1000;
+    uint16_t pwm_2 = (uint32_t)(pwm_value) * (1000 - decay) / 1000 + decay;
+
+    /* Write new PWM values to registers. */
+    WRITE_REG(*pwm_reg_1, pwm_1);
+    WRITE_REG(*pwm_reg_2, pwm_2);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool of_hal_motor_is_running(void)
+{
+    return (LL_TIM_OC_GetCompareCH1(TIM3) != LL_TIM_OC_GetCompareCH2(TIM3));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -185,11 +176,9 @@ bool of_hal_is_column_end(void)
 void of_hal_encoder_values_get(uint16_t *encoder_values)
 {
     // Map the dma buffer to the encoder channels.
-    encoder_values[1] = adc_dma_buf[0]; // Encoder channel A
-    encoder_values[0] = adc_dma_buf[1]; // Encoder channel B
-    encoder_values[2] = adc_dma_buf[2]; // Encoder channel C
-    encoder_values[3] = adc_dma_buf[3]; // Encoder channel D
-    encoder_values[4] = adc_dma_buf[4]; // Encoder channel Z
+    encoder_values[ENC_CH_B] = adc_dma_buf[0]; // Encoder channel B
+    encoder_values[ENC_CH_Z] = adc_dma_buf[1]; // Encoder channel Z
+    encoder_values[ENC_CH_A] = adc_dma_buf[2]; // Encoder channel A
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -241,8 +230,8 @@ static void of_hal_gpio_init(void)
     LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
     LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOF);
 
-    /* Initialize the "column-end" detection pin. (PA12) */
-    GPIO_InitStruct.Pin   = LL_GPIO_PIN_12;
+    /* Initialize the "column-end" detection pin. (PA1) */
+    GPIO_InitStruct.Pin   = LL_GPIO_PIN_1;
     GPIO_InitStruct.Mode  = LL_GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull  = LL_GPIO_PULL_UP;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
@@ -285,9 +274,9 @@ static void of_hal_tim1_init(void)
     GPIO_InitStruct.Speed               = LL_GPIO_SPEED_FREQ_HIGH;
 
     // TODO: PWM pin is disabled due to hardware changes, using interrupt for now.
-    // Configure PB5 as output.
-    GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
-    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    // Configure PA2 as output.
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_2;
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // Configure TIM1 base: 24MHz / (1000 * 24) ≈ 1000Hz (1000 counts of 1us)
     LL_TIM_SetPrescaler(TIM1, 24 - 1);
@@ -349,7 +338,7 @@ static void of_hal_tim3_init(void)
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // Configure TIM3 base: 24MHz / (1000 * 120) ≈ 200Hz (1000 counts of 5us)
-    LL_TIM_SetPrescaler(TIM3, 120 - 1);
+    LL_TIM_SetPrescaler(TIM3, 72 - 1);
     LL_TIM_SetAutoReload(TIM3, 1000 - 1);
     LL_TIM_SetCounterMode(TIM3, LL_TIM_COUNTERMODE_UP);
 
@@ -397,8 +386,7 @@ static void of_hal_adc1_init(void)
     GPIO_InitStruct.Pull                = LL_GPIO_PULL_NO;
 
     // Configure PA0 through PA4 as analog inputs for IR sensors.
-    GPIO_InitStruct.Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1 | LL_GPIO_PIN_2 | LL_GPIO_PIN_3 |
-                          LL_GPIO_PIN_4; // ADC1_IN0, ADC1_IN1, ADC1_IN2, ADC1_IN3, ADC1_IN4
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_3 | LL_GPIO_PIN_4 | LL_GPIO_PIN_5; // ADC1_IN3, ADC1_IN4, ADC1_IN5
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // ADC calibration (equivalent to HAL_ADCEx_Calibration_Start)
@@ -424,9 +412,8 @@ static void of_hal_adc1_init(void)
     LL_ADC_REG_SetOverrun(ADC1, LL_ADC_REG_OVR_DATA_OVERWRITTEN);
     LL_ADC_SetSamplingTimeCommonChannels(ADC1, LL_ADC_SAMPLINGTIME_41CYCLES_5);
 
-    // configuring channels 0 to 4
-    LL_ADC_REG_SetSequencerChannels(ADC1, LL_ADC_CHANNEL_0 | LL_ADC_CHANNEL_1 | LL_ADC_CHANNEL_2 | LL_ADC_CHANNEL_3 |
-                                              LL_ADC_CHANNEL_4);
+    // configuring channels 3 to 5
+    LL_ADC_REG_SetSequencerChannels(ADC1, LL_ADC_CHANNEL_3 | LL_ADC_CHANNEL_4 | LL_ADC_CHANNEL_5);
 
     // Enable ADC
     LL_ADC_Enable(ADC1);

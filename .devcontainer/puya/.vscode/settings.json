@@ -2,13 +2,18 @@
     "actionButtons": {
         "commands": [
             {
-                "name": "⚙️ Configure",
-                "command": "cmake --toolchain ${workspaceFolder}/software/module/puya_toolchain.cmake -S ${workspaceFolder}/software/module/ -B ${workspaceFolder}/build/module -Wno-dev",
+                "name": "🔨 Build",
+                "command": "cmake --toolchain ${workspaceFolder}/software/module/puya_toolchain.cmake -S ${workspaceFolder}/software/module/ -B ${workspaceFolder}/build/module -Wno-dev && cmake --build ${workspaceFolder}/build/module && echo -e \"New firmware CRC: \\\\033[1;35m$(tail -c 4 ${workspaceFolder}/build/module/bin/OpenFlap_Module_App.bin | xxd -p)\\\\033[0m\"",
                 "terminalName": "bash"
             },
             {
-                "name": "🔨 Build",
-                "command": "cmake --build ${workspaceFolder}/build/module && echo -e \"New firmware CRC: \\\\033[1;35m$(tail -c 4 ${workspaceFolder}/build/module/bin/OpenFlap_Module_App.bin | xxd -p)\\\\033[0m\"",
+                "name": "🧪 Test",
+                "command": "cmake --toolchain ${workspaceFolder}/software/module/linux_toolchain.cmake -S ${workspaceFolder}/software/module/ -B ${workspaceFolder}/build/module/tests -Wno-dev && cmake --build ${workspaceFolder}/build/module/tests && ctest --test-dir ${workspaceFolder}/build/module/tests",
+                "terminalName": "bash",
+            },
+            {
+                "name": "📊 Coverage",
+                "command": "cmake --toolchain ${workspaceFolder}/software/module/linux_toolchain.cmake -S ${workspaceFolder}/software/module/ -B ${workspaceFolder}/build/module/tests -Wno-dev && cmake --build ${workspaceFolder}/build/module/tests --target coverage && ls ${workspaceFolder}/build/module/tests/coverage/index.html",
                 "terminalName": "bash",
             },
             {
@@ -33,7 +38,7 @@
             }
         ]
     },
-    "cortex-debug.variableUseNaturalFormat": true,
+    "cortex-debug.variableUseNaturalFormat": false,
     "cSpell.words": [
         "openflap"
     ],

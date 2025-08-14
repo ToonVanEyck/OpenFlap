@@ -32,25 +32,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/** Motor operation modes. */
-typedef enum {
-    MOTOR_IDLE,    /**< Let the motor idle / freewheel. */
-    MOTOR_BRAKE,   /**< Actively brake the motor. */
-    MOTOR_FORWARD, /**< Run the motor forwards. */
-    MOTOR_REVERSE, /**< Run the motor in reverse. */
-} motor_mode_t;
-
-/** Motor decay mode. */
-typedef enum {
-    MOTOR_DECAY_FAST, /**< Fast decay mode. */
-    MOTOR_DECAY_SLOW  /**< Slow decay mode. */
-} motor_decay_mode_t;
-
 /** Type for controlling the motor. */
 typedef struct {
-    uint16_t speed;                /**< Motor speed (0-1000). */
-    motor_mode_t mode;             /**< Motor operation mode. */
-    motor_decay_mode_t decay_mode; /**< Motor decay mode. */
+    int16_t speed; /**< Motor speed and direction (-1000 to 1000). */
+    int16_t decay; /**< Motor decay SLOW/MIXED/FAST (0 to 100). */
 } of_hal_motor_ctx_t;
 
 typedef struct {
@@ -117,9 +102,19 @@ bool of_hal_debug_pin_get(uint8_t pin);
 /**
  * @brief Updates the motor control based on the provided motor context.
  *
- * @param[in] motor Pointer to the motor context containing speed and direction.
+ * @param[in] speed A value from -1000 to +1000 where -1000 is the maximum reverse speed and +1000 is the maximum
+ *                  forward speed.
+ * @param[in] decay A value from 0 to 1000 representing the decay mode. Where 0 is full slow decay, 1000 is full fast
+ *                  decay and the values between represent mixed decay.
  */
-void of_hal_motor_control(of_hal_motor_ctx_t *motor);
+void of_hal_motor_control(int16_t speed, int16_t decay);
+
+/**
+ * @brief Check if the motor is currently running.
+ *
+ * @return true if the motor is running, false otherwise.
+ */
+bool of_hal_motor_is_running(void);
 
 /**
  * @brief Check if the module is the last module in a column.

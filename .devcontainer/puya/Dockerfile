@@ -19,6 +19,11 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.d
 # Install figlet font
 RUN cd /usr/share/figlet && wget https://raw.githubusercontent.com/xero/figlet-fonts/master/3d.flf
 
+# Install Unity testing framework v2.6.1
+RUN cd /opt && \
+    git clone --depth 1 --branch v2.6.1 https://github.com/ThrowTheSwitch/Unity.git unity && \
+    chown -R root:root unity/
+
 # Change user name from vscode to openflap
 RUN usermod -l ${NEW_USER} ${ORIGINAL_USER} && \
     groupmod -n ${NEW_USER} ${ORIGINAL_USER} && \

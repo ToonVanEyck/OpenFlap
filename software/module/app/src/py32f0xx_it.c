@@ -22,7 +22,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "py32f0xx_it.h"
-#include "peripherals.h"
+#include "openflap_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -34,7 +34,8 @@
 /* External variables --------------------------------------------------------*/
 extern uint32_t systick_1ms_cnt;
 extern uint32_t pwm_timer_tick_cnt;
-extern peripherals_ctx_t peripherals_ctx;
+extern uint32_t sens_timer_tick_cnt;
+extern uart_driver_ctx_t *uart_driver;
 
 /******************************************************************************/
 /*          Cortex-M0+ Processor Interruption and Exception Handlers          */
@@ -89,7 +90,8 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
     /* Clear the TIM1 update interrupt flag */
     if (LL_TIM_IsActiveFlag_UPDATE(TIM1)) {
         LL_TIM_ClearFlag_UPDATE(TIM1);
-        LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_4); /* Do interrupt driven PWM for now. */
+        LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_5); /* Do interrupt driven PWM for now. */
+        sens_timer_tick_cnt++;                        // Increment the sensor timer tick count
     }
 }
 
@@ -98,7 +100,7 @@ void TIM1_CC_IRQHandler(void)
     /* Clear the TIM1 capture/compare interrupt flag */
     if (LL_TIM_IsActiveFlag_CC3(TIM1)) {
         LL_TIM_ClearFlag_CC3(TIM1);
-        LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_4); /* Do interrupt driven PWM for now. */
+        LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_5); /* Do interrupt driven PWM for now. */
     }
 }
 
@@ -132,7 +134,7 @@ void DMA1_Channel2_3_IRQHandler(void)
     /* Clear the DMA1 Channel 2 transfer complete flag */
     if (LL_DMA_IsActiveFlag_TC2(DMA1)) {
         LL_DMA_ClearFlag_TC2(DMA1);
-        uart_driver_tx_dma_transfer_complete(&peripherals_ctx.uart_driver);
+        uart_driver_tx_dma_transfer_complete(uart_driver);
     }
 
     /* Clear the DMA1 Channel 3 transfer complete flag */

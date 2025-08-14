@@ -1,0 +1,159 @@
+/**
+ * \file openflap_hal.h
+ *
+ * Used Peripherals:
+ * - TIMER 1:
+ *   - CH1 Input Capture of COMP2 event (motor commutator pulses).
+ *   - CH3 & CH4 PWM output for motor control.
+ *   - Tick timer for the system.
+ * - TIMER 3: Quadrature encoder input.
+ * - COMPARATOR 2: Motor commutator pulses.
+ */
+
+#pragma once
+
+#include "py32f0xx_bsp_clock.h"
+#include "py32f0xx_ll_adc.h"
+#include "py32f0xx_ll_bus.h"
+#include "py32f0xx_ll_comp.h"
+#include "py32f0xx_ll_dma.h"
+#include "py32f0xx_ll_flash.h"
+#include "py32f0xx_ll_gpio.h"
+#include "py32f0xx_ll_system.h"
+#include "py32f0xx_ll_tim.h"
+#include "py32f0xx_ll_usart.h"
+#include "py32f0xx_ll_utils.h"
+
+#include "hardware_setup.h"
+#include "openflap_config.h"
+#include "rbuff.h"
+#include "uart_driver.h"
+
+#include <stdbool.h>
+#include <stdint.h>
+
+/** Motor operation modes. */
+typedef enum {
+    MOTOR_IDLE,    /**< Let the motor idle / freewheel. */
+    MOTOR_BRAKE,   /**< Actively brake the motor. */
+    MOTOR_FORWARD, /**< Run the motor forwards. */
+    MOTOR_REVERSE, /**< Run the motor in reverse. */
+} motor_mode_t;
+
+/** Motor decay mode. */
+typedef enum {
+    MOTOR_DECAY_FAST, /**< Fast decay mode. */
+    MOTOR_DECAY_SLOW  /**< Slow decay mode. */
+} motor_decay_mode_t;
+
+/** Type for controlling the motor. */
+typedef struct {
+    uint16_t speed;                /**< Motor speed (0-1000). */
+    motor_mode_t mode;             /**< Motor operation mode. */
+    motor_decay_mode_t decay_mode; /**< Motor decay mode. */
+} of_hal_motor_ctx_t;
+
+typedef struct {
+    of_hal_motor_ctx_t motor;      /**< Motor control context. */
+    uart_driver_ctx_t uart_driver; /**< UART driver context. */
+} of_hal_ctx_t;
+
+/**
+ * @brief Initializes all peripherals.
+ */
+void of_hal_init(of_hal_ctx_t *of_hal_ctx);
+
+/**
+ * @brief Deinitializes all peripherals.
+ *
+ * @note This function is not implemented.
+ */
+void of_hal_deinit(void);
+
+/**
+ * @brief Get the elapsed time in milliseconds since the last reset.
+ *
+ * @return The elapsed time in milliseconds.
+ */
+uint32_t of_hal_tick_count_get(void);
+
+/**
+ * @brief Get the elapsed ticks since the last reset from the PWM timer.
+ *
+ * @return The elapsed ticks.
+ */
+uint32_t of_hal_pwm_tick_count_get(void);
+
+/**
+ * @brief Get the elapsed ticks since the last reset from the Sens timer.
+ *
+ * @return The elapsed ticks.
+ */
+uint32_t of_hal_sens_tick_count_get(void);
+
+/**
+ * @brief Sets a debug pin to a specific value.
+ *
+ * @param[in] pin The pin number (0).
+ * @param[in] value The value to set (true/false).
+ */
+void of_hal_debug_pin_set(uint8_t pin, bool value);
+
+/**
+ * @brief Toggles a debug pin.
+ *
+ * @param[in] pin The pin number (0).
+ */
+void of_hal_debug_pin_toggle(uint8_t pin);
+
+/**
+ * @brief Gets the current state of a debug pin.
+ *
+ * @param[in] pin The pin number (0).
+ * @return The state of the pin (true for high, false for low).
+ */
+bool of_hal_debug_pin_get(uint8_t pin);
+
+/**
+ * @brief Updates the motor control based on the provided motor context.
+ *
+ * @param[in] motor Pointer to the motor context containing speed and direction.
+ */
+void of_hal_motor_control(of_hal_motor_ctx_t *motor);
+
+/**
+ * @brief Check if the module is the last module in a column.
+ *
+ * @return true if it is the last module, false otherwise.
+ */
+bool of_hal_is_column_end(void);
+
+/**
+ * @brief Get the current encoder adc values.
+ *
+ * @param[out] encoder_values The encoder values array of size #ENCODER_CHANNEL_COUNT.
+ *
+ * @return The current encoder states.
+ */
+void of_hal_encoder_values_get(uint16_t *encoder_values);
+
+/**
+ * @brief Enables or disables a secondary uart TX pin.
+ *
+ * @param[in] enable_secondary_tx true to enable the secondary TX pin, false to disable it.
+ */
+void of_hal_uart_tx_pin_update(bool enable_secondary_tx);
+
+/**
+ * @brief Store the current configuration in the flash memory.
+ *
+ * @param[in] config Pointer to the configuration structure to store.
+ */
+void of_hal_config_store(of_config_t *config);
+
+/**
+ * @brief Load the configuration from the flash memory.
+ *
+ * @param[out] config Pointer to the configuration structure to load.
+ */
+void of_hal_config_load(of_config_t *config);

@@ -4,10 +4,11 @@ add_executable(${App}
     src/main.c 
     src/chain_comm.c
     src/property_handlers.c
+    src/openflap_hal.c
     src/openflap.c
     src/default_config.c
     src/checksum.c
-    src/peripherals.c
+    src/debug_term.c
 )
 
 # Get the version using git describe
@@ -31,7 +32,7 @@ target_compile_definitions(${App} PUBLIC
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 
-target_link_libraries(${App} PUBLIC puya_ll debug_io config flash config pid rbuff chain_comm_abi uart_driver interpolation) 
+target_link_libraries(${App} PUBLIC puya_ll debug_io flash pid rbuff chain_comm_abi uart_driver interpolation) 
 
 target_include_directories(${App} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 

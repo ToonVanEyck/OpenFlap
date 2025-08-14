@@ -1,7 +1,6 @@
 #pragma once
 
 #include "chain_comm_abi.h"
-#include "platform.h"
 #include "uart_driver.h"
 
 #ifdef IS_BTL

@@ -4,7 +4,7 @@ add_executable(${Btl}
     src/py32f0xx_it.c 
 )
 
-target_link_libraries(${Btl} PUBLIC puya_ll config flash)
+target_link_libraries(${Btl} PUBLIC puya_ll flash)
 
 target_include_directories(${Btl} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 

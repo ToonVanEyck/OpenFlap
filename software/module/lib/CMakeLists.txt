@@ -1,7 +1,6 @@
 add_subdirectory(puya_libs)
 add_subdirectory(debug_io)
 add_subdirectory(flash)
-add_subdirectory(config)
 add_subdirectory(rbuff)
 add_subdirectory(uart_driver)
 add_subdirectory(pid)

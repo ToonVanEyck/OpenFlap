@@ -6,18 +6,18 @@
 
 static void flashErase(uint32_t address);
 
-void flashRead(uint32_t address, uint8_t *data, uint32_t size)
+void flash_read(uint32_t address, uint8_t *data, uint32_t size)
 {
     memcpy(data, (void *)address, size);
 }
 
-void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
+void flash_write(uint32_t address, uint8_t *data, uint32_t size)
 {
     uint32_t flash_addr     = address;
     uint32_t flash_end      = (address + size);
     uint32_t size_remaining = flash_end - flash_addr;
-    flashPage_t *src        = (flashPage_t *)data;
-    flashPage_t data_page;
+    flash_page_t *src       = (flash_page_t *)data;
+    flash_page_t data_page;
 
     // Unlock Flash for write access
     LL_FLASH_Unlock();
@@ -29,7 +29,7 @@ void flashWrite(uint32_t address, uint8_t *data, uint32_t size)
         }
         // Create temporary page to pad the page with 0xFF bytes.
         uint8_t write_size = (size_remaining < FLASH_PAGE_SIZE) ? size_remaining : FLASH_PAGE_SIZE;
-        memset(&data_page, UINT32_MAX, sizeof(flashPage_t));
+        memset(&data_page, UINT32_MAX, sizeof(flash_page_t));
         memcpy(&data_page, src, write_size);
         // Write to flash
         if (LL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, flash_addr, (uint32_t *)&data_page) == SUCCESS) {

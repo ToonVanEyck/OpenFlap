@@ -1,4 +1,5 @@
 #include "chain_comm.h"
+#include "debug_io.h"
 #include "property_handlers.h"
 
 #ifndef CHAIN_COMM_DEBUG
@@ -101,12 +102,12 @@ const char *get_state_name(uint8_t state)
 
 void chain_comm_timer_start(chain_comm_ctx_t *ctx)
 {
-    ctx->timeout_tick_cnt = get_tick_count() + CHAIN_COMM_TIMEOUT_MS;
+    ctx->timeout_tick_cnt = of_hal_tick_count_get() + CHAIN_COMM_TIMEOUT_MS;
 }
 
 bool chain_comm_timer_elapsed(chain_comm_ctx_t *ctx)
 {
-    return get_tick_count() > ctx->timeout_tick_cnt;
+    return of_hal_tick_count_get() > ctx->timeout_tick_cnt;
 }
 
 bool chain_comm_is_busy(chain_comm_ctx_t *ctx)

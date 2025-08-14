@@ -1,16 +1,24 @@
-#include "config.h"
+#include "openflap_config.h"
 
 #define SYMBOL_€ (0x00ac82e2) // € symbol
 
 #define IR_HYSTERESIS (10)
-#define IT_THRESHOLD  (400)
+#define IT_THRESHOLD  (500)
 
 #ifdef SET_DEFAULT_CONFIG
 /* When SET_DEFAULT_CONFIG is not defined, the default configuration will not be included in the final binary. */
-const openflap_config_t __attribute__((section(".config"))) config = {
+const of_config_t __attribute__((section(".config"))) config = {
     .encoder_offset = 0,
-    .ir_threshold   = {IT_THRESHOLD - IR_HYSTERESIS, IT_THRESHOLD + IR_HYSTERESIS},
-    .base_speed     = 0,
+    .enc_cal =
+        {
+            {.min = 0, .max = 1000}, // Channel 0
+            {.min = 0, .max = 1000}, // Channel 1
+            {.min = 0, .max = 1000}, // Channel 2
+            {.min = 0, .max = 1000}, // Channel 3
+            {.min = 0, .max = 1000}  // Channel 4
+        },
+    .ir_threshold = {IT_THRESHOLD - IR_HYSTERESIS, IT_THRESHOLD + IR_HYSTERESIS},
+    .base_speed   = 0,
     .symbol_set =
         {
             (uint32_t)' ', (uint32_t)'A', (uint32_t)'B', (uint32_t)'C', (uint32_t)'D', (uint32_t)'E', (uint32_t)'F',

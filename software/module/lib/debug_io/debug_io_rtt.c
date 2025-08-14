@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG_IO_TERM_KEYWORD_MAX 10
+#define DEBUG_IO_TERM_KEYWORD_MAX 20
 
 #define DEBUG_IO_BUFFER_TERMINAL (0) /* The RTT up buffer used by the terminal. */
 #define DEBUG_IO_BUFFER_SCOPE    (1) /* The RTT up buffer used by the scope. */

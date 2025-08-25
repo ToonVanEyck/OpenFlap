@@ -49,11 +49,11 @@ static const int32_t sdp_interpolation_pwm_outputs[]  = {
 
 /* Input and output tables for speed to decay interpolation. */
 static const int32_t sd_interpolation_speed_inputs[]  = {30, 60};
-static const int32_t sd_interpolation_decay_outputs[] = {600, 0};
+static const int32_t sd_interpolation_decay_outputs[] = {650, 0};
 
 /* Input and output tables for distance to speed interpolation. */
-static const int32_t ds_interpolation_distance_inputs[] = {1, 5};
-static const int32_t ds_interpolation_speed_outputs[]   = {20, 75};
+static const int32_t ds_interpolation_distance_inputs[] = {2, 6};
+static const int32_t ds_interpolation_speed_outputs[]   = {18, 75};
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -120,7 +120,7 @@ int main(void)
 
         /* If the module is the last module in a column, a secondary uart TX will route this modules data back to the
          * module above it. Normally this data would come from the module below it. */
-        of_hal_uart_tx_pin_update(of_hal_is_column_end());
+        // of_hal_uart_tx_pin_update(of_hal_is_column_end());
 
         /* Run chain comm. */
         chain_comm(&of_ctx.chain_ctx);

@@ -7,7 +7,7 @@
 /** The motor will reverse direction for this duration after reaching the desired flap. */
 #define MOTOR_BACKSPIN_DURATION_TICKS (25)
 /** The motor will revers direction with this pwm value after reaching the desired flap. */
-#define MOTOR_BACKSPIN_PWM (300)
+#define MOTOR_BACKSPIN_PWM (350)
 
 typedef struct {
     uint8_t increment_pattern;
@@ -45,68 +45,6 @@ void of_encoder_values_update(of_ctx_t *ctx)
         }
     }
 }
-
-//----------------------------------------------------------------------------------------------------------------------
-
-// void of_encoder_position_update(of_ctx_t *ctx)
-// {
-//     /* Table with valid encoder patterns, invalid patterns are 0. */
-//     static const int8_t enc_pattern_index[16] = {
-//         [0b0000] = 1, [0b0001] = 2, [0b0011] = 3, [0b0111] = 4, [0b1111] = 5, [0b1110] = 6, [0b1100] = 7, [0b1000] =
-//         8,
-//     };
-
-//     /* Prevent decrementing the flap position, instead wind up the backspin prevention counter. */
-//     static int16_t backspin_prevention = 0; //-ENCODER_PULSES_PER_REVOLUTION;
-//     /* Prevent jumping back from 1 to zero. */
-//     static bool zero_lockout = false;
-//     /* Encoder increment/decrement is determined based on the old and new pattern. */
-//     static uint8_t old_pattern = 0x00;
-
-//     /* Digitize the ADC signals using the configured IR thresholds. */
-//     uint8_t new_pattern = (ctx->encoder.digital[ENC_CH_A] << 0) | (ctx->encoder.digital[ENC_CH_B] << 1) |
-//                           (ctx->encoder.digital[ENC_CH_C] << 2) | (ctx->encoder.digital[ENC_CH_D] << 3);
-
-//     /* Pattern is invalid or didn't change. */
-//     if (enc_pattern_index[new_pattern] == 0 || enc_pattern_index[old_pattern] == enc_pattern_index[new_pattern]) {
-//         return;
-//     }
-
-//     int8_t pattern_diff = enc_pattern_index[old_pattern] - enc_pattern_index[new_pattern];
-//     pattern_diff += (pattern_diff < -4) ? 8 : 0;
-
-//     /* Pattern change is too large. */
-//     if (pattern_diff < -3 || pattern_diff > 3) {
-//         return;
-//     }
-
-//     /* Determine if we need to increment or decrement. We will track when the encoder decrements but we don't show
-//      * decrements at the output. This is done because the split-flap mechanism can't physically undo a flap, and the
-//      * encoder position is used to keep track of which flap is displayed. */
-
-//     if (ctx->encoder.digital[ENC_CH_Z] & !zero_lockout) {
-//         encoder_zero(ctx);
-//         backspin_prevention = 0;
-//         zero_lockout        = true;
-//     } else if (pattern_diff < 0) {
-//         backspin_prevention += pattern_diff;
-//     } else {
-//         while (pattern_diff-- != 0) {
-//             if (backspin_prevention < 0) {
-//                 backspin_prevention++;
-//             } else {
-//                 encoder_increment(ctx);
-//                 /* Make sure we are well past 1 so we don't flipper between 1 and 0. */
-//                 if (ctx->flap_position > 5) {
-//                     zero_lockout = false;
-//                 }
-//             }
-//         }
-//     }
-
-//     /* Update the old_pattern. */
-//     old_pattern = new_pattern;
-// }
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -253,21 +191,21 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
     }
 
     /* Set motor direction and speed. */
+    /* Skip if we are in manual control mode. */
     if (ctx->debug_flags.motor_control_override == false) {
-        // ctx->motor_backspin_timeout_tick = 0;
-        // } else {
-        //     ctx->pid_ctx.integral = 0;
-        //     // if (ctx->motor_backspin_timeout_tick == 0) {
-        //     //     ctx->motor_backspin_timeout_tick = cl_tick + MOTOR_BACKSPIN_DURATION_TICKS;
-        //     //     ctx->of_hal.motor.mode           = MOTOR_REVERSE;
-        //     //     ctx->of_hal.motor.speed          = MOTOR_BACKSPIN_speed;
-        //     // } else if (cl_tick >= ctx->motor_backspin_timeout_tick) {
-        //     ctx->of_hal.motor.mode  = MOTOR_BRAKE; // Set to brake if speed is zero
-        //     ctx->of_hal.motor.speed = 0;
-        //     // }
-        // }
-
-        /* Skip if we are in manual control mode. */
+        if (ctx->flap_distance == 0 && ctx->flap_distance_prev != 0) {
+            ctx->motor_backspin_timeout_tick = MOTOR_BACKSPIN_DURATION_TICKS;
+        } else if (ctx->motor_backspin_timeout_tick) {
+            ctx->motor_backspin_timeout_tick--;
+            cl_speed       = -MOTOR_BACKSPIN_PWM;
+            decay_setpoint = 1000;
+            of_hal_debug_pin_set(0, 1);
+        } else if (ctx->flap_distance == 0) {
+            cl_speed       = 0;
+            decay_setpoint = 1000;
+            of_hal_debug_pin_set(0, 0);
+        }
+        ctx->flap_distance_prev = ctx->flap_distance;
         of_hal_motor_control(cl_speed, decay_setpoint);
     }
 
@@ -297,7 +235,7 @@ void of_encoder_speed_calc(of_ctx_t *ctx, uint32_t sens_tick)
         int32_t flap_change_time_delta = (int32_t)sens_tick - ctx->flap_position_change_tick_prev;
         int32_t ticks_per_rev          = ENCODER_PULSES_PER_REVOLUTION * flap_change_time_delta / flap_position_delta;
         ctx->encoder_rps_x100_actual   = (ctx->encoder_rps_x100_actual * 7 + (100000 / ticks_per_rev)) / 8;
-        // if (ctx->encoder_rps_x100_actual > 40) {
+        // if (ctx->encoder_rps_x100_actual > 1000) {
         //     debug_io_log_error("position %d - %d = %d\n", ctx->flap_position, ctx->flap_position_prev,
         //                        flap_position_delta);
         //     debug_io_log_error("ticks %d - %d = %d\n", sens_tick, ctx->flap_position_change_tick_prev,
@@ -309,7 +247,6 @@ void of_encoder_speed_calc(of_ctx_t *ctx, uint32_t sens_tick)
     } else if (sens_tick >= ctx->flap_position_change_tick_prev + 200) {
         /* If no position change for a while, reset the average speed */
         ctx->encoder_rps_x100_actual = 0;
-        // ctx->flap_position_change_tick_prev = sens_tick;
     }
 }
 

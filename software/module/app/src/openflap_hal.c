@@ -526,7 +526,7 @@ static void of_hal_uart1_init(void)
 
     // Enable DMA interrupts if needed
     LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
-    NVIC_SetPriority(DMA1_Channel2_3_IRQn, 2);
+    NVIC_SetPriority(DMA1_Channel2_3_IRQn, 3);
     NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
 
     LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3); // Enable DMA channel for USART1_RX

@@ -56,6 +56,9 @@ RUN apt -y install python3 python3-pip netcat && \
     ./configure --enable-optimizations && \
     make altinstall
 
+# install some packages for the ota tool.
+RUN pip install requests requests_toolbelt tqdm tabulate
+
 # install arm toolchain
 RUN mkdir -p /opt/gcc-arm/ && \
     wget https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/binrel/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi.tar.xz && \

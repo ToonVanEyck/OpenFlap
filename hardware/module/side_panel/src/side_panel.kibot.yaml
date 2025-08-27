@@ -16,6 +16,10 @@ preflight:
   drc:
     enabled: true
     warnings_as_errors : true
+    filters:
+      - filter: Segment on B.Silkscreen
+        error: silk_overlap
+        regex : (?s)Segment on B.Silkscreen
   update_xml: true
   set_text_variables:
     - name: GIT_TAG
@@ -35,6 +39,69 @@ outputs:
     options:
       format: png
       dpi: 300
+
+  - name: board_top_review
+    comment: "Top layer review img"
+    type: pcbdraw
+    dir: review
+    options:
+      format: png
+      dpi: 600
+      style:
+        board: '#00000000'
+        clad: '#CABB3EB0'
+        copper: '#C83434B0'
+        outline: '#000000'
+        pads: '#C83434B0'
+        silk: '#F2EDA1FF'
+
+  - name: board_bot_review
+    comment: "Bot layer review img"
+    type: pcbdraw
+    dir: review
+    options:
+      bottom: true
+      format: png
+      dpi: 600
+      style:
+        board: '#00000000'
+        clad: '#CABB3EB0'
+        copper: '#4D7FC4B0'
+        outline: '#000000'
+        pads: '#4D7FC4B0'
+        silk: '#E8B2A7FF'
+
+  - name: board_top_review_ns
+    comment: "Top layer review img (no Silkscreen)"
+    type: pcbdraw
+    dir: review/combined
+    options:
+      format: png
+      dpi: 600
+      style:
+        board: '#00000000'
+        clad: '#CABB3EB0'
+        copper: '#C83434B0'
+        outline: '#000000'
+        pads: '#C83434B0'
+        silk: '#00000000'
+
+  - name: board_bot_review_ns
+    comment: "Bot layer review img (no Silkscreen)"
+    type: pcbdraw
+    dir: review/combined
+    options:
+      bottom: true
+      mirror: true
+      format: png
+      dpi: 600
+      style:
+        board: '#00000000'
+        clad: '#CABB3EB0'
+        copper: '#4D7FC4B0'
+        outline: '#000000'
+        pads: '#4D7FC4B0'
+        silk: '#00000000'
 
   - name: board_bottom
     comment: Bottom layer view

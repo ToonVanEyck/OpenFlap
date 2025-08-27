@@ -88,6 +88,12 @@ for name in "${!modules[@]}"; do
         all_success=false
     else
         # Copy the generated files to the source directory
+        mapfile -t imgs < <(find "$BUILD_DIR/$(basename "$(dirname "$path")")/review/combined" -maxdepth 1 -type f -iname '*.png' | sort)
+        if [ "${#imgs[@]}" -ge 2 ]; then
+            convert "${imgs[0]}" "${imgs[1]}" -gravity center -compose over -composite "$BUILD_DIR/$(basename "$(dirname "$path")")/review/$(basename $(dirname $path))-combined.png"
+        fi
+        convert -density 300 $BUILD_DIR/$(basename $(dirname $path))/$(basename $(dirname $path))-schematic.pdf $BUILD_DIR/$(basename $(dirname $path))/review/$(basename $(dirname $path))-schematic.pdf
+        rm -r "$BUILD_DIR/$(basename "$(dirname "$path")")/review/combined"
         cp $BUILD_DIR/$(basename $(dirname $path))/*.png $SOURCE_DIR/$path/../ > /dev/null 2>&1 || true
         cp $BUILD_DIR/$(basename $(dirname $path))/*.pdf $SOURCE_DIR/$path/../ > /dev/null 2>&1 || true
         cp $BUILD_DIR/$(basename $(dirname $path))/*ibom.html $SOURCE_DIR/$path/../ > /dev/null 2>&1 || true

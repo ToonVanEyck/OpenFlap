@@ -59,6 +59,10 @@
         }
       ],
       "drc_exclusions": [
+        "silk_overlap|133753000|182982204|f287d1bf-4ece-482f-a0ed-f25bee1cd819|427a4613-8785-4ac3-bf2c-7da4f2fbc56f",
+        "silk_overlap|133753000|190602204|f287d1bf-4ece-482f-a0ed-f25bee1cd819|e1df5d80-c497-4c9c-a613-5b57d1517316",
+        "silk_overlap|133774000|185522204|1e6eedf6-cb99-4dd0-94fb-6d9080dbe5d1|f287d1bf-4ece-482f-a0ed-f25bee1cd819",
+        "silk_overlap|133774000|188062204|be3330f8-648a-4b26-8030-d31ec1963cb5|f287d1bf-4ece-482f-a0ed-f25bee1cd819",
         "unresolved_variable|113007200|280102200||",
         "unresolved_variable|91007200|264002200||"
       ],

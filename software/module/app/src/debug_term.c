@@ -82,7 +82,7 @@ static void debug_term_test_uart(const char *input, void *arg)
 {
     of_ctx_t *of_ctx = (of_ctx_t *)arg;
 
-    uart_driver_write(&of_ctx->of_hal.uart_driver, (uint8_t *)input, strlen(input));
+    uart_driver_write(&of_ctx->of_hal.uart_driver, (uint8_t *)input, strlen(input), NULL);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

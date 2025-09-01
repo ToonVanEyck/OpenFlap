@@ -51,9 +51,14 @@ typedef struct {
     uint16_t index;                                      /**< The index counter of the module in the display. */
     uint8_t property_data[CHAIN_COM_MAX_LEN];            /**< The data of the current property to be written or read. */
     property_handler_t property_handler[PROPERTIES_MAX]; /**< The property handlers. */
-    bool ack;                  /**< Flag indicating if the current message is waiting for an acknowledgment.  */
-    uint32_t timeout_tick_cnt; /**< Counter for determining timeout. */
-    uint16_t property_size;    /**< The size of the current property. */
+    chain_comm_return_code_t msg_rc;                     /**< return code for acknowledgment. */
+    uint32_t timeout_tick_cnt;                           /**< Counter for determining timeout. */
+    uint16_t property_size;                              /**< The size of the current property. */
+    uint8_t checksum_rx_calc;                            /**< Running checksum of received data. */
+    uint8_t checksum_tx_calc;                            /**< Running checksum of transmitted data. */
+    uint16_t writeSeq_packet_cnt;    /**< Counter for the number of packets in the write sequence. */
+    uint16_t writeSeq_property_size; /**< Copy of this modules property to be written, to restore at execution. */
+    chain_comm_msg_header_t writeSeq_header; /**< Copy of the write sequence message header, to restore at execution. */
 } chain_comm_ctx_t;
 
 /**

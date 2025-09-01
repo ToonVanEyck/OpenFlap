@@ -40,10 +40,11 @@ void uart_driver_init(uart_driver_ctx_t *uart_driver, volatile uint8_t *rx_buff,
  * \param[inout] uart_driver The UART driver.
  * \param[out] data The data read from the driver.
  * \param[in] size The number of bytes to read.
+ * \param[inout] checksum A running checksum of the received data. May be NULL to omit.
  *
  * \return The number of bytes read.
  */
-uint8_t uart_driver_read(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size);
+uint8_t uart_driver_read(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size, uint8_t *checksum);
 
 /**
  * \brief Count the number of bytes that can be read from the UART driver.
@@ -59,10 +60,11 @@ uint8_t uart_driver_cnt_readable(uart_driver_ctx_t *uart_driver);
  * \param[inout] uart_driver The UART driver.
  * \param[in] data The data to be written to the driver.
  * \param[in] size The number of bytes to write.
+ * \param[inout] checksum A running checksum of the data to be written. May be NULL to omit.
  *
  * \return The number of bytes written.
  */
-uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size);
+uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size, uint8_t *checksum);
 
 /**
  * \brief Count the number of bytes that can be written to the UART driver.

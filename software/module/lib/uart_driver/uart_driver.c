@@ -15,11 +15,14 @@ void uart_driver_init(uart_driver_ctx_t *uart_driver, volatile uint8_t *rx_buff,
     uart_driver->tx_dma_start_cb    = tx_dma_start_cb;
 }
 
-uint8_t uart_driver_read(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size)
+uint8_t uart_driver_read(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size, uint8_t *checksum)
 {
     uint8_t rx_cnt = rbuff_read(&uart_driver->rx_rbuff, data, size);
+    for (uint8_t i = 0; checksum && i < rx_cnt; i++) {
+        *checksum += data[i];
+    }
     // for (uint8_t i = 0; i < rx_cnt; i++) {
-    //     debug_io_log_debug("RX : 0x%02X\n", data[i]);
+    //     debug_io_log_debug("R: %02X\n", data[i]);
     // }
     return rx_cnt;
 }
@@ -29,9 +32,15 @@ uint8_t uart_driver_cnt_readable(uart_driver_ctx_t *uart_driver)
     return rbuff_cnt_used(&uart_driver->rx_rbuff);
 }
 
-uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size)
+uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t size, uint8_t *checksum)
 {
     uint8_t tx_cnt = rbuff_write(&uart_driver->tx_rbuff, data, size);
+    for (uint8_t i = 0; checksum && i < tx_cnt; i++) {
+        *checksum += data[i];
+    }
+    // for (uint8_t i = 0; i < tx_cnt; i++) {
+    //     debug_io_log_debug("W: %02X\n", data[i]);
+    // }
     uart_driver_update_tx_dma_buffer(uart_driver);
     return tx_cnt;
 }

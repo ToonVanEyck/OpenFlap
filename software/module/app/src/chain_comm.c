@@ -3,7 +3,7 @@
 #include "property_handlers.h"
 
 #ifndef CHAIN_COMM_DEBUG
-#define CHAIN_COMM_DEBUG false
+#define CHAIN_COMM_DEBUG true
 #endif
 
 /*
@@ -37,11 +37,11 @@ void chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx);
 
 void chain_comm_init(chain_comm_ctx_t *ctx, uart_driver_ctx_t *uart)
 {
-    ctx->uart     = uart;
-    ctx->state    = rxHeader;
-    ctx->data_cnt = 0;
-    ctx->index    = 0;
-    ctx->ack      = false;
+    ctx->uart                = uart;
+    ctx->state               = rxHeader;
+    ctx->data_cnt            = 0;
+    ctx->index               = 0;
+    ctx->writeSeq_packet_cnt = 0;
 }
 
 bool chain_comm(chain_comm_ctx_t *ctx)
@@ -153,14 +153,14 @@ void chain_comm_exec(chain_comm_ctx_t *ctx)
             ctx->property_handler[ctx->header.property].get(ctx->property_data, &ctx->property_size);
             debug_io_log_debug("Read %s property\n", property_name);
         } else {
-            debug_io_log_debug("Read %s property not supported\n", property_name);
+            debug_io_log_debug("Property (%d) not supported\n", ctx->header.property);
         }
     } else if (ctx->header.action == property_writeAll || ctx->header.action == property_writeSequential) {
         if (ctx->property_handler[ctx->header.property].set) {
             ctx->property_handler[ctx->header.property].set(ctx->property_data, &ctx->property_size);
             debug_io_log_debug("Write %s property\n", property_name);
         } else {
-            debug_io_log_debug("Write %s property not supported\n", property_name);
+            debug_io_log_debug("Property (%d) not supported\n", ctx->header.property);
         }
     }
 }
@@ -175,26 +175,48 @@ void chain_comm_exec(chain_comm_ctx_t *ctx)
 void chain_comm_state_rxHeader(chain_comm_ctx_t *ctx)
 {
     uint8_t data;
-    ctx->property_size = 0;
-    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
+    ctx->property_size    = 0;
+    ctx->checksum_rx_calc = 0;
+    ctx->checksum_tx_calc = 0;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1, &ctx->checksum_rx_calc)) {
         ctx->header.raw = data;
         if (ctx->header.property >= PROPERTIES_MAX) {
-            ctx->header.action = do_nothing;
+            chain_comm_state_change(ctx, rxHeader);
         }
 
         /* Switch to next state. */
         switch (ctx->header.action) {
             case property_readAll:
-                uart_driver_write(ctx->uart, &data, 1);
+                uart_driver_write(ctx->uart, &data, 1, &ctx->checksum_tx_calc);
                 chain_comm_state_change(ctx, readAll_rxCnt);
                 break;
             case property_writeAll:
-                uart_driver_write(ctx->uart, &data, 1);
+                uart_driver_write(ctx->uart, &data, 1, NULL);
                 chain_comm_state_change(ctx, rxSize);
                 break;
             case property_writeSequential:
                 /* Skip to transparent mode when no property is defined. */
-                chain_comm_state_change(ctx, ctx->header.property ? rxSize : writeSeq_rxToTx);
+                if (++ctx->writeSeq_packet_cnt == 1) {
+                    ctx->writeSeq_header.raw = ctx->header.raw;
+                } else {
+                    uart_driver_write(ctx->uart, &data, 1, NULL);
+                }
+                chain_comm_state_change(ctx, ctx->header.property != PROPERTY_NONE ? rxSize : rxHeader);
+                break;
+            case returnCode:
+                data |= ctx->msg_rc;
+                uart_driver_write(ctx->uart, &data, 1, NULL);
+                if (ctx->writeSeq_packet_cnt > 0) {
+                    if (ctx->msg_rc == CHAIN_COMM_RC_SUCCESS) {
+                        /* Restore header and data size before executing. */
+                        ctx->property_size = ctx->writeSeq_property_size;
+                        ctx->header.raw    = ctx->writeSeq_header.raw;
+                        chain_comm_exec(ctx);
+                    }
+                }
+                ctx->writeSeq_packet_cnt = 0;
+                ctx->msg_rc              = CHAIN_COMM_RC_SUCCESS;
+                chain_comm_state_change(ctx, rxHeader);
                 break;
             default:
                 chain_comm_state_change(ctx, rxHeader);
@@ -217,12 +239,16 @@ void chain_comm_state_rxSize(chain_comm_ctx_t *ctx)
         (ctx->header.action == property_readAll) ? chain_comm_property_read_attributes_get(ctx->header.property)
                                                  : chain_comm_property_write_attributes_get(ctx->header.property);
 
+    uint8_t *cs = (ctx->header.action == property_readAll) ? NULL : &ctx->checksum_tx_calc;
+
     /* Get the dynamic size bytes and retransmit the for readAll and writeAll properties. */
     if (prop_attr->dynamic_property_size) {
-        while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < 2 &&
-               uart_driver_read(ctx->uart, &((uint8_t *)&ctx->property_size)[ctx->data_cnt], 1)) {
-            if (ctx->header.action == property_writeAll || ctx->header.action == property_readAll) {
-                uart_driver_write(ctx->uart, &((uint8_t *)&ctx->property_size)[ctx->data_cnt], 1);
+        while (
+            uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < 2 &&
+            uart_driver_read(ctx->uart, &((uint8_t *)&ctx->property_size)[ctx->data_cnt], 1, &ctx->checksum_rx_calc)) {
+            if (ctx->header.action == property_writeAll || ctx->header.action == property_readAll ||
+                (ctx->header.action == property_writeSequential && ctx->writeSeq_packet_cnt > 1)) { /* TODO check !=1*/
+                uart_driver_write(ctx->uart, &((uint8_t *)&ctx->property_size)[ctx->data_cnt], 1, cs);
             }
             ctx->data_cnt++;
         };
@@ -257,7 +283,7 @@ void chain_comm_state_rxSize(chain_comm_ctx_t *ctx)
 void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
 {
     uint8_t data;
-    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1, NULL)) {
         ctx->data_cnt++;
         if (ctx->data_cnt == 1) {
             ctx->index = ((uint16_t)data) + 1;
@@ -265,6 +291,7 @@ void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
         } else {
             ctx->index += (data << 8);
             data = (ctx->index >> 8) & 0xff;
+            ctx->checksum_tx_calc += (uint8_t)((ctx->index) >> 8) + (uint8_t)(ctx->index);
             chain_comm_exec(ctx);
             if (--ctx->index) {
                 chain_comm_state_change(ctx, rxSize);
@@ -276,7 +303,7 @@ void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
                 }
             }
         }
-        uart_driver_write(ctx->uart, &data, 1);
+        uart_driver_write(ctx->uart, &data, 1, NULL);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
     }
@@ -294,13 +321,13 @@ void chain_comm_state_readAll_rxCnt(chain_comm_ctx_t *ctx)
 void chain_comm_state_readAll_rxData(chain_comm_ctx_t *ctx)
 {
     uint8_t data;
-
-    while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < ctx->property_size &&
-           uart_driver_read(ctx->uart, &data, 1)) {
+    /* Add 1 to size to account for checksum. */
+    while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < ctx->property_size + 1 &&
+           uart_driver_read(ctx->uart, &data, 1, NULL)) {
         ctx->data_cnt++;
-        uart_driver_write(ctx->uart, &data, 1);
+        uart_driver_write(ctx->uart, &data, 1, NULL);
     }
-    if (ctx->data_cnt == ctx->property_size) {
+    if (ctx->data_cnt == ctx->property_size + 1) {
         if (--ctx->index) {
             chain_comm_state_change(ctx, rxSize);
         } else {
@@ -327,7 +354,7 @@ void chain_comm_state_readAll_txSize(chain_comm_ctx_t *ctx)
 {
     if (ctx->data_cnt == 0 && uart_driver_cnt_writable(ctx->uart) >= 2) {
         /* Send dynamic size. */
-        uart_driver_write(ctx->uart, (uint8_t *)&ctx->property_size, 2);
+        uart_driver_write(ctx->uart, (uint8_t *)&ctx->property_size, 2, &ctx->checksum_tx_calc);
         chain_comm_state_change(ctx, readAll_txData);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
@@ -345,10 +372,11 @@ void chain_comm_state_readAll_txSize(chain_comm_ctx_t *ctx)
 void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
 {
     /* Send data. */
-    uint8_t data_cnt =
-        uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], ctx->property_size - ctx->data_cnt);
+    uint8_t data_cnt = uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt],
+                                         ctx->property_size - ctx->data_cnt, &ctx->checksum_tx_calc);
     ctx->data_cnt += data_cnt;
-    if (ctx->data_cnt == ctx->property_size) {
+    if (ctx->data_cnt == ctx->property_size && uart_driver_cnt_writable(ctx->uart)) {
+        uart_driver_write(ctx->uart, &ctx->checksum_tx_calc, 1, NULL); /* Transmit checksum. */
         chain_comm_state_change(ctx, rxHeader);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
@@ -366,16 +394,26 @@ void chain_comm_state_readAll_txData(chain_comm_ctx_t *ctx)
  */
 void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx)
 {
+    uint8_t cs = 0;
     while (uart_driver_cnt_writable(ctx->uart) && ctx->data_cnt < ctx->property_size &&
-           uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
-        if (!uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
+           uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1, &ctx->checksum_rx_calc)) {
+        if (!uart_driver_write(ctx->uart, &ctx->property_data[ctx->data_cnt], 1, NULL)) {
             debug_io_log_error("Error writing data to uart\n");
         };
         ctx->data_cnt++;
     }
-    if (ctx->data_cnt == ctx->property_size &&
-        uart_driver_cnt_written(ctx->uart) == 0) { // All bytes have been transmitted.
+    if (ctx->data_cnt == ctx->property_size && uart_driver_cnt_writable(ctx->uart) &&
+        uart_driver_read(ctx->uart, &cs, 1, NULL)) { /* RX checksum. */
+        uart_driver_write(ctx->uart, &cs, 1, NULL);  /* TX checksum. */
+        ctx->data_cnt++;
+        if (cs != ctx->checksum_rx_calc) {
+            ctx->msg_rc = CHAIN_COMM_RC_ERROR_CHECKSUM;
+            chain_comm_state_change(ctx, writeAll_rxAck);
+        }
+    } else if (ctx->data_cnt == ctx->property_size + 1 &&
+               uart_driver_cnt_written(ctx->uart) == 0) { // All bytes have been transmitted.
         chain_comm_exec(ctx);
+        ctx->msg_rc = CHAIN_COMM_RC_SUCCESS;
         chain_comm_state_change(ctx, writeAll_rxAck);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
@@ -391,13 +429,11 @@ void chain_comm_state_writeAll_rxData(chain_comm_ctx_t *ctx)
  */
 void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx)
 {
-    uint8_t data = 0;
-    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
-        if (data == 0xff) {
-            debug_io_log_debug("Ack received\n");
-            uart_driver_write(ctx->uart, &data, 1);
-            chain_comm_state_change(ctx, rxHeader);
-        }
+    uint8_t return_code = 0;
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &return_code, 1, NULL)) {
+        return_code |= ctx->msg_rc;
+        uart_driver_write(ctx->uart, &return_code, 1, NULL);
+        chain_comm_state_change(ctx, rxHeader);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
     }
@@ -414,12 +450,37 @@ void chain_comm_state_writeAll_rxAck(chain_comm_ctx_t *ctx)
  */
 void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx)
 {
-    if (uart_driver_read(ctx->uart, &ctx->property_data[ctx->data_cnt], 1)) {
-        if (++ctx->data_cnt == ctx->property_size) {
-            chain_comm_state_change(ctx, writeSeq_rxToTx);
+    uint8_t cs = 0;
+
+    /* Read data to dummy registers if we are just passing data through. */
+    uint8_t dummy       = 0;
+    uint8_t *msg_rc_ptr = &dummy;
+    uint8_t *data_ptr   = &dummy;
+
+    if (ctx->writeSeq_packet_cnt == 1) {
+        ctx->writeSeq_property_size = ctx->property_size;
+        msg_rc_ptr                  = &ctx->msg_rc;
+        data_ptr                    = &ctx->property_data[ctx->data_cnt];
+    }
+
+    if (ctx->data_cnt < ctx->property_size && uart_driver_read(ctx->uart, data_ptr, 1, &ctx->checksum_rx_calc)) {
+        if (ctx->writeSeq_packet_cnt > 1) {
+            uart_driver_write(ctx->uart, data_ptr, 1, NULL);
         }
+        ctx->data_cnt++;
+    } else if (ctx->data_cnt == ctx->property_size && uart_driver_read(ctx->uart, &cs, 1, NULL)) {
+        if (ctx->writeSeq_packet_cnt > 1) {
+            uart_driver_write(ctx->uart, &cs, 1, NULL);
+        }
+        if (cs == ctx->checksum_rx_calc) {
+            *msg_rc_ptr = CHAIN_COMM_RC_SUCCESS;
+        } else {
+            *msg_rc_ptr = CHAIN_COMM_RC_ERROR_CHECKSUM;
+        }
+        chain_comm_state_change(ctx, rxHeader /*writeSeq_rxToTx*/);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_state_change(ctx, rxHeader);
+        ctx->writeSeq_packet_cnt = 0;
     }
 }
 
@@ -435,8 +496,8 @@ void chain_comm_state_writeSeq_rxData(chain_comm_ctx_t *ctx)
 void chain_comm_state_writeSeq_rxToTx(chain_comm_ctx_t *ctx)
 {
     uint8_t data;
-    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1)) {
-        uart_driver_write(ctx->uart, &data, 1);
+    if (uart_driver_cnt_writable(ctx->uart) && uart_driver_read(ctx->uart, &data, 1, NULL)) {
+        uart_driver_write(ctx->uart, &data, 1, NULL);
         chain_comm_timer_start(ctx);
     } else if (chain_comm_timer_elapsed(ctx)) {
         chain_comm_exec(ctx);

@@ -21,7 +21,6 @@ const of_config_t __attribute__((section(".config"))) config = {
             (uint32_t)'8', (uint32_t)'9', SYMBOL_€,      (uint32_t)'$', (uint32_t)'!', (uint32_t)'?', (uint32_t)'.',
             (uint32_t)',', (uint32_t)':', (uint32_t)'/', (uint32_t)'@', (uint32_t)'#', (uint32_t)'&',
         },
-    .ota_completed    = false,
     .minimum_rotation = 1,
     .color            = {0xFFFFFF, 0x000000}, // White on black
     .motion           = {70, 150, 5, 10},

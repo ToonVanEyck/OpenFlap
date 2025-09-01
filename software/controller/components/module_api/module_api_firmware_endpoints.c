@@ -48,12 +48,6 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
 
         /* Indicate that the firmware property has changed and needs to be written. */
         module_property_indicate_desynchronized(module, PROPERTY_FIRMWARE_UPDATE);
-
-        /* All data has been transmitted, reboot the modules. */
-        if (data_offset + data_len == total_data_len) {
-            property_handler_command_set(module, CMD_REBOOT);
-            module_property_indicate_desynchronized(module, PROPERTY_COMMAND);
-        }
     }
 
     /* Notify that we have updated the display modules. */

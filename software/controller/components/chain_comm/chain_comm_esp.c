@@ -19,8 +19,9 @@
 #define RX_BYTES_TIMEOUT(_byte_cnt) (pdMS_TO_TICKS((_byte_cnt) * 50))
 
 static void chain_comm_task(void *arg);
-static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size);
-static int chain_comm_read_bytes(uart_port_t uart_num, void *buf, uint32_t length, TickType_t ticks_to_wait);
+static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size, uint8_t *checksum);
+static int chain_comm_read_bytes(uart_port_t uart_num, void *buf, uint32_t length, TickType_t ticks_to_wait,
+                                 uint8_t *checksum);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -69,6 +70,8 @@ esp_err_t chain_comm_destroy(chain_comm_ctx_t *ctx)
 
 esp_err_t chain_comm_property_read_all(display_t *display, property_id_t property_id)
 {
+    esp_err_t ret = ESP_OK; /* Set by ESP_GOTO_ON_ERROR macro. */
+
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
 
     const char *property_name = chain_comm_property_name_by_id(property_id);
@@ -90,29 +93,29 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
     uart_flush_input(UART_NUM);
 
     /* Send the header. */
-    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header), ESP_FAIL,
-                        TAG, "Failed to send header");
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header), NULL) == sizeof(tx_header),
+                        ESP_FAIL, TAG, "Failed to send header");
     /* Send the module count bytes. */
-    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &module_cnt, sizeof(module_cnt)) == sizeof(module_cnt),
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &module_cnt, sizeof(module_cnt), NULL) == sizeof(module_cnt),
                         ESP_FAIL, TAG, "Failed to send module count bytes");
 
     /* Receive the header. */
     chain_comm_msg_header_t rx_header = {0};
     ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header),
-                                              RX_BYTES_TIMEOUT(sizeof(rx_header))) == sizeof(rx_header),
+                                              RX_BYTES_TIMEOUT(sizeof(rx_header)), NULL) == sizeof(rx_header),
                         ESP_FAIL, TAG, "Failed to receive header");
     ESP_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, ESP_FAIL, TAG, "Header mismatch");
 
     /* Receive the module count. */
     ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &module_cnt, sizeof(module_cnt),
-                                              RX_BYTES_TIMEOUT(sizeof(module_cnt))) == sizeof(module_cnt),
+                                              RX_BYTES_TIMEOUT(sizeof(module_cnt)), NULL) == sizeof(module_cnt),
                         ESP_FAIL, TAG, "Failed to receive module count");
 
     /* Resize the display. */
     display_resize(display, module_cnt);
 
     /* Receive the data. */
-    for (uint16_t i = 0; i < module_cnt; i++) {
+    for (uint16_t i = 0; ret == ESP_OK && i < module_cnt; i++) {
         /* Get the module. */
         module_t *module = display_module_get(display, i);
         assert(module != NULL);
@@ -124,38 +127,49 @@ esp_err_t chain_comm_property_read_all(display_t *display, property_id_t propert
         /* Set the page cnt and size. */
         uint16_t property_size = chain_comm_read_attr->static_property_size;
 
+        /* Initialize the checksum.*/
+        uint8_t rx_checksum_calc   = tx_header.raw + (uint8_t)((i + 1) >> 8) + (uint8_t)(i + 1);
+        uint8_t rx_checksum_actual = 0; /* The actual checksum received. */
+
         if (chain_comm_read_attr->dynamic_property_size) {
-            ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, (uint8_t *)&property_size, 2, RX_BYTES_TIMEOUT(2)) == 2,
+            ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, (uint8_t *)&property_size, 2, RX_BYTES_TIMEOUT(2),
+                                                      &rx_checksum_calc) == 2,
                                 ESP_FAIL, TAG, "Failed to receive dynamic property size");
         }
 
         /* Allocate memory for the data. */
         uint8_t *rx_buff = malloc(property_size);
         ESP_RETURN_ON_FALSE(rx_buff != NULL, ESP_ERR_NO_MEM, TAG, "Memory allocation failed");
-
         /* Read the data. */
-        ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) ==
-                                property_size,
-                            ESP_FAIL, TAG, "Failed to receive read all data");
+        ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size),
+                                                &rx_checksum_calc) == property_size,
+                          ESP_FAIL, exit_loop_cleanup_buffer, TAG, "Failed to receive read all data");
+
+        /* Verify the checksum. */
+        ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_checksum_actual, 1, RX_BYTES_TIMEOUT(1), NULL) == 1,
+                          ESP_FAIL, exit_loop_cleanup_buffer, TAG, "Failed to receive checksum");
+        ESP_GOTO_ON_FALSE(rx_checksum_calc == rx_checksum_actual, ESP_FAIL, exit_loop_cleanup_buffer, TAG,
+                          "Checksum mismatch");
 
         /* Handle the data. */
-        ESP_RETURN_ON_ERROR(property_handler->from_binary(module, rx_buff, property_size), TAG,
-                            "Failed to convert read all data");
-
+        ESP_GOTO_ON_ERROR(property_handler->from_binary(module, rx_buff, property_size), exit_loop_cleanup_buffer, TAG,
+                          "Failed to convert read all data");
+    exit_loop_cleanup_buffer:
         free(rx_buff);
     }
 
-    return ESP_OK;
+    return ret;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
 esp_err_t chain_comm_property_write_all(display_t *display, property_id_t property_id)
 {
-    esp_err_t ret          = ESP_OK; /* Set by ESP_GOTO_ON_ERROR macro. */
-    uint8_t *property_data = NULL;
-    uint8_t *rx_buff       = NULL;
-    uint16_t property_size = 0;
+    esp_err_t ret                       = ESP_OK; /* Set by ESP_GOTO_ON_ERROR macro. */
+    uint8_t *property_data              = NULL;
+    uint8_t *rx_buff                    = NULL;
+    uint16_t property_size              = 0;
+    chain_comm_msg_return_code_t msg_rc = {.action = returnCode, .rc = CHAIN_COMM_RC_SUCCESS};
 
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "display is NULL");
 
@@ -176,12 +190,16 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
     /* Flush uart RX buffer. */
     uart_flush_input(UART_NUM);
 
+    uint8_t tx_checksum_calc   = 0;
+    uint8_t rx_checksum_actual = 0;
+
     /* Initiate the message. */
     chain_comm_msg_header_t tx_header = {.action = property_writeAll, .property = property_id};
 
     /* Send the header. */
-    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header), ESP_FAIL,
-                        TAG, "Failed to send header");
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header), &tx_checksum_calc) ==
+                            sizeof(tx_header),
+                        ESP_FAIL, TAG, "Failed to send header");
 
     /* Set the property data of the message. */
     const chain_comm_binary_attributes_t *chain_comm_write_attr =
@@ -192,24 +210,29 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
 
     /* Send dynamic property size. */
     if (chain_comm_write_attr->dynamic_property_size) {
-        ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size)) ==
+        ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size), &tx_checksum_calc) ==
                               sizeof(property_size),
                           ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to send dynamic property size");
     }
 
     /* Send the property data. */
-    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size) == property_size, ESP_FAIL,
-                      exit_cleanup_property_data, TAG, "Failed to send property data");
+    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size, &tx_checksum_calc) ==
+                          property_size,
+                      ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to send property data");
 
-    /* Send ack. */
-    const uint8_t ack = CHAIN_COMM_TIMEOUT_ACK;
-    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &ack, 1) == 1, ESP_FAIL, exit_cleanup_property_data, TAG,
-                      "Failed to send ack");
+    /* Send the checksum. */
+    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_checksum_calc, sizeof(tx_checksum_calc), NULL) ==
+                          sizeof(tx_checksum_calc),
+                      ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to send checksum");
+
+    /* Send message return code. */
+    ESP_GOTO_ON_FALSE(chain_comm_write_bytes(UART_NUM, &msg_rc.raw, 1, NULL) == 1, ESP_FAIL, exit_cleanup_property_data,
+                      TAG, "Failed to send message return code");
 
     /* Receive the header and compare with the original. */
     chain_comm_msg_header_t rx_header = {0};
     ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_header, sizeof(rx_header),
-                                            RX_BYTES_TIMEOUT(sizeof(rx_header))) == sizeof(rx_header),
+                                            RX_BYTES_TIMEOUT(sizeof(rx_header)), NULL) == sizeof(rx_header),
                       ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to receive header");
     ESP_GOTO_ON_FALSE(rx_header.raw == tx_header.raw, ESP_FAIL, exit_cleanup_property_data, TAG, "Header mismatch");
 
@@ -217,7 +240,8 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
     if (chain_comm_write_attr->dynamic_property_size) {
         uint16_t rx_property_size = 0;
         ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_property_size, sizeof(rx_property_size),
-                                                RX_BYTES_TIMEOUT(sizeof(rx_property_size))) == sizeof(rx_property_size),
+                                                RX_BYTES_TIMEOUT(sizeof(rx_property_size)),
+                                                NULL) == sizeof(rx_property_size),
                           ESP_FAIL, exit_cleanup_property_data, TAG, "Failed to receive property size header");
         ESP_GOTO_ON_FALSE(rx_property_size == property_size, ESP_FAIL, exit_cleanup_property_data, TAG,
                           "Property size mismatch");
@@ -226,17 +250,22 @@ esp_err_t chain_comm_property_write_all(display_t *display, property_id_t proper
     /* Receive the data and compare with the original data.*/
     rx_buff = malloc(property_size);
     ESP_GOTO_ON_FALSE(rx_buff != NULL, ESP_ERR_NO_MEM, exit_cleanup_property_data, TAG, "Memory allocation failed");
-    ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size)) ==
+    ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, rx_buff, property_size, RX_BYTES_TIMEOUT(property_size), NULL) ==
                           property_size,
                       ESP_FAIL, exit_cleanup_rx_buff, TAG, "Failed to receive data");
     ESP_GOTO_ON_FALSE(memcmp(property_data, rx_buff, property_size) == 0, ESP_FAIL, exit_cleanup_rx_buff, TAG,
                       "TX and RD data mismatch");
 
-    /* Receive ack. */
-    uint8_t rx_ack = 0;
-    ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_ack, 1, RX_BYTES_TIMEOUT(1)) == 1, ESP_FAIL,
-                      exit_cleanup_rx_buff, TAG, "Failed to receive ack");
-    ESP_GOTO_ON_FALSE(rx_ack == ack, ESP_FAIL, exit_cleanup_rx_buff, TAG, "Ack mismatch");
+    /* Verify the checksum. */
+    ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_checksum_actual, 1, RX_BYTES_TIMEOUT(1), NULL) == 1, ESP_FAIL,
+                      exit_cleanup_rx_buff, TAG, "Failed to receive checksum");
+    ESP_GOTO_ON_FALSE(tx_checksum_calc == rx_checksum_actual, ESP_FAIL, exit_cleanup_rx_buff, TAG, "Checksum mismatch");
+
+    /* Receive message return code. */
+    ESP_GOTO_ON_FALSE(chain_comm_read_bytes(UART_NUM, &msg_rc.raw, 1, RX_BYTES_TIMEOUT(1), NULL) == 1, ESP_FAIL,
+                      exit_cleanup_rx_buff, TAG, "Failed to receive message return code");
+    ESP_GOTO_ON_FALSE(msg_rc.rc == CHAIN_COMM_RC_SUCCESS, ESP_FAIL, exit_cleanup_rx_buff, TAG,
+                      "Message returned an error code.");
 
     /*Cleanup. */
 exit_cleanup_rx_buff:
@@ -268,9 +297,13 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "No modules in display");
     ESP_LOGI(TAG, "Writing sequential property %s", property_name);
 
+    /* Flush uart RX buffer. */
+    uart_flush_input(UART_NUM);
+
     uint16_t display_size = display_size_get(display);
     for (uint16_t i = 0; i < display_size; i++) {
-        module_t *module = display_module_get(display, i);
+        module_t *module         = display_module_get(display, i);
+        uint8_t tx_checksum_calc = 0;
 
         if (module_property_is_desynchronized(module, property_id)) {
             /* Property needs to be written to current module. */
@@ -279,7 +312,8 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
             chain_comm_msg_header_t tx_header = {.action = property_writeSequential, .property = property_id};
 
             /* Send the header. */
-            ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header),
+            ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header), &tx_checksum_calc) ==
+                                    sizeof(tx_header),
                                 ESP_FAIL, TAG, "Failed to send header");
 
             /* Set the property data of the message. */
@@ -291,13 +325,14 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
 
             /* Send dynamic property size. */
             if (chain_comm_write_attr->dynamic_property_size) {
-                ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size)) ==
-                                        sizeof(property_size),
+                ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &property_size, sizeof(property_size),
+                                                           &tx_checksum_calc) == sizeof(property_size),
                                     ESP_FAIL, TAG, "Failed to send dynamic property size");
             }
 
             /* Send the property data. */
-            ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size) == property_size,
+            ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, property_data, property_size, &tx_checksum_calc) ==
+                                    property_size,
                                 ESP_FAIL, TAG, "Failed to send property data");
 
         } else {
@@ -306,23 +341,34 @@ esp_err_t chain_comm_property_write_seq(display_t *display, property_id_t proper
             chain_comm_msg_header_t tx_header = {.action = property_writeSequential, .property = PROPERTY_NONE};
 
             /* Send the header. */
-            ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header)) == sizeof(tx_header),
+            ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_header, sizeof(tx_header), &tx_checksum_calc) ==
+                                    sizeof(tx_header),
                                 ESP_FAIL, TAG, "Failed to send header");
         }
+
+        /* Send the checksum. */
+        ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &tx_checksum_calc, sizeof(tx_checksum_calc), NULL) ==
+                                sizeof(tx_checksum_calc),
+                            ESP_FAIL, TAG, "Failed to send checksum");
     }
 
-    /* Send ack. */
-    const uint8_t ack = CHAIN_COMM_TIMEOUT_ACK;
-    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &ack, 1) == 1, ESP_FAIL, TAG, "Failed to send ack");
+    /* Send first message return code, this triggers the modules to execute their command. */
+    chain_comm_msg_return_code_t msg_rc = {.action = returnCode, .rc = CHAIN_COMM_RC_SUCCESS};
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &msg_rc.raw, 1, NULL) == 1, ESP_FAIL, TAG,
+                        "Failed to send first message return code");
+    /* Send second message return code, when this data returns, we know the modules have finished their command. */
+    ESP_RETURN_ON_FALSE(chain_comm_write_bytes(UART_NUM, &msg_rc.raw, 1, NULL) == 1, ESP_FAIL, TAG,
+                        "Failed to send second message return code");
 
-    /* Must receive ack within 500ms. */
-    uint8_t rx_ack = 0;
-    ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &rx_ack, 1, RX_BYTES_TIMEOUT(1)) == 1, ESP_FAIL, TAG,
-                        "Failed to receive ack");
-    ESP_RETURN_ON_FALSE(rx_ack == ack, ESP_FAIL, TAG, "Ack mismatch");
+    /* Receive first message return code. */
+    ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &msg_rc.raw, 1, RX_BYTES_TIMEOUT(1), NULL) == 1, ESP_FAIL, TAG,
+                        "Failed to receive message return code");
+    ESP_RETURN_ON_FALSE(msg_rc.rc == CHAIN_COMM_RC_SUCCESS, ESP_FAIL, TAG, "Message return code 1 mismatch");
 
-    /* Sequential writes must wait for at least the timeout in order for the modules to process the data. */
-    vTaskDelay(pdMS_TO_TICKS(CHAIN_COMM_TIMEOUT_MS * 12 / 10));
+    /* Receive second message return code. */
+    ESP_RETURN_ON_FALSE(chain_comm_read_bytes(UART_NUM, &msg_rc.raw, 1, RX_BYTES_TIMEOUT(1), NULL) == 1, ESP_FAIL, TAG,
+                        "Failed to receive message return code");
+    ESP_RETURN_ON_FALSE(msg_rc.rc == CHAIN_COMM_RC_SUCCESS, ESP_FAIL, TAG, "Message return code 2 mismatch");
 
     return ESP_OK;
 }
@@ -339,6 +385,7 @@ static void chain_comm_task(void *arg)
 
         /* Promote possible write seq to write all. */
         display_property_promote_write_seq_to_write_all(ctx->display);
+
         for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
             if (display_property_is_desynchronized(ctx->display, property, PROPERTY_SYNC_METHOD_READ)) {
                 esp_err_t err = chain_comm_property_read_all(ctx->display, property);
@@ -380,38 +427,25 @@ static void chain_comm_task(void *arg)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size)
+static int chain_comm_write_bytes(uart_port_t uart_num, const void *src, size_t size, uint8_t *checksum)
 {
-#if CHAIN_COMM_DEBUG
-    /* Send bytes with a small delay to allow receiver time to print debug statements. */
-    const uint8_t *data = (const uint8_t *)src;
-    for (size_t i = 0; i < size; i++) {
-        uart_write_bytes(uart_num, &data[i], 1);
-        printf("%02X ", data[i]);
-        esp_rom_delay_us(500);
+    int s = uart_write_bytes(uart_num, src, size);
+    for (size_t i = 0; checksum != NULL && i < s; i++) {
+        *checksum += ((const uint8_t *)src)[i];
     }
-    printf("\n");
-    return size;
-#else
-    return uart_write_bytes(uart_num, src, size);
-#endif
+    return s;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-static int chain_comm_read_bytes(uart_port_t uart_num, void *buf, uint32_t length, TickType_t ticks_to_wait)
+static int chain_comm_read_bytes(uart_port_t uart_num, void *buf, uint32_t length, TickType_t ticks_to_wait,
+                                 uint8_t *checksum)
 {
-#if CHAIN_COMM_DEBUG
-    /* Read and print all bytes. */
     int s = uart_read_bytes(uart_num, buf, length, ticks_to_wait);
-    for (int i = 0; i < s; i++) {
-        printf("%02X ", ((uint8_t *)buf)[i]);
+    for (size_t i = 0; checksum != NULL && i < s; i++) {
+        *checksum += ((const uint8_t *)buf)[i];
     }
-    printf("\n");
     return s;
-#else
-    return uart_read_bytes(uart_num, buf, length, ticks_to_wait);
-#endif
 }
 
 //---------------------------------------------------------------------------------------------------------------------

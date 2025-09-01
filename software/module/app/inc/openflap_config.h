@@ -27,7 +27,6 @@ typedef struct {
     } ir_threshold;                  /**< Sensor thresholds for IR sensors. */
     uint8_t base_speed;              /**< Base speed of the flap wheel. */
     uint32_t symbol_set[SYMBOL_CNT]; /**< An array of all supported symbols. */
-    bool ota_completed;              /**< Flag to indicate that the OTA process is completed. */
     uint8_t minimum_rotation;        /**< Add a complete rotation if the minimum distance between the current flap and
                                          destination flap is not met. */
     struct {

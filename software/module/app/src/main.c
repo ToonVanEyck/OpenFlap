@@ -8,19 +8,6 @@
 
 /* Private define ------------------------------------------------------------*/
 
-/** Convert a milliseconds value into a counter value for the IR/Encoder timer. */
-#define IR_TIMER_TICKS_FROM_MS(ms) ((ms) * 10)
-/** Convert a microsecond value into a counter value for the IR/Encoder timer. */
-#define IR_TIMER_TICKS_FROM_US(us) ((us) / 100)
-
-/** The period of the encoder readings when the motor is idle. */
-#define IR_IDLE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(50)
-/** The period of the encoder readings when the motor is active. */
-#define IR_ACTIVE_PERIOD_MS IR_TIMER_TICKS_FROM_MS(1)
-
-/** The IR sensor will illuminate the encoder wheel for this time in microseconds before starting the conversion */
-#define IR_ILLUMINATE_TIME_US IR_TIMER_TICKS_FROM_US(200)
-
 #ifndef VERSION
 #define VERSION "not found"
 #endif
@@ -101,7 +88,7 @@ int main(void)
                            ((checksum & 0x00FF0000) >> 8) | ((checksum & 0xFF000000) >> 24);
     debug_io_log_info("App Name : OpenFlap module\n");
     debug_io_log_info("Version  : %s \n", GIT_VERSION);
-    debug_io_log_info("CRC      : %08x\n", checksum_be);
+    debug_io_log_info("CRC -     : %08x\n", checksum_be);
 
     /* Start homing sequence at maximum speed. */
     of_ctx.flap_position = 0; /* Invalid position. */
@@ -169,10 +156,10 @@ int main(void)
             if (of_ctx.store_config) {
                 of_ctx.store_config = false;
                 of_hal_config_store(&of_ctx.of_config);
-                debug_io_log_info(0, "Config stored!\n");
+                debug_io_log_info("Config stored!\n");
             }
             if (of_ctx.reboot) {
-                debug_io_log_info(0, "Rebooting module!\n");
+                debug_io_log_info("Rebooting module!\n");
                 NVIC_SystemReset();
             }
         }

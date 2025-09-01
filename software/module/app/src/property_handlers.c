@@ -17,10 +17,6 @@ void property_firmware_set(uint8_t *buf, uint16_t *size)
     uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
     uint32_t addr        = addr_base + addr_offset;
     flash_write(addr, (buf + 2), FLASH_PAGE_SIZE);
-    if (addr_offset + FLASH_PAGE_SIZE == APP_SIZE) {
-        of_ctx->of_config.ota_completed = true;
-        of_ctx->store_config            = true;
-    }
 }
 
 void property_firmware_get(uint8_t *buf, uint16_t *size)

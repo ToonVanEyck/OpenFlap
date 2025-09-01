@@ -199,11 +199,9 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
             ctx->motor_backspin_timeout_tick--;
             cl_speed       = -MOTOR_BACKSPIN_PWM;
             decay_setpoint = 1000;
-            of_hal_debug_pin_set(0, 1);
         } else if (ctx->flap_distance == 0) {
             cl_speed       = 0;
             decay_setpoint = 1000;
-            of_hal_debug_pin_set(0, 0);
         }
         ctx->flap_distance_prev = ctx->flap_distance;
         of_hal_motor_control(cl_speed, decay_setpoint);

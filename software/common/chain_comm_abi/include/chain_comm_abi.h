@@ -7,21 +7,25 @@
 
 #define ABI_VERSION 2
 
-#define CHAIN_COM_MAX_LEN      (256)  /**< Maximum length of a chain communication message. */
-#define CHAIN_COMM_TIMEOUT_ACK (0xFF) /**< Value used as acknowledge. */
-#define CHAIN_COMM_TIMEOUT_MS  (250)  /**< Time after which a timeout event occurs. */
+#define CHAIN_COM_MAX_LEN     (256) /**< Maximum length of a chain communication message. */
+#define CHAIN_COMM_TIMEOUT_MS (50)  /**< Time after which a timeout event occurs. */
 
 typedef enum __attribute__((__packed__)) {
-    do_nothing,
-    property_readAll,
-    property_writeSequential,
-    property_writeAll,
+    property_readAll         = 0,
+    property_writeSequential = 1,
+    property_writeAll        = 2,
+    returnCode               = 3,
 } chain_comm_action_t;
 
 typedef struct {
     bool dynamic_property_size;
     uint16_t static_property_size;
 } chain_comm_binary_attributes_t;
+
+typedef enum {
+    CHAIN_COMM_RC_SUCCESS        = 0,
+    CHAIN_COMM_RC_ERROR_CHECKSUM = (uint8_t)(1 << 0),
+} chain_comm_return_code_t;
 
 #define GENERATE_PROPERTY_ENUM(ENUM, NAME, READ_ATTR, WRITE_ATTR)       ENUM,
 #define GENERATE_PROPERTY_NAME(ENUM, NAME, READ_ATTR, WRITE_ATTR)       NAME,
@@ -66,6 +70,14 @@ typedef union __attribute__((__packed__)) {
         chain_comm_action_t action : 2;
     };
 } chain_comm_msg_header_t;
+
+typedef union __attribute__((__packed__)) {
+    uint8_t raw;
+    struct {
+        chain_comm_return_code_t rc : 6;
+        chain_comm_action_t action : 2;
+    };
+} chain_comm_msg_return_code_t;
 
 #define NAMED_ENUM_ENUM(ENUM, NAME) ENUM,
 #define NAMED_ENUM_NAME(ENUM, NAME) NAME,

@@ -56,6 +56,7 @@ void of_encoder_position_update(of_ctx_t *ctx)
     static int8_t backspin_prevention = -SYMBOL_CNT;
     /* Prevent jumping back from 1 to zero. */
     static bool zero_lockout = false;
+    static bool zero_prev    = false;
     /* Encoder increment/decrement is determined based on the old and new pattern. */
     static uint8_t old_pattern = 0x00;
 
@@ -73,7 +74,7 @@ void of_encoder_position_update(of_ctx_t *ctx)
     }
 
     /* Check if we have a zero or full pattern. */
-    if (ctx->encoder.digital[ENC_CH_Z] & !zero_lockout) {
+    if (ctx->encoder.digital[ENC_CH_Z] == false && zero_prev == true && !zero_lockout) {
         encoder_zero(ctx);
         backspin_prevention = 0;
         zero_lockout        = true;
@@ -85,6 +86,7 @@ void of_encoder_position_update(of_ctx_t *ctx)
             zero_lockout = false;
         }
     }
+    zero_prev = ctx->encoder.digital[ENC_CH_Z];
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -111,10 +113,12 @@ void motor_state_update(of_ctx_t *ctx)
         ctx->motor_active_timeout_tick = of_hal_tick_count_get() + MOTOR_IDLE_TIMEOUT_MS;
         if (!ctx->motor_active) {
             ctx->motor_active = true;
+            of_hal_ir_timer_idle_set(false);
             debug_io_log_info("Motor Active\n");
         }
     } else if (ctx->motor_active && of_hal_tick_count_get() > ctx->motor_active_timeout_tick) {
         ctx->motor_active = false;
+        of_hal_ir_timer_idle_set(true);
         debug_io_log_info("Motor Idle\n");
     }
 }
@@ -201,7 +205,7 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
             decay_setpoint = 1000;
         } else if (ctx->flap_distance == 0) {
             cl_speed       = 0;
-            decay_setpoint = 1000;
+            decay_setpoint = 0;
         }
         ctx->flap_distance_prev = ctx->flap_distance;
         of_hal_motor_control(cl_speed, decay_setpoint);

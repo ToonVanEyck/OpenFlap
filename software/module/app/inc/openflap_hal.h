@@ -152,3 +152,10 @@ void of_hal_config_store(of_config_t *config);
  * @param[out] config Pointer to the configuration structure to load.
  */
 void of_hal_config_load(of_config_t *config);
+
+/**
+ * @brief Decrease the timer frequency of the IR led to reduce power consumption.
+ *
+ * @param[in] idle true to set the timer to idle mode, false to set it to normal mode.
+ */
+void of_hal_ir_timer_idle_set(bool idle);

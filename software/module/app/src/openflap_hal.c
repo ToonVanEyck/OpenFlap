@@ -209,6 +209,19 @@ void of_hal_config_load(of_config_t *config)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void of_hal_ir_timer_idle_set(bool idle)
+{
+    if (idle) {
+        LL_TIM_SetPrescaler(TIM1, (24 * 5) - 1); /* Reduce freq by factor 5 */
+        LL_TIM_OC_SetCompareCH3(TIM1, 1000 - (220 / 5));
+        LL_TIM_OC_SetCompareCH4(TIM1, 1000 - (20 / 5));
+    } else {
+        LL_TIM_SetPrescaler(TIM1, 24 - 1);
+        LL_TIM_OC_SetCompareCH3(TIM1, 1000 - 220);
+        LL_TIM_OC_SetCompareCH4(TIM1, 1000 - 20);
+    }
+}
+
 //======================================================================================================================
 //                                                         PRIVATE FUNCTIONS
 //======================================================================================================================
@@ -319,7 +332,7 @@ static void of_hal_tim1_init(void)
 
 /**
  * @brief Initializes TIM3 for PWM on channel 1 and 2.
- * TIM3 is configured as a slave at 200Hz.
+ * TIM3 is configured as a slave at 333.33Hz.
  */
 static void of_hal_tim3_init(void)
 {
@@ -337,7 +350,7 @@ static void of_hal_tim3_init(void)
     GPIO_InitStruct.Alternate = LL_GPIO_AF_1; // TIM3_CH1 & TIM3_CH2
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    // Configure TIM3 base: 24MHz / (1000 * 120) ≈ 200Hz (1000 counts of 5us)
+    // Configure TIM3 base: 24MHz / (1000 * 120) ≈ 333.33Hz (1000 counts of 3us)
     LL_TIM_SetPrescaler(TIM3, 72 - 1);
     LL_TIM_SetAutoReload(TIM3, 1000 - 1);
     LL_TIM_SetCounterMode(TIM3, LL_TIM_COUNTERMODE_UP);

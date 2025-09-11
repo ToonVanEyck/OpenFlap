@@ -21,7 +21,10 @@ _autosave-*
 *-save.pro
 *-save.kicad_pcb
 fp-info-cache
-**/hardware/**/src/*.xml
+**/hardware/**/*.xml
+**/hardware/**/production
+replicate_layout.log
+fabrication-toolkit-options.json
 
 # Netlist files (exported from Eeschema)
 *.net

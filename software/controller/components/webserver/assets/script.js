@@ -202,6 +202,12 @@ function createDisplay() {
 
 async function initialize() {
     moduleObjects = await moduleGetAll();
+
+    for (let i = 0; i < moduleObjects.length; i++) {
+        moduleObjects[i].command = "motor_unlock";
+    }
+    // modulesSetProperties(["command"]);
+
     createModuleTable();
     calculateDisplayDimensions();
     createDisplay();

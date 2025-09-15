@@ -196,7 +196,7 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
 
     /* Set motor direction and speed. */
     /* Skip if we are in manual control mode. */
-    if (ctx->debug_flags.motor_control_override == false) {
+    if (ctx->motor_control_override == false) {
         if (ctx->flap_distance == 0 && ctx->flap_distance_prev != 0) {
             ctx->motor_backspin_timeout_tick = MOTOR_BACKSPIN_DURATION_TICKS;
         } else if (ctx->motor_backspin_timeout_tick) {

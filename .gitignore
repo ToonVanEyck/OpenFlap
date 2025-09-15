@@ -3,6 +3,7 @@
 build
 software/controller/managed_components/*
 __pycache__
+NOTES.md
 ##############################################
 ##                Kicad files              ##
 ##############################################

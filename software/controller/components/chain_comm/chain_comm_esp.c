@@ -420,8 +420,8 @@ static void chain_comm_task(void *arg)
 #endif
         }
 
-        display_event_synchronized(ctx->display);
         ESP_LOGI(TAG, "Display synchronized");
+        display_event_synchronized(ctx->display);
     }
 }
 

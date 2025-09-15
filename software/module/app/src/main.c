@@ -88,7 +88,7 @@ int main(void)
                            ((checksum & 0x00FF0000) >> 8) | ((checksum & 0xFF000000) >> 24);
     debug_io_log_info("App Name : OpenFlap module\n");
     debug_io_log_info("Version  : %s \n", GIT_VERSION);
-    debug_io_log_info("CRC -     : %08x\n", checksum_be);
+    debug_io_log_info("CRC      : %08x\n", checksum_be);
 
     /* Start homing sequence at maximum speed. */
     of_ctx.flap_position = 0; /* Invalid position. */
@@ -96,7 +96,7 @@ int main(void)
     /* Speed is based on distance between setpoint and position. We initialize it with the maximum value. */
     of_ctx.flap_distance = ENCODER_PULSES_PER_REVOLUTION;
 
-    // of_ctx.debug_flags.motor_control_override = true; /* Don't turn motor at start. */
+    of_ctx.motor_control_override = true; /* Don't turn motor at start, wait for unlock command. */
 
     uint32_t pwm_tick_prev = 0, pwm_tick_curr = 0;
     uint32_t sens_tick_prev = 0, sens_tick_curr = 0;

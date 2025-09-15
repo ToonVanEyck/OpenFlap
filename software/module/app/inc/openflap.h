@@ -34,9 +34,9 @@ typedef struct of_ctx_tag {
     } encoder;
     struct {
         bool print_adc_values;           /**< Indicates if the ADC values should be printed. */
-        bool motor_control_override;     /**< Indicates if the motor pwm should be calculated or fixed */
         bool rps_x100_setpoint_override; /**< Indicates if the motor speed setpoint should be calculated or fixed. */
     } debug_flags;                       /**< Debug flags. */
+    bool motor_control_override;         /**< Indicates if the motor pwm should be calculated or fixed */
     interp_ctx_t sdp_interpolation_ctx;  /**< speed/decay to pwm interpolation context. */
     interp_ctx_t sd_interpolation_ctx;   /**< speed to decay interpolation context. */
     interp_ctx_t ds_interpolation_ctx;   /**< distance to speed interpolation context. */

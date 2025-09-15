@@ -85,6 +85,7 @@ typedef union __attribute__((__packed__)) {
 #define COMMAND_PROPERTY(NAMED_ENUM)                                                                                   \
     NAMED_ENUM(CMD_NO_COMMAND, "no_command")                                                                           \
     NAMED_ENUM(CMD_REBOOT, "reboot")                                                                                   \
+    NAMED_ENUM(CMD_MOTOR_UNLOCK, "motor_unlock")                                                                       \
     NAMED_ENUM(CMD_MAX, NULL)
 
 typedef enum { COMMAND_PROPERTY(NAMED_ENUM_ENUM) } command_property_t;

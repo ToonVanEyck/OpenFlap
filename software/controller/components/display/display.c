@@ -13,6 +13,8 @@
 #define DISPLAY_EVENT_SYNCHRONIZED (1u << 1)
 /** Indicates that the action performed on the display has failed. */
 #define DISPLAY_EVENT_FAILED (1u << 2)
+/** Mask of all event bits. */
+#define DISPLAY_EVENT_ALL_EVENTS (DISPLAY_EVENT_DESYNCHRONIZED | DISPLAY_EVENT_SYNCHRONIZED | DISPLAY_EVENT_FAILED)
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -96,6 +98,7 @@ esp_err_t display_event_desynchronized(display_t *display)
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
     /* Set the updated event. */
+    xEventGroupClearBits(display->event_handle, DISPLAY_EVENT_ALL_EVENTS);
     xEventGroupSetBits(display->event_handle, DISPLAY_EVENT_DESYNCHRONIZED);
 
     return ESP_OK;
@@ -124,6 +127,7 @@ esp_err_t display_event_synchronized(display_t *display)
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 
     /* Set the updated event. */
+    xEventGroupClearBits(display->event_handle, DISPLAY_EVENT_ALL_EVENTS);
     xEventGroupSetBits(display->event_handle, DISPLAY_EVENT_SYNCHRONIZED);
 
     return ESP_OK;

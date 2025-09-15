@@ -111,7 +111,7 @@ static void debug_term_test_motor(const char *input, void *arg)
         }
     }
 
-    of_ctx->debug_flags.motor_control_override = true; // Override motor control to use fixed speeds.
+    of_ctx->motor_control_override = true; // Override motor control to use fixed speeds.
 
     of_hal_motor_control(speed, decay);
 }
@@ -181,7 +181,7 @@ static void debug_term_speed_setpoint_set(const char *input, void *arg)
         if (setpoint >= 0 && setpoint <= 120) {
             of_ctx->encoder_rps_x100_setpoint              = setpoint;
             of_ctx->debug_flags.rps_x100_setpoint_override = true;
-            of_ctx->debug_flags.motor_control_override     = false;
+            of_ctx->motor_control_override                 = false;
             debug_io_log_info("Setpoint updated to %d\n", setpoint);
         } else {
             debug_io_log_error("Invalid setpoint value. Must be between 0 and %d.\n", 120);
@@ -269,7 +269,7 @@ static void debug_term_control_loop_toggle(const char *input, void *arg)
 
     of_ctx_t *of_ctx = (of_ctx_t *)arg;
 
-    of_ctx->debug_flags.motor_control_override     = false;
+    of_ctx->motor_control_override                 = false;
     of_ctx->debug_flags.rps_x100_setpoint_override = false;
 
     debug_io_log_debug("Motor control loop enabled\n");

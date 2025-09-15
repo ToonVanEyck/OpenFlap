@@ -2,6 +2,9 @@
 const moduleEndpoint = "/api/module"
 // const moduleEndpoint = "http://192.168.0.45:80/api/module" // enable this line for local development
 
+const controllerFirmwareEndpoint = "/api/controller/firmware.bin";
+const moduleFirmwareEndpoint = "/api/module/firmware.bin";
+
 var moduleObjects = [];
 var dimensions = { width: 0, height: 0 };
 
@@ -206,7 +209,7 @@ async function initialize() {
     for (let i = 0; i < moduleObjects.length; i++) {
         moduleObjects[i].command = "motor_unlock";
     }
-    // modulesSetProperties(["command"]);
+    modulesSetProperties(["command"]);
 
     createModuleTable();
     calculateDisplayDimensions();
@@ -412,6 +415,38 @@ async function writeNewSettingBulk() {
         body: JSON.stringify(json)
     });
     initialize();
+}
+
+async function uploadFirmware(fileInputId, endpoint) {
+    const fileInput = document.getElementById(fileInputId);
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert("Please select a firmware .bin file first.");
+        return;
+    }
+    const file = fileInput.files[0];
+    try {
+        const res = await fetch(endpoint, {
+            method: "PUT",
+            headers: { 'Content-Type': 'application/octet-stream' },
+            body: file
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Upload failed (${res.status}): ${text}`);
+        }
+        alert("Firmware upload started successfully.");
+    } catch (err) {
+        console.error("Firmware upload error:", err);
+        alert("Firmware upload error: " + err.message);
+    }
+}
+
+function updateControllerFirmware() {
+    uploadFirmware("updateController", controllerFirmwareEndpoint);
+}
+
+function updateModuleFirmware() {
+    uploadFirmware("updateModule", moduleFirmwareEndpoint);
 }
 
 function startCalibration() {

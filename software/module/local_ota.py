@@ -52,7 +52,7 @@ def main():
     print(f"Binary seems valid, checksum: {checksum:08X}")
 
     # Upload firmware
-    firmware_url = f"http://{args.url}/api/module/firmware"
+    firmware_url = f"http://{args.url}/api/module/firmware.bin"
     print("Uploading firmware to ", firmware_url)
     try:
         file_size = os.path.getsize(args.binfile)

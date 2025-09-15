@@ -13,15 +13,10 @@ extern uint32_t checksum;
 
 void property_firmware_set(uint8_t *buf, uint16_t *size)
 {
-
     uint32_t addr_base   = (uint32_t)(APP_START_PTR + (NEW_APP * APP_SIZE / 4));
     uint32_t addr_offset = ((uint32_t)buf[0] << 8 | (uint32_t)buf[1]) * FLASH_PAGE_SIZE;
     uint32_t addr        = addr_base + addr_offset;
-    if (!(addr % FLASH_SECTOR_SIZE)) {
-        of_hal_debug_pin_set(0, 1);
-    }
     flash_write(addr, (buf + 2), FLASH_PAGE_SIZE);
-    of_hal_debug_pin_set(0, 0);
 }
 
 void property_firmware_get(uint8_t *buf, uint16_t *size)

@@ -6,8 +6,8 @@
 
 #define TAG "module_api"
 
-#define MODULE_API_URI          "/module"          /**< module endpoint. */
-#define MODULE_FIRMWARE_API_URI "/module/firmware" /**< module firmware endpoint. */
+#define MODULE_API_URI          "/module"              /**< module endpoint. */
+#define MODULE_FIRMWARE_API_URI "/module/firmware.bin" /**< module firmware endpoint. */
 
 //---------------------------------------------------------------------------------------------------------------------
 

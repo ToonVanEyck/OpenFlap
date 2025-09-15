@@ -204,22 +204,22 @@
         </div>
         <div class="card" style="display:none" id="update_card">
             <div class="cardTitle">Update Firmware</div>
-            <form class="cardButtonRow" action="/firmware" enctype="multipart/form-data" method="post">
+            <div class="cardButtonRow">
                 <div class="cardButtonRowTitle">
                     Update Controller Firmware:
                 </div>
                 <input class="firmwareSelectButton" name="controller_firmware" type="file" accept=".bin"
                     id="updateController" />
-                <input class="button" type="submit" value="Update Controller">
-            </form>
-            <form class="cardButtonRow" action="/firmware" enctype="multipart/form-data" method="post">
+                <input class="button" type="button" value="Update Controller" onclick="updateControllerFirmware()">
+            </div>
+            <div class="cardButtonRow">
                 <div class="cardButtonRowTitle">
                     Update Module Firmware:
                 </div>
                 <input class="firmwareSelectButton" name="module_firmware" type="file" accept=".bin"
-                    id="updateController" />
-                <input class="button" type="submit" value="Update Modules">
-            </form>
+                    id="updateModule" />
+                <input class="button" type="button" value="Update Modules" onclick="updateModuleFirmware()">
+            </div>
         </div>
         <div class="card" style="display:none" id="wifi_card">
             <div class="cardTitle">Wi-Fi Settings</div>

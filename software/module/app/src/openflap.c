@@ -182,7 +182,6 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
             : interpolation_linear_compute(&ctx->sd_interpolation_ctx, ctx->encoder_rps_x100_setpoint);
 
     pid_output = pid_compute(&ctx->pid_ctx, ctx->encoder_rps_x100_setpoint - ctx->encoder_rps_x100_actual, 1000);
-    // feed_forward_speed = interp_compute(&ctx->speed_pwm_interp_ctx, ctx->encoder_rps_x100_setpoint);
     feed_forward_speed =
         interpolation_bilinear_compute(&ctx->sdp_interpolation_ctx, ctx->encoder_rps_x100_setpoint, decay_setpoint);
 
@@ -237,13 +236,6 @@ void of_encoder_speed_calc(of_ctx_t *ctx, uint32_t sens_tick)
         int32_t flap_change_time_delta = (int32_t)sens_tick - ctx->flap_position_change_tick_prev;
         int32_t ticks_per_rev          = ENCODER_PULSES_PER_REVOLUTION * flap_change_time_delta / flap_position_delta;
         ctx->encoder_rps_x100_actual   = (ctx->encoder_rps_x100_actual * 7 + (100000 / ticks_per_rev)) / 8;
-        // if (ctx->encoder_rps_x100_actual > 1000) {
-        //     debug_io_log_error("position %d - %d = %d\n", ctx->flap_position, ctx->flap_position_prev,
-        //                        flap_position_delta);
-        //     debug_io_log_error("ticks %d - %d = %d\n", sens_tick, ctx->flap_position_change_tick_prev,
-        //                        flap_change_time_delta);
-        //     debug_io_log_error("tpr %d / rps %d\n", ticks_per_rev, ctx->encoder_rps_x100_actual);
-        // }
         ctx->flap_position_change_tick_prev = sens_tick;
         ctx->flap_position_prev             = ctx->flap_position;
     } else if (sens_tick >= ctx->flap_position_change_tick_prev + 200) {

@@ -443,11 +443,36 @@ async function uploadFirmware(fileInputId, endpoint) {
 }
 
 function updateControllerFirmware() {
+    resetProgress('controller');
     uploadFirmware("updateController", controllerFirmwareEndpoint);
 }
 
 function updateModuleFirmware() {
+    resetProgress('module');
     uploadFirmware("updateModule", moduleFirmwareEndpoint);
+}
+
+// -------------------- Firmware Progress (parsed from logs) --------------------
+function setProgress(kind, current, total) {
+    const bar = document.getElementById(kind === 'module' ? 'progress_module' : 'progress_controller');
+    const txt = document.getElementById(kind === 'module' ? 'progress_module_text' : 'progress_controller_text');
+    const wrap = txt ? txt.closest('.progressWrap') : null;
+    if (!bar || !txt) return;
+    const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((current / total) * 100))) : 0;
+    // progress bar width: adjust right inset so width == pct%
+    bar.style.inset = `0 ${100 - pct}% 0 0`;
+    txt.textContent = `${pct}%`;
+    if (wrap) {
+        wrap.style.display = (pct === 0 || pct === 100) ? 'none' : '';
+    }
+}
+
+function resetProgress(kind) {
+    setProgress(kind, 0, 100);
+}
+
+function completeProgress(kind) {
+    setProgress(kind, 100, 100);
 }
 
 function startCalibration() {
@@ -485,7 +510,20 @@ async function setAccessPoint(type) {
 }
 
 function showCards(cards) {
-    [...document.querySelectorAll(".card")].forEach(n => n.style.display = cards.includes(n.id) ? "" : "none")
+    [...document.querySelectorAll(".card")].forEach(n => n.style.display = cards.includes(n.id) ? "" : "none");
+    // When opening the update card, hide progress wraps at 0% or 100%
+    if (cards.includes('update_card')) {
+        const wraps = document.querySelectorAll('#update_card .progressWrap');
+        wraps.forEach(w => {
+            const txt = w.querySelector('.progress__text');
+            let pct = 0;
+            if (txt && txt.textContent) {
+                const m = txt.textContent.match(/(\d+)%/);
+                if (m) pct = parseInt(m[1], 10);
+            }
+            w.style.display = (pct === 0 || pct === 100) ? 'none' : '';
+        });
+    }
 }
 
 function setDefaultcharacterSet() {
@@ -551,6 +589,29 @@ function appendLogLine(line, forcedColor) {
 
     const color = forcedColor || parseLineColor(line);
     const clean = stripAnsi(line);
+
+    // Detect firmware progress lines
+    // Module example: "MODULE_FIRMWARE_ENDPOINTS: writing 128 5888/28672 bytes"
+    const mod = clean.match(/MODULE_FIRMWARE_ENDPOINTS:\s*writing\s+\d+\s+(\d+)\/(\d+)\s+bytes/i);
+    if (mod) {
+        const cur = parseInt(mod[1], 10);
+        const tot = parseInt(mod[2], 10);
+        if (!Number.isNaN(cur) && !Number.isNaN(tot)) {
+            setProgress('module', cur, tot);
+            if (cur >= tot) completeProgress('module');
+        }
+    }
+
+    // Controller progress (future-proof): look for CONTROLLER_FIRMWARE lines of same shape
+    const ctl = clean.match(/CONTROLLER_OTA.*?:\s*writing\s+\d+\s+(\d+)\/(\d+)\s+bytes/i);
+    if (ctl) {
+        const cur = parseInt(ctl[1], 10);
+        const tot = parseInt(ctl[2], 10);
+        if (!Number.isNaN(cur) && !Number.isNaN(tot)) {
+            setProgress('controller', cur, tot);
+            if (cur >= tot) completeProgress('controller');
+        }
+    }
 
     const span = document.createElement('span');
     span.textContent = clean;

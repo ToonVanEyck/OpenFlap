@@ -212,6 +212,12 @@
                 <input class="firmwareSelectButton" name="controller_firmware" type="file" accept=".bin"
                     id="updateController" />
                 <input class="button" type="button" value="Update Controller" onclick="updateControllerFirmware()">
+                <div class="progressWrap">
+                    <div class="progress">
+                        <div id="progress_controller" class="progress__bar"></div>
+                    </div>
+                    <div id="progress_controller_text" class="progress__text">0%</div>
+                </div>
             </div>
             <div class="cardButtonRow">
                 <div class="cardButtonRowTitle">
@@ -220,6 +226,12 @@
                 <input class="firmwareSelectButton" name="module_firmware" type="file" accept=".bin"
                     id="updateModule" />
                 <input class="button" type="button" value="Update Modules" onclick="updateModuleFirmware()">
+                <div class="progressWrap">
+                    <div class="progress">
+                        <div id="progress_module" class="progress__bar"></div>
+                    </div>
+                    <div id="progress_module_text" class="progress__text">0%</div>
+                </div>
             </div>
         </div>
         <div class="card" style="display:none" id="wifi_card">

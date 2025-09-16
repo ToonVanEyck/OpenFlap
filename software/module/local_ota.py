@@ -59,11 +59,13 @@ def main():
     firmware_url = f"http://{args.url}/api/module/firmware.bin"
     ws_url = f"ws://{args.url}/log"
     print("Uploading firmware to", firmware_url)
+    print("Connecting to websocket...")
 
     # Regular PUT will stream the file; progress will be tracked from device log via WS
     ws_thread = None
     ws_app = None
     stop_ws = threading.Event()
+    ws_connected = threading.Event() 
 
     # Regex to capture "... writing <chunk> <written>/<total> bytes"
     # Example: "MODULE_FIRMWARE_ENDPOINTS: writing 128 26368/28672 bytes"
@@ -112,10 +114,14 @@ def main():
             # No-op
             pass
 
+        def on_ws_open(_ws):
+            ws_connected.set()  # mark WS ready for progress logs
+
         def ws_runner():
             nonlocal ws_app
             ws_app = websocket.WebSocketApp(
                 ws_url,
+                on_open=on_ws_open,
                 on_data=on_ws_data,
                 on_error=on_ws_error,
                 on_close=on_ws_close,
@@ -131,9 +137,15 @@ def main():
                     break
                 time.sleep(0.1)
 
+        # Start WS listener
         ws_thread = threading.Thread(target=ws_runner, daemon=True)
         ws_thread.start()
 
+        # Wait briefly for WS to connect so progress bar works reliably
+        deadline = time.time() + 5.0
+        while not ws_connected.is_set() and time.time() < deadline:
+            time.sleep(0.05)
+        # Proceed even if not connected (upload will still happen)
         try:
             with open(args.binfile, 'rb') as f:
                 # Stream upload; server generates WS progress logs while writing

@@ -75,9 +75,11 @@ void property_offset_set(uint8_t *buf, uint16_t *size)
     if (of_ctx->of_config.encoder_offset == buf[0]) {
         return;
     }
-    distance_update(of_ctx);
+    int16_t offset_delta             = (int16_t)of_ctx->of_config.encoder_offset - (int16_t)buf[0];
     of_ctx->of_config.encoder_offset = buf[0];
-    of_ctx->store_config             = true;
+    of_ctx->flap_position            = flapIndex_wrap_calc((int16_t)(of_ctx->flap_position) + offset_delta);
+    distance_update(of_ctx);
+    of_ctx->store_config = true;
 }
 void property_offset_get(uint8_t *buf, uint16_t *size)
 {

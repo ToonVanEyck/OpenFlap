@@ -66,14 +66,15 @@ esp_err_t webserver_api_endpoint_add(webserver_ctx_t *webserver_ctx, const char 
         };
 
         /* Register uri handler. */
-        ESP_LOGI(TAG, "Registering %s handler for %s", http_method_str(methods[i]), uri_endpoint);
+        ESP_LOGI(TAG, "Registering %s handler for %s", http_method_str(uri_handler.method), uri_endpoint);
         ESP_RETURN_ON_ERROR(httpd_register_uri_handler(webserver_ctx->server, &uri_handler), TAG,
-                            "Failed to register %s handler", http_method_str(methods[i]));
+                            "Failed to register %s handler", http_method_str(uri_handler.method));
 
         /* Prepare Access-Control-Allow-Methods value. */
         if (allow_cors) {
             snprintf(cors_allowed_mehods + strlen(cors_allowed_mehods),
-                     sizeof(cors_allowed_mehods) - strlen(cors_allowed_mehods), "%s, ", http_method_str(methods[i]));
+                     sizeof(cors_allowed_mehods) - strlen(cors_allowed_mehods), "%s, ",
+                     http_method_str(uri_handler.method));
         }
     }
 
@@ -291,3 +292,5 @@ static esp_err_t httpd_req_recv_blocking(httpd_req_t *r, char *buf, size_t buf_l
 
     return ESP_OK;
 }
+
+//---------------------------------------------------------------------------------------------------------------------

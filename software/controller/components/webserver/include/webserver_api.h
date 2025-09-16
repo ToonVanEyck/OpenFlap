@@ -1,7 +1,5 @@
 #pragma once
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/stream_buffer.h"
 #include "webserver_common.h"
 #include <stdbool.h>
 

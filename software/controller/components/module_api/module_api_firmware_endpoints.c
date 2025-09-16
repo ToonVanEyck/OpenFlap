@@ -13,6 +13,8 @@
 static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_t data_len, size_t data_offset,
                                                size_t total_data_len);
 
+//---------------------------------------------------------------------------------------------------------------------
+
 esp_err_t module_api_firmware_handler(httpd_req_t *req)
 {
     display_t *display = (display_t *)req->user_ctx;
@@ -58,6 +60,7 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
 
     if (data_offset + data_len == total_data_len) {
         ESP_LOGI(TAG, "Module OTA complete. Rebooting modules...");
+
         for (uint16_t i = 0; i < display_size; i++) {
             module_t *module = display_module_get(display, i);
             /* All data has been transmitted, reboot the modules. */

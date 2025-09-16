@@ -64,8 +64,6 @@ static esp_err_t firmware_version_from_binary(module_t *module, const uint8_t *b
         module->firmware_crc |= (uint32_t)bin[bin_size - 4 + i] << (i * 8);
     }
 
-    ESP_LOGI(PROPERTY_TAG, "Module Firmware: %s, CRC: %08lX", module->firmware_version->str, module->firmware_crc);
-
     return ESP_OK;
 }
 

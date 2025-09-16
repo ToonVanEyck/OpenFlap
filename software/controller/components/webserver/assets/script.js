@@ -214,6 +214,7 @@ async function initialize() {
     createModuleTable();
     calculateDisplayDimensions();
     createDisplay();
+    startLogWebSocket();
 }
 
 function trySetLetter(index, letter) {
@@ -492,3 +493,130 @@ function setDefaultcharacterSet() {
 }
 
 window.addEventListener("keydown", keydownHandler, true);
+
+let logWS;
+let logReconnectTimer;
+let logLineBuffer = "";
+
+function colorFromSgr(codes) {
+    // codes is an array of numbers like [0,32] or [1,33]
+    const hasBright = codes.includes(1) || codes.some(c => c >= 90 && c <= 97);
+    const fg = codes.find(c => (c >= 30 && c <= 37) || (c >= 90 && c <= 97));
+    const base = {
+        30: '#a0a0a0',
+        31: '#ff6b6b',
+        32: '#51cf66',
+        33: '#ffd43b',
+        34: '#4dabf7',
+        35: '#e599f7',
+        36: '#63e6be',
+        37: '#f8f9fa',
+    };
+    const bright = {
+        90: '#bfbfbf',
+        91: '#ff8787',
+        92: '#69db7c',
+        93: '#ffe066',
+        94: '#74c0fc',
+        95: '#f783ff',
+        96: '#66d9e8',
+        97: '#ffffff',
+    };
+
+    if (fg === undefined) return hasBright ? '#ffffff' : 'var(--fg-color)';
+    if (fg >= 90) return bright[fg] || '#ffffff';
+    const chosen = base[fg] || 'var(--fg-color)';
+    if (!hasBright) return chosen;
+    return chosen;
+}
+
+function stripAnsi(line) {
+    return line.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+function parseLineColor(line) {
+    const m = line.match(/^\x1b\[([0-9;]+)m/);
+    if (!m) return undefined;
+    const codes = m[1].split(';').map(n => parseInt(n, 10)).filter(n => !Number.isNaN(n));
+    return colorFromSgr(codes);
+}
+
+function appendLogLine(line, forcedColor) {
+    const el = document.getElementById('log_window');
+    if (!el) return;
+    const shouldStick = (el.scrollTop + el.clientHeight + 10) >= el.scrollHeight;
+
+    // Normalize CRLF/CR
+    line = line.replace(/\r$/, '');
+
+    const color = forcedColor || parseLineColor(line);
+    const clean = stripAnsi(line);
+
+    const span = document.createElement('span');
+    span.textContent = clean;
+    span.style.display = 'block';
+    if (color) span.style.color = color;
+    el.appendChild(span);
+
+    if (shouldStick) el.scrollTop = el.scrollHeight;
+}
+
+function appendLogChunk(text) {
+    // Accumulate and flush per-line
+    logLineBuffer += text;
+    let idx;
+    while ((idx = logLineBuffer.indexOf('\n')) !== -1) {
+        const line = logLineBuffer.slice(0, idx);
+        logLineBuffer = logLineBuffer.slice(idx + 1);
+        if (line.length === 0) { appendLogLine(''); } else { appendLogLine(line); }
+    }
+}
+
+function appendStatusLine(text) {
+    appendLogLine(text, '#bfbfbf');
+}
+
+function startLogWebSocket() {
+    const url = `ws://${location.host}/log`;
+
+    try {
+        if (logWS) {
+            try { logWS.close(); } catch (_) { }
+        }
+        logWS = new WebSocket(url);
+    } catch (e) {
+        console.error("WebSocket init error:", e);
+        scheduleLogReconnect();
+        return;
+    }
+
+    logWS.onopen = () => {
+        clearTimeout(logReconnectTimer);
+        appendStatusLine("[log] connected");
+    };
+
+    logWS.onmessage = (ev) => {
+        // Accept text frames; if binary, try to decode as UTF-8
+        if (typeof ev.data === 'string') {
+            appendLogChunk(ev.data);
+        } else if (ev.data instanceof Blob) {
+            ev.data.text().then(appendLogChunk).catch(() => { });
+        } else if (ev.data instanceof ArrayBuffer) {
+            try { appendLogChunk(new TextDecoder().decode(ev.data)); } catch (_) { }
+        }
+    };
+
+    logWS.onerror = (ev) => {
+        console.error("WebSocket error:", ev);
+    };
+
+    logWS.onclose = () => {
+        appendStatusLine("[log] disconnected, reconnecting...");
+        scheduleLogReconnect();
+    };
+}
+
+function scheduleLogReconnect() {
+    clearTimeout(logReconnectTimer);
+    logReconnectTimer = setTimeout(startLogWebSocket, 2000);
+}

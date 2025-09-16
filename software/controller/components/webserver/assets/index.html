@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height:100%;">
 
 <head>
     <meta characterMap="UTF-8">
@@ -20,6 +20,7 @@
         <input type="button" class="menuItem" value="-modules-" onclick="showCards(['modules_card'])" />
         <input type="button" class="menuItem" value="-update-" onclick="showCards(['update_card'])" />
         <input type="button" class="menuItem" value="-wifi-" onclick="showCards(['wifi_card'])" />
+        <input type="button" class="menuItem" value="-log-" onclick="showCards(['log_card'])" />
     </div>
     <div class="content">
         <div class="card" id="display_card">
@@ -239,6 +240,10 @@
                 <input id="host_pwd" placeholder="Wi-Fi Password" type="password" />
                 <input class="button" type="submit" value="Set Credentials" onclick="setAccessPoint('host')">
             </div>
+        </div>
+        <div class="card" style="display:none" id="log_card">
+            <div class="cardTitle">Log</div>
+            <div class="logWindow" id="log_window"></div>
         </div>
     </div>
     <script src="script.js"></script>

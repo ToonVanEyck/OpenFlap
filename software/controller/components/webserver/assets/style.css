@@ -11,6 +11,7 @@ body {
     font-family: "Red Hat Mono", monospace;
     display: flex;
     flex-direction: column;
+    height: 100%;
     margin: 0px;
 }
 
@@ -28,12 +29,14 @@ body {
 .content {
     display: flex;
     flex-direction: column;
+    height: 100%;
     padding: 30px;
 }
 
 .card {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .cardTitle {
@@ -464,4 +467,14 @@ input[type=checkbox] {
     accent-color: var(--accent-color);
     transform: scale(1.5);
 
+}
+
+.logWindow {
+    border: solid 1px var(--fg-color);
+    margin-top: 8px;
+    border-radius: 5px;
+    padding: 8px;
+    overflow: auto;
+    white-space: pre-wrap;
+    height: 70%;
 }

@@ -35,11 +35,11 @@ void app_main(void)
     ESP_LOGI(TAG, "Starting OpenFlap controller: %s", app_desc.version);
 
     /* Initialize the oled display. */
-    oled_disp_ctx_t oled_disp_ctx;
-    oled_disp_init(&oled_disp_ctx);
-    uint8_t major, minor, patch;
-    util_extract_version(app_desc.version, &major, &minor, &patch);
-    oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
+    // oled_disp_ctx_t oled_disp_ctx;
+    // oled_disp_init(&oled_disp_ctx);
+    // uint8_t major, minor, patch;
+    // util_extract_version(app_desc.version, &major, &minor, &patch);
+    // oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
 
     /* Connect to a network. */
     networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;
@@ -68,15 +68,15 @@ void app_main(void)
     ESP_LOGI(TAG, "Module api endpoint started!");
 
     /* Initialize controller OTA. */
-    controller_ota_ctx_t controller_ota_ctx;
-    ESP_GOTO_ON_ERROR(controller_ota_init(&controller_ota_ctx, &webserver_ctx), verify_firmware, TAG,
-                      "Failed to initialize controller OTA");
-    ESP_LOGI(TAG, "Controller OTA endpoint started!");
+    // controller_ota_ctx_t controller_ota_ctx;
+    // ESP_GOTO_ON_ERROR(controller_ota_init(&controller_ota_ctx, &webserver_ctx), verify_firmware, TAG,
+    //                   "Failed to initialize controller OTA");
+    // ESP_LOGI(TAG, "Controller OTA endpoint started!");
 
 verify_firmware:
     /* Verify the firmware. */
     bool startup_success = (ret == ESP_OK);
-    ESP_ERROR_CHECK(controller_ota_verify_firmware(startup_success));
+    // ESP_ERROR_CHECK(controller_ota_verify_firmware(startup_success));
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));

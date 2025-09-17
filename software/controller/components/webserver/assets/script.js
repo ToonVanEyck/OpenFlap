@@ -204,6 +204,7 @@ function createDisplay() {
 }
 
 async function initialize() {
+    startLogWebSocket();
     moduleObjects = await moduleGetAll();
 
     for (let i = 0; i < moduleObjects.length; i++) {
@@ -214,7 +215,6 @@ async function initialize() {
     createModuleTable();
     calculateDisplayDimensions();
     createDisplay();
-    startLogWebSocket();
 }
 
 function trySetLetter(index, letter) {

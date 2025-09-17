@@ -108,7 +108,7 @@ static esp_err_t motion_to_binary(uint8_t **bin, uint16_t *bin_size, const modul
 
     *bin_size = chain_comm_property_write_attributes_get(PROPERTY_MOTION)->static_property_size;
 
-    *bin = malloc(sizeof(*bin_size));
+    *bin = malloc(*bin_size);
     ESP_RETURN_ON_FALSE(*bin != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
 
     (*bin)[0] = module->motion.speed_min;

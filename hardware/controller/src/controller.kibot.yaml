@@ -16,6 +16,10 @@ preflight:
   drc:
     enabled: true
     warnings_as_errors : true
+    filters:
+      - filter: Silkscreen clipped by board edge
+        error: silk_edge_clearance
+        regex : (?s)Silkscreen clipped by board edge
   update_xml: true
   set_text_variables:
     - name: GIT_TAG

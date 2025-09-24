@@ -15,7 +15,6 @@
 #include "module.h"
 #include "module_api.h"
 #include "networking.h"
-#include "oled_disp.h"
 #include "utils.h"
 #include "webserver.h"
 
@@ -33,13 +32,6 @@ void app_main(void)
     esp_err_t ret                 = ESP_OK; /* Set by ESP_GOTO_ON_ERROR macro. */
     const esp_app_desc_t app_desc = *esp_app_get_description();
     ESP_LOGI(TAG, "Starting OpenFlap controller: %s", app_desc.version);
-
-    /* Initialize the oled display. */
-    oled_disp_ctx_t oled_disp_ctx;
-    oled_disp_init(&oled_disp_ctx);
-    uint8_t major, minor, patch;
-    util_extract_version(app_desc.version, &major, &minor, &patch);
-    oled_disp_home(&oled_disp_ctx, "OPENFLAP", major, minor, patch);
 
     /* Connect to a network. */
     networking_config_t network_config = NETWORKING_DEFAULT_CONFIG;
@@ -80,6 +72,6 @@ verify_firmware:
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
-        // ESP_LOGI(TAG, "Hello world!");
+        ESP_LOGI(TAG, "Hello world!");
     }
 }

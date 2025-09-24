@@ -1,4 +1,5 @@
 (fp_lib_table
   (version 7)
-  (lib (name "BoxHeader")(type "KiCad")(uri "${KIPRJMOD}/../../resources/BoxHeader.pretty")(options "")(descr ""))
+  (lib (name "USB-C-connector")(type "KiCad")(uri "${KIPRJMOD}/../../resources/USB-C-connector.pretty")(options "")(descr ""))
+  (lib (name "DC-jack-connector")(type "KiCad")(uri "${KIPRJMOD}/../../resources/DC-jack-connector.pretty")(options "")(descr ""))
 )

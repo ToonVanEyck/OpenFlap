@@ -17,6 +17,19 @@ esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display);
 //---------------------------------------------------------------------------------------------------------------------
 
 /**
+ * \brief Reconfigure the chain communication IOs based on the COL_START_PIN and ROW_START_PIN states.
+ *
+ * \param[in] controller_is_col_start True if the controller is mounted on top of a module.
+ * \param[in] controller_is_row_start True if the controller is connected to another top-con board.
+ *
+ * \retval ESP_OK The chain communication IOs were successfully reconfigured.
+ * \retval ESP_FAIL The chain communication IOs failed to reconfigure.
+ */
+esp_err_t chain_comm_io_reconfigure(bool controller_is_col_start, bool controller_is_row_start);
+
+//---------------------------------------------------------------------------------------------------------------------
+
+/**
  * \brief Destroy the chain communication.
  *
  * \param[in] ctx The chain communication context.

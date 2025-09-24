@@ -1,8 +1,12 @@
 #include "chain_comm_esp.h"
+#include "driver/gpio.h"
 #include "driver/uart.h"
 #include "esp_check.h"
 #include "esp_log.h"
+#include "hal/gpio_hal.h"
 #include "property_handler.h"
+#include "rom/gpio.h"
+#include "soc/gpio_sig_map.h"
 
 #include <string.h>
 
@@ -13,8 +17,12 @@
 
 #define UART_BUF_SIZE (1024)
 #define UART_NUM      UART_NUM_1
-#define TX_PIN        (17)
-#define RX_PIN        (16)
+#define COL_START_PIN (2)
+#define TX_COL_PIN    (47)
+#define RX_COL_PIN    (45)
+#define ROW_START_PIN (6)
+#define TX_ROW_PIN    (5)
+#define RX_ROW_PIN    (4)
 
 #define RX_BYTES_TIMEOUT(_byte_cnt) (pdMS_TO_TICKS((_byte_cnt) * 50))
 
@@ -43,12 +51,57 @@ esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display)
     ESP_RETURN_ON_ERROR(uart_driver_install(UART_NUM, UART_BUF_SIZE, UART_BUF_SIZE, 0, NULL, 0), TAG,
                         "Failed to install UART driver");
     ESP_RETURN_ON_ERROR(uart_param_config(UART_NUM, &uart_config), TAG, "Failed to configure UART parameters");
-    ESP_RETURN_ON_ERROR(uart_set_pin(UART_NUM, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE), TAG,
-                        "Failed to set UART pins");
+
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << COL_START_PIN) | (1ULL << ROW_START_PIN),
+        .mode         = GPIO_MODE_INPUT,
+        .pull_up_en   = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Failed to configure COL_START_PIN and ROW_START_PIN as inputs");
 
     ESP_RETURN_ON_FALSE(
         xTaskCreate(chain_comm_task, "chain_comm_task", CHAIN_COMM_TASK_SIZE, ctx, CHAIN_COMM_TASK_PRIO, &ctx->task),
         ESP_FAIL, TAG, "Failed to create chain comm task");
+
+    return ESP_OK;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+esp_err_t chain_comm_io_reconfigure(bool controller_is_col_start, bool controller_is_row_start)
+{
+    gpio_reset_pin(RX_COL_PIN);
+    gpio_set_direction(RX_COL_PIN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(RX_COL_PIN, GPIO_PULLUP_ONLY);
+    gpio_reset_pin(TX_COL_PIN);
+    gpio_set_direction(TX_COL_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_pull_mode(TX_COL_PIN, GPIO_FLOATING);
+    gpio_reset_pin(RX_ROW_PIN);
+    gpio_set_direction(RX_ROW_PIN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(RX_ROW_PIN, GPIO_PULLUP_ONLY);
+    gpio_reset_pin(TX_ROW_PIN);
+    gpio_set_direction(TX_ROW_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_pull_mode(TX_ROW_PIN, GPIO_FLOATING);
+
+    if (controller_is_row_start == controller_is_col_start) {
+        /* Both values are the same, either connected in a full display or not connected at all. */
+        ESP_RETURN_ON_ERROR(uart_set_pin(UART_NUM, TX_COL_PIN, RX_ROW_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE), TAG,
+                            "Failed to set UART pins");
+
+        /* Also connect RX_COL_PIN -> TX_ROW_PIN (direct mirror) */
+        gpio_matrix_in(RX_COL_PIN, SIG_IN_FUNC_212_IDX, false);
+        gpio_matrix_out(TX_ROW_PIN, SIG_IN_FUNC_212_IDX, false, false);
+    } else if (controller_is_col_start && !controller_is_row_start) {
+        /* Tx and Rx from column only. */
+        ESP_RETURN_ON_ERROR(uart_set_pin(UART_NUM, TX_COL_PIN, RX_COL_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE), TAG,
+                            "Failed to set UART pins");
+    } else if (!controller_is_col_start && controller_is_row_start) {
+        /* Tx and Rx from row only. */
+        ESP_RETURN_ON_ERROR(uart_set_pin(UART_NUM, TX_ROW_PIN, RX_ROW_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE), TAG,
+                            "Failed to set UART pins");
+    }
 
     return ESP_OK;
 }
@@ -379,9 +432,24 @@ static void chain_comm_task(void *arg)
 {
     chain_comm_ctx_t *ctx = (chain_comm_ctx_t *)arg;
 
+    bool controller_is_col_start_prev = !gpio_get_level(COL_START_PIN);
+    bool controller_is_row_start_prev = !gpio_get_level(ROW_START_PIN);
+    ESP_ERROR_CHECK(chain_comm_io_reconfigure(controller_is_col_start_prev, controller_is_row_start_prev));
+
     while (1) {
         display_event_wait_for_desynchronized(ctx->display, portMAX_DELAY);
         ESP_LOGI(TAG, "Display desynchronized");
+
+        /* Reconfigure IOs if needed. */
+        bool controller_is_col_start = !gpio_get_level(COL_START_PIN);
+        bool controller_is_row_start = !gpio_get_level(ROW_START_PIN);
+        if (controller_is_col_start != controller_is_col_start_prev ||
+            controller_is_row_start != controller_is_row_start_prev) {
+            ESP_LOGI(TAG, "Reconfiguring chain-comm IOs");
+            ESP_ERROR_CHECK(chain_comm_io_reconfigure(controller_is_col_start, controller_is_row_start));
+            controller_is_col_start_prev = controller_is_col_start;
+            controller_is_row_start_prev = controller_is_row_start;
+        }
 
         /* Promote possible write seq to write all. */
         display_property_promote_write_seq_to_write_all(ctx->display);

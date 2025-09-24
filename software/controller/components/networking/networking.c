@@ -106,7 +106,7 @@ static void networking_event_handler(void *arg, esp_event_base_t event_base, int
             default:
                 break;
         }
-    } else if (event_base == WIFI_EVENT) {
+    } else if (event_base == ETH_EVENT) {
         switch (event_id) {
             case ETHERNET_EVENT_START:
                 ESP_LOGI(TAG, "Ethernet Started");
@@ -214,7 +214,7 @@ static esp_err_t networking_wifi_setup(const networking_config_t *config)
             strcpy((char *)wifi_config.sta.ssid, config->wifi.access_point.ssid);
         }
         if (config->wifi.access_point.password) {
-            strcpy((char *)wifi_config.sta.password, config->wifi.access_point.password);
+            strcpy((char *)wifi_config.ap.password, config->wifi.access_point.password);
         }
         ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_AP, &wifi_config), TAG,
                             "Failed to set wifi access point config.");

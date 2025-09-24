@@ -5245,7 +5245,7 @@
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R1"
-			(at 3.925 0.2 360)
+			(at 3.925 0.2 0)
 			(layer "F.SilkS")
 			(uuid "76a74c67-357b-4759-a2c4-340a577039ae")
 			(effects
@@ -5256,7 +5256,7 @@
 			)
 		)
 		(property "Value" "10K"
-			(at 0 1.43 360)
+			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "44ab9b74-bfc4-4e3b-a02b-677a30287fc8")
 			(effects
@@ -5411,7 +5411,7 @@
 			(uuid "399dd5f3-0965-460c-9182-7a993b586085")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "000ff1e9-78a8-4bc6-b22e-0900b2a156f2")
 			(effects
@@ -9461,7 +9461,7 @@
 		(descr "Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R6"
-			(at 2.85 -0.05 180)
+			(at 2.85 -0.05 0)
 			(layer "F.SilkS")
 			(uuid "270b5fda-e461-4e9d-971d-8c4e5ec1e5a0")
 			(effects
@@ -12579,7 +12579,7 @@
 			(xy 144.105 158.805) (xy 144.105 128.065)
 		)
 		(height 2.9)
-		(gr_text "30,7400 mm"
+		(gr_text "30.7400 mm"
 			(at 145.855 143.435 90)
 			(layer "User.1")
 			(uuid "16966d42-08ce-4c05-82e0-888e8dc39735")
@@ -12612,7 +12612,7 @@
 			(xy 86.205 128.065) (xy 144.105 128.065)
 		)
 		(height -2.941268)
-		(gr_text "57,9000 mm"
+		(gr_text "57.9000 mm"
 			(at 115.155 123.973732 0)
 			(layer "User.1")
 			(uuid "6e59c18a-2a83-47bf-8005-6e5c9aba741b")
@@ -12645,7 +12645,7 @@
 			(xy 86.205 158.805) (xy 86.205 163.305)
 		)
 		(height 5.5)
-		(gr_text "4,5000 mm"
+		(gr_text "4.5000 mm"
 			(at 79.555 161.055 90)
 			(layer "User.1")
 			(uuid "f19d53d6-2140-4001-b617-8929911027da")

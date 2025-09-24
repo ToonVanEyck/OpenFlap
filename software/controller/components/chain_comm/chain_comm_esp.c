@@ -70,7 +70,7 @@ esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t chain_com_io_reconfigure(bool controller_is_col_start, bool controller_is_row_start)
+esp_err_t chain_comm_io_reconfigure(bool controller_is_col_start, bool controller_is_row_start)
 {
     gpio_reset_pin(RX_COL_PIN);
     gpio_set_direction(RX_COL_PIN, GPIO_MODE_INPUT);
@@ -434,7 +434,7 @@ static void chain_comm_task(void *arg)
 
     bool controller_is_col_start_prev = !gpio_get_level(COL_START_PIN);
     bool controller_is_row_start_prev = !gpio_get_level(ROW_START_PIN);
-    ESP_ERROR_CHECK(chain_com_io_reconfigure(controller_is_col_start_prev, controller_is_row_start_prev));
+    ESP_ERROR_CHECK(chain_comm_io_reconfigure(controller_is_col_start_prev, controller_is_row_start_prev));
 
     while (1) {
         display_event_wait_for_desynchronized(ctx->display, portMAX_DELAY);
@@ -446,7 +446,7 @@ static void chain_comm_task(void *arg)
         if (controller_is_col_start != controller_is_col_start_prev ||
             controller_is_row_start != controller_is_row_start_prev) {
             ESP_LOGI(TAG, "Reconfiguring chain-comm IOs");
-            ESP_ERROR_CHECK(chain_com_io_reconfigure(controller_is_col_start, controller_is_row_start));
+            ESP_ERROR_CHECK(chain_comm_io_reconfigure(controller_is_col_start, controller_is_row_start));
             controller_is_col_start_prev = controller_is_col_start;
             controller_is_row_start_prev = controller_is_row_start;
         }

@@ -25,7 +25,7 @@ esp_err_t chain_comm_init(chain_comm_ctx_t *ctx, display_t *display);
  * \retval ESP_OK The chain communication IOs were successfully reconfigured.
  * \retval ESP_FAIL The chain communication IOs failed to reconfigure.
  */
-esp_err_t chain_com_io_reconfigure(bool controller_is_col_start, bool controller_is_row_start);
+esp_err_t chain_comm_io_reconfigure(bool controller_is_col_start, bool controller_is_row_start);
 
 //---------------------------------------------------------------------------------------------------------------------
 

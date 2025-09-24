@@ -233,6 +233,108 @@
 				)
 			)
 		)
+		(symbol "Connector:TestPoint"
+			(pin_numbers hide)
+			(pin_names
+				(offset 0.762) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 5.08 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "Connector:USB_C_Receptacle_USB2.0_14P"
 			(pin_names
 				(offset 1.016)
@@ -6007,10 +6109,6 @@
 		(uuid "16dbe6fb-969e-4a6a-a86a-99b9a512b73b")
 	)
 	(no_connect
-		(at 147.32 100.33)
-		(uuid "28fa90a1-1232-4b79-991e-1d1d6ddf5910")
-	)
-	(no_connect
 		(at 147.32 80.01)
 		(uuid "2afcf67f-1ffc-4a9d-9e65-2a729e24fe0f")
 	)
@@ -6029,10 +6127,6 @@
 	(no_connect
 		(at 55.88 49.53)
 		(uuid "3b1d0b75-eca6-43ef-a275-86a50e7dc742")
-	)
-	(no_connect
-		(at 147.32 97.79)
-		(uuid "46574b87-74ef-4c77-bd7e-31bb196af116")
 	)
 	(no_connect
 		(at 55.88 100.33)
@@ -6686,6 +6780,16 @@
 	)
 	(wire
 		(pts
+			(xy 147.32 100.33) (xy 158.75 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4a7a8c33-16d9-4dd0-9591-ead01261243d")
+	)
+	(wire
+		(pts
 			(xy 151.13 130.81) (xy 162.56 130.81)
 		)
 		(stroke
@@ -6913,6 +7017,16 @@
 			(type default)
 		)
 		(uuid "67e31009-bfb6-42d9-9913-98be999697e2")
+	)
+	(wire
+		(pts
+			(xy 147.32 97.79) (xy 158.75 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "68647ce5-138d-4fd5-a0b0-9e030de125db")
 	)
 	(wire
 		(pts
@@ -8232,7 +8346,7 @@
 		)
 		(uuid "f39c434c-0701-4e11-9b93-a39e7eb05303")
 	)
-	(label "ROW END"
+	(label "ROW START"
 		(at 158.75 59.69 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8254,7 +8368,7 @@
 		)
 		(uuid "1286582b-96fb-43cf-8e10-9d3ab12955c2")
 	)
-	(label "COL END"
+	(label "COL START"
 		(at 151.13 130.81 0)
 		(fields_autoplaced yes)
 		(effects
@@ -8265,7 +8379,7 @@
 		)
 		(uuid "17de7a04-b89f-48c0-92ed-2cfacf5b8284")
 	)
-	(label "UART0_RX_B"
+	(label "UART1_RX_B"
 		(at 151.13 128.27 0)
 		(fields_autoplaced yes)
 		(effects
@@ -8276,7 +8390,7 @@
 		)
 		(uuid "2412dcef-01ac-47d2-92c4-5b020c9215d2")
 	)
-	(label "UART0_TX_A"
+	(label "UART1_TX_A"
 		(at 158.75 57.15 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8298,7 +8412,18 @@
 		)
 		(uuid "2d6de85b-f88d-487c-bc32-9e871506e229")
 	)
-	(label "UART0_RX_A"
+	(label "UART1_TX_B"
+		(at 158.75 97.79 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "33bbf1f5-aa47-4720-b531-16238214110b")
+	)
+	(label "UART1_RX_A"
 		(at 158.75 54.61 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8309,7 +8434,7 @@
 		)
 		(uuid "42f54a05-6814-4e0b-9424-2ac1552be18e")
 	)
-	(label "UART0_RX_A"
+	(label "UART1_RX_A"
 		(at 115.57 227.33 270)
 		(fields_autoplaced yes)
 		(effects
@@ -8331,7 +8456,7 @@
 		)
 		(uuid "5f98d94e-efc6-442a-9cff-251152c78725")
 	)
-	(label "UART0_TX_A"
+	(label "UART1_TX_A"
 		(at 125.73 227.33 270)
 		(fields_autoplaced yes)
 		(effects
@@ -8375,7 +8500,7 @@
 		)
 		(uuid "70f93ed6-167c-45d2-bc9e-1b700d33e7ad")
 	)
-	(label "UART0_TX_B"
+	(label "UART1_TX_B"
 		(at 146.05 227.33 270)
 		(fields_autoplaced yes)
 		(effects
@@ -8386,7 +8511,7 @@
 		)
 		(uuid "7902c289-d845-4ea2-ad86-09763c1d60e4")
 	)
-	(label "COL END"
+	(label "COL START"
 		(at 158.75 49.53 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8397,7 +8522,7 @@
 		)
 		(uuid "7b4d8d6f-8b2b-4717-acdb-237c1c69d182")
 	)
-	(label "ROW END"
+	(label "ROW START"
 		(at 186.69 156.21 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8419,7 +8544,7 @@
 		)
 		(uuid "84e13f5b-09f9-457f-bc70-7570481c41e9")
 	)
-	(label "ROW END"
+	(label "ROW START"
 		(at 156.21 227.33 270)
 		(fields_autoplaced yes)
 		(effects
@@ -8430,7 +8555,7 @@
 		)
 		(uuid "97ba075c-2c88-4af6-b777-8133c1bf5795")
 	)
-	(label "UART0_TX_B"
+	(label "UART0_TX"
 		(at 158.75 29.21 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8452,7 +8577,7 @@
 		)
 		(uuid "99f6ae71-d836-4806-b189-38c18e530cec")
 	)
-	(label "UART0_TX_A"
+	(label "UART1_TX_A"
 		(at 186.69 153.67 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8485,7 +8610,7 @@
 		)
 		(uuid "b02b4492-f3c1-4eb3-96a5-d72f7ef6f023")
 	)
-	(label "COL END"
+	(label "COL START"
 		(at 166.37 227.33 270)
 		(fields_autoplaced yes)
 		(effects
@@ -8518,7 +8643,7 @@
 		)
 		(uuid "c1a62d05-7aff-4acd-95c2-369cd82fc430")
 	)
-	(label "UART0_RX_B"
+	(label "UART1_RX_B"
 		(at 135.89 227.33 270)
 		(fields_autoplaced yes)
 		(effects
@@ -8529,7 +8654,7 @@
 		)
 		(uuid "c2fb13ca-da8b-40d8-a390-d396b6016975")
 	)
-	(label "UART0_RX_B"
+	(label "UART0_RX"
 		(at 158.75 31.75 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8540,7 +8665,7 @@
 		)
 		(uuid "ca4deb96-2ac2-48d9-aa2f-1bc9da1bf879")
 	)
-	(label "UART0_RX_A"
+	(label "UART1_RX_A"
 		(at 151.13 153.67 0)
 		(fields_autoplaced yes)
 		(effects
@@ -8551,7 +8676,7 @@
 		)
 		(uuid "d24c7c8f-ecfe-4d38-9247-648e8da8c569")
 	)
-	(label "UART0_TX_B"
+	(label "UART1_TX_B"
 		(at 186.69 128.27 180)
 		(fields_autoplaced yes)
 		(effects
@@ -8583,6 +8708,17 @@
 			(justify right bottom)
 		)
 		(uuid "e8f6c991-ac76-4a18-871e-bd46644f5983")
+	)
+	(label "UART1_RX_B"
+		(at 158.75 100.33 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "fb5617ef-aa4e-4495-8b49-d4c950c73676")
 	)
 	(symbol
 		(lib_id "Device:C_Small")
@@ -11097,6 +11233,73 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 158.75 29.21 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "55c94c51-45e9-4419-9f2a-ff54e865e4dc")
+		(property "Reference" "TX0"
+			(at 163.83 29.21 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 163.83 30.48 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 158.75 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 158.75 34.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 158.75 29.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "806b2724-25e0-48a6-9e80-b677336de203")
+		)
+		(instances
+			(project ""
+				(path "/af031611-7aa5-43e1-8885-232b80813f15"
+					(reference "TX0")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:D_Zener")
 		(at 156.21 240.03 270)
 		(unit 1)
@@ -12401,6 +12604,73 @@
 			(project ""
 				(path "/af031611-7aa5-43e1-8885-232b80813f15"
 					(reference "J4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 158.75 31.75 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "8e706544-95ef-41ba-b6eb-6cc65e8dc073")
+		(property "Reference" "RX0"
+			(at 163.83 31.75 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 163.83 33.02 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 158.75 36.83 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 158.75 36.83 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 158.75 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "1880d25d-4919-4958-9eed-fe1188f5267b")
+		)
+		(instances
+			(project "controller"
+				(path "/af031611-7aa5-43e1-8885-232b80813f15"
+					(reference "RX0")
 					(unit 1)
 				)
 			)

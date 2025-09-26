@@ -81,7 +81,7 @@ RUN apt install -y clang-format-18
 RUN ln -s /usr/bin/clang-format-18 /usr/bin/clang-format
 RUN rm llvm.sh
 
-# Install varouse python packages
+# Install various python packages
 RUN . /opt/esp/idf/export.sh && pip install codespell requests_toolbelt tqdm tabulate
 
 # Install mkdocs

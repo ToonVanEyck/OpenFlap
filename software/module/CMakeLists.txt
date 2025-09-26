@@ -49,16 +49,22 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "HostTest")
     set_property(TARGET chain_comm_abi PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../common/chain_comm_abi/include)
     add_dependencies(chain_comm_abi common_chain_comm_abi)
 
-    set(App ${PROJECT_NAME}_App)
     set(Btl ${PROJECT_NAME}_Btl)
-    add_subdirectory(app)
     add_subdirectory(btl)
+
+    if("${TEST_CC}")
+        set(App ${PROJECT_NAME}_Test_ccb)
+        add_subdirectory(test_ccb)
+    else()
+        set(App ${PROJECT_NAME}_App)
+        add_subdirectory(app)
+    endif()
 
     # Merge Btl + App + Cfg into one binary
     add_custom_command(OUTPUT ${PROJECT_NAME}_BtlAppCfg.hex
         COMMENT "Merging Bootloader, Application and Configuration"
         COMMAND srec_cat 
-                bin/${PROJECT_NAME}_App.hex -Intel 
+                bin/${App}.hex -Intel 
                 bin/${PROJECT_NAME}_Cfg.hex -Intel 
                 btl/${Btl}.hex -Intel 
                 -o bin/${PROJECT_NAME}_BtlAppCfg.hex -Intel -line-length=44

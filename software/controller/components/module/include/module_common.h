@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
     uint8_t speed_min;           /**< Minimum speed of the system. */
     uint8_t speed_max;           /**< Maximum speed of the system. */
-    uint8_t distance_ramp_start; /**< Use minium speed when distance is equal or below the value. */
+    uint8_t distance_ramp_start; /**< Use minimum speed when distance is equal or below the value. */
     uint8_t distance_ramp_stop;  /**< Use maximum speed when distance is equal or above the value. */
 } motion_property_t;
 

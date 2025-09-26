@@ -110,7 +110,7 @@ static bool minimum_rotation_compare(const module_t *module_a, const module_t *m
  * The minimum_rotation property handler.
  *
  * The minimum_rotation property is used to store the minimum_rotation data for the modules. The minimum_rotation data
- * is used to adjust the minimum_rotation between the character set and the encoder postion.
+ * is used to adjust the minimum_rotation between the character set and the encoder position.
  */
 const property_handler_t PROPERTY_HANDLER_MINIMUM_ROTATION = {
     .id          = PROPERTY_MINIMUM_ROTATION,

@@ -140,7 +140,7 @@ static bool motion_compare(const module_t *module_a, const module_t *module_b)
  * The motion property handler.
  *
  * The motion property is used to store the motion data for the modules. The motion data
- * is used to adjust the motion between the character set and the encoder postion.
+ * is used to adjust the motion between the character set and the encoder position.
  */
 const property_handler_t PROPERTY_HANDLER_MOTION = {
     .id          = PROPERTY_MOTION,

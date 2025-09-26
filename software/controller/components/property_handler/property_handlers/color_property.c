@@ -138,7 +138,7 @@ static bool color_compare(const module_t *module_a, const module_t *module_b)
  * The color property handler.
  *
  * The color property is used to store the color data for the modules. The color data
- * is used to adjust the color between the character set and the encoder postion.
+ * is used to adjust the color between the character set and the encoder position.
  */
 const property_handler_t PROPERTY_HANDLER_COLOR = {
     .id          = PROPERTY_COLOR,

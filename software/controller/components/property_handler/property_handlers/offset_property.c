@@ -109,7 +109,7 @@ static bool offset_compare(const module_t *module_a, const module_t *module_b)
  * The offset property handler.
  *
  * The offset property is used to store the offset data for the modules. The offset data is used to
- * adjust the offset between the character set and the encoder postion.
+ * adjust the offset between the character set and the encoder position.
  */
 const property_handler_t PROPERTY_HANDLER_OFFSET = {
     .id          = PROPERTY_OFFSET,

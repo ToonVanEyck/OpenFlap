@@ -94,6 +94,6 @@ bool uart_driver_is_busy(uart_driver_ctx_t *uart_driver);
 /**
  * \brief Callback function to handle the completion of a TX DMA transfer.
  *
- * Call ths function when the DMA transfer for TX is complete.
+ * Call this function when the DMA transfer for TX is complete.
  */
 void uart_driver_tx_dma_transfer_complete(uart_driver_ctx_t *uart_driver);

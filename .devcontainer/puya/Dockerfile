@@ -66,6 +66,16 @@ RUN mkdir -p /opt/gcc-arm/ && \
     cd /opt/gcc-arm/ && \
     chown -R root:root arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/
 
+# Install clang-format-18
+WORKDIR /tmp
+RUN apt update && apt install -y lsb-release software-properties-common gnupg 
+RUN wget https://apt.llvm.org/llvm.sh
+RUN chmod +x llvm.sh
+RUN ./llvm.sh 18 clang-format
+RUN apt install -y clang-format-18
+RUN ln -s /usr/bin/clang-format-18 /usr/bin/clang-format
+RUN rm llvm.sh
+
 RUN rm -rf /tmp/*
 
 # Setup user and home

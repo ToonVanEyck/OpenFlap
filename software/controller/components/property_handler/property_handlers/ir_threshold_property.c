@@ -124,7 +124,7 @@ static bool ir_threshold_compare(const module_t *module_a, const module_t *modul
  * The ir_threshold property handler.
  *
  * The ir_threshold property is used to store the ir_threshold data for the modules. The ir_threshold data
- * is used to adjust the ir_threshold between the character set and the encoder postion.
+ * is used to adjust the ir_threshold between the character set and the encoder position.
  */
 const property_handler_t PROPERTY_HANDLER_IR_THRESHOLD = {
     .id          = PROPERTY_IR_THRESHOLD,

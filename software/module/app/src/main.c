@@ -128,8 +128,6 @@ int main(void)
                     "raw: %s%04ld\x1b[0m %s%04ld\x1b[0m %s%04ld\x1b[0m\n",
                     of_ctx.encoder.digital[ENC_CH_A] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_A],
                     of_ctx.encoder.digital[ENC_CH_B] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_B],
-                    // of_ctx.encoder.digital[ENC_CH_C] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_C],
-                    // of_ctx.encoder.digital[ENC_CH_D] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_D],
                     of_ctx.encoder.digital[ENC_CH_Z] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_Z]);
             }
 

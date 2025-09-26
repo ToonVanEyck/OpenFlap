@@ -35,11 +35,19 @@
                 "name": "👀 Rtt",
                 "command": "cmake --build ${workspaceFolder}/build/module --target rtt",
                 "terminalName": "bash"
-            }
+            },
+            {
+                "name": "🔨 Build CC Test",
+                "command": "cmake --toolchain ${workspaceFolder}/software/module/puya_toolchain.cmake -S ${workspaceFolder}/software/module/ -B ${workspaceFolder}/build/module -Wno-dev -DTEST_CC=ON && cmake --build ${workspaceFolder}/build/module && echo -e \"New firmware CRC: \\\\033[1;35m$(tail -c 4 ${workspaceFolder}/build/module/bin/OpenFlap_Module_App.bin | xxd -p)\\\\033[0m\"",
+                "terminalName": "bash"
+            },
         ]
     },
     "cortex-debug.variableUseNaturalFormat": false,
     "cSpell.words": [
         "openflap"
     ],
+    "editor.formatOnSave": true,
+    "C_Cpp.clang_format_path": "/usr/bin/clang-format",
+    "C_Cpp.formatting": "clangFormat"
 }

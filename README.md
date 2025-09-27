@@ -13,8 +13,7 @@ This repository houses all the required files to build, program and modify your 
 
 - 48 Flaps per module.
 - 49mm x 70mm Character size.
-- Compact design.
-- Plug and play.
+- Stackable & Chainable.
 - Daisy chain communication.
 - Per module configuration & calibration.
 - HTTP API available.
@@ -25,9 +24,9 @@ This repository houses all the required files to build, program and modify your 
 
 The OpenFlap system is designed to be modular and expandable, using common components and manufacturing techniques such as 3D printing and printed circuit boards.
 
-The OpenFlap system uses DC geared motors instead of traditional stepper motors. This simplifies the design and reduces the cost of the system. Additionally this reduces the power consumption of the system and allows the split-flap display to rotate faster than the traditionally used stepper motors. 
+The OpenFlap system uses DC geared motors instead of traditional stepper motors. This simplifies the mechanical design and reduces the cost of the system. Additionally this reduces the power consumption of the system and allows the split-flap display to rotate faster than the traditionally used stepper motors. 
 
-The OpenFlap system is designed to be as plug and play as possible. The system should be able to determine it's own display size, and should only require calibration once.
+The OpenFlap system is designed to be as plug and play as possible. The system is able to determine it's own display size, and should only require calibration once.
 
 The OpenFlap system has a web interface that allows local control of the display. The web interface uses a HTTP API to communicate with the display, this API also allows external services to communicate with the display. No authentication or security measures are implemented at the moment.
 

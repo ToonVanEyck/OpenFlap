@@ -6,10 +6,6 @@ The top connectors and modules a equipped with a sensor witch allows them to det
 
 The image below show the signal path from the OpenFlap Controller through the OpenFlap Modules and back:
 
-![OpenFlap Signal Path](images/signalpath.png)
+![OpenFlap Signal Path](images/signalpath.drawio.png)
 
 The controller can be provided with 12V DC power through a barrel jack. This 12V is passed on to the top connectors and modules through the ribbon cable. The top connectors have a voltage regulator that converts the 12V to 5V. This 5V supply is shared by all the modules connected below the top connector.
-
-The maximum number of modules that can be connected to a single top connector is *T.B.D.*. This is due to the current limitations of the voltage regulator on the top connector.
-
-The maximum number of modules in the entire system is *T.B.D.*. This is due to the current limitations of the PCB traces and the ribbon cable.

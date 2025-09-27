@@ -39,8 +39,9 @@ nav:
   - Home: README.md
   - Technical: 
       - Overview: docs/architecture.md
-      - Controller: docs/controller.md 
       - Module: docs/module.md
+      - Top Connector: docs/top_connector.md 
+      - Controller: docs/controller.md
       - Wiring: docs/wiring.md
       - Communication: docs/chain_com.md
   - Licence: LICENCE.md

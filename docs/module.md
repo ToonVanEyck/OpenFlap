@@ -28,7 +28,7 @@ Three [ITR8307](https://www.everlighteurope.com/custom/files/datasheets/DRX-0000
 
 The motor is driven by a [L9110S](https://www.lcsc.com/datasheet/lcsc_datasheet_2203301130_LANKE-L9110S_C2984833.pdf) motor driver. PWM is used to modulate the speed of the motor. 
 
-2x8 Pin headers sit at the top and bottom of the PCB to connect the side panel to the other modules. One pin in the bottom header is always pulled low by the next module below it. When the module is the last in the chain, this pin is pulled high by a pull-up resistor. This way the module can determine if it is the last in a column.
+2x7 Pin headers sit at the top and bottom of the PCB to connect the side panel to the other modules. One pin in the bottom header is always pulled low by the next module below it. When the module is the last in the chain, this pin is pulled high by a pull-up resistor. This way the module can determine if it is the last in a column.
 
 ![OpenFlap Side Panel Render](../hardware/module/side_panel/side_panel-3D_blender_top.png)
 

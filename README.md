@@ -2,7 +2,9 @@
 
 [![Mechanical and Electronics Validation](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/ecad_mcad_ci.yml/badge.svg)](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/ecad_mcad_ci.yml)
 
-**🚨 This is still a work in progress. Using the the code and files in this repository to create your own display is not recommended at the moment! 🚨**
+!!! warning
+
+    🚨 This is still a work in progress. Using the the code and files in this repository to create your own display is not recommended at the moment! 🚨
 
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 This repository houses all the required files to build, program and modify your very own split-flap display. 
@@ -38,4 +40,4 @@ The OpenFlap system can connect to your local WiFi network or host it's own netw
 
 [... build my own OpenFlap display.](todo)
 
-[... contribute to the OpenFlap project.](todo)
+[... contribute to the OpenFlap project.](docs/developing.md)

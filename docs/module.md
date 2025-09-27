@@ -40,6 +40,7 @@ The motor is driven by a [L9110S](https://www.lcsc.com/datasheet/lcsc_datasheet_
 
 - [Schematic](../hardware/module/side_panel/side_panel-schematic.pdf)
 - [Interactive BOM](../hardware/module/side_panel/side_panel-ibom.html)
+- [KiCanvas](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2FToonVanEyck%2FOpenFlap%2Fblob%2Fmaster%2Fhardware%2Fmodule%2Fside_panel%2Fsrc%2Fside_panel.kicad_pro)
 
 ## Encoder Wheels PCB
 

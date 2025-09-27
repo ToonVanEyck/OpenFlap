@@ -11,3 +11,4 @@ The controller must be powered from a 12V power supply using the barrel jack con
 
 - [Schematic](../hardware/controller/controller-schematic.pdf)
 - [Interactive BOM](../hardware/controller/controller-ibom.html)
+- [KiCanvas](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2FToonVanEyck%2FOpenFlap%2Fblob%2Fmaster%2Fhardware%2Fcontroller%2Fsrc%2Fcontroller.kicad_pro)

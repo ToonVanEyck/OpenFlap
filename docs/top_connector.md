@@ -18,5 +18,6 @@ As the name suggests, the Top Connector is placed at the top of each column of m
 
 - [Schematic](../hardware/top_connector/top_connector-schematic.pdf)
 - [Interactive BOM](../hardware/top_connector/top_connector-ibom.html)
+- [KiCanvas](https://kicanvas.org/?github=https%3A%2F%2Fgithub.com%2FToonVanEyck%2FOpenFlap%2Fblob%2Fmaster%2Fhardware%2Ftop_connector%2Fsrc%2Ftop_connector.kicad_pro)
 
 (*) Power consumption and voltage drop over long cables may limit the practical width of the display.

@@ -22,7 +22,6 @@ theme:
 docs_dir: .
 
 exclude_docs: |
-    software/
     mechanical/
     docs/README_old.md
 
@@ -44,4 +43,7 @@ nav:
       - Controller: docs/controller.md
       - Wiring: docs/wiring.md
       - Communication: docs/chain_com.md
-  - Licence: LICENCE.md
+  - Developing:
+      - Introduction: docs/developing.md
+      - Controller Firmware: software/controller/README.md
+  - License: LICENSE.md

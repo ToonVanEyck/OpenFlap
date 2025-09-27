@@ -39,7 +39,7 @@
             {
                 "name": "🔧 Menu Config",
                 "command": "idf.py -B build/controller menuconfig -C software/controller",
-                "tooltip": "idf.py menuconfig"
+                "tooltip": "Menuconfig"
             },
             {
                 "name": "🧪 pyest component [qemu]",

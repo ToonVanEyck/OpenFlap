@@ -1,20 +1,34 @@
-# Testing commands
+# Controller firmware development with ESP-IDF
 
-Building all tests:
+To get started, make sure you have build and opened the `esp-idf` devcontainer in VS-Code.
+
+
+!!! info
+    
+    All commands below are to be run from the root of the repository.
+
+!!! note
+
+    You may set the `OPENFLAP_DEFAULT_SSID` and `OPENFLAP_DEFAULT_PASSWORD` environment variables to override the default WiFi SSID and password for the controller. If not set, the controller will default to `default_ssid` and `default_password`.
+
+## Build the firmware
+
+```bash
+idf.py -B build/controller -C software/controller build
 ```
-python software/controller/build_test.py -s software/controller/ -b build/controller/
+
+## Flash the firmware
+
+```bash
+idf.py -B build/controller -C software/controller flash monitor
 ```
 
-Running all tests with pytest:
-```
-pytest software/controller/ --build-dir build/controller/ -m esp32
-```
+!!! note 
 
-curl --header "Content-Type: application/json" POST --data '[{"module": 0,"character_set": [" ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"],"character": "5","calibration": {"offset": 0}}]' http://openflap.local/api/module
+    The first time you program the controller, you will need to use the UART0 RX/TX pads on the bottom of the board. After the initial programming, you can use the USB port to program and debug the controller.+
 
+## Action Buttons
 
-curl --header "Content-Type: application/json" http://openflap.local/api/module
+The VS Code devcontainer contains a toolbar with some useful actions for building and flashing the firmware.
 
-curl --header "Content-Type: application/json" POST --data '[{"module": 0,"character_set": ["Y", "O", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "€", "$", "!", "?", ".", ",", ":", "/", "@", "#", "&"]}]' http://openflap.local/api/module
-
-curl -T build/module/bin/OpenFlap_Module_App.bin http://openflap.local/api/module/firmware
+![ESP-IDF Action Buttons](../../docs/images/esp-idf-dev-toolbar.png)

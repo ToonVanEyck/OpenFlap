@@ -46,4 +46,6 @@ nav:
   - Developing:
       - Introduction: docs/developing.md
       - Controller Firmware: software/controller/README.md
+  - Build Your Own:
+      - Flap Generator: hardware/module/flaps/README.md
   - License: LICENSE.md

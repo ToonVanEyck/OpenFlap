@@ -41,7 +41,7 @@ jobs:
         if: steps.changes.outputs.container == 'true'
         uses: devcontainers/ci@v0.3
         with:
-          configFile: .devcontainer/ecad-mcad/devcontainer.json
+          configFile: .devcontainer/${{ inputs.container }}/devcontainer.json
           imageName: ghcr.io/toonvaneyck/${{ inputs.container }}
           cacheFrom: ghcr.io/toonvaneyck/${{ inputs.container }}
           push: always

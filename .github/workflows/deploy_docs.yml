@@ -1,12 +1,9 @@
-name: Deploy Flap Generator As Github Page
+name: Publish docs via GitHub Pages
 
 on:
-  # Runs on pull_requests targeting the default branch
-  pull_request:
+  push:
     branches:
-      - main
-    paths:
-      - hardware/module/flaps/**
+      - master
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -15,6 +12,7 @@ on:
 permissions:
   contents: read
   pages: write
+  packages: write
   id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
@@ -24,15 +22,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-# Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  update_container:
+    uses: ./.github/workflows/update_container.yml
+    with:
+      container: esp-idf
+      tag: latest
+
+  deploy_docs:
+    if: ${{ success() || cancelled() }}
+    needs: update_container
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/toonvaneyck/esp-idf:latest
+      options: --user openflap_ci
     steps:
-      - name: Checkout
+      - name: Checkout (GitHub)
         uses: actions/checkout@v4
+        with:
+          lfs: 'true'
+          fetch-depth: 0 # fetch all history for tags
+          fetch-tags: true
+
+      - name: Build Docs
+        run: |
+          . /opt/esp/entrypoint.sh
+          sed -i 's|.*https://toonvaneyck.github.io/OpenFlap/.*||g' README.md
+          mkdocs build --site-dir build/docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -40,7 +55,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'hardware/module/flaps/browser_based_flap_generator/'
+          path: 'build/docs/'
           
       - name: Deploy to GitHub Pages
         id: deployment

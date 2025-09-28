@@ -9,6 +9,8 @@
 The OpenFlap project aims to create a open source, affordable split-flap display for the makers and tinkerers of the world.
 This repository houses all the required files to build, program and modify your very own split-flap display. 
 
+[**Read the Docs**](https://toonvaneyck.github.io/OpenFlap/)
+
 ![OpenFlap Module](docs/images/OpenFlap.gif)
 
 ## Specifications

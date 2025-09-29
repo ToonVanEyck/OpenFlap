@@ -1,5 +1,6 @@
 # OpenFlap
 
+[![Publish docs via GitHub Pages](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/deploy_docs.yml/badge.svg)](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/deploy_docs.yml)
 [![Mechanical and Electronics Validation](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/ecad_mcad_ci.yml/badge.svg)](https://github.com/ToonVanEyck/OpenFlap/actions/workflows/ecad_mcad_ci.yml)
 
 !!! warning

@@ -4,6 +4,3 @@
 
 /** Initialize property handlers. */
 void property_handlers_init(of_ctx_t *ctx);
-
-/** Store the configuration inb flash. */
-void propertyHandlersConfigWrite(void);

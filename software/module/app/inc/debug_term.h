@@ -6,6 +6,7 @@
  */
 
 #include "openflap.h"
+#include "simple_term.h"
 
 /**
  * @brief Initializes the debug terminal and registers keywords.

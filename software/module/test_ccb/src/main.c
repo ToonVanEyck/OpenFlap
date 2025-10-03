@@ -1,6 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
 // #include "chain_comm.h"
-#include "debug_io.h"
 #include "debug_term.h"
 #include "interpolation.h"
 #include "openflap.h"
@@ -47,7 +46,7 @@ int main(void)
     debug_term_init(&of_ctx);
 
     /* Initialize chain communication and property handlers. */
-    chain_comm_init(&of_ctx.chain_ctx, &of_ctx.of_hal.uart_driver);
+    chain_comm_init(&of_ctx.cc_node_ctx, &of_ctx.of_hal.uart_driver);
     property_handlers_init(&of_ctx);
 
     /* Print boot messages. */
@@ -79,7 +78,7 @@ int main(void)
         // of_hal_uart_tx_pin_update(of_hal_is_column_end());
 
         /* Run chain comm. */
-        chain_comm(&of_ctx.chain_ctx);
+        chain_comm(&of_ctx.cc_node_ctx);
 
         /* Update the sense timer tick count. */
         sens_tick_curr = of_hal_sens_tick_count_get();

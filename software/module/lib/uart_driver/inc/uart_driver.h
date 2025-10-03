@@ -83,6 +83,22 @@ uint8_t uart_driver_cnt_writable(uart_driver_ctx_t *uart_driver);
 uint8_t uart_driver_cnt_written(uart_driver_ctx_t *uart_driver);
 
 /**
+ * \brief Returns True if data is readable from the RX buffer.
+ *
+ * \param[inout] uart_driver The UART driver.
+ * \return True if data is readable from the RX buffer, otherwise false.
+ */
+bool uart_driver_rx_in_progress(uart_driver_ctx_t *uart_driver);
+
+/**
+ * \brief Returns True if data is being transmitted or waiting to be transmitted.
+ *
+ * \param[inout] uart_driver The UART driver.
+ * \return True if data is being transmitted or waiting to be transmitted, otherwise false.
+ */
+bool uart_driver_tx_in_progress(uart_driver_ctx_t *uart_driver);
+
+/**
  * \brief Check if the UART driver is busy.
  * The driver is considered busy if the RX and TX ringbuffers are not empty.
  *

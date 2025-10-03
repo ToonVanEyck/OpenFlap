@@ -1,5 +1,4 @@
 #include "debug_term.h"
-#include "debug_io.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,16 +8,16 @@
 //                                                  FUNCTION PROTOTYPES
 //======================================================================================================================
 
-static void debug_term_config_dump(const char *input, void *arg);
-static void debug_term_test_uart(const char *input, void *arg);
-static void debug_term_test_motor(const char *input, void *arg);
-static void debug_term_test_adc(const char *input, void *arg);
-static void debug_term_position_setpoint_set(const char *input, void *arg);
-static void debug_term_speed_setpoint_set(const char *input, void *arg);
-static void debug_term_pid_tune(const char *input, void *arg);
-static void debug_term_ir_lims_set(const char *input, void *arg);
-static void debug_term_i_lim_update(const char *input, void *arg);
-static void debug_term_control_loop_toggle(const char *input, void *arg);
+static void debug_term_config_dump(int argc, char *argv[], void *userdata);
+static void debug_term_test_uart(int argc, char *argv[], void *userdata);
+static void debug_term_test_motor(int argc, char *argv[], void *userdata);
+static void debug_term_test_adc(int argc, char *argv[], void *userdata);
+static void debug_term_position_setpoint_set(int argc, char *argv[], void *userdata);
+static void debug_term_speed_setpoint_set(int argc, char *argv[], void *userdata);
+static void debug_term_pid_tune(int argc, char *argv[], void *userdata);
+static void debug_term_ir_lims_set(int argc, char *argv[], void *userdata);
+static void debug_term_i_lim_update(int argc, char *argv[], void *userdata);
+static void debug_term_control_loop_toggle(int argc, char *argv[], void *userdata);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
@@ -26,19 +25,18 @@ static void debug_term_control_loop_toggle(const char *input, void *arg);
 
 void debug_term_init(of_ctx_t *of_ctx)
 {
-    debug_io_init(LOG_LVL_DEBUG);
-    debug_io_scope_init("u4u4i4i4i4i4i4i4i4");
+    simple_term_init();
 
-    debug_io_term_register_keyword("config", debug_term_config_dump, of_ctx);
-    debug_io_term_register_keyword("uart", debug_term_test_uart, of_ctx);
-    debug_io_term_register_keyword("motor", debug_term_test_motor, of_ctx);
-    debug_io_term_register_keyword("adc", debug_term_test_adc, of_ctx);
-    debug_io_term_register_keyword("p_sp", debug_term_position_setpoint_set, of_ctx);
-    debug_io_term_register_keyword("s_sp", debug_term_speed_setpoint_set, of_ctx);
-    debug_io_term_register_keyword("pid", debug_term_pid_tune, of_ctx);
-    debug_io_term_register_keyword("ir", debug_term_ir_lims_set, of_ctx);
-    debug_io_term_register_keyword("i_lim", debug_term_i_lim_update, of_ctx);
-    debug_io_term_register_keyword("cl", debug_term_control_loop_toggle, of_ctx);
+    simple_term_register_keyword("config", debug_term_config_dump, of_ctx);
+    simple_term_register_keyword("uart", debug_term_test_uart, of_ctx);
+    // simple_term_register_keyword("motor", debug_term_test_motor, of_ctx);
+    // simple_term_register_keyword("adc", debug_term_test_adc, of_ctx);
+    // simple_term_register_keyword("p_sp", debug_term_position_setpoint_set, of_ctx);
+    // simple_term_register_keyword("s_sp", debug_term_speed_setpoint_set, of_ctx);
+    // simple_term_register_keyword("pid", debug_term_pid_tune, of_ctx);
+    // simple_term_register_keyword("ir", debug_term_ir_lims_set, of_ctx);
+    // simple_term_register_keyword("i_lim", debug_term_i_lim_update, of_ctx);
+    // simple_term_register_keyword("cl", debug_term_control_loop_toggle, of_ctx);
 }
 
 //======================================================================================================================
@@ -48,26 +46,31 @@ void debug_term_init(of_ctx_t *of_ctx)
 /**
  * @brief Dumps the current configuration to the debug terminal.
  *
- * @param[in] input The input string from the debug terminal (unused).
- * @param[in] arg   A pointer to the openflap configuration context.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
-static void debug_term_config_dump(const char *input, void *arg)
+static void debug_term_config_dump(int argc, char *argv[], void *userdata)
 {
-    of_config_t *config = (of_config_t *)arg;
-    debug_io_log_info("Config:\n");
-    debug_io_log_info("Encoder offset: %d\n", config->encoder_offset);
-    debug_io_log_info("IR thresholds: %d %d\n", config->ir_threshold.lower, config->ir_threshold.upper);
-    debug_io_log_info("Base speed: %d\n", config->base_speed);
-    debug_io_log_info("Symbol set:\n");
+    (void)argc;
+    (void)argv;
+
+    of_config_t *config = (of_config_t *)userdata;
+    printf("Config:\n");
+    printf("Encoder offset: %d\n", config->encoder_offset);
+    printf("IR thresholds: %d %d\n", config->ir_threshold.lower, config->ir_threshold.upper);
+    printf("Base speed: %d\n", config->base_speed);
+    printf("Symbol set: ");
     for (int i = 0; i < SYMBOL_CNT; i++) {
-        debug_io_log_info("%s ", &config->symbol_set[i]);
+        printf("%s ", (char *)&config->symbol_set[i]);
     }
-    debug_io_log_info("Minimum rotation: %d\n", config->minimum_rotation);
-    debug_io_log_info("Foreground Color: %d\n", config->color.foreground);
-    debug_io_log_info("Background Color: %d\n", config->color.background);
-    debug_io_log_info("Motion config: %d %d %d %d\n", config->motion.min_pwm, config->motion.max_pwm,
-                      config->motion.min_ramp_distance, config->motion.max_ramp_distance);
-    debug_io_log_info("\n");
+    printf("\n");
+    printf("Minimum rotation: %d\n", config->minimum_rotation);
+    printf("Foreground Color: %ld\n", config->color.foreground);
+    printf("Background Color: %ld\n", config->color.background);
+    printf("Motion config: %d %d %d %d\n", config->motion.min_pwm, config->motion.max_pwm,
+           config->motion.min_ramp_distance, config->motion.max_ramp_distance);
+    printf("\n");
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -75,14 +78,22 @@ static void debug_term_config_dump(const char *input, void *arg)
 /**
  * @brief Sends a test message to the UART driver.
  *
- * @param[in] input String to write to UART.
- * @param[in] arg   A pointer to the uart driver.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
-static void debug_term_test_uart(const char *input, void *arg)
+static void debug_term_test_uart(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    uart_driver_write(&of_ctx->of_hal.uart_driver, (uint8_t *)input, strlen(input), NULL);
+    if (argc != 2) {
+        printf("Usage: %s <message>\n", argv[0]);
+        return;
+    }
+
+    printf("Sending %d bytes over uart: %s\n", (int)strlen(argv[1]), argv[1]);
+
+    uart_driver_write(&of_ctx->of_hal.uart_driver, (uint8_t *)argv[1], strlen(argv[1]), NULL);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -90,30 +101,27 @@ static void debug_term_test_uart(const char *input, void *arg)
 /**
  * @brief Tests the motor control by setting speed and decay mode.
  *
- * @param[in] input String containing speed and decay mode. e.g. "500 s" for 500 speed with slow decay.
- * @param[in] arg   A pointer to the motor context.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
-static void debug_term_test_motor(const char *input, void *arg)
+static void debug_term_test_motor(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    // Parse speed and decay mode
-    int speed = 0;
-    int decay = 0;
+    if (argc == 3) {
+        int speed = atoi(argv[1]);
+        int decay = atoi(argv[2]);
 
-    // Expect input format: "<speed> <mode s/f>"
-    if (input) {
-        // Try to parse speed and mode
-        int parsed = sscanf(input, "%d %d", &speed, &decay);
-        if (parsed < 1) {
-            debug_io_log_error("Invalid input format. Expected: <speed [-1000;+1000]> <decay [0;+1000]>\n");
+        if (speed >= 0 && speed <= 1000 && decay >= 0 && decay <= 1000) {
+            printf("Setting motor speed to %d and decay to %d\n", speed, decay);
+            of_ctx->motor_control_override = true; // Override motor control to use fixed speeds.
+            of_hal_motor_control(speed, decay);
             return;
         }
     }
 
-    of_ctx->motor_control_override = true; // Override motor control to use fixed speeds.
-
-    of_hal_motor_control(speed, decay);
+    printf("Usage: %s <speed (0-1000)> <decay (0-1000)>\n", argv[0]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -121,17 +129,19 @@ static void debug_term_test_motor(const char *input, void *arg)
 /**
  * @brief Toggles the printing of the raw ADC encoder values.
  *
- * @param[in] input The input string from the debug terminal (unused).
- * @param[in] arg   A pointer to a boolean flag to toggle ADC printing.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
-static void debug_term_test_adc(const char *input, void *arg)
+static void debug_term_test_adc(int argc, char *argv[], void *userdata)
 {
-    (void)input; // Unused argument
+    (void)argc;
+    (void)argv;
 
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
     of_ctx->debug_flags.print_adc_values = !of_ctx->debug_flags.print_adc_values; // Toggle ADC values printing
-    debug_io_log_info("ADC values printing %s\n", of_ctx->debug_flags.print_adc_values ? "enabled" : "disabled");
+    printf("ADC values printing %s\n", of_ctx->debug_flags.print_adc_values ? "enabled" : "disabled");
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -139,15 +149,16 @@ static void debug_term_test_adc(const char *input, void *arg)
 /**
  * @brief Sets the flap setpoint based on user input.
  *
- * @param[in] input The input string from the debug terminal, expected to be a number.
- * @param[in] arg   A pointer to the openflap context.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
-static void debug_term_position_setpoint_set(const char *input, void *arg)
+static void debug_term_position_setpoint_set(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    if (input && strlen(input) > 0) {
-        int setpoint = atoi(input);
+    if (argc == 2) {
+        int setpoint = atoi(argv[1]);
         if (setpoint >= 0 && setpoint < SYMBOL_CNT) {
             of_ctx->flap_setpoint = setpoint * ENCODER_PULSES_PER_SYMBOL;
             distance_update(of_ctx);
@@ -155,13 +166,12 @@ static void debug_term_position_setpoint_set(const char *input, void *arg)
                 of_ctx->extend_revolution = true;
                 of_ctx->flap_distance += ENCODER_PULSES_PER_REVOLUTION;
             }
-            debug_io_log_info("Setpoint updated to %d\n", setpoint);
-        } else {
-            debug_io_log_error("Invalid setpoint value. Must be between 0 and %d.\n", SYMBOL_CNT - 1);
+            printf("Setpoint updated to %d\n", setpoint);
+            return;
         }
-    } else {
-        debug_io_log_error("No input provided for setpoint.\n");
     }
+
+    printf("Usage: %s <setpoint (0-%d)>\n", argv[0], SYMBOL_CNT - 1);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -169,26 +179,26 @@ static void debug_term_position_setpoint_set(const char *input, void *arg)
 /**
  * @brief Sets the speed setpoint based on user input.
  *
- * @param[in] input The input string from the debug terminal, expected to be a number.
- * @param[in] arg   A pointer to the openflap context.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
-static void debug_term_speed_setpoint_set(const char *input, void *arg)
+static void debug_term_speed_setpoint_set(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    if (input && strlen(input) > 0) {
-        int setpoint = atoi(input);
+    if (argc == 2) {
+        int setpoint = atoi(argv[1]);
         if (setpoint >= 0 && setpoint <= 120) {
             of_ctx->encoder_rps_x100_setpoint              = setpoint;
             of_ctx->debug_flags.rps_x100_setpoint_override = true;
             of_ctx->motor_control_override                 = false;
-            debug_io_log_info("Setpoint updated to %d\n", setpoint);
-        } else {
-            debug_io_log_error("Invalid setpoint value. Must be between 0 and %d.\n", 120);
+            printf("Setpoint updated to %d\n", setpoint);
+            return;
         }
-    } else {
-        debug_io_log_error("No input provided for setpoint.\n");
     }
+
+    printf("Usage: %s <setpoint (0-120)>\n", argv[0]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -196,23 +206,29 @@ static void debug_term_speed_setpoint_set(const char *input, void *arg)
 /**
  * @brief Tunes the PID controller parameters based on user input.
  *
- * @param[in] input The input string from the debug terminal, expected to be in the format "kp ki kd".
- * @param[in] arg   A pointer to the PID context.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
 
-static void debug_term_pid_tune(const char *input, void *arg)
+static void debug_term_pid_tune(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    int32_t kp = 0, ki = 0, kd = 0;
-    if (input && sscanf(input, "%ld %ld %ld", &kp, &ki, &kd) == 3) {
+    if (argc == 4) {
+        int32_t kp = atoi(argv[1]);
+        int32_t ki = atoi(argv[2]);
+        int32_t kd = atoi(argv[3]);
+
         of_ctx->pid_ctx.kp = kp;
         of_ctx->pid_ctx.ki = ki;
         of_ctx->pid_ctx.kd = kd;
-        debug_io_log_info("PID updated: kp=%d, ki=%d, kd=%d\n", kp, ki, kd);
-    } else {
-        debug_io_log_error("Invalid input. Usage: pid <kp> <ki> <kd>\n");
+
+        printf("PID updated: kp=%ld, ki=%ld, kd=%ld\n", kp, ki, kd);
+        return;
     }
+
+    printf("Usage: %s <kp> <ki> <kd>\n", argv[0]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -220,57 +236,54 @@ static void debug_term_pid_tune(const char *input, void *arg)
 /**
  * @brief Sets the IR sensor thresholds based on user input.
  *
- * @param[in] input The input string from the debug terminal, expected to be in the format "base range".
- * @param[in] arg   A pointer to the openflap configuration context.
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap configuration context.
  */
 
-static void debug_term_ir_lims_set(const char *input, void *arg)
+static void debug_term_ir_lims_set(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    if (input && strlen(input) > 0) {
-        uint16_t base = 0, range = 0;
-        if (sscanf(input, "%hu %hu", &base, &range) == 2) {
-            of_ctx->of_config.ir_threshold.lower = base - range;
-            of_ctx->of_config.ir_threshold.upper = base + range;
-            debug_io_log_info("IR thresholds updated: lower=%d, upper=%d\n", base - range, base + range);
-        } else {
-            debug_io_log_error("Invalid input format. Expected: <lower> <upper>\n");
-        }
-    } else {
-        debug_io_log_error("No input provided for IR thresholds.\n");
+    if (argc == 3) {
+        int16_t base                         = atoi(argv[1]);
+        int16_t range                        = atoi(argv[2]);
+        of_ctx->of_config.ir_threshold.lower = base - range;
+        of_ctx->of_config.ir_threshold.upper = base + range;
+        printf("IR thresholds updated: lower=%d, upper=%d\n", base - range, base + range);
+        return;
     }
+
+    printf("Usage: %s <base> <range>\n", argv[0]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static void debug_term_i_lim_update(const char *input, void *arg)
+static void debug_term_i_lim_update(int argc, char *argv[], void *userdata)
 {
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
-    if (input && strlen(input) > 0) {
-        int32_t i_lim = 0;
-        if (sscanf(input, "%ld", &i_lim) == 1) {
-            pid_i_lim_update(&of_ctx->pid_ctx, -i_lim, i_lim);
-            debug_io_log_info("PID integral limits updated: i_lim=%d\n", i_lim);
-        } else {
-            debug_io_log_error("Invalid input format. Expected: <i_lim>\n");
-        }
-    } else {
-        debug_io_log_error("No input provided for PID integral limits.\n");
+    if (argc == 2) {
+        int32_t i_lim = atoi(argv[1]);
+        pid_i_lim_update(&of_ctx->pid_ctx, -i_lim, i_lim);
+        printf("PID integral limits updated: i_lim=%ld\n", i_lim);
+        return;
     }
+
+    printf("Usage: %s <i_lim>\n", argv[0]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static void debug_term_control_loop_toggle(const char *input, void *arg)
+static void debug_term_control_loop_toggle(int argc, char *argv[], void *userdata)
 {
-    (void)input; // Unused argument
+    (void)argc;
+    (void)argv;
 
-    of_ctx_t *of_ctx = (of_ctx_t *)arg;
+    of_ctx_t *of_ctx = (of_ctx_t *)userdata;
 
     of_ctx->motor_control_override                 = false;
     of_ctx->debug_flags.rps_x100_setpoint_override = false;
 
-    debug_io_log_info("Motor control loop enabled\n");
+    printf("Motor control loop enabled\n");
 }

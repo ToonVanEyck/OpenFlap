@@ -1,10 +1,12 @@
 /* Includes ------------------------------------------------------------------*/
 // #include "chain_comm.h"
-#include "debug_io.h"
 #include "debug_term.h"
 #include "interpolation.h"
 #include "openflap.h"
 #include "property_handlers.h"
+#include "rtt_utils.h"
+
+#include <stdio.h>
 
 /* Private define ------------------------------------------------------------*/
 
@@ -55,10 +57,19 @@ int main(void)
     of_hal_config_load(&of_ctx.of_config);
 
     /* Initialize debugging features.*/
+    rtt_init();
+    // rtt_scope_init("u4");
     debug_term_init(&of_ctx);
 
     /* Initialize chain communication and property handlers. */
-    chain_comm_init(&of_ctx.chain_ctx, &of_ctx.of_hal.uart_driver);
+    cc_node_uart_cb_cfg_t uart_cb = {.read          = (uart_read_cb_t)uart_driver_read,
+                                     .cnt_readable  = (uart_cnt_readable_cb_t)uart_driver_cnt_readable,
+                                     .write         = (uart_write_cb_t)uart_driver_write,
+                                     .cnt_writable  = (uart_cnt_writable_cb_t)uart_driver_cnt_writable,
+                                     .tx_buff_empty = (uart_tx_buff_empty_cb_t)uart_driver_tx_in_progress,
+                                     .is_busy       = (uart_is_busy_cb_t)uart_driver_is_busy};
+
+    cc_node_init(&of_ctx.cc_node_ctx, &uart_cb, &of_ctx.of_hal.uart_driver, cc_prop_list, OF_CC_PROP_CNT, &of_ctx);
     property_handlers_init(&of_ctx);
 
     /* Initialize the PID controller. */
@@ -86,9 +97,9 @@ int main(void)
     /* Print boot messages. */
     uint32_t checksum_be = ((checksum & 0x000000FF) << 24) | ((checksum & 0x0000FF00) << 8) |
                            ((checksum & 0x00FF0000) >> 8) | ((checksum & 0xFF000000) >> 24);
-    debug_io_log_info("App Name : OpenFlap module\n");
-    debug_io_log_info("Version  : %s \n", GIT_VERSION);
-    debug_io_log_info("CRC      : %08x\n", checksum_be);
+    printf("App Name : OpenFlap module\n");
+    printf("Version  : %s \n", GIT_VERSION);
+    printf("CRC      : %08lx\n", checksum_be);
 
     /* Start homing sequence at maximum speed. */
     of_ctx.flap_position = 0; /* Invalid position. */
@@ -102,15 +113,15 @@ int main(void)
     uint32_t sens_tick_prev = 0, sens_tick_curr = 0;
 
     while (1) {
-        /* Handle the RTT terminal. */
-        debug_io_term_process();
+        /* Handle the terminal input. */
+        simple_term_process();
 
-        /* If the module is the last module in a column, a secondary uart TX will route this modules data back to the
-         * module above it. Normally this data would come from the module below it. */
+        /* If the module is the last module in a column, a secondary uart TX will route this modules data back to
+         * the module above it. Normally this data would come from the module below it. */
         of_hal_uart_tx_pin_update(of_hal_is_column_end());
 
         /* Run chain comm. */
-        chain_comm(&of_ctx.chain_ctx);
+        cc_node_tick(&of_ctx.cc_node_ctx, of_hal_tick_count_get());
 
         /* Update the sense timer tick count. */
         sens_tick_curr = of_hal_sens_tick_count_get();
@@ -124,11 +135,10 @@ int main(void)
 
             /* Print ADC values once every 25 ticks if desired. */
             if (of_ctx.debug_flags.print_adc_values && sens_tick_curr % 25 == 0) {
-                debug_io_log_info(
-                    "raw: %s%04ld\x1b[0m %s%04ld\x1b[0m %s%04ld\x1b[0m\n",
-                    of_ctx.encoder.digital[ENC_CH_A] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_A],
-                    of_ctx.encoder.digital[ENC_CH_B] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_B],
-                    of_ctx.encoder.digital[ENC_CH_Z] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_Z]);
+                printf("raw: %s%04d\x1b[0m %s%04d\x1b[0m %s%04d\x1b[0m\n",
+                       of_ctx.encoder.digital[ENC_CH_A] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_A],
+                       of_ctx.encoder.digital[ENC_CH_B] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_B],
+                       of_ctx.encoder.digital[ENC_CH_Z] ? "\x1b[7m" : "\x1b[27m", of_ctx.encoder.analog[ENC_CH_Z]);
             }
 
             /* Update the previous sensor tick count. */
@@ -154,10 +164,10 @@ int main(void)
             if (of_ctx.store_config) {
                 of_ctx.store_config = false;
                 of_hal_config_store(&of_ctx.of_config);
-                debug_io_log_info("Config stored!\n");
+                printf("Config stored!\n");
             }
             if (of_ctx.reboot) {
-                debug_io_log_info("Rebooting module!\n");
+                printf("Rebooting module!\n");
                 NVIC_SystemReset();
             }
         }

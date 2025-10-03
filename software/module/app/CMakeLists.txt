@@ -2,13 +2,13 @@
 add_executable(${App} 
     src/py32f0xx_it.c 
     src/main.c 
-    src/chain_comm.c
     src/property_handlers.c
     src/openflap_hal.c
     src/openflap.c
     src/default_config.c
     src/checksum.c
     src/debug_term.c
+    ../../common/openflap_properties/openflap_properties.c
 )
 
 # Get the version using git describe
@@ -32,9 +32,10 @@ target_compile_definitions(${App} PUBLIC
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 
-target_link_libraries(${App} PUBLIC puya_ll debug_io flash pid rbuff chain_comm_abi uart_driver interpolation) 
+target_link_libraries(${App} PUBLIC openflap)
 
 target_include_directories(${App} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_include_directories(${App} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../common/openflap_properties/inc)
 
 set_target_properties(${App} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/linker_script_app.ld")
 

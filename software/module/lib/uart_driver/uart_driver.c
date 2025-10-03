@@ -1,5 +1,4 @@
 #include "uart_driver.h"
-#include "debug_io.h"
 
 void uart_driver_update_tx_dma_buffer(uart_driver_ctx_t *uart_driver);
 
@@ -21,9 +20,6 @@ uint8_t uart_driver_read(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t 
     for (uint8_t i = 0; checksum && i < rx_cnt; i++) {
         *checksum += data[i];
     }
-    // for (uint8_t i = 0; i < rx_cnt; i++) {
-    //     debug_io_log_debug("R: %02X\n", data[i]);
-    // }
     return rx_cnt;
 }
 
@@ -38,9 +34,6 @@ uint8_t uart_driver_write(uart_driver_ctx_t *uart_driver, uint8_t *data, uint8_t
     for (uint8_t i = 0; checksum && i < tx_cnt; i++) {
         *checksum += data[i];
     }
-    // for (uint8_t i = 0; i < tx_cnt; i++) {
-    //     debug_io_log_debug("W: %02X\n", data[i]);
-    // }
     uart_driver_update_tx_dma_buffer(uart_driver);
     return tx_cnt;
 }
@@ -55,9 +48,19 @@ uint8_t uart_driver_cnt_written(uart_driver_ctx_t *uart_driver)
     return rbuff_cnt_used(&uart_driver->tx_rbuff);
 }
 
+bool uart_driver_rx_in_progress(uart_driver_ctx_t *uart_driver)
+{
+    return uart_driver_cnt_readable(uart_driver) > 0;
+}
+
+bool uart_driver_tx_in_progress(uart_driver_ctx_t *uart_driver)
+{
+    return uart_driver_cnt_written(uart_driver) > 0;
+}
+
 bool uart_driver_is_busy(uart_driver_ctx_t *uart_driver)
 {
-    return (!rbuff_is_empty(&uart_driver->rx_rbuff)) || (!rbuff_is_empty(&uart_driver->tx_rbuff));
+    return uart_driver_rx_in_progress(uart_driver) || uart_driver_tx_in_progress(uart_driver);
 }
 
 void uart_driver_tx_dma_transfer_complete(uart_driver_ctx_t *uart_driver)

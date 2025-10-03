@@ -35,7 +35,6 @@ void rbuff_init_dma_ro(rbuff_t *rbuff, volatile void *buff, size_t capacity, siz
     rbuff->dma_ro         = true;
     rbuff->dma_rw_ptr_get = dma_w_ptr_get;
 }
-
 //----------------------------------------------------------------------------------------------------------------------
 
 size_t rbuff_read(rbuff_t *rbuff, void *data, size_t size)

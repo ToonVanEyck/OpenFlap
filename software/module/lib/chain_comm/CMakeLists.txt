@@ -1,0 +1,1 @@
+add_subdirectory(../../../common/chain_comm/ ${CMAKE_BINARY_DIR}/module/chain_comm)

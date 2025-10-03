@@ -12,11 +12,10 @@ endif()
 if(NOT "${PUYA_CHIP}" STREQUAL "")
     add_compile_definitions(${PUYA_CHIP})
     set(CMAKE_EXECUTABLE_SUFFIX ".elf")
-else()
+elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
     add_library(unity STATIC /opt/unity/src/unity.c)
     target_include_directories(unity PUBLIC /opt/unity/src)
     include(CTest)
-    set(CMAKE_BUILD_TYPE "HostTest")
     include(CodeCoverage)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
         NAME coverage
@@ -27,28 +26,10 @@ endif()
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-set(DEBUG_IO_RTT_BACKEND 1 CACHE BOOL "Use RTT as debug input output backend")
-
 # Include the libraries
 add_subdirectory(lib)
 
-if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "HostTest")
-    # Include the external chain_comm_abi library
-    include(ExternalProject)
-    ExternalProject_Add(common_chain_comm_abi
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../common/chain_comm_abi
-        BINARY_DIR ${CMAKE_BINARY_DIR}/chain_comm_abi
-        CMAKE_ARGS 
-            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} 
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        INSTALL_COMMAND ""
-        UPDATE_COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/chain_comm_abi/timestamp
-    )
-    add_library(chain_comm_abi STATIC IMPORTED)
-    set_property(TARGET chain_comm_abi PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/chain_comm_abi/libchain_comm_abi.a)
-    set_property(TARGET chain_comm_abi PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../common/chain_comm_abi/include)
-    add_dependencies(chain_comm_abi common_chain_comm_abi)
-
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ARM")
     set(Btl ${PROJECT_NAME}_Btl)
     add_subdirectory(btl)
 

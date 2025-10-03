@@ -1,5 +1,7 @@
 #include "openflap.h"
-#include "debug_io.h"
+#include "rtt_utils.h"
+
+#include <stdio.h>
 
 #define MOTOR_IDLE_TIMEOUT_MS (500)
 #define COMMS_IDLE_TIMEOUT_MS (75)
@@ -27,7 +29,7 @@ typedef struct {
     int32_t decay;
     // uint32_t pwm;
     // uint32_t avg_speed;
-} debug_io_scope_t;
+} rtt_scope_t;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -69,7 +71,7 @@ void of_encoder_position_update(of_ctx_t *ctx)
     old_pattern = new_pattern;
 
     if (qem == 2) {
-        debug_io_log_error("Invalid QEM value: %d\n", qem);
+        printf("Invalid QEM value: %d\n", qem);
         return;
     }
 
@@ -114,12 +116,12 @@ void motor_state_update(of_ctx_t *ctx)
         if (!ctx->motor_active) {
             ctx->motor_active = true;
             of_hal_ir_timer_idle_set(false);
-            debug_io_log_info("Motor Active\n");
+            printf("Motor Active\n");
         }
     } else if (ctx->motor_active && of_hal_tick_count_get() > ctx->motor_active_timeout_tick) {
         ctx->motor_active = false;
         of_hal_ir_timer_idle_set(true);
-        debug_io_log_info("Motor Idle\n");
+        printf("Motor Idle\n");
     }
 }
 
@@ -127,21 +129,15 @@ void motor_state_update(of_ctx_t *ctx)
 
 void comms_state_update(of_ctx_t *ctx)
 {
-    if (chain_comm_is_busy(&ctx->chain_ctx)) {
+    if (cc_node_is_busy(&ctx->cc_node_ctx)) {
         ctx->comms_active_timeout_tick = of_hal_tick_count_get() + COMMS_IDLE_TIMEOUT_MS;
         if (!ctx->comms_active) {
             ctx->comms_active = true;
-            debug_io_log_info("Comms Active\n");
-#if !CHAIN_COMM_DEBUG
-            debug_io_log_set_level(LOG_LVL_WARN); /* Writing to RTT may fuck up the UART RX interrupt... */
-#endif
+            printf("Comms Active\n");
         }
     } else if (ctx->comms_active && of_hal_tick_count_get() > ctx->comms_active_timeout_tick) {
         ctx->comms_active = false;
-#if !CHAIN_COMM_DEBUG
-        debug_io_log_restore();
-#endif
-        debug_io_log_info("Comms Idle\n");
+        printf("Comms Idle\n");
     }
 }
 
@@ -211,7 +207,7 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
     }
 
     if (cl_tick % 10 == 1) {
-        debug_io_scope_t debug_io_scope = {
+        rtt_scope_t rtt_scope = {
             .setpoint     = ctx->encoder_rps_x100_setpoint,
             .actual       = ctx->encoder_rps_x100_actual,
             .p            = ctx->pid_ctx.p_error,
@@ -222,7 +218,7 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
             .cl_out       = cl_speed,
             .decay        = decay_setpoint,
         };
-        debug_io_scope_push(&debug_io_scope, sizeof(debug_io_scope));
+        // rtt_scope_push(&rtt_scope, sizeof(rtt_scope));
     }
 }
 

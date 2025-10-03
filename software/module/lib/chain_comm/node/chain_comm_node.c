@@ -2,6 +2,8 @@
 // #include "debug_io.h"
 // #include "property_handlers.h"
 
+#define CTX_PROP ctx->property_list[ctx->header.property - 1]
+
 #ifndef CHAIN_COMM_DEBUG
 #define CHAIN_COMM_DEBUG true
 #endif
@@ -165,19 +167,18 @@ void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state)
  */
 void cc_node_exec(cc_node_ctx_t *ctx)
 {
-    // const char *property_name = cc_property_name_by_id(ctx->header.property);
     if (ctx->header.action == property_readAll) {
-        if (ctx->property_list[ctx->header.property].handler.get) {
-            ctx->property_size = ctx->property_list[ctx->header.property].attribute.read_size.static_size;
-            ctx->property_list[ctx->header.property].handler.get(0, ctx->property_data, &ctx->property_size, NULL);
-            CC_LOGD(TAG, "Read %s property\n", ctx->property_list[ctx->header.property].attribute.name);
+        if (CTX_PROP.handler.get) {
+            ctx->property_size = CTX_PROP.attribute.read_size.static_size;
+            CTX_PROP.handler.get(0, ctx->property_data, &ctx->property_size, NULL);
+            CC_LOGD(TAG, "Read %s property\n", CTX_PROP.attribute.name);
         } else {
             CC_LOGD(TAG, "Property (%d) not supported\n", ctx->header.property);
         }
     } else if (ctx->header.action == property_writeAll || ctx->header.action == property_writeSequential) {
-        if (ctx->property_list[ctx->header.property].handler.set) {
-            ctx->property_list[ctx->header.property].handler.set(0, ctx->property_data, &ctx->property_size, NULL);
-            CC_LOGD(TAG, "Write %s property\n", ctx->property_list[ctx->header.property].attribute.name);
+        if (CTX_PROP.handler.set) {
+            CTX_PROP.handler.set(0, ctx->property_data, &ctx->property_size, NULL);
+            CC_LOGD(TAG, "Write %s property\n", CTX_PROP.attribute.name);
         } else {
             CC_LOGD(TAG, "Property (%d) not supported\n", ctx->header.property);
         }
@@ -255,7 +256,7 @@ void cc_node_state_rxHeader(cc_node_ctx_t *ctx)
  */
 void cc_node_state_rxSize(cc_node_ctx_t *ctx)
 {
-    const cc_prop_attr_t *property = &ctx->property_list[ctx->header.property].attribute;
+    const cc_prop_attr_t *property = &CTX_PROP.attribute;
     const cc_prop_size_t *property_size =
         ctx->header.action == property_readAll ? &property->read_size : &property->write_size;
 
@@ -315,7 +316,7 @@ void cc_node_state_readAll_rxCnt(cc_node_ctx_t *ctx)
             if (--ctx->index) {
                 cc_node_state_change(ctx, rxSize);
             } else {
-                if (ctx->property_list[ctx->header.property].attribute.read_size.is_dynamic) {
+                if (CTX_PROP.attribute.read_size.is_dynamic) {
                     cc_node_state_change(ctx, readAll_txSize);
                 } else {
                     cc_node_state_change(ctx, readAll_txData);
@@ -350,7 +351,7 @@ void cc_node_state_readAll_rxData(cc_node_ctx_t *ctx)
         if (--ctx->index) {
             cc_node_state_change(ctx, rxSize);
         } else {
-            if (ctx->property_list[ctx->header.property].attribute.read_size.is_dynamic) {
+            if (CTX_PROP.attribute.read_size.is_dynamic) {
                 cc_node_state_change(ctx, readAll_txSize);
             } else {
                 cc_node_state_change(ctx, readAll_txData);
@@ -430,7 +431,7 @@ void cc_node_state_writeAll_rxData(cc_node_ctx_t *ctx)
             cc_node_state_change(ctx, writeAll_rxAck);
         }
     } else if (ctx->data_cnt == ctx->property_size + 1 &&
-               ctx->uart.tx_buff_empty(ctx->uart_userdata) == 0) { // All bytes have been transmitted.
+               ctx->uart.tx_buff_empty(ctx->uart_userdata)) { // All bytes have been transmitted.
         cc_node_exec(ctx);
         ctx->msg_rc = CC_RC_SUCCESS;
         cc_node_state_change(ctx, writeAll_rxAck);

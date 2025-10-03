@@ -163,8 +163,8 @@ cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property
 
         /* Verify the checksum. */
         ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(1));
-        CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, &rx_checksum_actual, 1, &rx_checksum_calc) == 1, CC_MASTER_ERR_FAIL,
-                           TAG, "Failed to receive checksum");
+        CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, &rx_checksum_actual, 1, NULL) == 1, CC_MASTER_ERR_FAIL, TAG,
+                           "Failed to receive checksum");
         CC_RETURN_ON_FALSE(rx_checksum_calc == rx_checksum_actual, CC_MASTER_ERR_FAIL, TAG, "Checksum mismatch");
 
         /* Handle the data. */
@@ -343,6 +343,9 @@ cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t propert
         CC_RETURN_ON_FALSE(cc_master_uart_write(ctx, &tx_checksum_calc, sizeof(tx_checksum_calc), NULL) ==
                                sizeof(tx_checksum_calc),
                            CC_MASTER_ERR_FAIL, TAG, "Failed to send checksum");
+
+        /* Increment the node index. */
+        node_idx++;
     }
 
     /* Send first message return code, this triggers the modules to execute their command. */

@@ -54,5 +54,7 @@ static bool node_cnt_update(void *userdata, uint16_t node_cnt)
 static bool node_exists_and_must_be_written(void *userdata, uint16_t node_idx, uint8_t property, bool *must_be_written)
 {
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
-    return true;
+
+    *must_be_written = true;
+    return node_idx == 0;
 }

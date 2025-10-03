@@ -46,6 +46,12 @@ void test_chain_comm_master(void)
     /* Try a read all command */
     cc_master_err_t err = cc_property_read_all(&test_master_ctx.master_ctx, PROP_STATIC_RW);
 
+    /* Try a write all command */
+    err = cc_property_write_all(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+
+    /* Try a write sequential command */
+    err = cc_property_write_seq(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+
     cc_test_node_deinit(&test_node_ctx);
 }
 

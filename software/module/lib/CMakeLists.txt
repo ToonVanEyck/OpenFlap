@@ -8,3 +8,4 @@ endif()
 
 add_subdirectory(interpolation)
 add_subdirectory(rbuff)
+add_subdirectory(chain_comm)

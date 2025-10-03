@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 typedef struct {
-    int original_tx_fd; // Original write end of the pipe;
+    int original_rx_fd; // Original read end of the pipe;
     uart_driver_t uart;
     cc_master_ctx_t master_ctx;
 } cc_test_master_ctx_t;

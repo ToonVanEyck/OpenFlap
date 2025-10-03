@@ -21,9 +21,9 @@ bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx)
         return false;
     }
 
-    ctx->uart.rx_fd     = pipefd[0];
-    ctx->uart.tx_fd     = -1; // This will be set when connecting nodes
-    ctx->original_tx_fd = pipefd[1];
+    ctx->uart.rx_fd     = -1; // This will be set when connecting masters
+    ctx->uart.tx_fd     = pipefd[1];
+    ctx->original_rx_fd = pipefd[0];
 
     cc_node_uart_cb_cfg_t uart_cb = {
         .read          = (uart_read_cb_t)uart_read,
@@ -34,7 +34,7 @@ bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx)
         .is_busy       = (uart_is_busy_cb_t)uart_is_busy,
     };
 
-    cc_node_init(&ctx->node_ctx, &uart_cb, &ctx->uart);
+    cc_node_init(&ctx->node_ctx, &uart_cb, &ctx->uart, cc_property_list, PROPERTY_CNT);
 
     return true;
 }
@@ -49,8 +49,19 @@ bool cc_test_node_deinit(cc_test_node_ctx_t *ctx)
 static void *cc_test_node_thread_loop(void *arg)
 {
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)arg;
-    while (ctx->running) {
-        // Simulate node operations here
+    while (ctx->running && ctx->uart.rx_fd == -1) {
+        usleep(1000);
     }
+    printf("Node %ld thread started\n", ctx->id);
+    while (ctx->running) {
+        // Get current timestamp in milliseconds
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        uint64_t ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+
+        cc_node_tick(&ctx->node_ctx, ms);
+        usleep(25); // Sleep for 25us to avoid busy loop
+    }
+    printf("Node %ld thread stopped\n", ctx->id);
     return NULL;
 }

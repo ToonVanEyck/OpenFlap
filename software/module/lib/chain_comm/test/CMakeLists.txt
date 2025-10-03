@@ -1,4 +1,12 @@
-add_executable(${PROJECT_NAME}_test test.c test_uart.c chain_comm_master_test.c chain_comm_node_test.c)
+add_executable(${PROJECT_NAME}_test 
+    test.c 
+    test_uart.c 
+    chain_comm_master_test.c 
+    chain_comm_node_test.c 
+    test_master_properties.c
+    test_node_properties.c
+    test_properties.c
+)
 
 target_include_directories(${PROJECT_NAME}_test
     PUBLIC

@@ -1,40 +1,58 @@
 #include "test_properties.h"
 
-const cc_prop_attr_t cc_property_attribute_list {
-    .[PROP_STATIC_RW] =
+cc_prop_t cc_property_list[PROPERTY_CNT] = {
+    [PROP_STATIC_RW - 1] =
         {
-            .read_size  = CC_PROP_SIZE_STATIC(TEST_SIZE),
-            .write_size = CC_PROP_SIZE_STATIC(TEST_SIZE),
-            .name       = "STATIC_RW",
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .write_size = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .name       = "STATIC_RW",
+                },
         },
-    .[PROP_STATIC_RO] =
+    [PROP_STATIC_RO - 1] =
         {
-            .read_size  = CC_PROP_SIZE_STATIC(TEST_SIZE),
-            .write_size = CC_PROP_SIZE_NONE,
-            .name       = "STATIC_RO",
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .write_size = CC_PROP_SIZE_NONE,
+                    .name       = "STATIC_RO",
+                },
         },
-    .[PROP_STATIC_WO] =
+    [PROP_STATIC_WO - 1] =
         {
-            .read_size  = CC_PROP_SIZE_NONE,
-            .write_size = CC_PROP_SIZE_STATIC(TEST_SIZE),
-            .name       = "STATIC_WO",
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_NONE,
+                    .write_size = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .name       = "STATIC_WO",
+                },
         },
-    .[PROP_DYNAMIC_RW] =
+    [PROP_DYNAMIC_RW - 1] =
         {
-            .read_size  = CC_PROP_SIZE_DYNAMIC,
-            .write_size = CC_PROP_SIZE_DYNAMIC,
-            .name       = "DYNAMIC_RW",
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_DYNAMIC,
+                    .write_size = CC_PROP_SIZE_DYNAMIC,
+                    .name       = "DYNAMIC_RW",
+                },
         },
-    .[PROP_DYNAMIC_RO] =
+    [PROP_DYNAMIC_RO - 1] =
         {
-            .read_size  = CC_PROP_SIZE_DYNAMIC,
-            .write_size = CC_PROP_SIZE_NONE,
-            .name       = "DYNAMIC_RO",
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_DYNAMIC,
+                    .write_size = CC_PROP_SIZE_NONE,
+                    .name       = "DYNAMIC_RO",
+                },
         },
-    .[PROP_DYNAMIC_WO] =
+    [PROP_DYNAMIC_WO - 1] =
         {
-            .read_size  = CC_PROP_SIZE_NONE,
-            .write_size = CC_PROP_SIZE_DYNAMIC,
-            .name       = "DYNAMIC_WO",
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_NONE,
+                    .write_size = CC_PROP_SIZE_DYNAMIC,
+                    .name       = "DYNAMIC_WO",
+                },
         },
 };

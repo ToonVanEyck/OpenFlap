@@ -2,7 +2,9 @@
 
 #include <string.h>
 
-#define RX_BYTES_TIMEOUT(_byte_cnt) (10 + (_byte_cnt) * 1) /**< Timeout in ms for receiving bytes. */
+#define CTX_PROP ctx->property_list[property_id - 1]
+
+#define RX_BYTES_TIMEOUT(_byte_cnt) (1000 + (_byte_cnt) * 1) /**< Timeout in ms for receiving bytes. */
 
 static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum);
 static size_t cc_master_uart_read(cc_master_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum);
@@ -80,12 +82,15 @@ static size_t cc_master_uart_read(cc_master_ctx_t *ctx, void *buf, size_t length
 //---------------------------------------------------------------------------------------------------------------------
 
 void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, void *uart_userdata,
-                    cc_master_cb_cfg_t *master_cb_cfg, void *master_userdata)
+                    cc_master_cb_cfg_t *master_cb_cfg, void *master_userdata, cc_prop_t *property_list,
+                    size_t property_list_size)
 {
-    ctx->uart            = *uart_cb_cfg;
-    ctx->uart_userdata   = uart_userdata;
-    ctx->master          = *master_cb_cfg;
-    ctx->master_userdata = master_userdata;
+    ctx->property_list      = property_list;
+    ctx->property_list_size = property_list_size;
+    ctx->uart               = *uart_cb_cfg;
+    ctx->uart_userdata      = uart_userdata;
+    ctx->master             = *master_cb_cfg;
+    ctx->master_userdata    = master_userdata;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -99,16 +104,14 @@ cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property
                        "Property (%d) does not exist", property_id);
 
     /* Set the page cnt and size. */
-    uint16_t property_size = ctx->property_list[property_id].attribute.read_size.static_size;
+    uint16_t property_size = CTX_PROP.attribute.read_size.static_size;
 
-    CC_RETURN_ON_FALSE(ctx->property_list[property_id].handler.set != NULL &&
-                           (ctx->property_list[property_id].attribute.read_size.static_size ||
-                            ctx->property_list[property_id].attribute.read_size.is_dynamic),
+    CC_RETURN_ON_FALSE(CTX_PROP.handler.set != NULL &&
+                           (CTX_PROP.attribute.read_size.static_size || CTX_PROP.attribute.read_size.is_dynamic),
                        CC_MASTER_ERR_NOT_SUPPORTED, TAG, "Property (%d) %s is not readable.", property_id,
-                       ctx->property_list[property_id].attribute.name);
+                       CTX_PROP.attribute.name);
 
-    CC_LOGI(TAG, "Reading Property (%d) %s from all Nodes.", property_id,
-            ctx->property_list[property_id].attribute.name);
+    CC_LOGI(TAG, "Reading Property (%d) %s from all Nodes.", property_id, CTX_PROP.attribute.name);
 
     /* Initiate the message. */
     cc_msg_header_t tx_header = {.action = property_readAll, .property = property_id};
@@ -147,7 +150,7 @@ cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property
         uint8_t rx_checksum_calc   = tx_header.raw + (uint8_t)((i + 1) >> 8) + (uint8_t)(i + 1);
         uint8_t rx_checksum_actual = 0; /* The actual checksum received. */
 
-        if (ctx->property_list[property_id].attribute.read_size.is_dynamic) {
+        if (CTX_PROP.attribute.read_size.is_dynamic) {
             ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(2));
             CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, (uint8_t *)&property_size, 2, &rx_checksum_calc) == 2,
                                CC_MASTER_ERR_FAIL, TAG, "Failed to receive dynamic property size");
@@ -165,7 +168,7 @@ cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property
         CC_RETURN_ON_FALSE(rx_checksum_calc == rx_checksum_actual, CC_MASTER_ERR_FAIL, TAG, "Checksum mismatch");
 
         /* Handle the data. */
-        ctx->property_list[property_id].handler.set(i, property_data, &property_size, /*ctx->cc_userdata*/ NULL);
+        CTX_PROP.handler.set(i, property_data, &property_size, /*ctx->cc_userdata*/ NULL);
     }
 
     return CC_MASTER_OK;
@@ -186,17 +189,16 @@ cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t propert
                        "Property (%d) does not exist", property_id);
 
     /* Set the page cnt and size. */
-    property_size = ctx->property_list[property_id].attribute.write_size.static_size;
+    property_size = CTX_PROP.attribute.write_size.static_size;
 
-    CC_RETURN_ON_FALSE(ctx->property_list[property_id].handler.get != NULL &&
-                           (ctx->property_list[property_id].attribute.write_size.static_size ||
-                            ctx->property_list[property_id].attribute.write_size.is_dynamic),
+    CC_RETURN_ON_FALSE(CTX_PROP.handler.get != NULL &&
+                           (CTX_PROP.attribute.write_size.static_size || CTX_PROP.attribute.write_size.is_dynamic),
                        CC_MASTER_ERR_NOT_SUPPORTED, TAG, "Property (%d) %s is not writable.", property_id,
-                       ctx->property_list[property_id].attribute.name);
+                       CTX_PROP.attribute.name);
 
-    CC_LOGI(TAG, "Writing Property (%d) %s to all Nodes.", property_id, ctx->property_list[property_id].attribute.name);
+    CC_LOGI(TAG, "Writing Property (%d) %s to all Nodes.", property_id, CTX_PROP.attribute.name);
 
-    ctx->property_list[property_id].handler.get(0, property_data, &property_size, /*ctx->cc_userdata*/ NULL);
+    CTX_PROP.handler.get(0, property_data, &property_size, /*ctx->cc_userdata*/ NULL);
 
     /* Flush uart RX buffer. */
     // uart_flush_input(UART_NUM);
@@ -212,7 +214,7 @@ cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t propert
                        CC_MASTER_ERR_FAIL, TAG, "Failed to send header");
 
     /* Send dynamic property size. */
-    if (ctx->property_list[property_id].attribute.write_size.is_dynamic) {
+    if (CTX_PROP.attribute.write_size.is_dynamic) {
         CC_RETURN_ON_FALSE(cc_master_uart_write(ctx, &property_size, sizeof(property_size), &tx_checksum_calc) ==
                                sizeof(property_size),
                            CC_MASTER_ERR_FAIL, TAG, "Failed to send dynamic property size");
@@ -239,7 +241,7 @@ cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t propert
     CC_RETURN_ON_FALSE(rx_header.raw == tx_header.raw, CC_MASTER_ERR_FAIL, TAG, "Header mismatch");
 
     /* Receive dynamic size and compare with the original.*/
-    if (ctx->property_list[property_id].attribute.write_size.is_dynamic) {
+    if (CTX_PROP.attribute.write_size.is_dynamic) {
         uint16_t rx_property_size = 0;
 
         CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, &rx_property_size, sizeof(rx_property_size), NULL) ==
@@ -282,16 +284,14 @@ cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t propert
                        "Property (%d) does not exist", property_id);
 
     /* Set the page cnt and size. */
-    property_size = ctx->property_list[property_id].attribute.write_size.static_size;
+    property_size = CTX_PROP.attribute.write_size.static_size;
 
-    CC_RETURN_ON_FALSE(ctx->property_list[property_id].handler.get != NULL &&
-                           (ctx->property_list[property_id].attribute.write_size.static_size ||
-                            ctx->property_list[property_id].attribute.write_size.is_dynamic),
+    CC_RETURN_ON_FALSE(CTX_PROP.handler.get != NULL &&
+                           (CTX_PROP.attribute.write_size.static_size || CTX_PROP.attribute.write_size.is_dynamic),
                        CC_MASTER_ERR_NOT_SUPPORTED, TAG, "Property (%d) %s is not writable.", property_id,
-                       ctx->property_list[property_id].attribute.name);
+                       CTX_PROP.attribute.name);
 
-    CC_LOGI(TAG, "Writing Property (%d) %s to selected Nodes.", property_id,
-            ctx->property_list[property_id].attribute.name);
+    CC_LOGI(TAG, "Writing Property (%d) %s to selected Nodes.", property_id, CTX_PROP.attribute.name);
 
     /* Flush uart RX buffer. */
     // uart_flush_input(UART_NUM);
@@ -314,11 +314,10 @@ cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t propert
                                CC_MASTER_ERR_FAIL, TAG, "Failed to send header");
 
             /* Get the property data. */
-            ctx->property_list[property_id].handler.get(node_idx, property_data, &property_size,
-                                                        NULL /* ctx->userdata */);
+            CTX_PROP.handler.get(node_idx, property_data, &property_size, NULL /* ctx->userdata */);
 
             /* Send dynamic property size. */
-            if (ctx->property_list[property_id].attribute.write_size.is_dynamic) {
+            if (CTX_PROP.attribute.write_size.is_dynamic) {
                 CC_RETURN_ON_FALSE(cc_master_uart_write(ctx, &property_size, sizeof(property_size),
                                                         &tx_checksum_calc) == sizeof(property_size),
                                    CC_MASTER_ERR_FAIL, TAG, "Failed to send dynamic property size");
@@ -374,6 +373,9 @@ cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t propert
 static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum)
 {
     size_t s = ctx->uart.write(ctx->uart_userdata, buf, length);
+    for (size_t i = 0; i < s; i++) {
+        CC_LOGD(TAG, "W: 0x%02X", ((const uint8_t *)buf)[i]);
+    }
     for (size_t i = 0; checksum != NULL && i < s; i++) {
         *checksum += ((const uint8_t *)buf)[i];
     }
@@ -385,6 +387,9 @@ static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t
 static size_t cc_master_uart_read(cc_master_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum)
 {
     size_t s = ctx->uart.read(ctx->uart_userdata, buf, length);
+    for (size_t i = 0; i < s; i++) {
+        CC_LOGD(TAG, "R: 0x%02X", ((const uint8_t *)buf)[i]);
+    }
     for (size_t i = 0; checksum != NULL && i < s; i++) {
         *checksum += ((const uint8_t *)buf)[i];
     }

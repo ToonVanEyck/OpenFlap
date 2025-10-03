@@ -52,3 +52,7 @@ typedef struct {
 void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, void *uart_userdata,
                     cc_master_cb_cfg_t *master_cb_cfg, void *master_userdata, cc_prop_t *property_list,
                     size_t property_list_size);
+
+cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
+cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
+cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t property_id);

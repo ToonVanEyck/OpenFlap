@@ -2,4 +2,4 @@
 
 #include "test_properties.h"
 
-extern const cc_prop_handler_t master_property_handlers[PROPERTY_CNT];
+void setup_cc_master_property_list_handlers(void);

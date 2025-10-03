@@ -60,8 +60,11 @@ typedef struct {
  * \param[inout] ctx Pointer to the #cc_node_ctx_t structure containing the context information.
  * \param[in] uart_cb_cfg Pointer to the UART callback structure.
  * \param[in] uart_userdata Pointer to the UART user data.
+ * \param[in] property_list Pointer to the list of properties.
+ * \param[in] property_list_size Size of the property list.
  */
-void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb_cfg, void *uart_userdata);
+void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb, void *uart_userdata, cc_prop_t *property_list,
+                  size_t property_list_size);
 
 /**
  * \brief Executes the chain communication based on the provided context.
@@ -74,7 +77,7 @@ void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb_cfg, void *
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool chain_comm(cc_node_ctx_t *ctx, uint32_t tick_ms);
+bool cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms);
 
 /**
  * \brief Checks if the chain communication is busy.

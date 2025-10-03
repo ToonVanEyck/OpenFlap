@@ -9,9 +9,9 @@
 #define CC_PROPERTY_SIZE_MAX  (256) /**< Maximum length of a property. */
 #define CHAIN_COMM_TIMEOUT_MS (50)  /**< Time after which a timeout event occurs. */
 
-#define CC_PROP_SIZE_DYNAMIC    {.is_dynamic = true, .static_property_size = 0}
-#define CC_PROP_SIZE_STATIC(_s) {.is_dynamic = false, .static_property_size = (_s)}
-#define CC_PROP_SIZE_NONE       {.is_dynamic = false, .static_property_size = 0}
+#define CC_PROP_SIZE_DYNAMIC    {.is_dynamic = true, .static_size = 0}
+#define CC_PROP_SIZE_STATIC(_s) {.is_dynamic = false, .static_size = (_s)}
+#define CC_PROP_SIZE_NONE       {.is_dynamic = false, .static_size = 0}
 
 typedef void (*uart_read_timeout_set_cb_t)(void *uart_userdata, uint32_t timeout_ms);
 typedef size_t (*uart_read_cb_t)(void *uart_userdata, uint8_t *data, size_t size);
@@ -65,22 +65,18 @@ typedef enum {
     CC_RC_ERROR_CHECKSUM = (uint8_t)(1 << 0),
 } cc_ret_code_t;
 
-#define CC_PROP_SIZE_DYNAMIC    {.is_dynamic = true, .static_property_size = 0}
-#define CC_PROP_SIZE_STATIC(_s) {.is_dynamic = false, .static_property_size = (_s)}
-#define CC_PROP_SIZE_NONE       {.is_dynamic = false, .static_property_size = 0}
-
-typedef union __attribute__((__packed__)) {
+typedef union {
     uint8_t raw;
-    struct {
+    struct __attribute__((__packed__)) {
         cc_prop_id_t property : 6;
         // bool extended_id : 1;
         cc_action_t action : 2;
     };
 } cc_msg_header_t;
 
-typedef union __attribute__((__packed__)) {
+typedef union {
     uint8_t raw;
-    struct {
+    struct __attribute__((__packed__)) {
         cc_ret_code_t rc : 6;
         cc_action_t action : 2;
     };

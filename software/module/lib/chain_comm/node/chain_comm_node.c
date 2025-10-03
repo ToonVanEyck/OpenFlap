@@ -12,6 +12,18 @@
  */
 #define TRACE_CHAIN_COMM_UART false
 
+#ifndef TAG
+#define TAG "chain_comm_node"
+#endif
+
+#if !defined(CC_LOGE) || !defined(CC_LOGW) || !defined(CC_LOGI) || !defined(CC_LOGD)
+#include <stdio.h>
+#define CC_LOGE(tag, format, ...) printf("E: [%s]: " format "\n", tag, ##__VA_ARGS__)
+#define CC_LOGW(tag, format, ...) printf("W: [%s]: " format "\n", tag, ##__VA_ARGS__)
+#define CC_LOGI(tag, format, ...) printf("I: [%s]: " format "\n", tag, ##__VA_ARGS__)
+#define CC_LOGD(tag, format, ...) printf("D: [%s]: " format "\n", tag, ##__VA_ARGS__)
+#endif
+
 #if CHAIN_COMM_DEBUG
 const char *get_state_name(uint8_t state);
 #endif
@@ -39,8 +51,11 @@ void cc_node_state_writeSeq_rxToTx(cc_node_ctx_t *ctx);
 static size_t cc_node_uart_write(cc_node_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum);
 static size_t cc_node_uart_read(cc_node_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum);
 
-void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb, void *uart_userdata)
+void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb, void *uart_userdata, cc_prop_t *property_list,
+                  size_t property_list_size)
 {
+    ctx->property_list       = property_list;
+    ctx->property_list_size  = property_list_size;
     ctx->uart                = *uart_cb;
     ctx->uart_userdata       = uart_userdata;
     ctx->state               = rxHeader;
@@ -49,7 +64,7 @@ void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb, void *uart
     ctx->writeSeq_packet_cnt = 0;
 }
 
-bool chain_comm(cc_node_ctx_t *ctx, uint32_t tick_ms)
+bool cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
 {
     ctx->last_tick_ms = tick_ms;
     switch (ctx->state) {
@@ -84,7 +99,7 @@ bool chain_comm(cc_node_ctx_t *ctx, uint32_t tick_ms)
             cc_node_state_writeSeq_rxToTx(ctx);
             break;
         default:
-            // debug_io_log_error("Invalid state\n");
+            CC_LOGD(TAG, "Invalid state");
             break;
     }
     return true;
@@ -132,9 +147,7 @@ bool cc_node_is_busy(cc_node_ctx_t *ctx)
  */
 void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state)
 {
-#if CHAIN_COMM_DEBUG
-    // debug_io_log_debug("State: %s -> %s\n", get_state_name(ctx->state), get_state_name(state));
-#endif
+    CC_LOGD(TAG, "State: %s -> %s\n", get_state_name(ctx->state), get_state_name(state));
     if (state != rxHeader) {
         cc_node_timer_start(ctx);
     }
@@ -157,16 +170,16 @@ void cc_node_exec(cc_node_ctx_t *ctx)
         if (ctx->property_list[ctx->header.property].handler.get) {
             ctx->property_size = ctx->property_list[ctx->header.property].attribute.read_size.static_size;
             ctx->property_list[ctx->header.property].handler.get(0, ctx->property_data, &ctx->property_size, NULL);
-            // debug_io_log_debug("Read %s property\n", property_name);
+            CC_LOGD(TAG, "Read %s property\n", ctx->property_list[ctx->header.property].attribute.name);
         } else {
-            // debug_io_log_debug("Property (%d) not supported\n", ctx->header.property);
+            CC_LOGD(TAG, "Property (%d) not supported\n", ctx->header.property);
         }
     } else if (ctx->header.action == property_writeAll || ctx->header.action == property_writeSequential) {
         if (ctx->property_list[ctx->header.property].handler.set) {
             ctx->property_list[ctx->header.property].handler.set(0, ctx->property_data, &ctx->property_size, NULL);
-            // debug_io_log_debug("Write %s property\n", property_name);
+            CC_LOGD(TAG, "Write %s property\n", ctx->property_list[ctx->header.property].attribute.name);
         } else {
-            // debug_io_log_debug("Property (%d) not supported\n", ctx->header.property);
+            CC_LOGD(TAG, "Property (%d) not supported\n", ctx->header.property);
         }
     }
 }
@@ -187,6 +200,7 @@ void cc_node_state_rxHeader(cc_node_ctx_t *ctx)
     if (ctx->uart.cnt_writable(ctx->uart_userdata) && cc_node_uart_read(ctx, &data, 1, &ctx->checksum_rx_calc)) {
         ctx->header.raw = data;
         if (ctx->header.property >= ctx->property_list_size) {
+            CC_LOGW(TAG, "Invalid property ID: %d\n", ctx->header.property);
             cc_node_state_change(ctx, rxHeader);
         }
 
@@ -241,7 +255,7 @@ void cc_node_state_rxHeader(cc_node_ctx_t *ctx)
  */
 void cc_node_state_rxSize(cc_node_ctx_t *ctx)
 {
-    const cc_prop_attr_t *property = &ctx->property_list[ctx->header.property];
+    const cc_prop_attr_t *property = &ctx->property_list[ctx->header.property].attribute;
     const cc_prop_size_t *property_size =
         ctx->header.action == property_readAll ? &property->read_size : &property->write_size;
 
@@ -515,7 +529,11 @@ void cc_node_state_writeSeq_rxToTx(cc_node_ctx_t *ctx)
 static size_t cc_node_uart_write(cc_node_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum)
 {
     size_t s = ctx->uart.write(ctx->uart_userdata, buf, length);
+    for (size_t i = 0; i < s; i++) {
+        CC_LOGD(TAG, "W: 0x%02X", ((const uint8_t *)buf)[i]);
+    }
     for (size_t i = 0; checksum != NULL && i < s; i++) {
+
         *checksum += ((const uint8_t *)buf)[i];
     }
     return s;
@@ -526,6 +544,9 @@ static size_t cc_node_uart_write(cc_node_ctx_t *ctx, const void *buf, size_t len
 static size_t cc_node_uart_read(cc_node_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum)
 {
     size_t s = ctx->uart.read(ctx->uart_userdata, buf, length);
+    for (size_t i = 0; i < s; i++) {
+        CC_LOGD(TAG, "R: 0x%02X", ((const uint8_t *)buf)[i]);
+    }
     for (size_t i = 0; checksum != NULL && i < s; i++) {
         *checksum += ((const uint8_t *)buf)[i];
     }

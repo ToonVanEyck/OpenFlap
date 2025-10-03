@@ -15,5 +15,5 @@
 
 #define PROPERTY_CNT (6) /* Update this when adding new properties. */
 
-/* Extern list of property attributes used by both the master and the nodes. */
-extern const cc_prop_attr_t cc_property_attribute_list[PROPERTY_CNT];
+/* Extern list of property used by both the master and the nodes. */
+extern cc_prop_t cc_property_list[PROPERTY_CNT];

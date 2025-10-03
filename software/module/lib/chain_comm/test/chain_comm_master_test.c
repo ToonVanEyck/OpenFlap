@@ -8,16 +8,15 @@ static bool node_exists_and_must_be_written(void *userdata, uint16_t node_idx, u
 
 bool cc_test_master_init(cc_test_master_ctx_t *ctx)
 {
-
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe");
         return false;
     }
 
-    ctx->uart.rx_fd     = pipefd[0];
-    ctx->uart.tx_fd     = -1; // This will be set when connecting masters
-    ctx->original_tx_fd = pipefd[1];
+    ctx->uart.rx_fd     = -1; // This will be set when connecting masters
+    ctx->uart.tx_fd     = pipefd[1];
+    ctx->original_rx_fd = pipefd[0];
 
     cc_master_uart_cb_cfg_t uart_cb = {
         .read             = (uart_read_cb_t)uart_read,
@@ -32,7 +31,10 @@ bool cc_test_master_init(cc_test_master_ctx_t *ctx)
             (cc_master_node_exists_and_must_be_written_cb_t)node_exists_and_must_be_written,
     };
 
-    cc_master_init(&ctx->master_ctx, &uart_cb, &ctx->uart, &master_cb, ctx);
+    cc_prop_t *master_properties = calloc(PROPERTY_CNT, sizeof(cc_prop_t));
+    memcpy(master_properties, cc_property_list, PROPERTY_CNT * sizeof(cc_prop_t));
+
+    cc_master_init(&ctx->master_ctx, &uart_cb, &ctx->uart, &master_cb, ctx, master_properties, PROPERTY_CNT);
 
     return true;
 }
@@ -45,6 +47,7 @@ bool cc_test_master_deinit(cc_test_master_ctx_t *ctx)
 static bool node_cnt_update(void *userdata, uint16_t node_cnt)
 {
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
+    printf("Node count updated to %d\n", node_cnt);
     return true;
 }
 

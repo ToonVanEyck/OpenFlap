@@ -3,8 +3,6 @@ add_executable(${PROJECT_NAME}_test
     test_uart.c 
     chain_comm_master_test.c 
     chain_comm_node_test.c 
-    test_master_properties.c
-    test_node_properties.c
     test_properties.c
 )
 

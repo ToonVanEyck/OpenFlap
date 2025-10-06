@@ -14,8 +14,11 @@ typedef struct {
     cc_node_ctx_t node_ctx;
     uart_driver_t uart;
     int original_rx_fd; /* This fd must be passed to the node before this one. */
+    uint8_t node_data[TEST_PROP_SIZE];
 } cc_test_node_ctx_t;
 
 bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx);
 
 bool cc_test_node_deinit(cc_test_node_ctx_t *ctx);
+
+void setup_cc_node_property_list_handlers(void);

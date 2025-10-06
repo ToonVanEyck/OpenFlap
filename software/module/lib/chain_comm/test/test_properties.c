@@ -5,8 +5,8 @@ cc_prop_t cc_property_list[PROPERTY_CNT] = {
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_STATIC(TEST_SIZE),
-                    .write_size = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
+                    .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
                     .name       = "STATIC_RW",
                 },
         },
@@ -14,7 +14,7 @@ cc_prop_t cc_property_list[PROPERTY_CNT] = {
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
                     .write_size = CC_PROP_SIZE_NONE,
                     .name       = "STATIC_RO",
                 },
@@ -24,7 +24,7 @@ cc_prop_t cc_property_list[PROPERTY_CNT] = {
             .attribute =
                 {
                     .read_size  = CC_PROP_SIZE_NONE,
-                    .write_size = CC_PROP_SIZE_STATIC(TEST_SIZE),
+                    .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
                     .name       = "STATIC_WO",
                 },
         },

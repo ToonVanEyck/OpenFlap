@@ -2,7 +2,7 @@
 
 #include "chain_comm_shared.h"
 
-#define TEST_SIZE 4
+#define TEST_PROP_SIZE (20)
 
 /* Define 6 example properties*/
 

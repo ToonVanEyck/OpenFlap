@@ -129,7 +129,6 @@ bool uart_is_busy(uart_driver_t *ctx)
     return pipe_used(ctx->tx_fd) || pipe_used(ctx->rx_fd);
 }
 
-//-----------------------------------------
 static int pipe_capacity(int fd)
 {
     int size = fcntl(fd, F_GETPIPE_SZ);
@@ -139,7 +138,7 @@ static int pipe_capacity(int fd)
     }
     return size;
 }
-//-----------------------------------------
+
 static int pipe_used(int fd)
 {
     int count;

@@ -14,7 +14,6 @@
     GENERATOR(readAll_txData, "readAll_txData")                                                                        \
     GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
     GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
-    GENERATOR(writeSeq_rxToTx, "writeSeq_rxToTx")                                                                      \
     GENERATOR(writeAll_rxAck, "writeAll_rxAck")
 
 typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } cc_node_state_t;
@@ -32,10 +31,12 @@ typedef struct {
  * \brief Chain-comm context object.
  */
 typedef struct {
-    cc_prop_t *property_list;                    /**< The list of properties. */
-    size_t property_list_size;                   /**< The size of the property list. */
-    cc_node_uart_cb_cfg_t uart;                  /**< Uart driver callback configurations. */
-    void *uart_userdata;                         /**< Uart user data to be used by callback functions. */
+    cc_prop_t *property_list;   /**< List of property handlers and attributes. */
+    size_t property_list_size;  /**< Size of property_list. */
+    void *cc_userdata;          /**< User data for the property callback functions. */
+    cc_node_uart_cb_cfg_t uart; /**< Uart driver callback configurations. */
+    void *uart_userdata;        /**< Uart user data to be used by callback functions. */
+
     cc_node_state_t state;                       /**< The current state of the FSM managing the protocol. */
     cc_msg_header_t header;                      /**< The header of the current message. */
     uint8_t data_cnt;                            /**< The number of bytes handled in the current state. */
@@ -62,9 +63,10 @@ typedef struct {
  * \param[in] uart_userdata Pointer to the UART user data.
  * \param[in] property_list Pointer to the list of properties.
  * \param[in] property_list_size Size of the property list.
+ * \param[in] cc_userdata Pointer to user data for the property callback functions.
  */
-void cc_node_init(cc_node_ctx_t *ctx, cc_node_uart_cb_cfg_t *uart_cb, void *uart_userdata, cc_prop_t *property_list,
-                  size_t property_list_size);
+void cc_node_init(cc_node_ctx_t *ctx, const cc_node_uart_cb_cfg_t *uart_cb, void *uart_userdata,
+                  cc_prop_t *property_list, size_t property_list_size, void *cc_userdata);
 
 /**
  * \brief Executes the chain communication based on the provided context.

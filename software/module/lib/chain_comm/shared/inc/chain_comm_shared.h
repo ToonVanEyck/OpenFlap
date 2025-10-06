@@ -6,8 +6,11 @@
 
 #define ABI_VERSION 2
 
-#define CC_PROPERTY_SIZE_MAX  (256) /**< Maximum length of a property. */
-#define CHAIN_COMM_TIMEOUT_MS (50)  /**< Time after which a timeout event occurs. */
+#define CC_PROPERTY_SIZE_MAX (256) /**< Maximum length of a property. */
+
+#ifndef CHAIN_COMM_TIMEOUT_MS
+#define CHAIN_COMM_TIMEOUT_MS (500) /**< Time after which a timeout event occurs. */
+#endif
 
 #define CC_PROP_SIZE_DYNAMIC    {.is_dynamic = true, .static_size = 0}
 #define CC_PROP_SIZE_STATIC(_s) {.is_dynamic = false, .static_size = (_s)}

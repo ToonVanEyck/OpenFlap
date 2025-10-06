@@ -29,12 +29,13 @@ typedef struct {
 } cc_master_cb_cfg_t;
 
 typedef struct {
-    cc_prop_t *property_list;     /**< The list of properties. */
-    size_t property_list_size;    /**< The size of the property list. */
+    cc_prop_t *property_list;     /**< List of property handlers and attributes. */
+    size_t property_list_size;    /**< Size of property_list. */
+    void *cc_userdata;            /**< User data for the property callback functions. */
     cc_master_uart_cb_cfg_t uart; /**< Uart driver callback configurations. */
     void *uart_userdata;          /**< Uart user data to be used by callback functions. */
-    cc_master_cb_cfg_t master;    /**< Master callback configurations. */
-    void *master_userdata;        /**< Master user data to be used by callback functions. */
+
+    cc_master_cb_cfg_t master; /**< Master callback configurations. */
 } cc_master_ctx_t;
 
 /**
@@ -45,13 +46,14 @@ typedef struct {
  * \param[inout] ctx Pointer to the #cc_node_ctx_t structure containing the context information.
  * \param[in] uart_cb_cfg Pointer to the UART callback structure.
  * \param[in] uart_userdata Pointer to the UART user data.
- * \param[in] node_cnt_update Callback to update the number of nodes in the chain.
- * \param[in] node_data_set Callback to set property data of a specific node.
- * \param[in] node_data_get Callback to get property data of a specific node.
+ * \param[in] master_cb_cfg Pointer to the master callback structure.
+ * \param[in] property_list Pointer to the list of properties.
+ * \param[in] property_list_size Size of the property list.
+ * \param[in] cc_userdata Pointer to user data for the property callback functions.
  */
 void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, void *uart_userdata,
-                    cc_master_cb_cfg_t *master_cb_cfg, void *master_userdata, cc_prop_t *property_list,
-                    size_t property_list_size);
+                    cc_master_cb_cfg_t *master_cb_cfg, cc_prop_t *property_list, size_t property_list_size,
+                    void *cc_userdata);
 
 cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
 cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id);

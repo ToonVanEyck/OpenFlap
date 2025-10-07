@@ -28,6 +28,11 @@ bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt,
 
     /* Create the node list. */
     node_test_grp->node_list = malloc(node_cnt * sizeof(cc_test_node_ctx_t));
+    if (!node_test_grp->node_list) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    memset(node_test_grp->node_list, 0, node_cnt * sizeof(cc_test_node_ctx_t));
     for (size_t i = 0; i < node_cnt; i++) {
         node_test_grp->node_list[i].id = i;
 
@@ -40,6 +45,9 @@ bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt,
         node_test_grp->node_list[i].uart.tx_fd     = pipefd[1];
         node_test_grp->node_list[i].original_rx_fd = pipefd[0];
         memset(node_test_grp->node_list[i].node_data, 0, TEST_PROP_SIZE);
+
+        node_test_grp->node_list[i].uart.print_debug = NULL;        //"NODE";
+        uart_delay_xth_tx(&node_test_grp->node_list[i].uart, 0, 0); // No delay by default
 
         cc_node_init(&node_test_grp->node_list[i].node_ctx, &uart_cb, &node_test_grp->node_list[i].uart,
                      cc_property_list, PROPERTY_CNT, &node_test_grp->node_list[i]);

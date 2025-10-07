@@ -92,7 +92,8 @@ void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
         TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
-    /* Deinitialize nodes. */
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
     cc_test_node_deinit(&node_test_grp);
 }
 
@@ -167,7 +168,8 @@ void test_read_only_property(uint8_t node_cnt, cc_prop_id_t property)
         TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
-    /* Deinitialize nodes. */
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
     cc_test_node_deinit(&node_test_grp);
 }
 
@@ -243,7 +245,8 @@ void test_write_only_property(uint8_t node_cnt, cc_prop_id_t property)
         TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
-    /* Deinitialize nodes. */
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
     cc_test_node_deinit(&node_test_grp);
 }
 
@@ -303,6 +306,70 @@ void test_chain_comm_property_dynamic_wo(void)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void test_chain_comm_property_timeout_read_all(void)
+{
+    cc_master_err_t err = CC_MASTER_OK;
+
+    /* Initialize master. */
+    setup_cc_master_property_list_handlers();
+    cc_test_master_ctx_t test_master_ctx;
+    cc_test_master_init(&test_master_ctx);
+
+    /* Initialize the nodes. */
+    setup_cc_node_property_list_handlers();
+
+    cc_test_node_group_ctx_t node_test_grp;
+    cc_test_node_init(&node_test_grp, 2, &test_master_ctx);
+
+    usleep(100000); // Wait a bit for threads to start
+
+    /* Try a read all command */
+    uart_delay_xth_tx(&test_master_ctx.uart, 2, 550);
+    err = cc_master_prop_read_all(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+    usleep(10000);
+    TEST_ASSERT_EQUAL(CC_MASTER_ERR_TIMEOUT, err);
+
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
+    cc_test_node_deinit(&node_test_grp);
+}
+
+void test_chain_comm_property_timeout_write_seq(void)
+{
+    size_t node_cnt       = 20;
+    cc_prop_id_t property = PROP_STATIC_RW;
+    cc_master_err_t err   = CC_MASTER_OK;
+
+    /* Initialize master. */
+    setup_cc_master_property_list_handlers();
+    cc_test_master_ctx_t test_master_ctx;
+    cc_test_master_init(&test_master_ctx);
+
+    /* Initialize the nodes. */
+    setup_cc_node_property_list_handlers();
+
+    cc_test_node_group_ctx_t node_test_grp;
+    cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
+
+    usleep(100000); // Wait a bit for threads to start
+
+    /* Try a write all command */
+    test_master_ctx.master_ctx.master.node_cnt_update(&test_master_ctx, node_cnt);
+    randomize_array(test_master_ctx.node_data, TEST_PROP_SIZE * node_cnt); /* Write all uses data from node 0 */
+
+    uart_delay_xth_tx(&test_master_ctx.uart, 20, 550);
+
+    err = cc_master_prop_write_seq(&test_master_ctx.master_ctx, property);
+    usleep(10000);
+    TEST_ASSERT_EQUAL(CC_MASTER_ERR_FAIL, err);
+
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
+    cc_test_node_deinit(&node_test_grp);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 //======================================================================================================================
 //                                                         PRIVATE FUNCTIONS
 //======================================================================================================================
@@ -317,6 +384,8 @@ int main(void)
     RUN_TEST(test_chain_comm_property_dynamic_ro);
     RUN_TEST(test_chain_comm_property_static_wo);
     RUN_TEST(test_chain_comm_property_dynamic_wo);
+    RUN_TEST(test_chain_comm_property_timeout_read_all);
+    RUN_TEST(test_chain_comm_property_timeout_write_seq);
 
     return UNITY_END();
 }

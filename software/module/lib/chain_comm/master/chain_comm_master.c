@@ -373,9 +373,9 @@ cc_master_err_t cc_master_prop_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t prop
 static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum)
 {
     size_t s = ctx->uart.write(ctx->uart_userdata, buf, length);
-    for (size_t i = 0; i < s; i++) {
-        CC_LOGD(TAG, "W: 0x%02X", ((const uint8_t *)buf)[i]);
-    }
+    // for (size_t i = 0; i < s; i++) {
+    //     CC_LOGD(TAG, "W: 0x%02X", ((const uint8_t *)buf)[i]);
+    // }
     for (size_t i = 0; checksum != NULL && i < s; i++) {
         *checksum += ((const uint8_t *)buf)[i];
     }
@@ -387,9 +387,9 @@ static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t
 static size_t cc_master_uart_read(cc_master_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum)
 {
     size_t s = ctx->uart.read(ctx->uart_userdata, buf, length);
-    for (size_t i = 0; i < s; i++) {
-        CC_LOGD(TAG, "R: 0x%02X", ((const uint8_t *)buf)[i]);
-    }
+    // for (size_t i = 0; i < s; i++) {
+    //     CC_LOGD(TAG, "R: 0x%02X", ((const uint8_t *)buf)[i]);
+    // }
     for (size_t i = 0; checksum != NULL && i < s; i++) {
         *checksum += ((const uint8_t *)buf)[i];
     }

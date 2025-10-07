@@ -21,7 +21,7 @@ void uart_read_timeout_set(uart_driver_t *ctx, uint32_t timeout_ms)
     }
 }
 
-size_t uart_read(uart_driver_t *ctx, uint8_t *data, size_t size)
+ssize_t uart_read(uart_driver_t *ctx, uint8_t *data, size_t size)
 {
     if (!ctx || !data || size == 0) {
         errno = EINVAL;
@@ -89,7 +89,7 @@ size_t uart_read(uart_driver_t *ctx, uint8_t *data, size_t size)
     return (size_t)bytes_read;
 }
 
-size_t uart_cnt_readable(uart_driver_t *ctx)
+ssize_t uart_cnt_readable(uart_driver_t *ctx)
 {
     if (!ctx) {
         return 0;
@@ -97,15 +97,82 @@ size_t uart_cnt_readable(uart_driver_t *ctx)
     return pipe_used(ctx->rx_fd);
 }
 
-size_t uart_write(uart_driver_t *ctx, const uint8_t *data, size_t size)
+ssize_t uart_write(uart_driver_t *ctx, const uint8_t *data, size_t size)
 {
     if (!ctx || !data || size == 0) {
         return 0;
     }
-    return write(ctx->tx_fd, data, size);
+    // return write(ctx->tx_fd, data, size);
+    if (ctx->tx_delay_xth == 0) {
+        if (ctx->tx_delay_ms > 0) {
+            if (ctx->print_debug) {
+                printf("[%s] TX: delay %u ms ...\n", ctx->print_debug, ctx->tx_delay_ms);
+            }
+            usleep(ctx->tx_delay_ms * 1000);
+            ctx->tx_delay_ms = 0; // Reset to 0 to disable further delays
+        }
+        ssize_t w = write(ctx->tx_fd, data, size);
+        if (w < 0 && ctx->print_debug) {
+            printf("[%s] TX: failed\n", ctx->print_debug);
+        } else {
+            for (size_t i = 0; i < w && ctx->print_debug; i++) {
+                printf("[%s] TX: %02X\n", ctx->print_debug, data[i]);
+            }
+        }
+        return w;
+    } else if (ctx->tx_delay_xth > size) {
+        ssize_t w = write(ctx->tx_fd, data, size);
+        if (w > 0) {
+            ctx->tx_delay_xth -= w;
+            for (size_t i = 0; i < w && ctx->print_debug; i++) {
+                printf("[%s] TX: %02X\n", ctx->print_debug, data[i]);
+            }
+        }
+        return w;
+    } else {
+        size_t no_delay_cnt = size < ctx->tx_delay_xth ? size : ctx->tx_delay_xth;
+        size_t delay_cnt    = size - no_delay_cnt;
+        ssize_t w           = write(ctx->tx_fd, data, no_delay_cnt);
+        if (w < 0) {
+            if (ctx->print_debug) {
+                printf("[%s] TX: failed\n", ctx->print_debug);
+            }
+            return w; // Write error
+        }
+        for (size_t i = 0; i < w && ctx->print_debug; i++) {
+            printf("[%s] TX: %02X\n", ctx->print_debug, data[i]);
+        }
+        ctx->tx_delay_xth -= w;
+        if (ctx->print_debug) {
+            printf("[%s] TX: delay %u ms ...\n", ctx->print_debug, ctx->tx_delay_ms);
+        }
+        usleep(ctx->tx_delay_ms * 1000);
+        ctx->tx_delay_ms = 0; // Reset to 0 to disable further delays
+        ssize_t w2       = write(ctx->tx_fd, data + w, size - w);
+        if (w2) {
+            for (size_t i = 0; i < w2 && ctx->print_debug; i++) {
+                printf("[%s] TX: %02X\n", ctx->print_debug, data[w + i]);
+            }
+            w += w2; // Write error
+        }
+        return w;
+    }
 }
 
-size_t uart_cnt_writable(uart_driver_t *ctx)
+// written += write(ctx->tx_fd, data, no_delay_cnt);
+// if (ctx->tx_delay_xth > no_delay_cnt) {
+// }
+// ctx->tx_delay_xth -= no_delay_cnt;
+// if (written < no_delay_cnt || written == size) {
+//     return written; // Write error or partial write
+// }
+// usleep(ctx->tx_delay_ms * 1000);
+// ctx->tx_delay_ms = 0; // Reset to 0 to disable further delays
+// written += write(ctx->tx_fd, data + written, delay_cnt);
+// return written;
+// }
+
+ssize_t uart_cnt_writable(uart_driver_t *ctx)
 {
     if (!ctx) {
         return 0;
@@ -147,4 +214,13 @@ static int pipe_used(int fd)
         exit(EXIT_FAILURE);
     }
     return count;
+}
+
+void uart_delay_xth_tx(uart_driver_t *ctx, size_t xth, uint32_t delay_ms)
+{
+    if (!ctx) {
+        return;
+    }
+    ctx->tx_delay_xth = xth;
+    ctx->tx_delay_ms  = delay_ms;
 }

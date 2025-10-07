@@ -24,12 +24,16 @@ void cc_test_master_init(cc_test_master_ctx_t *ctx)
     ctx->node_data      = NULL;
     ctx->node_cnt       = 0;
 
+    ctx->uart.print_debug = "MASTER";
+
     cc_master_uart_cb_cfg_t uart_cb = {
         .read             = (uart_read_cb_t)uart_read,
         .cnt_readable     = (uart_cnt_readable_cb_t)uart_cnt_readable,
         .write            = (uart_write_cb_t)uart_write,
         .read_timeout_set = (uart_read_timeout_set_cb_t)uart_read_timeout_set,
     };
+
+    uart_delay_xth_tx(&ctx->uart, 0, 0); // No delay by default
 
     cc_master_cb_cfg_t master_cb = {
         .node_cnt_update = (cc_master_node_cnt_update_cb_t)node_cnt_update,
@@ -47,6 +51,8 @@ void cc_test_master_init(cc_test_master_ctx_t *ctx)
 
 void cc_test_master_deinit(cc_test_master_ctx_t *ctx)
 {
+    free(ctx->node_data);
+    free(ctx->master_ctx.property_list);
     return;
 }
 

@@ -95,7 +95,7 @@ void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, 
 
 //---------------------------------------------------------------------------------------------------------------------
 
-cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
+cc_master_err_t cc_master_prop_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
 {
     CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
 
@@ -176,7 +176,7 @@ cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property
 
 //---------------------------------------------------------------------------------------------------------------------
 
-cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
+cc_master_err_t cc_master_prop_write_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
 {
     cc_master_err_t ret                         = CC_MASTER_OK; /* Set by CC_GOTO_ON_ERROR macro. */
     uint16_t property_size                      = 0;
@@ -275,7 +275,7 @@ cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t propert
 
 //---------------------------------------------------------------------------------------------------------------------
 
-cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
+cc_master_err_t cc_master_prop_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
 {
     uint16_t property_size = 0;
 

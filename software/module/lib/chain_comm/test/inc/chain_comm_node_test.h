@@ -1,5 +1,6 @@
 #pragma once
 
+#include "chain_comm_master_test.h"
 #include "chain_comm_node.h"
 #include "test_properties.h"
 #include "test_uart.h"
@@ -8,8 +9,6 @@
 #include <stdbool.h>
 
 typedef struct {
-    pthread_t thread;
-    bool running;
     size_t id;
     cc_node_ctx_t node_ctx;
     uart_driver_t uart;
@@ -17,8 +16,15 @@ typedef struct {
     uint8_t node_data[TEST_PROP_SIZE];
 } cc_test_node_ctx_t;
 
-bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx);
+typedef struct {
+    size_t node_cnt;
+    cc_test_node_ctx_t *node_list;
+    pthread_t thread;
+    bool running;
+} cc_test_node_group_ctx_t;
 
-bool cc_test_node_deinit(cc_test_node_ctx_t *ctx);
+bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt, cc_test_master_ctx_t *master);
+
+bool cc_test_node_deinit(cc_test_node_group_ctx_t *node_test_grp);
 
 void setup_cc_node_property_list_handlers(void);

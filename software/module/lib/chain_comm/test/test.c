@@ -32,32 +32,20 @@ void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
     TEST_ASSERT_NULL(test_master_ctx.node_data);
     TEST_ASSERT_EQUAL(0, test_master_ctx.node_cnt);
 
-    /* Initialize a node. */
+    /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
 
-    cc_test_node_ctx_t test_nodes[255];
-    for (int i = 0; i < node_cnt; i++) {
-        cc_test_node_init(i, &test_nodes[i]);
-        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0}, test_nodes[i].node_data, TEST_PROP_SIZE);
-    }
-
-    /* Connect the master and node. */
-    test_nodes[0].uart.rx_fd = test_master_ctx.original_rx_fd;
-
-    for (int i = 1; i < node_cnt; i++) {
-        test_nodes[i].uart.rx_fd = test_nodes[i - 1].original_rx_fd;
-    }
-
-    test_master_ctx.uart.rx_fd = test_nodes[node_cnt - 1].original_rx_fd;
+    cc_test_node_group_ctx_t node_test_grp;
+    cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
 
     /* Try a read all command */
     for (int i = 0; i < node_cnt; i++) {
-        randomize_array(test_nodes[i].node_data, TEST_PROP_SIZE);
+        randomize_array(node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
     }
 
-    err = cc_property_read_all(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_read_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
 
@@ -65,48 +53,47 @@ void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
     TEST_ASSERT_EQUAL(node_cnt, test_master_ctx.node_cnt);
 
     for (int i = 0; i < node_cnt; i++) {
-        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE), test_nodes[i].node_data,
-                                     TEST_PROP_SIZE);
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE),
+                                     node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Try a write all command */
     randomize_array(test_master_ctx.node_data, TEST_PROP_SIZE); /* Write all uses data from node 0 */
 
-    err = cc_property_write_all(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_write_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
 
     for (int i = 0; i < node_cnt; i++) {
-        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data, test_nodes[i].node_data, TEST_PROP_SIZE);
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data, node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Try a write sequential command */
     memset(test_master_ctx.node_data, 0xff, TEST_PROP_SIZE * node_cnt);
 
     for (int i = 0; i < node_cnt; i++) {
-        memset(test_nodes[i].node_data, 0x00, TEST_PROP_SIZE);
+        memset(node_test_grp.node_list[i].node_data, 0x00, TEST_PROP_SIZE);
     }
 
-    err = cc_property_write_seq(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_write_seq(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
 
     for (int i = 0; i < node_cnt; i++) {
         if (i % 2 == 0) {
-            TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE), test_nodes[i].node_data,
-                                         TEST_PROP_SIZE);
+            TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE),
+                                         node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
         } else {
-            TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, test_nodes[i].node_data, TEST_PROP_SIZE);
+            TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, node_test_grp.node_list[i].node_data,
+                                         TEST_PROP_SIZE);
         }
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Deinitialize nodes. */
-    for (int i = 0; i < node_cnt; i++) {
-        cc_test_node_deinit(&test_nodes[i]);
-    }
+    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -126,32 +113,19 @@ void test_read_only_property(uint8_t node_cnt, cc_prop_id_t property)
     TEST_ASSERT_NULL(test_master_ctx.node_data);
     TEST_ASSERT_EQUAL(0, test_master_ctx.node_cnt);
 
-    /* Initialize a node. */
+    /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
 
-    cc_test_node_ctx_t test_nodes[255];
-    for (int i = 0; i < node_cnt; i++) {
-        cc_test_node_init(i, &test_nodes[i]);
-        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0}, test_nodes[i].node_data, TEST_PROP_SIZE);
-    }
-
-    /* Connect the master and node. */
-    test_nodes[0].uart.rx_fd = test_master_ctx.original_rx_fd;
-
-    for (int i = 1; i < node_cnt; i++) {
-        test_nodes[i].uart.rx_fd = test_nodes[i - 1].original_rx_fd;
-    }
-
-    test_master_ctx.uart.rx_fd = test_nodes[node_cnt - 1].original_rx_fd;
+    cc_test_node_group_ctx_t node_test_grp;
+    cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
-
     /* Try a read all command */
     for (int i = 0; i < node_cnt; i++) {
-        randomize_array(test_nodes[i].node_data, TEST_PROP_SIZE);
+        randomize_array(node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
     }
 
-    err = cc_property_read_all(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_read_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
 
@@ -159,42 +133,42 @@ void test_read_only_property(uint8_t node_cnt, cc_prop_id_t property)
     TEST_ASSERT_EQUAL(node_cnt, test_master_ctx.node_cnt);
 
     for (int i = 0; i < node_cnt; i++) {
-        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE), test_nodes[i].node_data,
-                                     TEST_PROP_SIZE);
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE),
+                                     node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Try a write all command */
     for (int i = 0; i < node_cnt; i++) {
-        memset(test_nodes[i].node_data, 0x00, TEST_PROP_SIZE); /* Clear all node data. */
+        memset(node_test_grp.node_list[i].node_data, 0x00, TEST_PROP_SIZE); /* Clear all node data. */
     }
     randomize_array(test_master_ctx.node_data, TEST_PROP_SIZE); /* Write all uses data from node 0 */
 
-    err = cc_property_write_all(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_write_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_ERR_NOT_SUPPORTED, err);
 
     for (int i = 0; i < node_cnt; i++) {
-        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, test_nodes[i].node_data, TEST_PROP_SIZE);
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, node_test_grp.node_list[i].node_data,
+                                     TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Try a write sequential command */
     memset(test_master_ctx.node_data, 0xff, TEST_PROP_SIZE * node_cnt);
 
-    err = cc_property_write_seq(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_write_seq(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_ERR_NOT_SUPPORTED, err);
 
     for (int i = 0; i < node_cnt; i++) {
-        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, test_nodes[i].node_data, TEST_PROP_SIZE);
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, node_test_grp.node_list[i].node_data,
+                                     TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Deinitialize nodes. */
-    for (int i = 0; i < node_cnt; i++) {
-        cc_test_node_deinit(&test_nodes[i]);
-    }
+    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -214,32 +188,20 @@ void test_write_only_property(uint8_t node_cnt, cc_prop_id_t property)
     TEST_ASSERT_NULL(test_master_ctx.node_data);
     TEST_ASSERT_EQUAL(0, test_master_ctx.node_cnt);
 
-    /* Initialize a node. */
+    /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
 
-    cc_test_node_ctx_t test_nodes[255];
-    for (int i = 0; i < node_cnt; i++) {
-        cc_test_node_init(i, &test_nodes[i]);
-        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0}, test_nodes[i].node_data, TEST_PROP_SIZE);
-    }
-
-    /* Connect the master and node. */
-    test_nodes[0].uart.rx_fd = test_master_ctx.original_rx_fd;
-
-    for (int i = 1; i < node_cnt; i++) {
-        test_nodes[i].uart.rx_fd = test_nodes[i - 1].original_rx_fd;
-    }
-
-    test_master_ctx.uart.rx_fd = test_nodes[node_cnt - 1].original_rx_fd;
+    cc_test_node_group_ctx_t node_test_grp;
+    cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
 
     /* Try a read all command */
     for (int i = 0; i < node_cnt; i++) {
-        randomize_array(test_nodes[i].node_data, TEST_PROP_SIZE);
+        randomize_array(node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
     }
 
-    err = cc_property_read_all(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_read_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_ERR_NOT_SUPPORTED, err);
 
@@ -250,40 +212,39 @@ void test_write_only_property(uint8_t node_cnt, cc_prop_id_t property)
     test_master_ctx.master_ctx.master.node_cnt_update(&test_master_ctx, node_cnt);
     randomize_array(test_master_ctx.node_data, TEST_PROP_SIZE); /* Write all uses data from node 0 */
 
-    err = cc_property_write_all(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_write_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
 
     for (int i = 0; i < node_cnt; i++) {
-        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data, test_nodes[i].node_data, TEST_PROP_SIZE);
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data, node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Try a write sequential command */
     memset(test_master_ctx.node_data, 0xff, TEST_PROP_SIZE * node_cnt);
 
     for (int i = 0; i < node_cnt; i++) {
-        memset(test_nodes[i].node_data, 0x00, TEST_PROP_SIZE);
+        memset(node_test_grp.node_list[i].node_data, 0x00, TEST_PROP_SIZE);
     }
 
-    err = cc_property_write_seq(&test_master_ctx.master_ctx, property);
+    err = cc_master_prop_write_seq(&test_master_ctx.master_ctx, property);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
 
     for (int i = 0; i < node_cnt; i++) {
         if (i % 2 == 0) {
-            TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE), test_nodes[i].node_data,
-                                         TEST_PROP_SIZE);
+            TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE),
+                                         node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
         } else {
-            TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, test_nodes[i].node_data, TEST_PROP_SIZE);
+            TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, node_test_grp.node_list[i].node_data,
+                                         TEST_PROP_SIZE);
         }
-        TEST_ASSERT_EQUAL(rxHeader, test_nodes[i].node_ctx.state);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
 
     /* Deinitialize nodes. */
-    for (int i = 0; i < node_cnt; i++) {
-        cc_test_node_deinit(&test_nodes[i]);
-    }
+    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

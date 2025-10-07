@@ -2,30 +2,17 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+// static void *cc_test_node_thread_loop(void *arg);
 static void *cc_test_node_thread_loop(void *arg);
 static void node_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
 static void node_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
 
-bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx)
+bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt, cc_test_master_ctx_t *master)
 {
-    ctx->id      = id;
-    ctx->running = true;
-
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        perror("pipe");
-        return false;
-    }
-
-    ctx->uart.rx_fd     = -1; // This will be set when connecting masters
-    ctx->uart.tx_fd     = pipefd[1];
-    ctx->original_rx_fd = pipefd[0];
-
-    memset(ctx->node_data, 0, TEST_PROP_SIZE);
-
     const cc_node_uart_cb_cfg_t uart_cb = {
         .read          = (uart_read_cb_t)uart_read,
         .cnt_readable  = (uart_cnt_readable_cb_t)uart_cnt_readable,
@@ -35,24 +22,56 @@ bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx)
         .is_busy       = (uart_is_busy_cb_t)uart_is_busy,
     };
 
-    cc_node_init(&ctx->node_ctx, &uart_cb, &ctx->uart, cc_property_list, PROPERTY_CNT, ctx);
+    printf("Initializing %zu nodes\n", node_cnt);
+    node_test_grp->node_cnt = node_cnt;
+    node_test_grp->running  = true;
 
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setstacksize(&attr, 254 * 1024); // 1 MB per thread
-    if (pthread_create(&ctx->thread, &attr, cc_test_node_thread_loop, ctx) != 0) {
-        perror("pthread_create");
-        return false;
+    /* Create the node list. */
+    node_test_grp->node_list = malloc(node_cnt * sizeof(cc_test_node_ctx_t));
+    for (size_t i = 0; i < node_cnt; i++) {
+        node_test_grp->node_list[i].id = i;
+
+        int pipefd[2];
+        if (pipe(pipefd) == -1) {
+            perror("pipe");
+            exit(EXIT_FAILURE);
+        }
+        node_test_grp->node_list[i].uart.rx_fd     = -1; // This will be set when connecting masters
+        node_test_grp->node_list[i].uart.tx_fd     = pipefd[1];
+        node_test_grp->node_list[i].original_rx_fd = pipefd[0];
+        memset(node_test_grp->node_list[i].node_data, 0, TEST_PROP_SIZE);
+
+        cc_node_init(&node_test_grp->node_list[i].node_ctx, &uart_cb, &node_test_grp->node_list[i].uart,
+                     cc_property_list, PROPERTY_CNT, &node_test_grp->node_list[i]);
     }
-    pthread_attr_destroy(&attr);
+
+    /* Connect the master and nodes. */
+    node_test_grp->node_list[0].uart.rx_fd = master->original_rx_fd;
+
+    for (size_t i = 1; i < node_cnt; i++) {
+        node_test_grp->node_list[i].uart.rx_fd = node_test_grp->node_list[i - 1].original_rx_fd;
+    }
+
+    master->uart.rx_fd = node_test_grp->node_list[node_cnt - 1].original_rx_fd;
+
+    /* Start the node thread. */
+    if (pthread_create(&node_test_grp->thread, NULL, cc_test_node_thread_loop, node_test_grp) != 0) {
+        perror("pthread_create");
+        exit(EXIT_FAILURE);
+    }
 
     return true;
 }
 
-bool cc_test_node_deinit(cc_test_node_ctx_t *ctx)
+bool cc_test_node_deinit(cc_test_node_group_ctx_t *node_test_grp)
 {
-    ctx->running = false;
-    pthread_join(ctx->thread, NULL);
+    node_test_grp->running = false;
+    pthread_join(node_test_grp->thread, NULL);
+    for (int i = 0; i < node_test_grp->node_cnt; i++) {
+        close(node_test_grp->node_list[i].uart.rx_fd);
+        close(node_test_grp->node_list[i].uart.tx_fd);
+    }
+    free(node_test_grp->node_list);
     return true;
 }
 
@@ -79,19 +98,22 @@ void setup_cc_node_property_list_handlers(void)
 
 static void *cc_test_node_thread_loop(void *arg)
 {
-    cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)arg;
-    while (ctx->running && ctx->uart.rx_fd == -1) {
-        usleep(1000);
-    }
-    while (ctx->running) {
+    cc_test_node_group_ctx_t *node_test_grp = (cc_test_node_group_ctx_t *)arg;
+
+    struct timespec ts;
+    size_t ctx_idx = 0;
+    /* Loop over all nodes. */
+    while (node_test_grp->running) {
         // Get current timestamp in milliseconds
-        struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
         uint64_t ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-
-        cc_node_tick(&ctx->node_ctx, ms);
-        sched_yield();
+        cc_node_tick(&node_test_grp->node_list[ctx_idx].node_ctx, ms);
+        ctx_idx = (ctx_idx + 1) % node_test_grp->node_cnt;
+        if (ctx_idx == 0) {
+            sched_yield();
+        }
     }
+    printf("Node thread exiting\n");
     return NULL;
 }
 

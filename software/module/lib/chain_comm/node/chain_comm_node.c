@@ -116,22 +116,6 @@ bool cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
     return true;
 }
 
-/**
- * \brief Get the state name for a FSM state.
- *
- * \return the state name.
- */
-#if CHAIN_COMM_DEBUG
-const char *get_state_name(uint8_t state)
-{
-    static const char *cc_node_state_names[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
-    if (state < sizeof(cc_node_state_names) / sizeof(cc_node_state_names[0])) {
-        return cc_node_state_names[state];
-    }
-    return "undefined";
-}
-#endif
-
 void cc_node_timer_start(cc_node_ctx_t *ctx)
 {
     ctx->timeout_tick_cnt = ctx->last_tick_ms + CHAIN_COMM_TIMEOUT_MS;
@@ -177,7 +161,6 @@ void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state)
 void cc_node_exec(cc_node_ctx_t *ctx)
 {
     if (ctx->header.property == 0 || ctx->header.property > ctx->property_list_size) {
-        CC_LOGW(TAG, "Invalid property ID: %d\n", ctx->header.property);
         return;
     }
     if (ctx->header.action == property_readAll) {
@@ -213,7 +196,7 @@ void cc_node_state_rxHeader(cc_node_ctx_t *ctx)
     ctx->checksum_tx_calc = 0;
     if (ctx->uart.cnt_writable(ctx->uart_userdata) && cc_node_uart_read(ctx, &data, 1, &ctx->checksum_rx_calc)) {
         ctx->header.raw = data;
-        if (ctx->header.property >= ctx->property_list_size) {
+        if (ctx->header.property > ctx->property_list_size) {
             CC_LOGW(TAG, "Invalid property ID: %d\n", ctx->header.property);
             cc_node_state_change(ctx, rxHeader);
         }
@@ -229,7 +212,6 @@ void cc_node_state_rxHeader(cc_node_ctx_t *ctx)
                 cc_node_state_change(ctx, rxSize);
                 break;
             case property_writeSequential:
-                /* Skip to transparent mode when no property is defined. */
                 if (++ctx->writeSeq_packet_cnt == 1) {
                     ctx->writeSeq_header.raw = ctx->header.raw;
                 } else {

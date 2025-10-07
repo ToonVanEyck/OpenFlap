@@ -51,18 +51,6 @@ bool cc_test_node_init(size_t id, cc_test_node_ctx_t *ctx)
 
 bool cc_test_node_deinit(cc_test_node_ctx_t *ctx)
 {
-
-    /* Inspect the actual thread attributes for the running thread (GNU extension) */
-    pthread_attr_t attr;
-    if (pthread_getattr_np(ctx->thread, &attr) == 0) {
-        size_t actual_stack = 0;
-        pthread_attr_getstacksize(&attr, &actual_stack);
-        printf("Actual thread stack size: %zu bytes (%.1f KB)\n", actual_stack, actual_stack / 1024.0);
-        pthread_attr_destroy(&attr);
-    } else {
-        perror("pthread_getattr_np");
-    }
-
     ctx->running = false;
     pthread_join(ctx->thread, NULL);
     return true;
@@ -73,31 +61,28 @@ void setup_cc_node_property_list_handlers(void)
     cc_property_list[PROP_STATIC_RW - 1].handler.get = node_get_handler;
     cc_property_list[PROP_STATIC_RW - 1].handler.set = node_set_handler;
 
-    cc_property_list[PROP_STATIC_RO - 1].handler.get = NULL;
-    cc_property_list[PROP_STATIC_RO - 1].handler.set = node_set_handler;
+    cc_property_list[PROP_STATIC_RO - 1].handler.get = node_get_handler;
+    cc_property_list[PROP_STATIC_RO - 1].handler.set = NULL;
 
-    cc_property_list[PROP_STATIC_WO - 1].handler.get = node_get_handler;
-    cc_property_list[PROP_STATIC_WO - 1].handler.set = NULL;
+    cc_property_list[PROP_STATIC_WO - 1].handler.get = NULL;
+    cc_property_list[PROP_STATIC_WO - 1].handler.set = node_set_handler;
 
     cc_property_list[PROP_DYNAMIC_RW - 1].handler.get = node_get_handler;
     cc_property_list[PROP_DYNAMIC_RW - 1].handler.set = node_set_handler;
 
-    cc_property_list[PROP_DYNAMIC_RO - 1].handler.get = NULL;
-    cc_property_list[PROP_DYNAMIC_RO - 1].handler.set = node_set_handler;
+    cc_property_list[PROP_DYNAMIC_RO - 1].handler.get = node_get_handler;
+    cc_property_list[PROP_DYNAMIC_RO - 1].handler.set = NULL;
 
-    cc_property_list[PROP_DYNAMIC_WO - 1].handler.get = node_get_handler;
-    cc_property_list[PROP_DYNAMIC_WO - 1].handler.set = NULL;
+    cc_property_list[PROP_DYNAMIC_WO - 1].handler.get = NULL;
+    cc_property_list[PROP_DYNAMIC_WO - 1].handler.set = node_set_handler;
 }
 
 static void *cc_test_node_thread_loop(void *arg)
 {
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)arg;
-    printf("Node %ld waiting on uart connection\n", ctx->id);
     while (ctx->running && ctx->uart.rx_fd == -1) {
         usleep(1000);
     }
-
-    printf("Node %ld thread started\n", ctx->id);
     while (ctx->running) {
         // Get current timestamp in milliseconds
         struct timespec ts;
@@ -107,14 +92,12 @@ static void *cc_test_node_thread_loop(void *arg)
         cc_node_tick(&ctx->node_ctx, ms);
         sched_yield();
     }
-    printf("Node %ld thread stopped\n", ctx->id);
     return NULL;
 }
 
 static void node_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)
 {
     (void)node_idx;
-    printf("Dummy set handler called with size %d and user data %p:\n", *size, userdata);
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)userdata;
     memcpy(ctx->node_data, buf, *size);
     for (uint16_t i = 0; i < *size; i++) {

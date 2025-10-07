@@ -100,7 +100,7 @@ cc_master_err_t cc_property_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property
     CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
 
     /* Check if the property exists. */
-    CC_RETURN_ON_FALSE(property_id < ctx->property_list_size, CC_MASTER_ERR_INVALID_ARG, TAG,
+    CC_RETURN_ON_FALSE(property_id <= ctx->property_list_size, CC_MASTER_ERR_INVALID_ARG, TAG,
                        "Property (%d) does not exist", property_id);
 
     /* Set the page cnt and size. */
@@ -185,7 +185,7 @@ cc_master_err_t cc_property_write_all(cc_master_ctx_t *ctx, cc_prop_id_t propert
     cc_msg_return_code_t msg_rc                 = {.action = returnCode, .rc = CC_RC_SUCCESS};
 
     /* Check if the property exists. */
-    CC_RETURN_ON_FALSE(property_id < ctx->property_list_size, CC_MASTER_ERR_INVALID_ARG, TAG,
+    CC_RETURN_ON_FALSE(property_id <= ctx->property_list_size, CC_MASTER_ERR_INVALID_ARG, TAG,
                        "Property (%d) does not exist", property_id);
 
     /* Set the page cnt and size. */
@@ -280,7 +280,7 @@ cc_master_err_t cc_property_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t propert
     uint16_t property_size = 0;
 
     /* Check if the property exists. */
-    CC_RETURN_ON_FALSE(property_id < ctx->property_list_size, CC_MASTER_ERR_INVALID_ARG, TAG,
+    CC_RETURN_ON_FALSE(property_id <= ctx->property_list_size, CC_MASTER_ERR_INVALID_ARG, TAG,
                        "Property (%d) does not exist", property_id);
 
     /* Set the page cnt and size. */

@@ -92,7 +92,7 @@ static bool node_exists_and_must_be_written(void *userdata, uint16_t node_idx, u
 
     *must_be_written = node_idx % 2 == 0; // Write to even nodes only
     bool exists      = node_idx < ctx->node_cnt;
-    printf("Node %d exists: %d, must be written: %d (%p)\n", node_idx, exists, *must_be_written, ctx);
+    // printf("Node %d exists: %d, must be written: %d (%p)\n", node_idx, exists, *must_be_written, ctx);
     return exists;
 }
 
@@ -100,15 +100,15 @@ static void master_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, 
 {
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
     memcpy(ctx->node_data + node_idx * TEST_PROP_SIZE, buf, *size);
-    printf("Dummy set handler called for node %d with size %d and user data %p:\n", node_idx, *size, userdata);
-    for (uint16_t i = 0; i < *size; i++) {
-        printf("  Data[%d]: %02X\n", i, buf[i]);
-    }
+    // printf("Dummy set handler called for node %d with size %d and user data %p:\n", node_idx, *size, userdata);
+    // for (uint16_t i = 0; i < *size; i++) {
+    //     printf("  Data[%d]: %02X\n", i, buf[i]);
+    // }
 }
 
 static void master_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)
 {
-    printf("Dummy get handler called for node %d with size %d and user data %p\n", node_idx, *size, userdata);
+    // printf("Dummy get handler called for node %d with size %d and user data %p\n", node_idx, *size, userdata);
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
     *size                     = TEST_PROP_SIZE;
     memcpy(buf, ctx->node_data + node_idx * TEST_PROP_SIZE, *size);

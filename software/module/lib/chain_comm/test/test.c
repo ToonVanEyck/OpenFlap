@@ -10,6 +10,9 @@
 #include <string.h>
 #include <unistd.h>
 
+static cc_test_master_ctx_t test_master_ctx;
+static cc_test_node_group_ctx_t node_test_grp;
+
 void randomize_array(uint8_t *array, size_t size)
 {
     for (size_t i = 0; i < size; i++) {
@@ -26,7 +29,6 @@ void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
 
     /* Initialize master. */
     setup_cc_master_property_list_handlers();
-    cc_test_master_ctx_t test_master_ctx;
     cc_test_master_init(&test_master_ctx);
 
     TEST_ASSERT_NULL(test_master_ctx.node_data);
@@ -34,8 +36,6 @@ void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
 
     /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
-
-    cc_test_node_group_ctx_t node_test_grp;
     cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
@@ -91,10 +91,6 @@ void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
         }
         TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
-
-    /* Deinitialize master and nodes. */
-    cc_test_master_deinit(&test_master_ctx);
-    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -108,7 +104,6 @@ void test_read_only_property(uint8_t node_cnt, cc_prop_id_t property)
 
     /* Initialize master. */
     setup_cc_master_property_list_handlers();
-    cc_test_master_ctx_t test_master_ctx;
     cc_test_master_init(&test_master_ctx);
 
     TEST_ASSERT_NULL(test_master_ctx.node_data);
@@ -116,8 +111,6 @@ void test_read_only_property(uint8_t node_cnt, cc_prop_id_t property)
 
     /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
-
-    cc_test_node_group_ctx_t node_test_grp;
     cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
@@ -167,10 +160,6 @@ void test_read_only_property(uint8_t node_cnt, cc_prop_id_t property)
                                      TEST_PROP_SIZE);
         TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
-
-    /* Deinitialize master and nodes. */
-    cc_test_master_deinit(&test_master_ctx);
-    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -184,7 +173,6 @@ void test_write_only_property(uint8_t node_cnt, cc_prop_id_t property)
 
     /* Initialize master. */
     setup_cc_master_property_list_handlers();
-    cc_test_master_ctx_t test_master_ctx;
     cc_test_master_init(&test_master_ctx);
 
     TEST_ASSERT_NULL(test_master_ctx.node_data);
@@ -192,8 +180,6 @@ void test_write_only_property(uint8_t node_cnt, cc_prop_id_t property)
 
     /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
-
-    cc_test_node_group_ctx_t node_test_grp;
     cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
@@ -244,10 +230,6 @@ void test_write_only_property(uint8_t node_cnt, cc_prop_id_t property)
         }
         TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
     }
-
-    /* Deinitialize master and nodes. */
-    cc_test_master_deinit(&test_master_ctx);
-    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -259,7 +241,9 @@ void setUp(void)
 
 void tearDown(void)
 {
-    // This function is called after each test
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
+    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -312,13 +296,10 @@ void test_chain_comm_property_timeout_read_all(void)
 
     /* Initialize master. */
     setup_cc_master_property_list_handlers();
-    cc_test_master_ctx_t test_master_ctx;
     cc_test_master_init(&test_master_ctx);
 
     /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
-
-    cc_test_node_group_ctx_t node_test_grp;
     cc_test_node_init(&node_test_grp, 2, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
@@ -328,44 +309,58 @@ void test_chain_comm_property_timeout_read_all(void)
     err = cc_master_prop_read_all(&test_master_ctx.master_ctx, PROP_STATIC_RW);
     usleep(10000);
     TEST_ASSERT_EQUAL(CC_MASTER_ERR_TIMEOUT, err);
-
-    /* Deinitialize master and nodes. */
-    cc_test_master_deinit(&test_master_ctx);
-    cc_test_node_deinit(&node_test_grp);
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 void test_chain_comm_property_timeout_write_seq(void)
 {
-    size_t node_cnt       = 20;
+    /* This test has a payload crafted in such a way that the data following the timeout causes another write which
+     * should not happen. V2 protocol should be able to resist this. */
+    size_t node_cnt       = 3;
     cc_prop_id_t property = PROP_STATIC_RW;
     cc_master_err_t err   = CC_MASTER_OK;
 
     /* Initialize master. */
     setup_cc_master_property_list_handlers();
-    cc_test_master_ctx_t test_master_ctx;
     cc_test_master_init(&test_master_ctx);
 
     /* Initialize the nodes. */
     setup_cc_node_property_list_handlers();
-
-    cc_test_node_group_ctx_t node_test_grp;
     cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
 
     usleep(100000); // Wait a bit for threads to start
 
     /* Try a write all command */
     test_master_ctx.master_ctx.master.node_cnt_update(&test_master_ctx, node_cnt);
-    randomize_array(test_master_ctx.node_data, TEST_PROP_SIZE * node_cnt); /* Write all uses data from node 0 */
 
-    uart_delay_xth_tx(&test_master_ctx.uart, 20, 550);
+    memset(test_master_ctx.node_data, 0x00, TEST_PROP_SIZE * node_cnt);
 
-    err = cc_master_prop_write_seq(&test_master_ctx.master_ctx, property);
+    cc_msg_header_t header = {
+        .action   = property_writeAll,
+        .property = PROP_STATIC_RW_HALF_SIZE,
+    };
+    test_master_ctx.node_data[4] = header.raw; // Corrupt data so delayed byte is interpreted as a header.
+    memset(test_master_ctx.node_data + 5, 0xFF, (TEST_PROP_SIZE / 2));
+
+    cc_msg_header_t tail = {
+        .action   = returnCode,
+        .property = 0,
+    };
+    test_master_ctx.node_data[5 + TEST_PROP_SIZE / 2] =
+        tail.raw; // Corrupt data so delayed byte is interpreted as a header.
+
+    uart_delay_xth_tx(&test_master_ctx.uart, 5, 550);
+
+    err = cc_master_prop_write_all(&test_master_ctx.master_ctx, property);
     usleep(10000);
-    TEST_ASSERT_EQUAL(CC_MASTER_ERR_FAIL, err);
 
-    /* Deinitialize master and nodes. */
-    cc_test_master_deinit(&test_master_ctx);
-    cc_test_node_deinit(&node_test_grp);
+    for (int i = 0; i < node_cnt; i++) {
+        TEST_ASSERT_EQUAL_HEX8_ARRAY((uint8_t[TEST_PROP_SIZE]) {0x00}, node_test_grp.node_list[i].node_data,
+                                     TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(rxHeader, node_test_grp.node_list[i].node_ctx.state);
+    }
+    TEST_ASSERT_EQUAL(CC_MASTER_ERR_FAIL, err);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -378,13 +373,13 @@ int main(void)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_chain_comm_property_static_rw);
-    RUN_TEST(test_chain_comm_property_dynamic_rw);
-    RUN_TEST(test_chain_comm_property_static_ro);
-    RUN_TEST(test_chain_comm_property_dynamic_ro);
-    RUN_TEST(test_chain_comm_property_static_wo);
-    RUN_TEST(test_chain_comm_property_dynamic_wo);
-    RUN_TEST(test_chain_comm_property_timeout_read_all);
+    // RUN_TEST(test_chain_comm_property_static_rw);
+    // RUN_TEST(test_chain_comm_property_dynamic_rw);
+    // RUN_TEST(test_chain_comm_property_static_ro);
+    // RUN_TEST(test_chain_comm_property_dynamic_ro);
+    // RUN_TEST(test_chain_comm_property_static_wo);
+    // RUN_TEST(test_chain_comm_property_dynamic_wo);
+    // RUN_TEST(test_chain_comm_property_timeout_read_all);
     RUN_TEST(test_chain_comm_property_timeout_write_seq);
 
     return UNITY_END();

@@ -131,7 +131,7 @@ static void node_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, vo
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)userdata;
     memcpy(ctx->node_data, buf, *size);
     for (uint16_t i = 0; i < *size; i++) {
-        // printf("  Data[%d]: %02X\n", i, buf[i]);
+        printf("  Data[%d]: %02X\n", i, buf[i]);
     }
 }
 

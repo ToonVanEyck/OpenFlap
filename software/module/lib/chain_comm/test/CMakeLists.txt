@@ -18,4 +18,6 @@ target_link_libraries(${PROJECT_NAME}_test
 add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
 
 append_coverage_compiler_flags_to_target(${PROJECT_NAME}_node)
+append_coverage_compiler_flags_to_target(${PROJECT_NAME}_master)
+append_coverage_compiler_flags_to_target(${PROJECT_NAME}_shared)
 add_dependencies(coverage ${PROJECT_NAME}_test)

@@ -55,4 +55,13 @@ cc_prop_t cc_property_list[PROPERTY_CNT] = {
                     .name       = "DYNAMIC_WO",
                 },
         },
+    [PROP_STATIC_RW_HALF_SIZE - 1] =
+        {
+            .attribute =
+                {
+                    .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE / 2),
+                    .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE / 2),
+                    .name       = "STATIC_RW_HALF_SIZE",
+                },
+        },
 };

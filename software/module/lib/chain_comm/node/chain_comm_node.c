@@ -26,10 +26,6 @@
 #define CC_LOGD(tag, format, ...) printf("D: [%s]: " format "\n", tag, ##__VA_ARGS__)
 #endif
 
-#if CHAIN_COMM_DEBUG
-const char *get_state_name(uint8_t state);
-#endif
-
 void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state);
 void cc_node_exec(cc_node_ctx_t *ctx);
 
@@ -142,7 +138,8 @@ bool cc_node_is_busy(cc_node_ctx_t *ctx)
  */
 void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state)
 {
-    // CC_LOGD(TAG, "State: %s -> %s\n", get_state_name(ctx->state), get_state_name(state));
+    static const char *state_names[] = {CHAIN_COMM_STATE(GENERATE_STATE_NAME)};
+    CC_LOGD(TAG, "State: %s -> %s", state_names[ctx->state], state_names[state]);
     if (state != rxHeader) {
         cc_node_timer_start(ctx);
     }

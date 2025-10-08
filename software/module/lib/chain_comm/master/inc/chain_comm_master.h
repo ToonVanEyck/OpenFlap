@@ -58,3 +58,13 @@ void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, 
 cc_master_err_t cc_master_prop_read_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
 cc_master_err_t cc_master_prop_write_all(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
 cc_master_err_t cc_master_prop_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
+
+/**
+ * \brief Reads a property from all nodes.
+ *
+ * \param[inout] ctx Pointer to the #cc_master_ctx_t structure containing the context information.
+ * \param[in] property_id The ID of the property to read.
+ *
+ * \return CC_MASTER_OK on success, or an error code on failure.
+ */
+cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_id);

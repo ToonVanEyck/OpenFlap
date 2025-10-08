@@ -5,63 +5,63 @@ cc_prop_t cc_property_list[PROPERTY_CNT] = {
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
-                    .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
-                    .name       = "STATIC_RW",
+                    // .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
+                    // .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
+                    .name = "STATIC_RW",
                 },
         },
     [PROP_STATIC_RO - 1] =
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
-                    .write_size = CC_PROP_SIZE_NONE,
-                    .name       = "STATIC_RO",
+                    // .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
+                    // .write_size = CC_PROP_SIZE_NONE,
+                    .name = "STATIC_RO",
                 },
         },
     [PROP_STATIC_WO - 1] =
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_NONE,
-                    .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
-                    .name       = "STATIC_WO",
+                    // .read_size  = CC_PROP_SIZE_NONE,
+                    // .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE),
+                    .name = "STATIC_WO",
                 },
         },
     [PROP_DYNAMIC_RW - 1] =
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_DYNAMIC,
-                    .write_size = CC_PROP_SIZE_DYNAMIC,
-                    .name       = "DYNAMIC_RW",
+                    // .read_size  = CC_PROP_SIZE_DYNAMIC,
+                    // .write_size = CC_PROP_SIZE_DYNAMIC,
+                    .name = "DYNAMIC_RW",
                 },
         },
     [PROP_DYNAMIC_RO - 1] =
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_DYNAMIC,
-                    .write_size = CC_PROP_SIZE_NONE,
-                    .name       = "DYNAMIC_RO",
+                    // .read_size  = CC_PROP_SIZE_DYNAMIC,
+                    // .write_size = CC_PROP_SIZE_NONE,
+                    .name = "DYNAMIC_RO",
                 },
         },
     [PROP_DYNAMIC_WO - 1] =
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_NONE,
-                    .write_size = CC_PROP_SIZE_DYNAMIC,
-                    .name       = "DYNAMIC_WO",
+                    // .read_size  = CC_PROP_SIZE_NONE,
+                    // .write_size = CC_PROP_SIZE_DYNAMIC,
+                    .name = "DYNAMIC_WO",
                 },
         },
     [PROP_STATIC_RW_HALF_SIZE - 1] =
         {
             .attribute =
                 {
-                    .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE / 2),
-                    .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE / 2),
-                    .name       = "STATIC_RW_HALF_SIZE",
+                    // .read_size  = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE / 2),
+                    // .write_size = CC_PROP_SIZE_STATIC(TEST_PROP_SIZE / 2),
+                    .name = "STATIC_RW_HALF_SIZE",
                 },
         },
 };

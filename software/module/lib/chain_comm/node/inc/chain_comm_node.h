@@ -37,20 +37,22 @@ typedef struct {
     cc_node_uart_cb_cfg_t uart; /**< Uart driver callback configurations. */
     void *uart_userdata;        /**< Uart user data to be used by callback functions. */
 
-    cc_node_state_t state;                       /**< The current state of the FSM managing the protocol. */
-    cc_msg_header_t header;                      /**< The header of the current message. */
-    uint8_t data_cnt;                            /**< The number of bytes handled in the current state. */
-    uint16_t index;                              /**< The index counter of the module in the display. */
-    uint8_t property_data[CC_PROPERTY_SIZE_MAX]; /**< The data of the current property to be written or read. */
-    cc_ret_code_t msg_rc;                        /**< return code for acknowledgment. */
-    uint32_t timeout_tick_cnt;                   /**< Counter for determining timeout. */
-    uint16_t property_size;                      /**< The size of the current property. */
-    uint8_t checksum_rx_calc;                    /**< Running checksum of received data. */
-    uint8_t checksum_tx_calc;                    /**< Running checksum of transmitted data. */
-    uint16_t writeSeq_packet_cnt;                /**< Counter for the number of packets in the write sequence. */
-    uint16_t writeSeq_property_size; /**< Copy of this modules property to be written, to restore at execution. */
-    cc_msg_header_t writeSeq_header; /**< Copy of the write sequence message header, to restore at execution. */
-    uint32_t last_tick_ms;           /**< Last tick in milliseconds, used for timeout calculation. */
+    cc_node_state_t state; /**< The current state of the FSM managing the protocol. */
+
+    uint32_t timeout_tick_cnt; /**< Counter for determining timeout. */
+    uint32_t last_tick_ms;     /**< Last tick in milliseconds, used for timeout calculation. */
+
+    // cc_msg_header_t header;                      /**< The header of the current message. */
+    // uint8_t data_cnt;                            /**< The number of bytes handled in the current state. */
+    // uint16_t index;                              /**< The index counter of the module in the display. */
+    // uint8_t property_data[CC_PROPERTY_SIZE_MAX]; /**< The data of the current property to be written or read. */
+    // cc_ret_code_t msg_rc;                        /**< return code for acknowledgment. */
+    // uint16_t property_size;                      /**< The size of the current property. */
+    // uint8_t checksum_rx_calc;                    /**< Running checksum of received data. */
+    // uint8_t checksum_tx_calc;                    /**< Running checksum of transmitted data. */
+    // uint16_t writeSeq_packet_cnt;                /**< Counter for the number of packets in the write sequence. */
+    // uint16_t writeSeq_property_size; /**< Copy of this modules property to be written, to restore at execution. */
+    // cc_msg_header_t writeSeq_header; /**< Copy of the write sequence message header, to restore at execution. */
 } cc_node_ctx_t;
 
 /**

@@ -8,8 +8,8 @@
 
 // static void *cc_test_node_thread_loop(void *arg);
 static void *cc_test_node_thread_loop(void *arg);
-static void node_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
-static void node_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
+static void node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+static void node_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
 
 bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt, cc_test_master_ctx_t *master)
 {
@@ -125,7 +125,7 @@ static void *cc_test_node_thread_loop(void *arg)
     return NULL;
 }
 
-static void node_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)
+static void node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
 {
     (void)node_idx;
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)userdata;
@@ -135,7 +135,7 @@ static void node_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, vo
     }
 }
 
-static void node_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)
+static void node_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
 {
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)userdata;
     memcpy(buf, ctx->node_data, TEST_PROP_SIZE);

@@ -6,9 +6,6 @@
 
 #define RX_BYTES_TIMEOUT(_byte_cnt) (1000 + (_byte_cnt) * 1) /**< Timeout in ms for receiving bytes. */
 
-static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum);
-static size_t cc_master_uart_read(cc_master_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum);
-
 #ifndef TAG
 #define TAG "chain_comm_master"
 #endif
@@ -274,6 +271,7 @@ cc_master_err_t cc_master_prop_write_all(cc_master_ctx_t *ctx, cc_prop_id_t prop
 
     // /*Cleanup. */
     // return ret;
+    return CC_MASTER_OK;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -386,95 +384,70 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
 
     CC_LOGI(TAG, "Reading Property (%d) %s from all Nodes.", property_id, CTX_PROP.attribute.name);
 
-    // /* Initiate the message. */
-    // cc_msg_header_t tx_header = {.action_header = {.action = CC_ACTION_READ, .property = property_id, .node_cnt =
-    // 0}}; cc_header_parity_set(&tx_header); uint8_t reversed_header[sizeof(tx_header.raw)] = {tx_header.raw[2],
-    // tx_header.raw[1], tx_header.raw[0]}; uint16_t node_cnt                              = 0;
+    /* Initiate the message. */
+    cc_msg_header_t tx_header = {0};
+    cc_header_action_set(&tx_header, CC_ACTION_READ);
+    cc_header_property_set(&tx_header, property_id);
+    // cc_header_node_cnt_set(&tx_header, 0);
+    cc_header_parity_set(&tx_header);
+    printf("Master transmit header: 0x%02X 0x%02X 0x%02X \n", tx_header.raw[0], tx_header.raw[1], tx_header.raw[2]);
 
     // /* Flush uart RX buffer. */
     // // uart_flush_input(UART_NUM);
 
-    // /* Send the header. */
-    // CC_RETURN_ON_FALSE(cc_master_uart_write(ctx, &tx_header, sizeof(tx_header), NULL) == sizeof(tx_header),
-    //                    CC_MASTER_ERR_FAIL, TAG, "Failed to send header");
-    // /* Send the module count bytes. */
-    // CC_RETURN_ON_FALSE(cc_master_uart_write(ctx, &module_cnt, sizeof(module_cnt), NULL) == sizeof(module_cnt),
-    //                    CC_MASTER_ERR_FAIL, TAG, "Failed to send module count bytes");
+    /* Send the header. */
+    CC_RETURN_ON_FALSE(ctx->uart.write(ctx->uart_userdata, tx_header.raw, sizeof(tx_header)) == sizeof(tx_header),
+                       CC_MASTER_ERR_FAIL, TAG, "Failed to send header");
 
-    // /* Receive the header. */
-    // cc_msg_header_t rx_header = {0};
-    // ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(sizeof(rx_header)));
-    // CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, &rx_header, sizeof(rx_header), NULL) == sizeof(rx_header),
-    //                    CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive header");
-    // CC_RETURN_ON_FALSE(tx_header.raw == rx_header.raw, CC_MASTER_ERR_FAIL, TAG, "Header mismatch");
+    /* Receive the header. */
+    cc_msg_header_t rx_header = {0};
+    ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(sizeof(rx_header)));
+    CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, sizeof(rx_header)) == sizeof(rx_header),
+                       CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive header");
 
-    // /* Receive the module count. */
-    // ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(sizeof(module_cnt)));
-    // CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, &module_cnt, sizeof(module_cnt), NULL) == sizeof(module_cnt),
-    //                    CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive module count");
+    printf("Master received header: 0x%02X 0x%02X 0x%02X \n", rx_header.raw[0], rx_header.raw[1], rx_header.raw[2]);
+    /* Check header integrity. */
+    CC_RETURN_ON_FALSE(cc_header_parity_check(rx_header), CC_MASTER_ERR_FAIL, TAG, "Header parity invalid");
+    CC_RETURN_ON_FALSE(cc_header_action_get(rx_header) == CC_ACTION_READ, CC_MASTER_ERR_FAIL, TAG,
+                       "Header action corrupted");
+    CC_RETURN_ON_FALSE(cc_header_property_get(rx_header) == property_id, CC_MASTER_ERR_FAIL, TAG,
+                       "Header property corrupted");
 
-    // /* Update the node count. */
-    // ctx->master.node_cnt_update(ctx->cc_userdata, module_cnt);
+    /* Update the node count. */
+    uint16_t node_cnt = cc_header_node_cnt_get(rx_header);
+    ctx->master.node_cnt_update(ctx->cc_userdata, node_cnt);
 
-    // /* Receive the data. */
-    // for (uint16_t i = 0; i < module_cnt; i++) {
-    //     uint8_t property_data[CC_PROPERTY_SIZE_MAX] = {0};
+    /* Receive the data. */
+    for (uint16_t i = 0; i < node_cnt; i++) {
+        uint8_t property_data[CC_PAYLOAD_SIZE_MAX] = {0};
+        size_t data_size                           = CC_PROPERTY_SIZE_MAX;
 
-    //     /* Initialize the checksum.*/
-    //     uint8_t rx_checksum_calc   = tx_header.raw + (uint8_t)((i + 1) >> 8) + (uint8_t)(i + 1);
-    //     uint8_t rx_checksum_actual = 0; /* The actual checksum received. */
+        /* Read the data. */
+        ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(1));
 
-    //     if (CTX_PROP.attribute.read_size.is_dynamic) {
-    //         ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(2));
-    //         CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, (uint8_t *)&property_size, 2, &rx_checksum_calc) == 2,
-    //                            CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive dynamic property size");
-    //     }
+        /* Read data until the end of the message. */
+        size_t read_cnt = CC_COBS_OVERHEAD_SIZE;
+        do {
+            CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, property_data + read_cnt, 1) == 1,
+                               CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive read all data");
+            read_cnt++;
+        } while (property_data[read_cnt - 1] != 0x00 && read_cnt < CC_PAYLOAD_SIZE_MAX);
 
-    //     /* Read the data. */
-    //     ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(property_size));
-    //     CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, property_data, property_size, &rx_checksum_calc) ==
-    //     property_size,
-    //                        CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive read all data");
+        /* Decode the payload. */
+        CC_RETURN_ON_FALSE(cc_payload_cobs_decode(property_data, &data_size, property_data + CC_COBS_OVERHEAD_SIZE,
+                                                  read_cnt - CC_COBS_OVERHEAD_SIZE),
+                           CC_MASTER_ERR_PAYLOAD, TAG, "Failed to decode COBS payload");
 
-    //     /* Verify the checksum. */
-    //     ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(1));
-    //     CC_RETURN_ON_FALSE(cc_master_uart_read(ctx, &rx_checksum_actual, 1, NULL) == 1, CC_MASTER_ERR_TIMEOUT, TAG,
-    //                        "Failed to receive checksum");
-    //     CC_RETURN_ON_FALSE(rx_checksum_calc == rx_checksum_actual, CC_MASTER_ERR_FAIL, TAG, "Checksum mismatch");
+        /* Verify the checksum. */
+        CC_RETURN_ON_FALSE(cc_checksum_calculate(property_data, data_size) == CC_CHECKSUM_OK, CC_MASTER_ERR_CHECKSUM,
+                           TAG, "Payload checksum invalid");
+        data_size--; /* Remove checksum from size. */
 
-    //     /* Handle the data. */
-    //     CTX_PROP.handler.set(i, property_data, &property_size, ctx->cc_userdata);
-    // }
+        /* Handle the data. */
+        CTX_PROP.handler.set(i, property_data, &data_size, ctx->cc_userdata);
+    }
 
     return CC_MASTER_OK;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-static size_t cc_master_uart_write(cc_master_ctx_t *ctx, const void *buf, size_t length, uint8_t *checksum)
-{
-    size_t s = ctx->uart.write(ctx->uart_userdata, buf, length);
-    // for (size_t i = 0; i < s; i++) {
-    //     CC_LOGD(TAG, "W: 0x%02X", ((const uint8_t *)buf)[i]);
-    // }
-    for (size_t i = 0; checksum != NULL && i < s; i++) {
-        *checksum += ((const uint8_t *)buf)[i];
-    }
-    return s;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-static size_t cc_master_uart_read(cc_master_ctx_t *ctx, void *buf, size_t length, uint8_t *checksum)
-{
-    size_t s = ctx->uart.read(ctx->uart_userdata, buf, length);
-    // for (size_t i = 0; i < s; i++) {
-    //     CC_LOGD(TAG, "R: 0x%02X", ((const uint8_t *)buf)[i]);
-    // }
-    for (size_t i = 0; checksum != NULL && i < s; i++) {
-        *checksum += ((const uint8_t *)buf)[i];
-    }
-    return s;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

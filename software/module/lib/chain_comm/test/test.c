@@ -10,8 +10,8 @@
 #include <string.h>
 #include <unistd.h>
 
-static cc_test_master_ctx_t test_master_ctx;
-static cc_test_node_group_ctx_t node_test_grp;
+// static cc_test_master_ctx_t test_master_ctx;
+// static cc_test_node_group_ctx_t node_test_grp;
 
 void randomize_array(uint8_t *array, size_t size)
 {
@@ -497,6 +497,29 @@ void test_cc_cobs_decode_nok(void)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void test_cc_checksum_calculate(void)
+{
+    srand(0xdeadbeef); // Seed for reproducibility
+    uint8_t checksum  = 0;
+    uint8_t data[256] = {0};
+    uint8_t len       = 0;
+    for (int i = 0; i < 25; i++) {
+        len = (uint8_t)(rand() % 0xFF);
+        randomize_array(data, len);
+        checksum = cc_checksum_calculate(data, len);
+        TEST_ASSERT_NOT_EQUAL(CC_CHECKSUM_OK, checksum); /* Random data should not give valid checksum. */
+        data[len] = (uint8_t)(checksum);                 /* Add checksum byte. */
+        checksum  = cc_checksum_calculate(data, len + 1);
+        TEST_ASSERT_EQUAL(CC_CHECKSUM_OK, checksum); /* Data should be good now. */
+    }
+
+    /* Test invalid arg cases: */
+    TEST_ASSERT_EQUAL(CC_CHECKSUM_OK, cc_checksum_calculate(NULL, 0));
+    TEST_ASSERT_EQUAL(CC_CHECKSUM_OK, cc_checksum_calculate(data, 0));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void test_cc_checksum_update(void)
 {
     uint8_t checksum = 0;
@@ -582,23 +605,29 @@ void test_cc_header_property_set_get(void)
 {
     cc_msg_header_t header = {0};
 
-    cc_header_property_set(&header, 0x07); /* This should only affect raw byte [1]. */
+    cc_header_property_set(&header, 0b11); /* This should only affect raw byte [1]. */
     TEST_ASSERT_EQUAL(0b00000000, header.raw[0]);
-    TEST_ASSERT_EQUAL(0b11100000, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b11000000, header.raw[1]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
-    TEST_ASSERT_EQUAL(0x07, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(0b11, cc_header_property_get(header));
 
-    cc_header_property_set(&header, 0x08); /* This should only affect raw byte [0]. */
+    cc_header_property_set(&header, 0b100); /* This should only affect raw byte [0]. */
     TEST_ASSERT_EQUAL(0b00000001, header.raw[0]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[1]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
-    TEST_ASSERT_EQUAL(0x08, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(0b100, cc_header_property_get(header));
 
-    cc_header_property_set(&header, 0x7F); /* All property bits set. */
+    cc_header_property_set(&header, 0b111111); /* All property bits set. */
     TEST_ASSERT_EQUAL(0b00001111, header.raw[0]);
-    TEST_ASSERT_EQUAL(0b11100000, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b11000000, header.raw[1]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
-    TEST_ASSERT_EQUAL(0x7F, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(0b111111, cc_header_property_get(header));
+
+    memset(header.raw, 0xFF, sizeof(header.raw));
+    cc_header_property_set(&header, 0); /* Clear property */
+    TEST_ASSERT_EQUAL(0b11110000, header.raw[0]);
+    TEST_ASSERT_EQUAL(0b00111111, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b11111111, header.raw[2]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -622,6 +651,12 @@ void test_cc_node_cnt_set_get(void)
     TEST_ASSERT_EQUAL(0b00000010, header.raw[2]);
     node_cnt = cc_header_node_cnt_get(header);
     TEST_ASSERT_EQUAL(0b1000000, node_cnt); /* 64 */
+
+    memset(header.raw, 0xFF, sizeof(header.raw));
+    cc_header_node_cnt_set(&header, 0); /* Clear node count */
+    TEST_ASSERT_EQUAL(0b11111111, header.raw[0]);
+    TEST_ASSERT_EQUAL(0b11000000, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b00000001, header.raw[2]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -651,6 +686,50 @@ void test_cc_header_parity_set(void)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void test_cc_master_prop_read(void)
+{
+    /* Initialize a test master. */
+    cc_master_err_t err = CC_MASTER_OK;
+    cc_test_master_ctx_t test_master_ctx;
+    cc_test_master_init(&test_master_ctx);
+
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
+    test_master_ctx.uart.rx_fd = pipefd[0];
+    uart_driver_t test_node    = {.rx_fd = test_master_ctx.original_rx_fd, .tx_fd = pipefd[1], .print_debug = "NODE"};
+
+    uint8_t expected_data[5] = {0};
+    // randomize_array(expected_data, sizeof(expected_data));
+    memset(expected_data, 0xAA, sizeof(expected_data) - 1);
+    expected_data[sizeof(expected_data) - 1] = cc_checksum_calculate(expected_data, sizeof(expected_data) - 1);
+
+    uint8_t tx_payload[100] = {0};
+    size_t tx_payload_len   = sizeof(tx_payload) - 3;
+
+    cc_msg_header_t header = {0};
+    cc_header_action_set(&header, CC_ACTION_READ);
+    cc_header_property_set(&header, PROP_STATIC_RW);
+    cc_header_node_cnt_set(&header, 1);
+    cc_header_parity_set(&header);
+
+    tx_payload[0] = header.raw[0];
+    tx_payload[1] = header.raw[1];
+    tx_payload[2] = header.raw[2];
+    cc_payload_cobs_encode(tx_payload + 3, &tx_payload_len, expected_data, sizeof(expected_data));
+
+    uart_write(&test_node, tx_payload, tx_payload_len + 3);
+
+    /* Try a read all command */
+    err = cc_master_prop_read(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+
+    uint8_t received_data[100] = {0};
+    uart_read(&test_master_ctx.uart, received_data, 3);
+}
+
 //======================================================================================================================
 //                                                         PRIVATE FUNCTIONS
 //======================================================================================================================
@@ -669,15 +748,21 @@ int main(void)
     // RUN_TEST(test_chain_comm_property_timeout_write_seq);
 
     //---------------------- V2 TESTS ------------------------
+
+    /* Test shared functions. */
     RUN_TEST(test_cc_cobs_encode_decode_ok);
     RUN_TEST(test_cc_cobs_encode_nok);
     RUN_TEST(test_cc_cobs_decode_nok);
     RUN_TEST(test_cc_checksum_update);
+    RUN_TEST(test_cc_checksum_calculate);
     RUN_TEST(test_cc_parity_check);
     RUN_TEST(test_cc_node_cnt_set_get);
     RUN_TEST(test_cc_header_action_set_get);
     RUN_TEST(test_cc_header_property_set_get);
     RUN_TEST(test_cc_header_parity_set);
+
+    /* Test Master functions. */
+    RUN_TEST(test_cc_master_prop_read);
 
     return UNITY_END();
 }

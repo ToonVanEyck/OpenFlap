@@ -104,6 +104,21 @@ void cc_checksum_update(uint8_t *checksum, uint8_t data)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+uint8_t cc_checksum_calculate(const uint8_t *data, size_t size)
+{
+    if (data == NULL || size == 0) {
+        return CC_CHECKSUM_OK;
+    }
+
+    uint8_t checksum = 0;
+    for (size_t i = 0; i < size; i++) {
+        checksum += data[i];
+    }
+    return (uint8_t)(-checksum);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 cc_action_t cc_header_action_get(cc_msg_header_t header)
 {
     return (cc_action_t)(header.raw[0] >> 6);
@@ -122,20 +137,20 @@ void cc_header_action_set(cc_msg_header_t *header, cc_action_t action)
 cc_prop_id_t cc_header_property_get(cc_msg_header_t header)
 {
     uint16_t property_msb = header.raw[0] & 0b00001111;        /* 4 LSB bits are stored in byte 0 */
-    uint16_t property_lsb = (header.raw[1] >> 5) & 0b00000111; /* 3 MSB bits are stored in byte 1 */
-    return (cc_prop_id_t)((property_msb << 3) | property_lsb);
+    uint16_t property_lsb = (header.raw[1] >> 6) & 0b00000011; /* 2 MSB bits are stored in byte 1 */
+    return (cc_prop_id_t)((property_msb << 2) | property_lsb);
 }
 
 void cc_header_property_set(cc_msg_header_t *header, cc_prop_id_t property)
 {
     assert(header != NULL);
-    assert(property <= (1 << 7) - 1); /* 7 bits are used for property */
+    assert(property <= (1 << 6) - 1); /* 6 bits are used for property */
 
-    uint16_t property_msb = (property >> 3) & 0b1111; /* 4 MSB bits to be set */
-    uint16_t property_lsb = property & 0b111;         /* 3 LSB bits to be set */
+    uint16_t property_msb = (property >> 2) & 0b1111; /* 4 MSB bits to be set */
+    uint16_t property_lsb = property & 0b11;          /* 2 LSB bits to be set */
 
     header->raw[0] = (header->raw[0] & 0b11110000) | (property_msb & 0b00001111); /* Set 4 LSB bits in byte 0 */
-    header->raw[1] = (header->raw[1] & 0b00011111) | (property_lsb << 5);         /* Set 3 MSB bits in byte 1 */
+    header->raw[1] = (header->raw[1] & 0b00111111) | (property_lsb << 6);         /* Set 2 MSB bits in byte 1 */
 }
 
 //----------------------------------------------------------------------------------------------------------------------

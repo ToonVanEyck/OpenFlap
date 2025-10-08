@@ -86,6 +86,14 @@ ssize_t uart_read(uart_driver_t *ctx, uint8_t *data, size_t size)
         }
     }
 
+    if (ctx->print_debug) {
+        for (size_t i = 0; i < bytes_read; i++) {
+            printf("[%s] RX: %02X\n", ctx->print_debug, data[i]);
+        }
+        if (bytes_read == 0) {
+            printf("[%s] RX: timeout after %u ms\n", ctx->print_debug, timeout_ms);
+        }
+    }
     return (size_t)bytes_read;
 }
 

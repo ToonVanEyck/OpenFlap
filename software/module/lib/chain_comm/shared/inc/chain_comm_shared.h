@@ -7,7 +7,11 @@
 
 #define ABI_VERSION 2
 
-#define CC_PROPERTY_SIZE_MAX (256) /**< Maximum length of a property. */
+#define CC_PROPERTY_SIZE_MAX (254) /**< Maximum length of a property. */
+
+/** Additional overhead available for COBS encoding and checksum. */
+#define CC_COBS_OVERHEAD_SIZE ((CC_PROPERTY_SIZE_MAX / 0xff) + 2)
+#define CC_PAYLOAD_SIZE_MAX   (CC_PROPERTY_SIZE_MAX + CC_COBS_OVERHEAD_SIZE) /**< Maximum size of a payload. */
 
 #ifndef CHAIN_COMM_TIMEOUT_MS
 #define CHAIN_COMM_TIMEOUT_MS (500) /**< Time after which a timeout event occurs. */
@@ -16,6 +20,11 @@
 #define CC_PROP_SIZE_DYNAMIC    {.is_dynamic = true, .static_size = 0}
 #define CC_PROP_SIZE_STATIC(_s) {.is_dynamic = false, .static_size = (_s)}
 #define CC_PROP_SIZE_NONE       {.is_dynamic = false, .static_size = 0}
+
+#define CC_ACTION_HEADER_SIZE (3) /**< Size of the action header. */
+#define CC_SYNC_HEADER_SIZE   (1) /**< Size of the sync header. */
+
+#define CC_CHECKSUM_OK (0x00) /**< Checksum value indicating no error. */
 
 /**
  * \brief Chain communication UART set read timeout callback.
@@ -92,16 +101,16 @@ typedef bool (*uart_is_busy_cb_t)(void *uart_userdata);
  * \param[inout] size Pointer to the size of the data buffer.
  * \param[in] userdata Pointer to user data.
  */
-typedef void (*cc_prop_handler_cb_t)(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
+typedef void (*cc_prop_handler_cb_t)(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
 
-typedef enum __attribute__((__packed__)) {
+typedef enum {
     CC_ACTION_READ      = 0, /**< Read property data from all nodes. */
     CC_ACTION_WRITE     = 1, /**< Write (different) property data to all nodes. */
     CC_ACTION_BROADCAST = 2, /**< Broadcast / Write (the same) property data to all nodes. */
     CC_ACTION_SYNC      = 3, /**< Synchronization action used for error checking and latching data. */
 } cc_action_t;
 
-typedef enum __attribute__((__packed__)) {
+typedef enum {
     CC_SYNC_SYNC       = 0, /**< A synchronisation byte, will be passed after the nodes exit from the EXEC state. */
     CC_SYNC_EXEC       = 1, /**< Execute previously received data. */
     CC_SYNC_RESERVED_1 = 2, /**< Reserved for future use. */
@@ -144,30 +153,6 @@ typedef struct {
     cc_prop_attr_t attribute;  /**< Property attributes. */
 } cc_prop_t;
 
-#define CC_ACTION_HEADER_SIZE (3) /**< Size of the action header. */
-#define CC_SYNC_HEADER_SIZE   (1) /**< Size of the sync header. */
-
-// /**
-//  * \brief Chain Comm header.
-//  * The header is either 3 bytes for READ, WRITE or BROADCAST actions, or 1 byte for SYNC actions.
-//  */
-// typedef union {
-//     uint8_t raw[3]; /* Raw access to the header bytes. */
-//     struct __attribute__((__packed__)) {
-//         uint8_t even_parity : 1;   /**< Parity check */
-//         uint16_t node_cnt_msb : 7; /**< Most significant bits of node count */
-//         uint16_t node_cnt_lsb : 6; /**< Least significant bits of node count */
-//         cc_prop_id_t property : 7; /**< Up to 128 Properties */
-//         uint8_t reserved : 1;      /**< Reserved, must be 0 */
-//         cc_action_t action : 2;    /**< READ / WRITE / BROADCAST / SYNC */
-//     } action_header;
-//     struct __attribute__((__packed__)) {
-//         cc_sync_error_code_t rc : 4;  /**< Return code */
-//         cc_sync_type_t sync_type : 2; /**< Reserved, must be 0 */
-//         cc_action_t action : 2;       /**< READ / WRITE / BROADCAST / SYNC */
-//     } sync_header;
-// } cc_msg_header_t;
-
 /**
  * \brief Bit field definitions for the message header.
  *
@@ -176,7 +161,7 @@ typedef struct {
  * +-------------+-------------------------+---------------+---------------------+
  * |            BYTE 0                     |    BYTE 1     |        BYTE 2       |
  * +-------------+-------------------------+-----+---------+-------+-------------+
- * | ACTION (3b) | RESERVED (1b) | PROPERTY (7b) |  NODE_CNT (13b) | PARITY (1b) |
+ * | ACTION (3b) | RESERVED (1b) | PROPERTY (6b) |  NODE_CNT (13b) | PARITY (1b) |
  * +-------------+---------------+---------------+-----------------+-------------+
  * 23          22 21           21 20           14 13              1 0            0
  * \endcode
@@ -185,7 +170,7 @@ typedef struct {
  * LSB before the MSB.
  */
 typedef struct {
-    uint8_t raw[3]; /* Raw access to the header bytes. */
+    uint8_t raw[CC_ACTION_HEADER_SIZE]; /* Raw access to the header bytes. */
 } cc_msg_header_t;
 
 /**
@@ -219,6 +204,18 @@ bool cc_payload_cobs_decode(uint8_t *dst, size_t *dst_len, const uint8_t *src, s
  * \param[in] data New byte of data to update the checksum with.
  */
 void cc_checksum_update(uint8_t *checksum, uint8_t data);
+
+/**
+ * \brief Calculate the checksum of a data buffer.
+ * Calculates an 8 bit checksum of an array of data. If the array is terminated with the checksum, the result will be
+ * 0xFF.
+ *
+ * \param[in] data Pointer to the data buffer.
+ * \param[in] size Size of the data buffer.
+ *
+ * \return The calculated checksum.
+ */
+uint8_t cc_checksum_calculate(const uint8_t *data, size_t size);
 
 /**
  * \brief Extract the action type from a message header.

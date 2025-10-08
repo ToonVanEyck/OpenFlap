@@ -41,6 +41,7 @@ void cc_test_master_init(cc_test_master_ctx_t *ctx)
             (cc_master_node_exists_and_must_be_written_cb_t)node_exists_and_must_be_written,
     };
 
+    setup_cc_master_property_list_handlers();
     cc_prop_t *master_properties = calloc(PROPERTY_CNT, sizeof(cc_prop_t));
     memcpy(master_properties, cc_property_list, PROPERTY_CNT * sizeof(cc_prop_t));
 
@@ -106,10 +107,10 @@ static void master_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, 
 {
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
     memcpy(ctx->node_data + node_idx * TEST_PROP_SIZE, buf, *size);
-    // printf("Dummy set handler called for node %d with size %d and user data %p:\n", node_idx, *size, userdata);
-    // for (uint16_t i = 0; i < *size; i++) {
-    //     printf("  Data[%d]: %02X\n", i, buf[i]);
-    // }
+    printf("Dummy set handler called for node %d with size %d and user data %p:\n", node_idx, *size, userdata);
+    for (uint16_t i = 0; i < *size; i++) {
+        printf("  Data[%d]: %02X\n", i, buf[i]);
+    }
 }
 
 static void master_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)

@@ -13,8 +13,8 @@
 #define CC_COBS_OVERHEAD_SIZE ((CC_PROPERTY_SIZE_MAX / 0xff) + 3)
 #define CC_PAYLOAD_SIZE_MAX   (CC_PROPERTY_SIZE_MAX + CC_COBS_OVERHEAD_SIZE) /**< Maximum size of a payload. */
 
-#ifndef CHAIN_COMM_TIMEOUT_MS
-#define CHAIN_COMM_TIMEOUT_MS (500) /**< Time after which a timeout event occurs. */
+#ifndef CC_NODE_TIMEOUT_MS
+#define CC_NODE_TIMEOUT_MS (500) /**< Time after which a timeout event occurs. */
 #endif
 
 #define CC_PROP_SIZE_DYNAMIC    {.is_dynamic = true, .static_size = 0}

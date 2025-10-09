@@ -8,12 +8,9 @@
 #include <string.h>
 #include <unistd.h>
 
-void randomize_array(uint8_t *array, size_t size)
-{
-    for (size_t i = 0; i < size; i++) {
-        array[i] = (uint8_t)(rand() % 0xFF);
-    }
-}
+//======================================================================================================================
+//                                                   MACROS a DEFINES
+//======================================================================================================================
 
 #define TEST_ASSERT_COBS_ENCODED(_encoded_data, _encoded_data_len)                                                     \
     do {                                                                                                               \
@@ -24,6 +21,58 @@ void randomize_array(uint8_t *array, size_t size)
         TEST_ASSERT_EQUAL_MESSAGE(0, _encoded_data[_encoded_data_len - 1],                                             \
                                   "COBS encoding failed, last byte is not zero");                                      \
     } while (0);
+
+//======================================================================================================================
+//                                                   TYPE DEFINITIONS
+//======================================================================================================================
+
+typedef struct {
+    uint8_t rx_buf[1000];
+    uint8_t tx_buf[1000];
+    size_t rx_cnt;
+    size_t tx_cnt;
+    bool is_busy;
+    bool tx_busy;
+    size_t cnt_readable;
+    size_t cnt_writable;
+} uart_dummy_ctx_t;
+
+typedef struct {
+    uint8_t data;
+    bool success;
+} prop_dummy_ctx_t;
+
+//======================================================================================================================
+//                                                   FUNCTION PROTOTYPES
+//======================================================================================================================
+
+size_t uart_dummy_read(void *uart_userdata, uint8_t *data, size_t size);
+size_t uart_dummy_cnt_readable(void *uart_userdata);
+size_t uart_dummy_write(void *uart_userdata, const uint8_t *data, size_t size);
+size_t uart_dummy_cnt_writable(void *uart_userdata);
+bool uart_dummy_tx_buff_empty(void *uart_userdata);
+bool uart_dummy_is_busy(void *uart_userdata);
+bool prop_dummy_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+bool prop_dummy_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+void randomize_array(uint8_t *array, size_t size);
+void node_dummy_config(cc_node_ctx_t *node_ctx);
+
+//======================================================================================================================
+//                                                   GLOBAL VARIABLES
+//======================================================================================================================
+
+static uart_dummy_ctx_t uart_ctx = {0};
+static prop_dummy_ctx_t prop_ctx = {0};
+static cc_prop_t prop_list[1]    = {
+    {
+           .attribute = {.name = "Dummy Property"},
+           .handler   = {.set = prop_dummy_set_handler, .get = prop_dummy_get_handler},
+    },
+};
+
+//======================================================================================================================
+//                                                   TEST FUNCTIONS
+//======================================================================================================================
 
 // void test_read_write_property(uint8_t node_cnt, cc_prop_id_t property)
 // {
@@ -782,8 +831,162 @@ void test_master_read_single_node(void)
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_node_rx_header_state_read_action_ok(void)
+{
+    /* Test Params: */
+    cc_action_t test_action   = CC_ACTION_READ;
+    cc_prop_id_t test_prop_id = 1; /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 5;
+
+    /* Setup A Node. */;
+    cc_node_ctx_t node_ctx = {0};
+    node_dummy_config(&node_ctx);
+
+    /* Setup the state. */
+    node_ctx.state      = CC_NODE_STATE_RX_HEADER;
+    node_ctx.next_state = CC_NODE_STATE_RX_HEADER;
+
+    /* Run the chain communication node. */
+    cc_node_tick(&node_ctx, 0); /* Initial Tick. */
+
+    /* Write a dummy header. */
+    cc_msg_header_t header = {0};
+    cc_header_action_set(&header, test_action);
+    cc_header_property_set(&header, test_prop_id);
+    cc_header_node_cnt_set(&header, test_node_cnt);
+    cc_header_parity_set(&header, true);
+    uart_ctx.cnt_readable = 3;
+    memcpy(uart_ctx.rx_buf, header.raw, 3);
+
+    uart_ctx.cnt_writable = 1000;
+    uart_ctx.rx_cnt       = 0;
+    uart_ctx.tx_cnt       = 0;
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(1, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(2, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(2, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(3, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(3, node_ctx.data_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.next_state);
+
+    memcpy(header.raw, uart_ctx.tx_buf, 3); /* Compare the transmitted header. */
+    TEST_ASSERT_EQUAL(test_action, cc_header_action_get(header));
+    TEST_ASSERT_EQUAL(test_prop_id, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(test_node_cnt + 1, cc_header_node_cnt_get(header));
+    TEST_ASSERT_TRUE(cc_header_parity_check(header));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_node_rx_header_state_read_action_parity_error(void)
+{
+    /* Test Params: */
+    cc_action_t test_action   = CC_ACTION_READ;
+    cc_prop_id_t test_prop_id = 1; /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 5;
+
+    /* Setup A Node. */;
+    cc_node_ctx_t node_ctx = {0};
+    node_dummy_config(&node_ctx);
+
+    /* Setup the state. */
+    node_ctx.state      = CC_NODE_STATE_RX_HEADER;
+    node_ctx.next_state = CC_NODE_STATE_RX_HEADER;
+
+    /* Run the chain communication node. */
+    cc_node_tick(&node_ctx, 0); /* Initial Tick. */
+
+    /* Write a dummy header. */
+    cc_msg_header_t header = {0};
+    cc_header_action_set(&header, test_action);
+    cc_header_property_set(&header, test_prop_id);
+    cc_header_node_cnt_set(&header, test_node_cnt);
+    cc_header_parity_set(&header, false); /* Intentionally set parity wrong. */
+    uart_ctx.cnt_readable = 3;
+    memcpy(uart_ctx.rx_buf, header.raw, 3);
+
+    uart_ctx.cnt_writable = 1000;
+    uart_ctx.rx_cnt       = 0;
+    uart_ctx.tx_cnt       = 0;
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(1, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(2, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(2, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(3, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(3, node_ctx.data_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_ERROR, node_ctx.next_state);
+    TEST_ASSERT_EQUAL(CC_NODE_ERR_HEADER_PARITY, node_ctx.last_error);
+
+    memcpy(header.raw, uart_ctx.tx_buf, 3); /* Compare the transmitted header. */
+    TEST_ASSERT_EQUAL(test_action, cc_header_action_get(header));
+    TEST_ASSERT_EQUAL(test_prop_id, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(test_node_cnt + 1, cc_header_node_cnt_get(header));
+    TEST_ASSERT_FALSE(cc_header_parity_check(header));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_node_rx_header_state_read_action_timeout_error(void)
+{
+    /* Test Params: */
+    cc_action_t test_action   = CC_ACTION_READ;
+    cc_prop_id_t test_prop_id = 1;    /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 0xFF; /* This value cause a carry from raw[1] to raw[2] */
+
+    /* Setup A Node. */;
+    cc_node_ctx_t node_ctx = {0};
+    node_dummy_config(&node_ctx);
+
+    /* Setup the state. */
+    node_ctx.state      = CC_NODE_STATE_RX_HEADER;
+    node_ctx.next_state = CC_NODE_STATE_RX_HEADER;
+
+    /* Run the chain communication node. */
+    cc_node_tick(&node_ctx, 0); /* Initial Tick. */
+
+    /* Write a dummy header. */
+    cc_msg_header_t header = {0};
+    cc_header_action_set(&header, test_action);
+    cc_header_property_set(&header, test_prop_id);
+    cc_header_node_cnt_set(&header, test_node_cnt);
+    cc_header_parity_set(&header, false); /* Intentionally set parity wrong. */
+    uart_ctx.cnt_readable = 1;            /* Timeout will occur before full header is read. */
+    memcpy(uart_ctx.rx_buf, header.raw, 3);
+
+    uart_ctx.cnt_writable = 1000;
+    uart_ctx.rx_cnt       = 0;
+    uart_ctx.tx_cnt       = 0;
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(1, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, CC_NODE_TIMEOUT_MS + 1);
+    TEST_ASSERT_EQUAL(1, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(1, node_ctx.data_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_ERROR, node_ctx.next_state);
+    TEST_ASSERT_EQUAL(CC_NODE_ERR_TIMEOUT, node_ctx.last_error);
+}
+
 //======================================================================================================================
-//                                                         PRIVATE FUNCTIONS
+//                                                   MAIN TEST RUNNER
 //======================================================================================================================
 
 int main(void)
@@ -815,7 +1018,125 @@ int main(void)
 
     /* Test Master functions. */
     // RUN_TEST(test_cc_master_prop_read);
-    RUN_TEST(test_master_read_single_node);
+    // RUN_TEST(test_master_read_single_node);
+    RUN_TEST(test_node_rx_header_state_read_action_ok);
+    RUN_TEST(test_node_rx_header_state_read_action_parity_error);
+    RUN_TEST(test_node_rx_header_state_read_action_timeout_error);
 
     return UNITY_END();
 }
+
+//======================================================================================================================
+//                                                         PRIVATE FUNCTIONS
+//======================================================================================================================
+
+void randomize_array(uint8_t *array, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        array[i] = (uint8_t)(rand() % 0xFF);
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+size_t uart_dummy_read(void *uart_userdata, uint8_t *data, size_t size)
+{
+    uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
+
+    size_t s = ctx->cnt_readable < size ? ctx->cnt_readable : size;
+    memcpy(data, ctx->rx_buf + ctx->rx_cnt, s);
+
+    ctx->rx_cnt += s;
+    ctx->cnt_readable -= s;
+    return s;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+size_t uart_dummy_cnt_readable(void *uart_userdata)
+{
+    uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
+
+    return ctx->cnt_readable;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+size_t uart_dummy_write(void *uart_userdata, const uint8_t *data, size_t size)
+{
+    uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
+    memcpy(ctx->tx_buf + ctx->tx_cnt, data, size);
+
+    ctx->tx_busy = true;
+    ctx->tx_cnt += size;
+
+    return size;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+size_t uart_dummy_cnt_writable(void *uart_userdata)
+{
+    uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
+
+    return ctx->cnt_writable;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool uart_dummy_tx_buff_empty(void *uart_userdata)
+{
+    uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
+
+    return ctx->tx_busy == false;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool uart_dummy_is_busy(void *uart_userdata)
+{
+    uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
+
+    return ctx->tx_busy;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool prop_dummy_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
+{
+    (void)node_idx;
+    prop_dummy_ctx_t *ctx = (prop_dummy_ctx_t *)userdata;
+    memcpy(&ctx->data, buf, *size);
+    return ctx->success;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+bool prop_dummy_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
+{
+    (void)node_idx;
+    prop_dummy_ctx_t *ctx = (prop_dummy_ctx_t *)userdata;
+    memcpy(buf, &ctx->data, *size);
+    return ctx->success;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void node_dummy_config(cc_node_ctx_t *node_ctx)
+{
+    memset(&uart_ctx, 0, sizeof(uart_dummy_ctx_t));
+    memset(&prop_ctx, 0, sizeof(prop_dummy_ctx_t));
+    memset(node_ctx, 0, sizeof(cc_node_ctx_t));
+    node_ctx->property_list      = prop_list;
+    node_ctx->property_list_size = sizeof(prop_list) / sizeof(prop_list[0]);
+    node_ctx->cc_userdata        = &prop_ctx;
+    node_ctx->uart.read          = uart_dummy_read;
+    node_ctx->uart.cnt_readable  = uart_dummy_cnt_readable;
+    node_ctx->uart.write         = uart_dummy_write;
+    node_ctx->uart.cnt_writable  = uart_dummy_cnt_writable;
+    node_ctx->uart.tx_buff_empty = uart_dummy_tx_buff_empty;
+    node_ctx->uart.is_busy       = uart_dummy_is_busy;
+    node_ctx->uart_userdata      = &uart_ctx;
+}
+
+//----------------------------------------------------------------------------------------------------------------------

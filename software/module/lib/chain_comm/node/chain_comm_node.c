@@ -89,7 +89,7 @@ void cc_node_init(cc_node_ctx_t *ctx, const cc_node_uart_cb_cfg_t *uart_cb, void
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
+void cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
 {
     ctx->last_tick_ms = tick_ms;
 
@@ -123,7 +123,6 @@ bool cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
             CC_LOGD(TAG, "Invalid state");
             break;
     }
-    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -721,7 +720,7 @@ void cc_node_error_and_continue(cc_node_ctx_t *ctx, cc_node_err_t err)
  */
 void cc_node_timer_start(cc_node_ctx_t *ctx)
 {
-    ctx->timeout_tick_cnt = ctx->last_tick_ms + CHAIN_COMM_TIMEOUT_MS;
+    ctx->timeout_tick_cnt = ctx->last_tick_ms + CC_NODE_TIMEOUT_MS;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

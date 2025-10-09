@@ -101,7 +101,7 @@ void cc_node_init(cc_node_ctx_t *ctx, const cc_node_uart_cb_cfg_t *uart_cb, void
  *
  * \return True if data needs to be transmitted, false otherwise.
  */
-bool cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms);
+void cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms);
 
 /**
  * \brief Checks if the chain communication is busy.

@@ -510,42 +510,44 @@ void cc_node_state_rx_header(cc_node_ctx_t *ctx)
     cc_node_timer_start(ctx); /* Start the timer. */
 
     /* Handle the data. */
-    if (ctx->data_cnt == 0) { /* Handle first header byte. */
-
-        ctx->header.raw[0] = data; /* Store the first header byte */
+    if (ctx->data_cnt == 0) {      /* Handle first header byte. */
+        ctx->header.raw[0] = data; /* Store the first header byte. */
         ctx->header.raw[1] = 0;    /* Clear the second header byte */
         ctx->header.raw[2] = 0;    /* Clear the third header byte */
         ctx->action        = cc_header_action_get(ctx->header);
         if (ctx->action == CC_ACTION_SYNC) {
             /* We only expect one header byte. */
             /* TODO */
+        }
+
+    } else if (ctx->data_cnt == 1) { /* Handle second header byte. */
+        ctx->header.raw[1] = data;   /* Set the second header byte. */
+                                     /* Get the node count, increment it and transmit it. */
+        ctx->node_cnt = cc_header_node_cnt_get(ctx->header);
+        ctx->node_cnt += (ctx->action == CC_ACTION_READ) ? (1) : (-1);
+        cc_header_node_cnt_set(&ctx->header, ctx->node_cnt & 0x1fff); /* Mask to 13 bits to avoid assertion. */
+
+    } else {                                     /* Handle third header byte. */
+        cc_header_node_cnt_set(&ctx->header, 0); /* Clear the node count to get the MSB. */
+        ctx->header.raw[2]   = data;             /* Set the third header byte. */
+        int16_t node_cnt_msb = cc_header_node_cnt_get(ctx->header);
+        ctx->node_cnt += node_cnt_msb;
+        /* Decrement the node count before determining the header parity. */
+        cc_header_node_cnt_set(&ctx->header,
+                               ((ctx->action == CC_ACTION_READ) ? (ctx->node_cnt - 1) : (ctx->node_cnt + 1)));
+        bool header_parity_valid = cc_header_parity_check(ctx->header);
+        cc_header_node_cnt_set(&ctx->header, (ctx->node_cnt)); /* Restore cnt. */
+        if (!header_parity_valid) {
+            cc_node_error_and_terminate(ctx, CC_NODE_ERR_HEADER_PARITY); /* Header parity error */
+            /* Break the header parity for subsequent nodes as well. */
+            cc_header_parity_set(&ctx->header, false);
         } else {
-            /* Get the node count, increment it and transmit it. */
-            ctx->node_cnt = cc_header_node_cnt_get(ctx->header);
-            ctx->node_cnt++;
-            cc_header_node_cnt_set(&ctx->header, ctx->node_cnt);
-            ctx->uart.write(ctx->uart_userdata, &ctx->header.raw[0], 1);
+            ctx->property_id = cc_header_property_get(ctx->header);
+            cc_header_parity_set(&ctx->header, true);              /* Ensure parity is set correctly. */
+            cc_node_state_change(ctx, CC_NODE_STATE_DEC_NODE_CNT); /* Switch to next state. */
         }
-    } else {                                    /* Handle second and third header bytes */
-        ctx->header.raw[ctx->data_cnt] += data; /* ADD! the second/third header byte. */
-        if (ctx->data_cnt == 2) {               /* Full header received. */
-            ctx->node_cnt = cc_header_node_cnt_get(ctx->header);
-            /* Decrement the node count before determining the header parity. */
-            cc_header_node_cnt_set(&ctx->header, (ctx->node_cnt - 1));
-            bool header_parity_valid = cc_header_parity_check(ctx->header);
-            cc_header_node_cnt_set(&ctx->header, (ctx->node_cnt)); /* Restore cnt. */
-            if (!header_parity_valid) {
-                cc_node_error_and_terminate(ctx, CC_NODE_ERR_HEADER_PARITY); /* Header parity error */
-                /* Break the header parity for subsequent nodes as well. */
-                cc_header_parity_set(&ctx->header, false);
-            } else {
-                ctx->property_id = cc_header_property_get(ctx->header);
-                cc_header_parity_set(&ctx->header, true);              /* Ensure parity is set correctly. */
-                cc_node_state_change(ctx, CC_NODE_STATE_DEC_NODE_CNT); /* Switch to next state. */
-            }
-        }
-        ctx->uart.write(ctx->uart_userdata, ctx->header.raw + ctx->data_cnt, 1);
     }
+    ctx->uart.write(ctx->uart_userdata, ctx->header.raw + ctx->data_cnt, 1);
 
     /* Increment the data count. */
     ctx->data_cnt++;

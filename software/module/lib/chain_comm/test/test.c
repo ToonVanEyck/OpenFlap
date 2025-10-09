@@ -656,28 +656,28 @@ void test_cc_header_property_set_get(void)
 {
     cc_msg_header_t header = {0};
 
-    cc_header_property_set(&header, 0b11); /* This should only affect raw byte [1]. */
-    TEST_ASSERT_EQUAL(0b00000000, header.raw[0]);
-    TEST_ASSERT_EQUAL(0b11000000, header.raw[1]);
-    TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
-    TEST_ASSERT_EQUAL(0b11, cc_header_property_get(header));
-
-    cc_header_property_set(&header, 0b100); /* This should only affect raw byte [0]. */
+    cc_header_property_set(&header, 0b10); /* This should only affect raw byte [0]. */
     TEST_ASSERT_EQUAL(0b00000001, header.raw[0]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[1]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
-    TEST_ASSERT_EQUAL(0b100, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(0b10, cc_header_property_get(header));
+
+    cc_header_property_set(&header, 0b01); /* This should only affect raw byte [1]. */
+    TEST_ASSERT_EQUAL(0b00000000, header.raw[0]);
+    TEST_ASSERT_EQUAL(0b10000000, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
+    TEST_ASSERT_EQUAL(0b01, cc_header_property_get(header));
 
     cc_header_property_set(&header, 0b111111); /* All property bits set. */
-    TEST_ASSERT_EQUAL(0b00001111, header.raw[0]);
-    TEST_ASSERT_EQUAL(0b11000000, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b00011111, header.raw[0]);
+    TEST_ASSERT_EQUAL(0b10000000, header.raw[1]);
     TEST_ASSERT_EQUAL(0b00000000, header.raw[2]);
     TEST_ASSERT_EQUAL(0b111111, cc_header_property_get(header));
 
     memset(header.raw, 0xFF, sizeof(header.raw));
     cc_header_property_set(&header, 0); /* Clear property */
-    TEST_ASSERT_EQUAL(0b11110000, header.raw[0]);
-    TEST_ASSERT_EQUAL(0b00111111, header.raw[1]);
+    TEST_ASSERT_EQUAL(0b11100000, header.raw[0]);
+    TEST_ASSERT_EQUAL(0b01111111, header.raw[1]);
     TEST_ASSERT_EQUAL(0b11111111, header.raw[2]);
 }
 
@@ -837,8 +837,8 @@ void test_node_rx_header_state_read_action_ok(void)
 {
     /* Test Params: */
     cc_action_t test_action   = CC_ACTION_READ;
-    cc_prop_id_t test_prop_id = 1; /* Only one handler so must be one!*/
-    uint16_t test_node_cnt    = 5;
+    cc_prop_id_t test_prop_id = 1;    /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 0xFF; /* This value cause a carry from raw[1] to raw[2] */
 
     /* Setup A Node. */;
     cc_node_ctx_t node_ctx = {0};
@@ -891,8 +891,8 @@ void test_node_rx_header_state_read_action_parity_error(void)
 {
     /* Test Params: */
     cc_action_t test_action   = CC_ACTION_READ;
-    cc_prop_id_t test_prop_id = 1; /* Only one handler so must be one!*/
-    uint16_t test_node_cnt    = 5;
+    cc_prop_id_t test_prop_id = 1;    /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 0xFF; /* This value cause a carry from raw[1] to raw[2] */
 
     /* Setup A Node. */;
     cc_node_ctx_t node_ctx = {0};
@@ -985,6 +985,60 @@ void test_node_rx_header_state_read_action_timeout_error(void)
     TEST_ASSERT_EQUAL(CC_NODE_ERR_TIMEOUT, node_ctx.last_error);
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_node_rx_header_state_write_action_ok(void)
+{
+    /* Test Params: */
+    cc_action_t test_action   = CC_ACTION_WRITE;
+    cc_prop_id_t test_prop_id = 1;     /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 0xFC0; /* This value cause a (negative) carry from raw[1] to raw[2] */
+
+    /* Setup A Node. */;
+    cc_node_ctx_t node_ctx = {0};
+    node_dummy_config(&node_ctx);
+
+    /* Setup the state. */
+    node_ctx.state      = CC_NODE_STATE_RX_HEADER;
+    node_ctx.next_state = CC_NODE_STATE_RX_HEADER;
+
+    /* Run the chain communication node. */
+    cc_node_tick(&node_ctx, 0); /* Initial Tick. */
+
+    /* Write a dummy header. */
+    cc_msg_header_t header = {0};
+    cc_header_action_set(&header, test_action);
+    cc_header_property_set(&header, test_prop_id);
+    cc_header_node_cnt_set(&header, test_node_cnt);
+    cc_header_parity_set(&header, true);
+    uart_ctx.cnt_readable = 3;
+    memcpy(uart_ctx.rx_buf, header.raw, 3);
+
+    uart_ctx.cnt_writable = 1000;
+    uart_ctx.rx_cnt       = 0;
+    uart_ctx.tx_cnt       = 0;
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(1, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(2, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(2, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(3, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(3, node_ctx.data_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.next_state);
+
+    memcpy(header.raw, uart_ctx.tx_buf, 3); /* Compare the transmitted header. */
+    TEST_ASSERT_EQUAL(test_action, cc_header_action_get(header));
+    TEST_ASSERT_EQUAL(test_prop_id, cc_header_property_get(header));
+    TEST_ASSERT_EQUAL(test_node_cnt - 1, cc_header_node_cnt_get(header));
+    TEST_ASSERT_TRUE(cc_header_parity_check(header));
+}
+
 //======================================================================================================================
 //                                                   MAIN TEST RUNNER
 //======================================================================================================================
@@ -1005,23 +1059,26 @@ int main(void)
     //---------------------- V2 TESTS ------------------------
 
     /* Test shared functions. */
-    // RUN_TEST(test_cc_cobs_encode_decode_ok);
-    // RUN_TEST(test_cc_cobs_encode_nok);
-    // RUN_TEST(test_cc_cobs_decode_nok);
-    // RUN_TEST(test_cc_checksum_update);
-    // RUN_TEST(test_cc_checksum_calculate);
-    // RUN_TEST(test_cc_parity_check);
-    // RUN_TEST(test_cc_node_cnt_set_get);
-    // RUN_TEST(test_cc_header_action_set_get);
-    // RUN_TEST(test_cc_header_property_set_get);
-    // RUN_TEST(test_cc_header_parity_set);
+    RUN_TEST(test_cc_cobs_encode_decode_ok);
+    RUN_TEST(test_cc_cobs_encode_nok);
+    RUN_TEST(test_cc_cobs_decode_nok);
+    RUN_TEST(test_cc_checksum_update);
+    RUN_TEST(test_cc_checksum_calculate);
+    RUN_TEST(test_cc_parity_check);
+    RUN_TEST(test_cc_node_cnt_set_get);
+    RUN_TEST(test_cc_header_action_set_get);
+    RUN_TEST(test_cc_header_property_set_get);
+    RUN_TEST(test_cc_header_parity_set);
 
     /* Test Master functions. */
     // RUN_TEST(test_cc_master_prop_read);
     // RUN_TEST(test_master_read_single_node);
+
+    /* Test Node functions. */
     RUN_TEST(test_node_rx_header_state_read_action_ok);
     RUN_TEST(test_node_rx_header_state_read_action_parity_error);
     RUN_TEST(test_node_rx_header_state_read_action_timeout_error);
+    RUN_TEST(test_node_rx_header_state_write_action_ok);
 
     return UNITY_END();
 }
@@ -1046,6 +1103,10 @@ size_t uart_dummy_read(void *uart_userdata, uint8_t *data, size_t size)
     size_t s = ctx->cnt_readable < size ? ctx->cnt_readable : size;
     memcpy(data, ctx->rx_buf + ctx->rx_cnt, s);
 
+    for (size_t i = 0; i < s; i++) {
+        printf("RX %02X\n", data[i]);
+    }
+
     ctx->rx_cnt += s;
     ctx->cnt_readable -= s;
     return s;
@@ -1066,6 +1127,10 @@ size_t uart_dummy_write(void *uart_userdata, const uint8_t *data, size_t size)
 {
     uart_dummy_ctx_t *ctx = (uart_dummy_ctx_t *)uart_userdata;
     memcpy(ctx->tx_buf + ctx->tx_cnt, data, size);
+
+    for (size_t i = 0; i < size; i++) {
+        printf("TX %02X\n", data[i]);
+    }
 
     ctx->tx_busy = true;
     ctx->tx_cnt += size;

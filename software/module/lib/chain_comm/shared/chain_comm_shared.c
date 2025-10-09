@@ -136,44 +136,54 @@ void cc_header_action_set(cc_msg_header_t *header, cc_action_t action)
 
 cc_prop_id_t cc_header_property_get(cc_msg_header_t header)
 {
-    uint16_t property_msb = header.raw[0] & 0b00001111;        /* 4 LSB bits are stored in byte 0 */
-    uint16_t property_lsb = (header.raw[1] >> 6) & 0b00000011; /* 2 MSB bits are stored in byte 1 */
-    return (cc_prop_id_t)((property_msb << 2) | property_lsb);
+    const uint16_t lsb_bits = 1; /* Number of LSB bits stored in byte 1 */
+    const uint16_t msb_bits = 5; /* Number of MSB bits stored in byte 0 */
+
+    uint16_t lsb = (header.raw[1] & ~(0xFF >> lsb_bits)) >> (8 - lsb_bits);
+    uint16_t msb = (header.raw[0] & ~(0xFF << msb_bits)) << lsb_bits;
+    return (cc_prop_id_t)(msb | lsb);
 }
 
 void cc_header_property_set(cc_msg_header_t *header, cc_prop_id_t property)
 {
+    const uint16_t lsb_bits = 1; /* Number of LSB bits stored in byte 1 */
+    const uint16_t msb_bits = 5; /* Number of MSB bits stored in byte 0 */
+    assert(property <= (1 << (lsb_bits + msb_bits)) - 1);
     assert(header != NULL);
-    assert(property <= (1 << 6) - 1); /* 6 bits are used for property */
 
-    uint16_t property_msb = (property >> 2) & 0b1111; /* 4 MSB bits to be set */
-    uint16_t property_lsb = property & 0b11;          /* 2 LSB bits to be set */
+    uint16_t lsb = property << (8 - lsb_bits);
+    uint16_t msb = property >> lsb_bits;
 
-    header->raw[0] = (header->raw[0] & 0b11110000) | (property_msb & 0b00001111); /* Set 4 LSB bits in byte 0 */
-    header->raw[1] = (header->raw[1] & 0b00111111) | (property_lsb << 6);         /* Set 2 MSB bits in byte 1 */
+    header->raw[1] = (header->raw[1] & (0xFF >> lsb_bits)) | lsb;
+    header->raw[0] = (header->raw[0] & (0xFF << msb_bits)) | msb;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 uint16_t cc_header_node_cnt_get(cc_msg_header_t header)
 {
-    uint16_t node_cnt_lsb = header.raw[1] & 0b111111; /* 6 LSB bits are stored in byte 1 */
-    uint16_t node_cnt_msb = header.raw[2] >> 1;       /* 7 MSB bits are stored in byte 2 */
-    return (node_cnt_msb << 6) | node_cnt_lsb;
+    const uint16_t lsb_bits = 6; /* Number of LSB bits stored in byte 1 */
+    const uint16_t msb_bits = 7; /* Number of MSB bits stored in byte 2 */
+
+    uint16_t lsb = (header.raw[1] & ~(0xFF << lsb_bits));
+    uint16_t msb = ((header.raw[2] & ~(0xFF >> msb_bits)) >> (8 - msb_bits)) << lsb_bits;
+    return (uint16_t)(msb | lsb);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void cc_header_node_cnt_set(cc_msg_header_t *header, uint16_t node_cnt)
 {
+    const uint16_t lsb_bits = 6; /* Number of LSB bits stored in byte 1 */
+    const uint16_t msb_bits = 7; /* Number of MSB bits stored in byte 2 */
+    assert(node_cnt <= (1 << (lsb_bits + msb_bits)) - 1);
     assert(header != NULL);
-    assert(node_cnt <= (1 << 13) - 1); /* 13 bits are used for node count */
 
-    uint16_t node_cnt_lsb = node_cnt & 0b111111;         /* 6 LSB bits to be set */
-    uint16_t node_cnt_msb = (node_cnt >> 6) & 0b1111111; /* 7 MSB bits to be set */
+    uint16_t lsb = node_cnt & ~(0xFF << lsb_bits);
+    uint16_t msb = (node_cnt >> lsb_bits) << (8 - msb_bits);
 
-    header->raw[1] = (header->raw[1] & 0b11000000) | (node_cnt_lsb & 0b00111111); /* Set 6 LSB bits in byte 1 */
-    header->raw[2] = (header->raw[2] & 0b00000001) | (node_cnt_msb << 1);         /* Set 7 MSB bits in byte 2 */
+    header->raw[1] = ((header->raw[1] & (0xFF << lsb_bits)) | lsb);
+    header->raw[2] = ((header->raw[2] & (0xFF >> msb_bits)) | msb);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

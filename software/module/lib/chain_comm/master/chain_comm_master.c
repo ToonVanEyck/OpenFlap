@@ -388,9 +388,7 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
     cc_msg_header_t tx_header = {0};
     cc_header_action_set(&tx_header, CC_ACTION_READ);
     cc_header_property_set(&tx_header, property_id);
-    // cc_header_node_cnt_set(&tx_header, 0);
-    cc_header_parity_set(&tx_header);
-    printf("Master transmit header: 0x%02X 0x%02X 0x%02X \n", tx_header.raw[0], tx_header.raw[1], tx_header.raw[2]);
+    cc_header_parity_set(&tx_header, true);
 
     // /* Flush uart RX buffer. */
     // // uart_flush_input(UART_NUM);
@@ -405,7 +403,6 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
     CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, sizeof(rx_header)) == sizeof(rx_header),
                        CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive header");
 
-    printf("Master received header: 0x%02X 0x%02X 0x%02X \n", rx_header.raw[0], rx_header.raw[1], rx_header.raw[2]);
     /* Check header integrity. */
     CC_RETURN_ON_FALSE(cc_header_parity_check(rx_header), CC_MASTER_ERR_FAIL, TAG, "Header parity invalid");
     CC_RETURN_ON_FALSE(cc_header_action_get(rx_header) == CC_ACTION_READ, CC_MASTER_ERR_FAIL, TAG,
@@ -437,6 +434,11 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
         CC_RETURN_ON_FALSE(cc_payload_cobs_decode(property_data, &data_size, property_data + CC_COBS_OVERHEAD_SIZE,
                                                   read_cnt - CC_COBS_OVERHEAD_SIZE),
                            CC_MASTER_ERR_PAYLOAD, TAG, "Failed to decode COBS payload");
+
+        if (data_size == 0) {
+            // No data received for this node, skip processing.
+            continue;
+        }
 
         /* Verify the checksum. */
         CC_RETURN_ON_FALSE(cc_checksum_calculate(property_data, data_size) == CC_CHECKSUM_OK, CC_MASTER_ERR_CHECKSUM,

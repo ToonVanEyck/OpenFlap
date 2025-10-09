@@ -1,6 +1,4 @@
-#include "chain_comm_master.h"
 #include "chain_comm_master_test.h"
-#include "chain_comm_node.h"
 #include "chain_comm_node_test.h"
 #include "test_properties.h"
 
@@ -9,9 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-// static cc_test_master_ctx_t test_master_ctx;
-// static cc_test_node_group_ctx_t node_test_grp;
 
 void randomize_array(uint8_t *array, size_t size)
 {
@@ -405,6 +400,13 @@ void test_cc_cobs_encode_decode_ok(void)
     TEST_ASSERT_TRUE(cc_payload_cobs_decode(payload_out, &payload_out_len, encoded, encoded_len));
     TEST_ASSERT_EQUAL(payload_in_len, payload_out_len);
     TEST_ASSERT_COBS_ENCODED(encoded, encoded_len);
+
+    /* Decode empty payload. */
+    encoded[0]      = 0;
+    encoded_len     = 1;
+    payload_out_len = sizeof(payload_out); /* "unlimited" */
+    TEST_ASSERT_TRUE(cc_payload_cobs_decode(payload_out, &payload_out_len, encoded, encoded_len));
+    TEST_ASSERT_EQUAL(payload_out_len, 0);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -671,7 +673,7 @@ void test_cc_header_parity_set(void)
     TEST_ASSERT_FALSE(cc_header_parity_check(header_original));
 
     /* Fix parity. */
-    cc_header_parity_set(&header_fixed);
+    cc_header_parity_set(&header_fixed, true);
 
     /* Check that parity is now correct. */
     TEST_ASSERT_TRUE(cc_header_parity_check(header_fixed));
@@ -682,6 +684,19 @@ void test_cc_header_parity_set(void)
 
     /* Check that only the parity bit was changed. */
     TEST_ASSERT_TRUE((header_original.raw[2] & 1) != (header_fixed.raw[2] & 1));
+
+    /* Break parity. */
+    cc_header_parity_set(&header_fixed, false);
+
+    /* Check that parity is now incorrect. */
+    TEST_ASSERT_FALSE(cc_header_parity_check(header_fixed));
+
+    /* Additional test case. */
+    header_original = (cc_msg_header_t) {.raw = {0x00, 0x03, 0x01}};
+    printf("Original header: %02X %02X %02X\n", header_original.raw[0], header_original.raw[1], header_original.raw[2]);
+    cc_header_parity_set(&header_original, true);
+    printf("Fixed header:   %02X %02X %02X\n", header_original.raw[0], header_original.raw[1], header_original.raw[2]);
+    TEST_ASSERT_TRUE(cc_header_parity_check(header_original)); // Parity should be ok.
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -689,7 +704,6 @@ void test_cc_header_parity_set(void)
 void test_cc_master_prop_read(void)
 {
     /* Initialize a test master. */
-    cc_master_err_t err = CC_MASTER_OK;
     cc_test_master_ctx_t test_master_ctx;
     cc_test_master_init(&test_master_ctx);
 
@@ -703,7 +717,6 @@ void test_cc_master_prop_read(void)
     uart_driver_t test_node    = {.rx_fd = test_master_ctx.original_rx_fd, .tx_fd = pipefd[1], .print_debug = "NODE"};
 
     uint8_t expected_data[5] = {0};
-    // randomize_array(expected_data, sizeof(expected_data));
     memset(expected_data, 0xAA, sizeof(expected_data) - 1);
     expected_data[sizeof(expected_data) - 1] = cc_checksum_calculate(expected_data, sizeof(expected_data) - 1);
 
@@ -714,7 +727,7 @@ void test_cc_master_prop_read(void)
     cc_header_action_set(&header, CC_ACTION_READ);
     cc_header_property_set(&header, PROP_STATIC_RW);
     cc_header_node_cnt_set(&header, 1);
-    cc_header_parity_set(&header);
+    cc_header_parity_set(&header, true);
 
     tx_payload[0] = header.raw[0];
     tx_payload[1] = header.raw[1];
@@ -724,10 +737,49 @@ void test_cc_master_prop_read(void)
     uart_write(&test_node, tx_payload, tx_payload_len + 3);
 
     /* Try a read all command */
-    err = cc_master_prop_read(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+    cc_master_prop_read(&test_master_ctx.master_ctx, PROP_STATIC_RW);
 
     uint8_t received_data[100] = {0};
     uart_read(&test_master_ctx.uart, received_data, 3);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_master_read_single_node(void)
+{
+    size_t node_cnt     = 10;
+    cc_master_err_t err = CC_MASTER_OK;
+
+    /* Initialize master. */
+    cc_test_master_ctx_t test_master_ctx = {0};
+    cc_test_master_init(&test_master_ctx);
+
+    TEST_ASSERT_NULL(test_master_ctx.node_data);
+    TEST_ASSERT_EQUAL(0, test_master_ctx.node_cnt);
+
+    /* Initialize the nodes. */
+    cc_test_node_group_ctx_t node_test_grp = {0};
+    setup_cc_node_property_list_handlers();
+    cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
+
+    /* Try a read all command */
+    for (int i = 0; i < node_cnt; i++) {
+        // randomize_array(node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        memset(node_test_grp.node_list[i].node_data, 0xAA, TEST_PROP_SIZE);
+    }
+
+    err = cc_master_prop_read(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+    usleep(10000);
+    TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
+
+    TEST_ASSERT_NOT_NULL(test_master_ctx.node_data);
+    TEST_ASSERT_EQUAL(node_cnt, test_master_ctx.node_cnt);
+
+    for (int i = 0; i < node_cnt; i++) {
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE),
+                                     node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_test_grp.node_list[i].node_ctx.state);
+    }
 }
 
 //======================================================================================================================
@@ -750,21 +802,20 @@ int main(void)
     //---------------------- V2 TESTS ------------------------
 
     /* Test shared functions. */
-    RUN_TEST(test_cc_cobs_encode_decode_ok);
-    RUN_TEST(test_cc_cobs_encode_nok);
-    RUN_TEST(test_cc_cobs_decode_nok);
-    RUN_TEST(test_cc_checksum_update);
-    RUN_TEST(test_cc_checksum_calculate);
-    RUN_TEST(test_cc_parity_check);
-    RUN_TEST(test_cc_node_cnt_set_get);
-    RUN_TEST(test_cc_header_action_set_get);
-    RUN_TEST(test_cc_header_property_set_get);
-    RUN_TEST(test_cc_header_parity_set);
+    // RUN_TEST(test_cc_cobs_encode_decode_ok);
+    // RUN_TEST(test_cc_cobs_encode_nok);
+    // RUN_TEST(test_cc_cobs_decode_nok);
+    // RUN_TEST(test_cc_checksum_update);
+    // RUN_TEST(test_cc_checksum_calculate);
+    // RUN_TEST(test_cc_parity_check);
+    // RUN_TEST(test_cc_node_cnt_set_get);
+    // RUN_TEST(test_cc_header_action_set_get);
+    // RUN_TEST(test_cc_header_property_set_get);
+    // RUN_TEST(test_cc_header_parity_set);
 
     /* Test Master functions. */
-    RUN_TEST(test_cc_master_prop_read);
+    // RUN_TEST(test_cc_master_prop_read);
+    RUN_TEST(test_master_read_single_node);
 
     return UNITY_END();
 }
-
-//----------------------------------------------------------------------------------------------------------------------

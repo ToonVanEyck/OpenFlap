@@ -8,8 +8,8 @@
 
 // static void *cc_test_node_thread_loop(void *arg);
 static void *cc_test_node_thread_loop(void *arg);
-static void node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
-static void node_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+static bool node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+static bool node_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
 
 bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt, cc_test_master_ctx_t *master)
 {
@@ -46,7 +46,7 @@ bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt,
         node_test_grp->node_list[i].original_rx_fd = pipefd[0];
         memset(node_test_grp->node_list[i].node_data, 0, TEST_PROP_SIZE);
 
-        node_test_grp->node_list[i].uart.print_debug = NULL;        //"NODE";
+        asprintf(&node_test_grp->node_list[i].uart.print_debug, "NODE %zu", i);
         uart_delay_xth_tx(&node_test_grp->node_list[i].uart, 0, 0); // No delay by default
 
         cc_node_init(&node_test_grp->node_list[i].node_ctx, &uart_cb, &node_test_grp->node_list[i].uart,
@@ -67,7 +67,7 @@ bool cc_test_node_init(cc_test_node_group_ctx_t *node_test_grp, size_t node_cnt,
         perror("pthread_create");
         exit(EXIT_FAILURE);
     }
-
+    usleep(50000); // Wait a bit for threads to start
     return true;
 }
 
@@ -78,6 +78,7 @@ bool cc_test_node_deinit(cc_test_node_group_ctx_t *node_test_grp)
     for (int i = 0; i < node_test_grp->node_cnt; i++) {
         close(node_test_grp->node_list[i].uart.rx_fd);
         close(node_test_grp->node_list[i].uart.tx_fd);
+        free(node_test_grp->node_list[i].uart.print_debug);
     }
     free(node_test_grp->node_list);
     return true;
@@ -125,7 +126,7 @@ static void *cc_test_node_thread_loop(void *arg)
     return NULL;
 }
 
-static void node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
+static bool node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
 {
     (void)node_idx;
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)userdata;
@@ -133,11 +134,14 @@ static void node_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void
     for (uint16_t i = 0; i < *size; i++) {
         printf("  Data[%d]: %02X\n", i, buf[i]);
     }
+    return true;
 }
 
-static void node_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
+static bool node_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
 {
+    printf("Dummy node get handler called for node %d\n", node_idx);
     cc_test_node_ctx_t *ctx = (cc_test_node_ctx_t *)userdata;
     memcpy(buf, ctx->node_data, TEST_PROP_SIZE);
     *size = TEST_PROP_SIZE;
+    return true;
 }

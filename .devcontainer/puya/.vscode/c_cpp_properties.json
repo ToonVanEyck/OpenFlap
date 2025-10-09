@@ -4,8 +4,9 @@
             "name": "Linux",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}/software/common/**",
-                "${workspaceFolder}/software/module/**",
+                "/opt/unity/src",
+                "${workspaceFolder}/software/module/**"
+                // "${workspaceFolder}/software/common/**",
             ],
             "defines": [
                 "__STATIC_INLINE=static inline"

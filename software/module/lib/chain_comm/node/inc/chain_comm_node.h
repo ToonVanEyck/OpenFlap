@@ -2,21 +2,17 @@
 
 #include "chain_comm_shared.h"
 
-#define GENERATE_STATE_ENUM(ENUM, NAME) ENUM,
-#define GENERATE_STATE_NAME(ENUM, NAME) NAME,
+#define GENERATE_ENUM_VALUE(ENUM, NAME) ENUM,
+#define GENERATE_ENUM_NAME(ENUM, NAME)  NAME,
 
-#define CHAIN_COMM_STATE(GENERATOR)                                                                                    \
-    GENERATOR(rxHeader, "rxHeader")                                                                                    \
-    GENERATOR(rxSize, "rxSize")                                                                                        \
-    GENERATOR(readAll_rxCnt, "readAll_rxCnt")                                                                          \
-    GENERATOR(readAll_rxData, "readAll_rxData")                                                                        \
-    GENERATOR(readAll_txSize, "readAll_txSize")                                                                        \
-    GENERATOR(readAll_txData, "readAll_txData")                                                                        \
-    GENERATOR(writeAll_rxData, "writeAll_rxData")                                                                      \
-    GENERATOR(writeSeq_rxData, "writeSeq_rxData")                                                                      \
-    GENERATOR(writeAll_rxAck, "writeAll_rxAck")
-
-typedef enum { CHAIN_COMM_STATE(GENERATE_STATE_ENUM) } cc_node_state_t;
+#define CC_NODE_STATE_GENERATOR(GENERATOR)                                                                             \
+    GENERATOR(CC_NODE_STATE_RX_HEADER, "Receive Header")                                                               \
+    GENERATOR(CC_NODE_STATE_ERROR, "Error")                                                                            \
+    GENERATOR(CC_NODE_STATE_TIMEOUT, "Timeout")                                                                        \
+    GENERATOR(CC_NODE_STATE_DEC_NODE_CNT, "Decrement Node Cnt")                                                        \
+    GENERATOR(CC_NODE_STATE_TX_PROP, "Transmit Property Data")                                                         \
+    GENERATOR(CC_NODE_STATE_RX_PROP, "Receive Property Data")
+typedef enum { CC_NODE_STATE_GENERATOR(GENERATE_ENUM_VALUE) } cc_node_state_t;
 
 typedef struct {
     uart_read_cb_t read;
@@ -26,6 +22,21 @@ typedef struct {
     uart_tx_buff_empty_cb_t tx_buff_empty;
     uart_is_busy_cb_t is_busy;
 } cc_node_uart_cb_cfg_t;
+
+#define CC_NODE_ERROR_GENERATOR(GENERATOR)                                                                             \
+    GENERATOR(CC_NODE_ERR_NONE = 0, "None")                                                                            \
+    GENERATOR(CC_NODE_ERR_TIMEOUT, "Timeout")                                                                          \
+    GENERATOR(CC_NODE_ERR_COBS_ENC, "COBS Encoding")                                                                   \
+    GENERATOR(CC_NODE_ERR_COBS_DEC, "COBS Decoding")                                                                   \
+    GENERATOR(CC_NODE_ERR_CHECKSUM, "Checksum")                                                                        \
+    GENERATOR(CC_NODE_ERR_READ_NOT_SUPPORTED, "Read Not Supported")                                                    \
+    GENERATOR(CC_NODE_ERR_WRITE_NOT_SUPPORTED, "Write Not Supported")                                                  \
+    GENERATOR(CC_NODE_ERR_PROP_NOT_SUPPORTED, "Property Not Supported")                                                \
+    GENERATOR(CC_NODE_ERR_WRITE_CB, "Write Callback")                                                                  \
+    GENERATOR(CC_NODE_ERR_READ_CB, "Read Callback")                                                                    \
+    GENERATOR(CC_NODE_ERR_HEADER_PARITY, "Header Parity")                                                              \
+    GENERATOR(CC_NODE_ERR_INVALID_STATE, "Invalid State")
+typedef enum { CC_NODE_ERROR_GENERATOR(GENERATE_ENUM_VALUE) } cc_node_err_t;
 
 /**
  * \brief Chain-comm context object.
@@ -37,17 +48,26 @@ typedef struct {
     cc_node_uart_cb_cfg_t uart; /**< Uart driver callback configurations. */
     void *uart_userdata;        /**< Uart user data to be used by callback functions. */
 
-    cc_node_state_t state; /**< The current state of the FSM managing the protocol. */
+    cc_node_state_t state;      /**< The current state of the FSM managing the protocol. */
+    cc_node_state_t next_state; /**< The next state of the FSM managing the protocol. */
 
     uint32_t timeout_tick_cnt; /**< Counter for determining timeout. */
     uint32_t last_tick_ms;     /**< Last tick in milliseconds, used for timeout calculation. */
 
-    // cc_msg_header_t header;                      /**< The header of the current message. */
-    // uint8_t data_cnt;                            /**< The number of bytes handled in the current state. */
-    // uint16_t index;                              /**< The index counter of the module in the display. */
-    // uint8_t property_data[CC_PROPERTY_SIZE_MAX]; /**< The data of the current property to be written or read. */
+    cc_node_err_t last_error;    /**< Last error code. */
+    cc_node_state_t error_state; /**< State in which the last error occurred. */
+
+    cc_msg_header_t header;   /**< The header of the current message. */
+    cc_action_t action;       /**< The action of the current message (from header). */
+    cc_prop_id_t property_id; /**< The ID of the current property (from header). */
+    uint16_t node_cnt;        /**< The node counter (from header). */
+
+    uint8_t data_cnt; /**< The number of bytes handled in the current state. */
+
+    uint8_t property_data[CC_PAYLOAD_SIZE_MAX]; /**< The data of the current property to be written or read. */
+    size_t property_size;                       /**< The size of the current property. */
+
     // cc_ret_code_t msg_rc;                        /**< return code for acknowledgment. */
-    // uint16_t property_size;                      /**< The size of the current property. */
     // uint8_t checksum_rx_calc;                    /**< Running checksum of received data. */
     // uint8_t checksum_tx_calc;                    /**< Running checksum of transmitted data. */
     // uint16_t writeSeq_packet_cnt;                /**< Counter for the number of packets in the write sequence. */

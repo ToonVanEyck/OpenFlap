@@ -9,8 +9,8 @@
 
 #define CC_PROPERTY_SIZE_MAX (254) /**< Maximum length of a property. */
 
-/** Additional overhead available for COBS encoding and checksum. */
-#define CC_COBS_OVERHEAD_SIZE ((CC_PROPERTY_SIZE_MAX / 0xff) + 2)
+/** Additional overhead available for COBS encoding and checksum and zero terminator. */
+#define CC_COBS_OVERHEAD_SIZE ((CC_PROPERTY_SIZE_MAX / 0xff) + 3)
 #define CC_PAYLOAD_SIZE_MAX   (CC_PROPERTY_SIZE_MAX + CC_COBS_OVERHEAD_SIZE) /**< Maximum size of a payload. */
 
 #ifndef CHAIN_COMM_TIMEOUT_MS
@@ -46,7 +46,7 @@ typedef void (*uart_read_timeout_set_cb_t)(void *uart_userdata, uint32_t timeout
  *
  * \return Number of bytes read, or -1 on error.
  */
-typedef ssize_t (*uart_read_cb_t)(void *uart_userdata, uint8_t *data, size_t size);
+typedef size_t (*uart_read_cb_t)(void *uart_userdata, uint8_t *data, size_t size);
 
 /**
  * \brief Chain communication UART rx buffer space used callback.
@@ -55,7 +55,7 @@ typedef ssize_t (*uart_read_cb_t)(void *uart_userdata, uint8_t *data, size_t siz
  *
  * \return Number of bytes available in the rx buffer.
  */
-typedef ssize_t (*uart_cnt_readable_cb_t)(void *uart_userdata);
+typedef size_t (*uart_cnt_readable_cb_t)(void *uart_userdata);
 
 /**
  * \brief Chain communication UART write callback.
@@ -66,7 +66,7 @@ typedef ssize_t (*uart_cnt_readable_cb_t)(void *uart_userdata);
  *
  * \return Number of bytes written, or -1 on error.
  */
-typedef ssize_t (*uart_write_cb_t)(void *uart_userdata, const uint8_t *data, size_t size);
+typedef size_t (*uart_write_cb_t)(void *uart_userdata, const uint8_t *data, size_t size);
 
 /**
  * \brief Chain communication UART tx buffer space available callback.
@@ -75,7 +75,7 @@ typedef ssize_t (*uart_write_cb_t)(void *uart_userdata, const uint8_t *data, siz
  *
  * \return Number of bytes available in the tx buffer.
  */
-typedef ssize_t (*uart_cnt_writable_cb_t)(void *uart_userdata);
+typedef size_t (*uart_cnt_writable_cb_t)(void *uart_userdata);
 
 /**
  * \brief Chain communication UART tx pending callback.
@@ -101,7 +101,7 @@ typedef bool (*uart_is_busy_cb_t)(void *uart_userdata);
  * \param[inout] size Pointer to the size of the data buffer.
  * \param[in] userdata Pointer to user data.
  */
-typedef void (*cc_prop_handler_cb_t)(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+typedef bool (*cc_prop_handler_cb_t)(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
 
 typedef enum {
     CC_ACTION_READ      = 0, /**< Read property data from all nodes. */
@@ -281,5 +281,6 @@ bool cc_header_parity_check(cc_msg_header_t header);
  * \brief Set the parity bit in a message header.
  *
  * \param[inout] header Pointer to the message header to set the parity bit for.
+ * \param[in] valid The parity value to set (true for valid, false for invalid).
  */
-void cc_header_parity_set(cc_msg_header_t *header);
+void cc_header_parity_set(cc_msg_header_t *header, bool valid);

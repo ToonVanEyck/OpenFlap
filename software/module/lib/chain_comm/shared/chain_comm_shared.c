@@ -193,9 +193,9 @@ bool cc_header_parity_check(cc_msg_header_t header)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void cc_header_parity_set(cc_msg_header_t *header)
+void cc_header_parity_set(cc_msg_header_t *header, bool valid)
 {
-    header->raw[2] ^= (uint8_t)!cc_header_parity_check(*header);
+    header->raw[2] ^= (uint8_t)cc_header_parity_check(*header) ^ (uint8_t)valid;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

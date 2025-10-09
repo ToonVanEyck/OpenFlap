@@ -7,8 +7,8 @@
 
 static bool node_cnt_update(void *userdata, uint16_t node_cnt);
 static bool node_exists_and_must_be_written(void *userdata, uint16_t node_idx, uint8_t property, bool *must_be_written);
-static void master_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
-static void master_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata);
+static bool master_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
+static bool master_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata);
 
 void cc_test_master_init(cc_test_master_ctx_t *ctx)
 {
@@ -103,20 +103,22 @@ static bool node_exists_and_must_be_written(void *userdata, uint16_t node_idx, u
     return exists;
 }
 
-static void master_set_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)
+static bool master_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
 {
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
     memcpy(ctx->node_data + node_idx * TEST_PROP_SIZE, buf, *size);
-    printf("Dummy set handler called for node %d with size %d and user data %p:\n", node_idx, *size, userdata);
+    printf("Dummy set handler called for node %d with size %ld and user data %p:\n", node_idx, *size, userdata);
     for (uint16_t i = 0; i < *size; i++) {
         printf("  Data[%d]: %02X\n", i, buf[i]);
     }
+    return true;
 }
 
-static void master_get_handler(uint16_t node_idx, uint8_t *buf, uint16_t *size, void *userdata)
+static bool master_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void *userdata)
 {
     // printf("Dummy get handler called for node %d with size %d and user data %p\n", node_idx, *size, userdata);
     cc_test_master_ctx_t *ctx = (cc_test_master_ctx_t *)userdata;
     *size                     = TEST_PROP_SIZE;
     memcpy(buf, ctx->node_data + node_idx * TEST_PROP_SIZE, *size);
+    return false;
 }

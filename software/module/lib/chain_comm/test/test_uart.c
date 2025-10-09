@@ -27,7 +27,6 @@ ssize_t uart_read(uart_driver_t *ctx, uint8_t *data, size_t size)
         errno = EINVAL;
         return -1;
     }
-
     const int timeout_ms = ctx->read_timeout_ms;
     struct timespec start;
     if (timeout_ms > 0 && clock_gettime(CLOCK_MONOTONIC, &start) == -1) {
@@ -90,7 +89,7 @@ ssize_t uart_read(uart_driver_t *ctx, uint8_t *data, size_t size)
         for (size_t i = 0; i < bytes_read; i++) {
             printf("[%s] RX: %02X\n", ctx->print_debug, data[i]);
         }
-        if (bytes_read == 0) {
+        if (bytes_read == 0 && timeout_ms > 0) {
             printf("[%s] RX: timeout after %u ms\n", ctx->print_debug, timeout_ms);
         }
     }

@@ -372,6 +372,7 @@ cc_master_err_t cc_master_prop_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t prop
 
 cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
 {
+    cc_master_err_t err = CC_MASTER_OK;
     CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
 
     /* Check if the property exists. */
@@ -396,6 +397,135 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
     /* Send the header. */
     CC_RETURN_ON_FALSE(ctx->uart.write(ctx->uart_userdata, tx_header.raw, sizeof(tx_header)) == sizeof(tx_header),
                        CC_MASTER_ERR_FAIL, TAG, "Failed to send header");
+
+    /* Receive the header. */
+    cc_msg_header_t rx_header = {0};
+    ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(sizeof(rx_header)));
+    CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, sizeof(rx_header)) == sizeof(rx_header),
+                       CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive header");
+
+    /* Check header integrity. */
+    CC_RETURN_ON_FALSE(cc_header_parity_check(rx_header), CC_MASTER_ERR_FAIL, TAG, "Header parity invalid");
+    CC_RETURN_ON_FALSE(cc_header_action_get(rx_header) == CC_ACTION_READ, CC_MASTER_ERR_FAIL, TAG,
+                       "Header action corrupted");
+    CC_RETURN_ON_FALSE(cc_header_property_get(rx_header) == property_id, CC_MASTER_ERR_FAIL, TAG,
+                       "Header property corrupted");
+
+    /* Update the node count. */
+    uint16_t node_cnt = cc_header_node_cnt_get(rx_header);
+    ctx->master.node_cnt_update(ctx->cc_userdata, node_cnt);
+
+    /* Receive the data. */
+    for (uint16_t i = 0; i < node_cnt; i++) {
+        uint8_t property_data[CC_PAYLOAD_SIZE_MAX] = {0};
+        size_t data_size                           = CC_PROPERTY_SIZE_MAX;
+
+        /* Read the data. */
+        ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(1));
+
+        /* Read data until the end of the message. */
+        size_t read_cnt = CC_COBS_OVERHEAD_SIZE;
+        do {
+            CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, property_data + read_cnt, 1) == 1,
+                               CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive read all data");
+            read_cnt++;
+        } while (property_data[read_cnt - 1] != 0x00 && read_cnt < CC_PAYLOAD_SIZE_MAX);
+
+        /* Decode the payload. */
+        CC_RETURN_ON_FALSE(cc_payload_cobs_decode(property_data, &data_size, property_data + CC_COBS_OVERHEAD_SIZE,
+                                                  read_cnt - CC_COBS_OVERHEAD_SIZE),
+                           CC_MASTER_ERR_COBS_DEC, TAG, "Failed to decode COBS payload");
+
+        if (data_size == 0) {
+            // No data received for this node, skip processing.
+            continue;
+        }
+
+        /* Verify the checksum. */
+        CC_RETURN_ON_FALSE(cc_checksum_calculate(property_data, data_size) == CC_CHECKSUM_OK, CC_MASTER_ERR_CHECKSUM,
+                           TAG, "Payload checksum invalid");
+        data_size--; /* Remove checksum from size. */
+
+        /* Handle the data. */
+        if (!CTX_PROP.handler.set(i, property_data, &data_size, ctx->cc_userdata)) {
+            err = CC_MASTER_ERR_WRITE_CB;
+        }
+    }
+
+    return err;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property_id, uint16_t node_cnt,
+                                     bool staged_write, bool broadcast)
+{
+    cc_master_err_t err = CC_MASTER_OK;
+
+    CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
+
+    /* Check if the property exists. */
+    CC_RETURN_ON_FALSE(property_id <= ctx->property_list_size, CC_MASTER_ERR_NOT_SUPPORTED, TAG,
+                       "Property (%d) does not exist", property_id);
+
+    /* Check if the property handler supports reading. (We read from the master and write to the nodes. ) */
+    CC_RETURN_ON_FALSE(CTX_PROP.handler.get != NULL, CC_MASTER_ERR_NOT_SUPPORTED, TAG,
+                       "Property (%d) %s is not readable.", property_id, CTX_PROP.attribute.name);
+
+    /* Check If the node count is valid. */
+    if (broadcast) {
+        CC_RETURN_ON_FALSE(node_cnt == 0, CC_MASTER_ERR_INVALID_ARG, TAG, "Node count must be zero in broadcast mode");
+    } else {
+        CC_RETURN_ON_FALSE(node_cnt > 0, CC_MASTER_ERR_INVALID_ARG, TAG,
+                           "Node count must be greater than zero in non-broadcast mode");
+    }
+
+    CC_LOGI(TAG, "Writing Property (%d) %s to all Nodes.", property_id, CTX_PROP.attribute.name);
+
+    /* Initiate the message. */
+    cc_msg_header_t tx_header = {0};
+    cc_header_action_set(&tx_header, broadcast ? CC_ACTION_BROADCAST : CC_ACTION_WRITE);
+    cc_header_staging_bit_set(&tx_header, staged_write);
+    cc_header_property_set(&tx_header, property_id);
+    cc_header_node_cnt_set(&tx_header, node_cnt);
+    cc_header_parity_set(&tx_header, true);
+
+    // /* Flush uart RX buffer. */
+    // // uart_flush_input(UART_NUM);
+
+    /* Send the header. */
+    CC_RETURN_ON_FALSE(ctx->uart.write(ctx->uart_userdata, tx_header.raw, sizeof(tx_header)) == sizeof(tx_header),
+                       CC_MASTER_ERR_FAIL, TAG, "Failed to send header");
+
+    node_cnt = broadcast ? 1 : node_cnt; /* Update node count for broadcast mode */
+
+    /* Write the data.*/
+    for (int16_t i = 0; i < node_cnt; i++) {
+        uint8_t tx_checksum_calc                    = 0;
+        uint16_t property_size                      = 0;
+        uint8_t property_data[CC_PROPERTY_SIZE_MAX] = {0};
+        size_t unencoded_size                       = 0;
+
+        /* Get the property data. */
+        if (!CTX_PROP.handler.get(i, property_data + CC_COBS_OVERHEAD_SIZE - 1, &unencoded_size, ctx->cc_userdata)) {
+            err = CC_MASTER_ERR_READ_CB;
+        }
+
+        assert(unencoded_size <= CC_PROPERTY_SIZE_MAX);
+
+        /* Append checksum. */
+        property_data[CC_COBS_OVERHEAD_SIZE - 1 + unencoded_size] =
+            cc_checksum_calculate(property_data + CC_COBS_OVERHEAD_SIZE - 1, unencoded_size);
+
+        /* Encode the property data. */
+        property_size = sizeof(property_data);
+        if (!cc_payload_cobs_encode(property_data, &property_size, property_data + CC_COBS_OVERHEAD_SIZE - 1,
+                                    unencoded_size + 1)) {
+            err = CC_MASTER_ERR_COBS_ENC;
+        }
+
+        /* Continue here ... */
+    }
 
     /* Receive the header. */
     cc_msg_header_t rx_header = {0};

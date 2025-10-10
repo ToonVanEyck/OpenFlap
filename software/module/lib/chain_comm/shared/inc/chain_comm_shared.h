@@ -107,12 +107,12 @@ typedef enum {
     CC_ACTION_READ      = 0, /**< Read property data from all nodes. */
     CC_ACTION_WRITE     = 1, /**< Write (different) property data to all nodes. */
     CC_ACTION_BROADCAST = 2, /**< Broadcast / Write (the same) property data to all nodes. */
-    CC_ACTION_SYNC      = 3, /**< Synchronization action used for error checking and latching data. */
+    CC_ACTION_SYNC      = 3, /**< Synchronization action used for error checking and committing staged data. */
 } cc_action_t;
 
 typedef enum {
-    CC_SYNC_SYNC       = 0, /**< A synchronisation byte, will be passed after the nodes exit from the EXEC state. */
-    CC_SYNC_EXEC       = 1, /**< Execute previously received data. */
+    CC_SYNC_ACK        = 0, /**< Single byte command to acknowledge errorless reception of data. */
+    CC_SYNC_COMMIT     = 1, /**< Single byte command to commit previously staged data. */
     CC_SYNC_RESERVED_1 = 2, /**< Reserved for future use. */
     CC_SYNC_RESERVED_2 = 3, /**< Reserved for future use. */
 } cc_sync_type_t;
@@ -158,12 +158,12 @@ typedef struct {
  *
  * \code
  * 23                                    16 15            8 7                    0
- * +-------------+-------------------------+---------------+---------------------+
- * |            BYTE 0                     |    BYTE 1     |        BYTE 2       |
- * +-------------+-------------------------+-----+---------+-------+-------------+
- * | ACTION (2b) | RESERVED (1b) | PROPERTY (6b) |  NODE_CNT (13b) | PARITY (1b) |
- * +-------------+---------------+---------------+-----------------+-------------+
- * 23          22 21           21 20           14 13              1 0            0
+ * +-------------+----------------------+---------------+---------------------+
+ * |            BYTE 0                  |    BYTE 1     |        BYTE 2       |
+ * +-------------+----------------------+-----+---------+-------+-------------+
+ * | ACTION (2b) | STAGE (1b) | PROPERTY (6b) |  NODE_CNT (13b) | PARITY (1b) |
+ * +-------------+------------+---------------+-----------------+-------------+
+ * 23          22 21        21 20           14 13              1 0            0
  * \endcode
  * \note
  * The node count is split into 7 MSB bits and 6 LSB bits. This is done because we must always transmit the node count
@@ -233,6 +233,23 @@ cc_action_t cc_header_action_get(cc_msg_header_t header);
  * \param[in] action The action type to set.
  */
 void cc_header_action_set(cc_msg_header_t *header, cc_action_t action);
+
+/**
+ * \brief Extract the stage bit from a message header.
+ *
+ * \param[in] header The message header to extract the stage bit from.
+ *
+ * \return The stage bit.
+ */
+bool cc_header_staging_bit_get(cc_msg_header_t header);
+
+/**
+ * \brief Set the stage bit in a message header.
+ *
+ * \param[inout] header Pointer to the message header to set the stage bit for.
+ * \param[in] stage The stage value to set (true for stage, false for no stage).
+ */
+void cc_header_staging_bit_set(cc_msg_header_t *header, bool stage);
 
 /**
  * \brief Extract the property id from a message header.

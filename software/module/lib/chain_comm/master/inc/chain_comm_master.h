@@ -15,6 +15,11 @@ typedef enum {
     CC_MASTER_ERR_NO_MEM,
     CC_MASTER_ERR_NOT_SUPPORTED,
     CC_MASTER_ERR_FAIL,
+    CC_MASTER_ERR_WRITE_CB,
+    CC_MASTER_ERR_READ_CB,
+    CC_MASTER_ERR_COBS_ENC,
+    CC_MASTER_ERR_COBS_DEC,
+
 } cc_master_err_t;
 
 typedef struct {
@@ -69,3 +74,17 @@ cc_master_err_t cc_master_prop_write_seq(cc_master_ctx_t *ctx, cc_prop_id_t prop
  * \return CC_MASTER_OK on success, or an error code on failure.
  */
 cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_id);
+
+/**
+ * \brief Writes a property from all nodes.
+ *
+ * \param[inout] ctx Pointer to the #cc_master_ctx_t structure containing the context information.
+ * \param[in] property_id The ID of the property to write.
+ * \param[in] node_cnt The number of nodes to write the property to.
+ * \param[in] staged_write If true, the property will be staged and not applied immediately.
+ * \param[in] broadcast If true, the property read from node 1 will be written to all nodes.
+ *
+ * \return CC_MASTER_OK on success, or an error code on failure.
+ */
+cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property_id, uint16_t node_cnt,
+                                     bool staged_write, bool broadcast);

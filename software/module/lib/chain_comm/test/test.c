@@ -38,7 +38,7 @@ typedef struct {
 } uart_dummy_ctx_t;
 
 typedef struct {
-    uint8_t data;
+    uint8_t data[1000];
     bool success;
 } prop_dummy_ctx_t;
 
@@ -650,6 +650,25 @@ void test_cc_header_action_set_get(void)
     TEST_ASSERT_EQUAL(CC_ACTION_SYNC, cc_header_action_get(header));
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_cc_header_staging_bit_set_get(void)
+{
+    cc_msg_header_t header = {0};
+
+    cc_header_staging_bit_set(&header, true);
+    TEST_ASSERT_EQUAL(0b00100000, header.raw[0]);
+    TEST_ASSERT_EQUAL(0, header.raw[1]);
+    TEST_ASSERT_EQUAL(0, header.raw[2]);
+    TEST_ASSERT_TRUE(cc_header_staging_bit_get(header));
+
+    cc_header_staging_bit_set(&header, false);
+    TEST_ASSERT_EQUAL(0b00000000, header.raw[0]);
+    TEST_ASSERT_EQUAL(0, header.raw[1]);
+    TEST_ASSERT_EQUAL(0, header.raw[2]);
+    TEST_ASSERT_FALSE(cc_header_staging_bit_get(header));
+}
+
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 void test_cc_header_property_set_get(void)
@@ -794,7 +813,7 @@ void test_cc_master_prop_read(void)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void test_master_read_single_node(void)
+void test_master_read_nodes(void)
 {
     size_t node_cnt     = 10;
     cc_master_err_t err = CC_MASTER_OK;
@@ -829,6 +848,53 @@ void test_master_read_single_node(void)
                                      node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
         TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_test_grp.node_list[i].node_ctx.state);
     }
+
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
+    cc_test_node_deinit(&node_test_grp);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_master_read_nodes(void)
+{
+    size_t node_cnt     = 10;
+    cc_master_err_t err = CC_MASTER_OK;
+
+    /* Initialize master. */
+    cc_test_master_ctx_t test_master_ctx = {0};
+    cc_test_master_init(&test_master_ctx);
+
+    TEST_ASSERT_NULL(test_master_ctx.node_data);
+    TEST_ASSERT_EQUAL(0, test_master_ctx.node_cnt);
+
+    /* Initialize the nodes. */
+    cc_test_node_group_ctx_t node_test_grp = {0};
+    setup_cc_node_property_list_handlers();
+    cc_test_node_init(&node_test_grp, node_cnt, &test_master_ctx);
+
+    /* Try a read all command */
+    for (int i = 0; i < node_cnt; i++) {
+        // randomize_array(node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        memset(node_test_grp.node_list[i].node_data, 0xAA, TEST_PROP_SIZE);
+    }
+
+    err = cc_master_prop_write(&test_master_ctx.master_ctx, PROP_STATIC_RW);
+    usleep(10000);
+    TEST_ASSERT_EQUAL(CC_MASTER_OK, err);
+
+    TEST_ASSERT_NOT_NULL(test_master_ctx.node_data);
+    TEST_ASSERT_EQUAL(node_cnt, test_master_ctx.node_cnt);
+
+    for (int i = 0; i < node_cnt; i++) {
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(test_master_ctx.node_data + (i * TEST_PROP_SIZE),
+                                     node_test_grp.node_list[i].node_data, TEST_PROP_SIZE);
+        TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_test_grp.node_list[i].node_ctx.state);
+    }
+
+    /* Deinitialize master and nodes. */
+    cc_test_master_deinit(&test_master_ctx);
+    cc_test_node_deinit(&node_test_grp);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -840,7 +906,7 @@ void test_node_rx_header_state_read_action_ok(void)
     cc_prop_id_t test_prop_id = 1;    /* Only one handler so must be one!*/
     uint16_t test_node_cnt    = 0xFF; /* This value cause a carry from raw[1] to raw[2] */
 
-    /* Setup A Node. */;
+    /* Setup a node. */
     cc_node_ctx_t node_ctx = {0};
     node_dummy_config(&node_ctx);
 
@@ -882,6 +948,7 @@ void test_node_rx_header_state_read_action_ok(void)
     TEST_ASSERT_EQUAL(test_action, cc_header_action_get(header));
     TEST_ASSERT_EQUAL(test_prop_id, cc_header_property_get(header));
     TEST_ASSERT_EQUAL(test_node_cnt + 1, cc_header_node_cnt_get(header));
+    TEST_ASSERT_EQUAL(test_node_cnt + 1, node_ctx.node_cnt);
     TEST_ASSERT_TRUE(cc_header_parity_check(header));
 }
 
@@ -891,10 +958,10 @@ void test_node_rx_header_state_read_action_parity_error(void)
 {
     /* Test Params: */
     cc_action_t test_action   = CC_ACTION_READ;
-    cc_prop_id_t test_prop_id = 1;    /* Only one handler so must be one!*/
-    uint16_t test_node_cnt    = 0xFF; /* This value cause a carry from raw[1] to raw[2] */
+    cc_prop_id_t test_prop_id = 1; /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 0;
 
-    /* Setup A Node. */;
+    /* Setup a node. */
     cc_node_ctx_t node_ctx = {0};
     node_dummy_config(&node_ctx);
 
@@ -949,7 +1016,7 @@ void test_node_rx_header_state_read_action_timeout_error(void)
     cc_prop_id_t test_prop_id = 1;    /* Only one handler so must be one!*/
     uint16_t test_node_cnt    = 0xFF; /* This value cause a carry from raw[1] to raw[2] */
 
-    /* Setup A Node. */;
+    /* Setup a node. */
     cc_node_ctx_t node_ctx = {0};
     node_dummy_config(&node_ctx);
 
@@ -994,7 +1061,7 @@ void test_node_rx_header_state_write_action_ok(void)
     cc_prop_id_t test_prop_id = 1;     /* Only one handler so must be one!*/
     uint16_t test_node_cnt    = 0xFC0; /* This value cause a (negative) carry from raw[1] to raw[2] */
 
-    /* Setup A Node. */;
+    /* Setup a node. */
     cc_node_ctx_t node_ctx = {0};
     node_dummy_config(&node_ctx);
 
@@ -1036,7 +1103,150 @@ void test_node_rx_header_state_write_action_ok(void)
     TEST_ASSERT_EQUAL(test_action, cc_header_action_get(header));
     TEST_ASSERT_EQUAL(test_prop_id, cc_header_property_get(header));
     TEST_ASSERT_EQUAL(test_node_cnt - 1, cc_header_node_cnt_get(header));
+    TEST_ASSERT_EQUAL(test_node_cnt, node_ctx.node_cnt);
     TEST_ASSERT_TRUE(cc_header_parity_check(header));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_node_rx_header_state_write_action_node_cnt_error(void)
+{
+    /* Test Params: */
+    cc_action_t test_action   = CC_ACTION_WRITE;
+    cc_prop_id_t test_prop_id = 1; /* Only one handler so must be one!*/
+    uint16_t test_node_cnt    = 0; /* We can't write data to zero nodes! */
+
+    /* Setup a node. */
+    cc_node_ctx_t node_ctx = {0};
+    node_dummy_config(&node_ctx);
+
+    /* Setup the state. */
+    node_ctx.state      = CC_NODE_STATE_RX_HEADER;
+    node_ctx.next_state = CC_NODE_STATE_RX_HEADER;
+
+    /* Run the chain communication node. */
+    cc_node_tick(&node_ctx, 0); /* Initial Tick. */
+
+    /* Write a dummy header. */
+    cc_msg_header_t header = {0};
+    cc_header_action_set(&header, test_action);
+    cc_header_property_set(&header, test_prop_id);
+    cc_header_node_cnt_set(&header, test_node_cnt);
+    cc_header_parity_set(&header, true);
+    uart_ctx.cnt_readable = 3;
+    memcpy(uart_ctx.rx_buf, header.raw, 3);
+
+    uart_ctx.cnt_writable = 1000;
+    uart_ctx.rx_cnt       = 0;
+    uart_ctx.tx_cnt       = 0;
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(1, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(2, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(2, node_ctx.data_cnt);
+
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(3, uart_ctx.tx_cnt);
+    TEST_ASSERT_EQUAL(3, node_ctx.data_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_ERROR, node_ctx.next_state);
+    TEST_ASSERT_EQUAL(CC_NODE_ERR_INVALID_STATE, node_ctx.last_error);
+
+    memcpy(header.raw, uart_ctx.tx_buf, 3); /* Compare the transmitted header. */
+    TEST_ASSERT_FALSE(cc_header_parity_check(header));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void test_node_dec_node_cnt_state_ok(void)
+{
+    /* Setup a node. */
+    cc_node_ctx_t node_ctx = {0};
+    node_dummy_config(&node_ctx);
+
+    /* Setup the state. */
+    node_ctx.state = CC_NODE_STATE_DEC_NODE_CNT;
+
+    /* Test Read flow where node_cnt > 1 */
+    node_ctx.next_state   = CC_NODE_STATE_DEC_NODE_CNT;
+    node_ctx.property_id  = 1; /* Only one handler so must be one!*/
+    node_ctx.staged_write = false;
+    node_ctx.action       = CC_ACTION_READ;
+    node_ctx.node_cnt     = 2;
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, node_ctx.node_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_PROP, node_ctx.next_state);
+
+    /* Test Read flow where node_cnt = 1 */
+    node_ctx.next_state   = CC_NODE_STATE_DEC_NODE_CNT;
+    node_ctx.property_id  = 1; /* Only one handler so must be one!*/
+    node_ctx.staged_write = false;
+    node_ctx.action       = CC_ACTION_READ;
+    node_ctx.node_cnt     = 1;
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(0, node_ctx.node_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_TX_PROP, node_ctx.next_state);
+
+    /* Dont Test Read flow where node_cnt = 0, this can never happen ...*/
+
+    /* Test Write flow where node_cnt > 1 */
+    node_ctx.next_state   = CC_NODE_STATE_DEC_NODE_CNT;
+    node_ctx.property_id  = 1; /* Only one handler so must be one!*/
+    node_ctx.staged_write = false;
+    node_ctx.action       = CC_ACTION_WRITE;
+    node_ctx.node_cnt     = 2;
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(1, node_ctx.node_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_PROP, node_ctx.next_state);
+
+    /* Test Write flow where node_cnt = 1 */
+    node_ctx.next_state   = CC_NODE_STATE_DEC_NODE_CNT;
+    node_ctx.property_id  = 1; /* Only one handler so must be one!*/
+    node_ctx.staged_write = false;
+    node_ctx.action       = CC_ACTION_WRITE;
+    node_ctx.node_cnt     = 1;
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(0, node_ctx.node_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_PROP, node_ctx.next_state);
+
+    /* Test Write flow where node_cnt = 0, don't stage write. */
+    node_ctx.next_state   = CC_NODE_STATE_DEC_NODE_CNT;
+    node_ctx.property_id  = 1; /* Only one handler so must be one!*/
+    node_ctx.staged_write = false;
+    node_ctx.action       = CC_ACTION_WRITE;
+    node_ctx.node_cnt     = 0;
+    memcpy(node_ctx.property_data, (uint8_t[]) {0xAA, 0xBB, 0xCC, 0xDD}, 4);
+    memset(prop_ctx.data, 0, sizeof(prop_ctx.data));
+    node_ctx.property_size = 4;
+    prop_ctx.success       = true;
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(0, node_ctx.node_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.next_state);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(node_ctx.property_data, prop_ctx.data, node_ctx.property_size);
+
+    /* Test Write flow where node_cnt = 0, stage write. */
+    node_ctx.next_state   = CC_NODE_STATE_DEC_NODE_CNT;
+    node_ctx.property_id  = 1; /* Only one handler so must be one!*/
+    node_ctx.staged_write = true;
+    node_ctx.action       = CC_ACTION_WRITE;
+    node_ctx.node_cnt     = 0;
+    memcpy(node_ctx.property_data, (uint8_t[]) {0xAA, 0xBB, 0xCC, 0xDD}, 4);
+    memset(prop_ctx.data, 0, sizeof(prop_ctx.data));
+    node_ctx.property_size = 4;
+    prop_ctx.success       = true;
+    cc_node_tick(&node_ctx, 0);
+    TEST_ASSERT_EQUAL(0, node_ctx.node_cnt);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_DEC_NODE_CNT, node_ctx.state);
+    TEST_ASSERT_EQUAL(CC_NODE_STATE_RX_HEADER, node_ctx.next_state);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(((uint8_t[]) {0, 0, 0, 0}), prop_ctx.data, node_ctx.property_size);
 }
 
 //======================================================================================================================
@@ -1067,18 +1277,21 @@ int main(void)
     RUN_TEST(test_cc_parity_check);
     RUN_TEST(test_cc_node_cnt_set_get);
     RUN_TEST(test_cc_header_action_set_get);
+    RUN_TEST(test_cc_header_staging_bit_set_get);
     RUN_TEST(test_cc_header_property_set_get);
     RUN_TEST(test_cc_header_parity_set);
 
     /* Test Master functions. */
-    // RUN_TEST(test_cc_master_prop_read);
-    // RUN_TEST(test_master_read_single_node);
+    RUN_TEST(test_cc_master_prop_read);
+    RUN_TEST(test_master_read_nodes);
 
     /* Test Node functions. */
     RUN_TEST(test_node_rx_header_state_read_action_ok);
     RUN_TEST(test_node_rx_header_state_read_action_parity_error);
     RUN_TEST(test_node_rx_header_state_read_action_timeout_error);
     RUN_TEST(test_node_rx_header_state_write_action_ok);
+    RUN_TEST(test_node_rx_header_state_write_action_node_cnt_error);
+    RUN_TEST(test_node_dec_node_cnt_state_ok);
 
     return UNITY_END();
 }
@@ -1171,7 +1384,7 @@ bool prop_dummy_set_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void 
 {
     (void)node_idx;
     prop_dummy_ctx_t *ctx = (prop_dummy_ctx_t *)userdata;
-    memcpy(&ctx->data, buf, *size);
+    memcpy(ctx->data, buf, *size);
     return ctx->success;
 }
 
@@ -1181,7 +1394,7 @@ bool prop_dummy_get_handler(uint16_t node_idx, uint8_t *buf, size_t *size, void 
 {
     (void)node_idx;
     prop_dummy_ctx_t *ctx = (prop_dummy_ctx_t *)userdata;
-    memcpy(buf, &ctx->data, *size);
+    memcpy(buf, ctx->data, *size);
     return ctx->success;
 }
 

@@ -132,6 +132,19 @@ void cc_header_action_set(cc_msg_header_t *header, cc_action_t action)
     header->raw[0] = (header->raw[0] & 0b00111111) | (action << 6);
 }
 
+bool cc_header_staging_bit_get(cc_msg_header_t header)
+{
+    return (bool)((header.raw[0] >> 5) & 0x01);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void cc_header_staging_bit_set(cc_msg_header_t *header, bool stage)
+{
+    assert(header != NULL);
+    header->raw[0] = (header->raw[0] & 0b11011111) | (stage << 5);
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 cc_prop_id_t cc_header_property_get(cc_msg_header_t header)

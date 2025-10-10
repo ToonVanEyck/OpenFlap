@@ -47,6 +47,7 @@ void cc_node_state_rx_prop(cc_node_ctx_t *ctx);
 void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state);
 void cc_node_error_and_terminate(cc_node_ctx_t *ctx, cc_node_err_t err);
 void cc_node_error_and_continue(cc_node_ctx_t *ctx, cc_node_err_t err);
+void cc_node_commit_property(cc_node_ctx_t *ctx);
 // void cc_node_exec(cc_node_ctx_t *ctx);
 
 /* Chain comm timer functions. */
@@ -55,7 +56,7 @@ bool cc_node_timer_elapsed(cc_node_ctx_t *ctx);
 
 /* Chain comm UART functions. */
 static size_t cc_node_uart_read_if_writable(cc_node_ctx_t *ctx, uint8_t *buf, size_t length);
-static bool cc_node_uart_forward_byte(cc_node_ctx_t *ctx, uint8_t *byte);
+static bool cc_node_uart_forward_byte(cc_node_ctx_t *ctx, uint8_t *byte, bool forward);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
@@ -94,6 +95,7 @@ void cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
     ctx->last_tick_ms = tick_ms;
 
     if (ctx->state != ctx->next_state) {
+        CC_LOGD(TAG, "State: %d -> %d", ctx->state, ctx->next_state);
         CC_LOGD(TAG, "State: %s -> %s", state_names[ctx->state], state_names[ctx->next_state]);
         cc_node_timer_start(ctx);
         ctx->state    = ctx->next_state;
@@ -515,6 +517,8 @@ void cc_node_state_rx_header(cc_node_ctx_t *ctx)
         ctx->header.raw[1] = 0;    /* Clear the second header byte */
         ctx->header.raw[2] = 0;    /* Clear the third header byte */
         ctx->action        = cc_header_action_get(ctx->header);
+        ctx->staged_write  = cc_header_staging_bit_get(ctx->header);
+
         if (ctx->action == CC_ACTION_SYNC) {
             /* We only expect one header byte. */
             /* TODO */
@@ -522,9 +526,10 @@ void cc_node_state_rx_header(cc_node_ctx_t *ctx)
 
     } else if (ctx->data_cnt == 1) { /* Handle second header byte. */
         ctx->header.raw[1] = data;   /* Set the second header byte. */
-                                     /* Get the node count, increment it and transmit it. */
+        ctx->property_id   = cc_header_property_get(ctx->header);
+        /* Get the node count, increment it and transmit it. */
         ctx->node_cnt = cc_header_node_cnt_get(ctx->header);
-        ctx->node_cnt += (ctx->action == CC_ACTION_READ) ? (1) : (-1);
+        ctx->node_cnt += (ctx->action == CC_ACTION_WRITE) ? (-1) : (1);
         cc_header_node_cnt_set(&ctx->header, ctx->node_cnt & 0x1fff); /* Mask to 13 bits to avoid assertion. */
 
     } else {                                     /* Handle third header byte. */
@@ -534,18 +539,24 @@ void cc_node_state_rx_header(cc_node_ctx_t *ctx)
         ctx->node_cnt += node_cnt_msb;
         /* Decrement the node count before determining the header parity. */
         cc_header_node_cnt_set(&ctx->header,
-                               ((ctx->action == CC_ACTION_READ) ? (ctx->node_cnt - 1) : (ctx->node_cnt + 1)));
+                               ((ctx->action == CC_ACTION_WRITE) ? (ctx->node_cnt + 1) : (ctx->node_cnt - 1)));
         bool header_parity_valid = cc_header_parity_check(ctx->header);
-        cc_header_node_cnt_set(&ctx->header, (ctx->node_cnt)); /* Restore cnt. */
+        cc_header_node_cnt_set(&ctx->header, (ctx->node_cnt) & 0x1fff); /* Restore cnt. */
+        bool header_valid = true;
         if (!header_parity_valid) {
             cc_node_error_and_terminate(ctx, CC_NODE_ERR_HEADER_PARITY); /* Header parity error */
-            /* Break the header parity for subsequent nodes as well. */
-            cc_header_parity_set(&ctx->header, false);
+            header_valid = false;                                        /* Break parity to help next nodes. */
         } else {
-            ctx->property_id = cc_header_property_get(ctx->header);
-            cc_header_parity_set(&ctx->header, true);              /* Ensure parity is set correctly. */
             cc_node_state_change(ctx, CC_NODE_STATE_DEC_NODE_CNT); /* Switch to next state. */
+            if (ctx->action == CC_ACTION_WRITE && !++ctx->node_cnt) {
+                /* Invalid state, node count can't be zero for write action. */
+                cc_node_error_and_terminate(ctx, CC_NODE_ERR_INVALID_STATE);
+                header_valid = false; /* Break parity to help next nodes. */
+            }
+            /* Ensure node_cnt is 1 for broadcast. */
+            ctx->node_cnt = (ctx->action == CC_ACTION_BROADCAST) ? 1 : ctx->node_cnt;
         }
+        cc_header_parity_set(&ctx->header, header_valid); /* Ensure parity is set correctly. */
     }
     ctx->uart.write(ctx->uart_userdata, ctx->header.raw + ctx->data_cnt, 1);
 
@@ -564,17 +575,20 @@ void cc_node_state_error(cc_node_ctx_t *ctx)
 void cc_node_state_dec_node_cnt(cc_node_ctx_t *ctx)
 {
     if (ctx->node_cnt == 0) {
-        /* We should not be able to reach this state with node count 0. */
-        cc_node_error_and_terminate(ctx, CC_NODE_ERR_INVALID_STATE);
+        cc_node_state_change(ctx, CC_NODE_STATE_RX_HEADER);
+        if (!ctx->staged_write) {
+            cc_node_commit_property(ctx); /* Commit the property if not a staged write. */
+        }
         return;
     }
 
     /* Decrement the node count. */
     ctx->node_cnt--;
 
-    if (ctx->node_cnt == 0) {
+    if (ctx->action == CC_ACTION_READ && ctx->node_cnt == 0) {
         cc_node_state_change(ctx, CC_NODE_STATE_TX_PROP);
     } else {
+        /* Write / Broadcast actions always go to RX_PROP state. */
         cc_node_state_change(ctx, CC_NODE_STATE_RX_PROP);
     }
 }
@@ -656,8 +670,8 @@ void cc_node_state_rx_prop(cc_node_ctx_t *ctx)
         return;
     }
 
-    /* Receive the property data. */
-    if (cc_node_uart_forward_byte(ctx, ctx->property_data + ctx->data_cnt)) {
+    /* Receive the property data,do not forward it if it is meant for this node only (node_cnt = 0). */
+    if (cc_node_uart_forward_byte(ctx, ctx->property_data + ctx->data_cnt, ctx->node_cnt)) {
         if (ctx->property_data[ctx->data_cnt] == 0) {
             ctx->property_size = sizeof(ctx->property_data);
 
@@ -698,6 +712,12 @@ void cc_node_state_change(cc_node_ctx_t *ctx, cc_node_state_t state)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+/**
+ * \brief Store error information and change state to ERROR state.
+ *
+ * \param[inout] ctx Pointer to the cc_node_ctx_t structure containing the context information.
+ * \param[in] err The error code to store.
+ */
 void cc_node_error_and_terminate(cc_node_ctx_t *ctx, cc_node_err_t err)
 {
     cc_node_error_and_continue(ctx, err);
@@ -706,11 +726,43 @@ void cc_node_error_and_terminate(cc_node_ctx_t *ctx, cc_node_err_t err)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+/**
+ * \brief Store error information and continue in active state.
+ *
+ * \param[inout] ctx Pointer to the cc_node_ctx_t structure containing the context information.
+ * \param[in] err The error code to store.
+ */
 void cc_node_error_and_continue(cc_node_ctx_t *ctx, cc_node_err_t err)
 {
     ctx->last_error  = err;
     ctx->error_state = ctx->state;
     CC_LOGE(TAG, "\"%s\" Error occurred in \"%s\" state!", error_strs[err], state_names[ctx->error_state]);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Commits the property data to the property handler.
+ *
+ * \param[inout] ctx Pointer to the cc_node_ctx_t structure containing the context information.
+ */
+void cc_node_commit_property(cc_node_ctx_t *ctx)
+{
+    if (ctx->property_id > ctx->property_list_size) {
+        cc_node_error_and_terminate(ctx, CC_NODE_ERR_PROP_NOT_SUPPORTED); /* Property not supported. */
+        return;
+    }
+
+    if (ctx->property_list[ctx->property_id - 1].handler.set == NULL) {
+        cc_node_error_and_terminate(ctx, CC_NODE_ERR_WRITE_NOT_SUPPORTED); /* Can't write active property. */
+        return;
+    }
+
+    if (!ctx->property_list[ctx->property_id - 1].handler.set(0, ctx->property_data, &ctx->property_size,
+                                                              ctx->cc_userdata)) {
+        cc_node_error_and_terminate(ctx, CC_NODE_ERR_WRITE_CB); /* Property write failed. */
+        return;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -765,13 +817,14 @@ static size_t cc_node_uart_read_if_writable(cc_node_ctx_t *ctx, uint8_t *buf, si
  *
  * \param[in] ctx Pointer to the cc_node_ctx_t structure containing the context information.
  * \param[out] byte Value of the byte read.
+ * \param[in] forward If true, the byte will be forwarded to the output UART. If false, the byte will only be read.
  *
  * \return true if a byte was forwarded, false otherwise.
  */
-static bool cc_node_uart_forward_byte(cc_node_ctx_t *ctx, uint8_t *byte)
+static bool cc_node_uart_forward_byte(cc_node_ctx_t *ctx, uint8_t *byte, bool forward)
 {
     return (ctx->uart.cnt_writable(ctx->uart_userdata) && ctx->uart.read(ctx->uart_userdata, byte, 1) &&
-            ctx->uart.write(ctx->uart_userdata, byte, 1));
+            (!forward || ctx->uart.write(ctx->uart_userdata, byte, 1)));
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -59,6 +59,7 @@ typedef struct {
 
     cc_msg_header_t header;   /**< The header of the current message. */
     cc_action_t action;       /**< The action of the current message (from header). */
+    bool staged_write;        /**< The staging bit of the current message (from header). */
     cc_prop_id_t property_id; /**< The ID of the current property (from header). */
     int16_t node_cnt;         /**< The node counter (from header). */
 

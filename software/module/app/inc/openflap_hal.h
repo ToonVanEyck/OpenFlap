@@ -100,6 +100,16 @@ void of_hal_debug_pin_toggle(uint8_t pin);
 bool of_hal_debug_pin_get(uint8_t pin);
 
 /**
+ * @brief Sets the state of the on-board LED.
+ */
+void of_hal_led_set(bool value);
+
+/**
+ * @brief Toggles the state of the on-board LED.
+ */
+void of_hal_led_toggle();
+
+/**
  * @brief Updates the motor control based on the provided motor context.
  *
  * @param[in] speed A value from -1000 to +1000 where -1000 is the maximum reverse speed and +1000 is the maximum

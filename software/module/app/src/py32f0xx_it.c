@@ -90,8 +90,7 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
     /* Clear the TIM1 update interrupt flag */
     if (LL_TIM_IsActiveFlag_UPDATE(TIM1)) {
         LL_TIM_ClearFlag_UPDATE(TIM1);
-        LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_2); /* Do interrupt driven PWM for now. */
-        sens_timer_tick_cnt++;                        // Increment the sensor timer tick count
+        pwm_timer_tick_cnt++; // Increment the PWM timer tick count
     }
 }
 
@@ -100,18 +99,17 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
 //     /* Clear the TIM1 capture/compare interrupt flag */
 //     if (LL_TIM_IsActiveFlag_CC3(TIM1)) {
 //         LL_TIM_ClearFlag_CC3(TIM1);
-//         LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_2); /* Do interrupt driven PWM for now. */
 //     }
 // }
 
-// void TIM3_IRQHandler(void)
-// {
-//     /* Clear the TIM3 UPDATE interrupt flag */
-//     if (LL_TIM_IsActiveFlag_UPDATE(TIM3)) {
-//         LL_TIM_ClearFlag_UPDATE(TIM3);
-//         pwm_timer_tick_cnt++; // Increment the PWM timer tick count
-//     }
-// }
+void TIM3_IRQHandler(void)
+{
+    /* Clear the TIM3 UPDATE interrupt flag */
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM3)) {
+        LL_TIM_ClearFlag_UPDATE(TIM3);
+        sens_timer_tick_cnt++; // Increment the sensor timer tick count
+    }
+}
 
 // void DMA1_Channel1_IRQHandler(void)
 // {

@@ -107,7 +107,7 @@ int main(void)
 
         /* If the module is the last module in a column, a secondary uart TX will route this modules data back to the
          * module above it. Normally this data would come from the module below it. */
-        // of_hal_uart_tx_pin_update(of_hal_is_column_end());
+        of_hal_uart_tx_pin_update(of_hal_is_column_end());
 
         /* Run chain comm. */
         chain_comm(&of_ctx.chain_ctx);

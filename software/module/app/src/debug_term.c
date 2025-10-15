@@ -131,7 +131,7 @@ static void debug_term_test_adc(const char *input, void *arg)
     of_ctx_t *of_ctx = (of_ctx_t *)arg;
 
     of_ctx->debug_flags.print_adc_values = !of_ctx->debug_flags.print_adc_values; // Toggle ADC values printing
-    debug_io_log_debug("ADC values printing %s\n", of_ctx->debug_flags.print_adc_values ? "enabled" : "disabled");
+    debug_io_log_info("ADC values printing %s\n", of_ctx->debug_flags.print_adc_values ? "enabled" : "disabled");
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -272,5 +272,5 @@ static void debug_term_control_loop_toggle(const char *input, void *arg)
     of_ctx->motor_control_override                 = false;
     of_ctx->debug_flags.rps_x100_setpoint_override = false;
 
-    debug_io_log_debug("Motor control loop enabled\n");
+    debug_io_log_info("Motor control loop enabled\n");
 }

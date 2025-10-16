@@ -29,14 +29,14 @@ void debug_term_init(of_ctx_t *of_ctx)
 
     simple_term_register_keyword("config", debug_term_config_dump, of_ctx);
     simple_term_register_keyword("uart", debug_term_test_uart, of_ctx);
-    // simple_term_register_keyword("motor", debug_term_test_motor, of_ctx);
-    // simple_term_register_keyword("adc", debug_term_test_adc, of_ctx);
-    // simple_term_register_keyword("p_sp", debug_term_position_setpoint_set, of_ctx);
-    // simple_term_register_keyword("s_sp", debug_term_speed_setpoint_set, of_ctx);
-    // simple_term_register_keyword("pid", debug_term_pid_tune, of_ctx);
-    // simple_term_register_keyword("ir", debug_term_ir_lims_set, of_ctx);
-    // simple_term_register_keyword("i_lim", debug_term_i_lim_update, of_ctx);
-    // simple_term_register_keyword("cl", debug_term_control_loop_toggle, of_ctx);
+    simple_term_register_keyword("motor", debug_term_test_motor, of_ctx);
+    simple_term_register_keyword("adc", debug_term_test_adc, of_ctx);
+    simple_term_register_keyword("p_sp", debug_term_position_setpoint_set, of_ctx);
+    simple_term_register_keyword("s_sp", debug_term_speed_setpoint_set, of_ctx);
+    simple_term_register_keyword("pid", debug_term_pid_tune, of_ctx);
+    simple_term_register_keyword("ir", debug_term_ir_lims_set, of_ctx);
+    simple_term_register_keyword("i_lim", debug_term_i_lim_update, of_ctx);
+    simple_term_register_keyword("cl", debug_term_control_loop_toggle, of_ctx);
 }
 
 //======================================================================================================================

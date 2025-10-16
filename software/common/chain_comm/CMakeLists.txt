@@ -18,8 +18,8 @@ add_subdirectory(master)
 add_subdirectory(node)
 
 # --- Feature toggles ---
-option(CC_STATE_STRINGS "Enable human-readable state names." OFF)
-option(CC_ERROR_STRINGS "Enable human-readable error strings." OFF)
+option(CC_STATE_STRINGS "Enable human-readable state names." ON)
+option(CC_ERROR_STRINGS "Enable human-readable error strings." ON)
 
 # Pass compile-time defines
 if(CC_STATE_STRINGS)

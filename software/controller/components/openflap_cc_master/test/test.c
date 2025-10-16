@@ -1,6 +1,6 @@
 #include "chain_comm_esp.h"
-#include "display.h"
 #include "memory_checks.h"
+#include "openflap_display.h"
 #include "property_handler.h"
 #include "unity.h"
 

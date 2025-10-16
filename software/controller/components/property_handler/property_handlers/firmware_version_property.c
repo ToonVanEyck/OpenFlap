@@ -103,7 +103,7 @@ static bool firmware_version_compare(const module_t *module_a, const module_t *m
  * The firmware property is used to store the firmware data for the modules.
  */
 const property_handler_t PROPERTY_HANDLER_FIRMWARE_VERSION = {
-    .id          = PROPERTY_FIRMWARE_VERSION,
+    .id          = OF_CC_PROP_FIRMWARE_VERSION,
     .to_json     = firmware_version_to_json,
     .from_binary = firmware_version_from_binary,
     .compare     = firmware_version_compare,

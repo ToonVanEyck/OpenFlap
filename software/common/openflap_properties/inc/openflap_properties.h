@@ -2,6 +2,8 @@
 
 #include "chain_comm_shared.h"
 
+#define OF_CC_PROP_UNDEFINED (cc_prop_id_t)(-1) /**< Undefined property ID. */
+
 #define OF_CC_PROP_FIRMWARE_VERSION (cc_prop_id_t)(0)
 #define OF_CC_PROP_FIRMWARE_UPDATE  (cc_prop_id_t)(1)
 #define OF_CC_PROP_COMMAND          (cc_prop_id_t)(2)
@@ -15,6 +17,8 @@
 #define OF_CC_PROP_IR_THRESHOLD     (cc_prop_id_t)(10)
 
 #define OF_CC_PROP_CNT (11) /** Total number of properties. */
+
+#define OF_FIRMWARE_UPDATE_PAGE_SIZE 128 /**< Size of a firmware update page in bytes. */
 
 /**
  * \brief Command property commands.
@@ -48,3 +52,14 @@ typedef struct __attribute__((__packed__)) {
 
 /* Extern list of property used by both the master and the nodes. */
 extern cc_prop_t cc_prop_list[OF_CC_PROP_CNT];
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Get the property ID by its name.
+ *
+ * \param[in] name The name of the property.
+ *
+ * \return The property ID or -1 if the property does not exist.
+ */
+cc_prop_id_t cc_prop_id_by_name(const char *name);

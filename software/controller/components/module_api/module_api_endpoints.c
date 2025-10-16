@@ -1,9 +1,9 @@
 #include "module_api_endpoints.h"
 #include "cJSON.h"
-#include "display.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "module.h"
+#include "openflap_display.h"
 #include "openflap_properties.h"
 #include "property_handler.h"
 
@@ -17,7 +17,7 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
     esp_err_t err         = ESP_OK;
 
     /* Desynchronize all properties which can be read through json. to force them to be read. */
-    for (cc_prop_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
+    for (cc_prop_id_t property = 0; property < OF_CC_PROP_CNT; property++) {
         const property_handler_t *property_handler = property_handler_get_by_id(property);
         if ((property_handler != NULL) && (property_handler->to_json != NULL)) {
             display_property_indicate_desynchronized(display, property, PROPERTY_SYNC_METHOD_READ);
@@ -42,10 +42,10 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
         cJSON_AddNumberToObject(module_json, MODULE_INDEX_KEY_STR, i);
 
         /* Get all properties from a module. */
-        for (cc_prop_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
+        for (cc_prop_id_t property_id = 0; property_id < OF_CC_PROP_CNT; property_id++) {
             /* Get the property handler. */
-            const char *property_name                  = chain_comm_property_name_by_id(property);
-            const property_handler_t *property_handler = property_handler_get_by_id(property);
+            const char *property_name                  = cc_prop_list[property_id].attribute.name;
+            const property_handler_t *property_handler = property_handler_get_by_id(property_id);
 
             /* Check if the property can be converted to a JSON. */
             if ((property_handler == NULL) || (property_handler->to_json == NULL)) {
@@ -153,7 +153,7 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             }
 
             /* Get the property handler. */
-            cc_prop_id_t property_id                   = chain_comm_property_id_by_name(property_json->string);
+            cc_prop_id_t property_id                   = cc_prop_id_by_name(property_json->string);
             const property_handler_t *property_handler = property_handler_get_by_id(property_id);
             if (property_handler == NULL) {
                 ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
@@ -182,6 +182,7 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
 
             /* Indicate that the property needs to be written to the actual module. */
             module_property_indicate_desynchronized(module, property_handler->id);
+            display_property_indicate_desynchronized(display, property_handler->id, PROPERTY_SYNC_METHOD_WRITE);
         }
     }
 

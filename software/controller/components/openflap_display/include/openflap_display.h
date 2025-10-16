@@ -6,6 +6,8 @@
 
 #include "esp_log.h"
 #include "module.h"
+#include "openflap_cc_master.h"
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
 
@@ -17,10 +19,13 @@ typedef struct {
 
     module_t **modules;    /**< Array of modules. */
     uint16_t module_count; /**< Number of modules. */
-    /** Indicates witch properties need to be synchronized by reading actual modules. */
-    uint64_t sync_properties_read_all_required;
-    /** Indicates witch properties need to be synchronized by writing to actual modules. */
-    uint64_t sync_properties_write_all_required;
+
+    /** Indicates which properties need to be synchronized by reading actual modules. */
+    uint64_t sync_prop_read_required;
+    /** Indicates which properties need to be synchronized by writing to actual modules. */
+    uint64_t sync_prop_write_required;
+    /** Indicates which properties may broadcast the property data of node 0 to all nodes. */
+    uint64_t sync_prop_write_required_broadcast_possible;
 } of_display_t;
 
 typedef enum {
@@ -107,20 +112,6 @@ esp_err_t display_property_indicate_desynchronized(of_display_t *display, cc_pro
  * \retval ESP_ERR_INVALID_ARG The display is NULL or the property id is invalid.
  */
 esp_err_t display_property_indicate_synchronized(of_display_t *display, cc_prop_id_t property_id);
-
-//---------------------------------------------------------------------------------------------------------------------
-
-/**
- * \brief Check if a property of a module is desynchronized.
- *
- * \param[in] display The display to check.
- * \param[in] property_id The id of the property to check.
- * \param[in] sync_method The method of synchronization to check.
- *
- * \return True if the property is desynchronized, false otherwise.
- */
-bool display_property_is_desynchronized(of_display_t *display, cc_prop_id_t property_id,
-                                        property_sync_method_t sync_method);
 
 //---------------------------------------------------------------------------------------------------------------------
 

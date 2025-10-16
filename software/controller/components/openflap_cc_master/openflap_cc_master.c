@@ -51,9 +51,8 @@ esp_err_t of_cc_master_init(of_cc_master_ctx_t *ctx, void *model_userdata, of_cc
                         "Failed to initialize UART for chain communication");
 
     /* Initialize chain communication master context. */
-    ESP_RETURN_ON_ERROR(cc_master_init(&ctx->cc_master, &uart_cb, &ctx->uart_ctx, master_cb_cfg, cc_prop_list,
-                                       OF_CC_PROP_CNT, model_userdata),
-                        TAG, "Failed to initialize chain communication master");
+    cc_master_init(&ctx->cc_master, &uart_cb, &ctx->uart_ctx, &master_cb_cfg, cc_prop_list, OF_CC_PROP_CNT,
+                   model_userdata);
 
     /* Create event group for context. */
     ctx->event_handle = xEventGroupCreate();
@@ -73,7 +72,7 @@ esp_err_t chain_comm_destroy(of_cc_master_ctx_t *ctx)
 {
     ESP_RETURN_ON_FALSE(ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "Chain-comm context is NULL");
 
-    uart_driver_delete(UART_NUM);
+    of_cc_master_uart_deinit(&ctx->uart_ctx);
 
     vEventGroupDelete(ctx->event_handle);
     ctx->event_handle = NULL;
@@ -84,7 +83,7 @@ esp_err_t chain_comm_destroy(of_cc_master_ctx_t *ctx)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-esp_err_t of_cc_master_synchronize(of_cc_master_ctx_t ctx, uint32_t timeout_ms)
+esp_err_t of_cc_master_synchronize(of_cc_master_ctx_t *ctx, uint32_t timeout_ms)
 {
 
     xEventGroupClearBits(ctx->event_handle, OF_CC_MASTER_MODEL_EVENT_SYNCHRONIZED);
@@ -111,7 +110,7 @@ static void of_cc_master_task(void *arg)
 
     bool controller_is_col_start_prev = !gpio_get_level(COL_START_PIN);
     bool controller_is_row_start_prev = !gpio_get_level(ROW_START_PIN);
-    ESP_ERROR_CHECK(chain_comm_io_reconfigure(controller_is_col_start_prev, controller_is_row_start_prev));
+    ESP_ERROR_CHECK(of_cc_master_uart_reconfigure(controller_is_col_start_prev, controller_is_row_start_prev));
 
     while (1) {
         /* Wait here until we receive a desynchronization event. */
@@ -124,19 +123,19 @@ static void of_cc_master_task(void *arg)
         if (controller_is_col_start != controller_is_col_start_prev ||
             controller_is_row_start != controller_is_row_start_prev) {
             ESP_LOGI(TAG, "Reconfiguring chain-comm IOs");
-            ESP_ERROR_CHECK(chain_comm_io_reconfigure(controller_is_col_start, controller_is_row_start));
+            ESP_ERROR_CHECK(of_cc_master_uart_reconfigure(controller_is_col_start, controller_is_row_start));
             controller_is_col_start_prev = controller_is_col_start;
             controller_is_row_start_prev = controller_is_row_start;
         }
 
         /* Synchronize the model. */
         for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
-            cc_action_t required_action = ctx->model_sync_required(ctx->model_userdata, &prop_id);
+            cc_action_t required_action = ctx->model_sync_required(ctx->model_userdata, prop_id);
             switch (required_action) {
                 case CC_ACTION_READ:
                     ESP_LOGI(TAG, "Model requires READ of property %d", prop_id);
                     if (cc_master_prop_read(&ctx->cc_master, prop_id) == CC_MASTER_OK) {
-                        ctx->model_sync_done(ctx->model_userdata, &prop_id);
+                        ctx->model_sync_done(ctx->model_userdata, prop_id);
                     } else {
                         ESP_LOGW(TAG, "Failed to read property %d", prop_id);
                     }
@@ -144,7 +143,7 @@ static void of_cc_master_task(void *arg)
                 case CC_ACTION_WRITE:
                     ESP_LOGI(TAG, "Model requires WRITE of property %d", prop_id);
                     if (cc_master_prop_write(&ctx->cc_master, prop_id, ctx->node_cnt, false, false) == CC_MASTER_OK) {
-                        ctx->model_sync_done(ctx->model_userdata, &prop_id);
+                        ctx->model_sync_done(ctx->model_userdata, prop_id);
                     } else {
                         ESP_LOGW(TAG, "Failed to write property %d", prop_id);
                     }
@@ -152,7 +151,7 @@ static void of_cc_master_task(void *arg)
                 case CC_ACTION_BROADCAST:
                     ESP_LOGI(TAG, "Model requires BROADCAST of property %d", prop_id);
                     if (cc_master_prop_write(&ctx->cc_master, prop_id, 0, false, true) == CC_MASTER_OK) {
-                        ctx->model_sync_done(ctx->model_userdata, &prop_id);
+                        ctx->model_sync_done(ctx->model_userdata, prop_id);
                     } else {
                         ESP_LOGW(TAG, "Failed to broadcast property %d", prop_id);
                     }

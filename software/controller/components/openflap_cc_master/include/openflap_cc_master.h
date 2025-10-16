@@ -14,6 +14,7 @@
 
 #include "chain_comm_master.h"
 #include "openflap_cc_master_uart.h"
+
 #include "openflap_properties.h"
 
 #include <freertos/FreeRTOS.h>
@@ -33,7 +34,7 @@
  * \retval CC_ACTION_BROADCAST if the master must broadcast the property to all nodes.
  * \retval -1 if no synchronization is required.
  */
-typedef cc_action_t (*of_cc_master_model_sync_required_cb)(void *model_userdata, cc_prop_id_t *property_id);
+typedef cc_action_t (*of_cc_master_model_sync_required_cb)(void *model_userdata, cc_prop_id_t property_id);
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -43,7 +44,7 @@ typedef cc_action_t (*of_cc_master_model_sync_required_cb)(void *model_userdata,
  * \param[in] model_userdata Pointer to model user data.
  * \param[in] property_id The property that has been synchronized.
  */
-typedef void (*of_cc_master_model_sync_done_cb)(void *model_userdata, cc_prop_id_t *property_id);
+typedef void (*of_cc_master_model_sync_done_cb)(void *model_userdata, cc_prop_id_t property_id);
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -113,5 +114,11 @@ esp_err_t chain_comm_destroy(of_cc_master_ctx_t *ctx);
 
 /**
  * \brief Signal the chain communication task that the model and actual model require synchronization.
+ *
+ * \param[in] ctx The chain communication context.
+ * \param[in] timeout_ms The timeout in milliseconds to wait for synchronization. (0 for no wait)
+ *
+ * \retval ESP_OK The model is synchronized.
+ * \retval ESP_ERR_TIMEOUT The model could not be synchronized within the timeout.
  */
-void of_cc_master_synchronize(of_cc_master_ctx_t ctx);
+esp_err_t of_cc_master_synchronize(of_cc_master_ctx_t *ctx, uint32_t timeout_ms);

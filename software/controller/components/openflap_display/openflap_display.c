@@ -16,12 +16,12 @@
 //======================================================================================================================
 
 static bool of_display_resize(void *model_userdata, uint16_t module_count);
-static bool of_display_module_exists_and_must_be_written(void *model_userdata, uint16_t node_idx, uint8_t property,
-                                                         bool *must_be_written);
+static bool of_display_module_exists_and_must_be_written(void *model_userdata, uint16_t node_idx,
+                                                         cc_prop_id_t property_id, bool *must_be_written);
 static void of_display_module_error_set(void *model_userdata, uint16_t node_idx, cc_node_err_t error,
                                         cc_node_state_t state);
-static cc_action_t of_display_prop_sync_required(void *model_userdata, cc_prop_id_t *property_id);
-static void of_display_prop_sync_done(void *model_userdata, cc_prop_id_t *property_id);
+static cc_action_t of_display_prop_sync_required(void *model_userdata, cc_prop_id_t property_id);
+static void of_display_prop_sync_done(void *model_userdata, cc_prop_id_t property_id);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
@@ -42,9 +42,8 @@ esp_err_t of_display_init(of_display_t *display)
         .model_sync_done                 = of_display_prop_sync_done,
     };
 
-    of_cc_master_init(&display->cc_master, display, &of_cc_master_cb_cfg);
-
-    ESP_RETURN_ON_FALSE(display->event_handle != NULL, ESP_FAIL, TAG, "Failed to create event group for display");
+    ESP_RETURN_ON_ERROR(of_cc_master_init(&display->cc_master, display, &of_cc_master_cb_cfg), TAG,
+                        "Failed to initialize CC master");
 
     return ESP_OK;
 }
@@ -54,10 +53,6 @@ esp_err_t of_display_init(of_display_t *display)
 esp_err_t display_destroy(of_display_t *display)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
-
-    /* Delete the event group. */
-    vEventGroupDelete(display->event_handle);
-    display->event_handle = 0;
 
     /* Free modules. */
     return of_display_resize(display, 0) ? ESP_OK : ESP_FAIL;
@@ -76,7 +71,7 @@ uint16_t display_size_get(of_display_t *display)
 
 esp_err_t of_display_synchronize(of_display_t *display, uint32_t timeout_ms)
 {
-    of_cc_master_synchronize(display->cc_master, timeout_ms);
+    return of_cc_master_synchronize(&display->cc_master, timeout_ms);
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -96,16 +91,16 @@ esp_err_t display_property_indicate_desynchronized(of_display_t *display, cc_pro
                                                    property_sync_method_t sync_method)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
-    ESP_RETURN_ON_FALSE(property_id < PROPERTIES_MAX, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+    ESP_RETURN_ON_FALSE(property_id < OF_CC_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
 
     /* Reset all flags synchronisation flags because reads and writes cannot be combined. */
-    display_property_indicate_synchronized(display, property_id);
+    // display_property_indicate_synchronized(display, property_id);
 
     /* Indicate that all modules have been desynchronised. */
     if (sync_method == PROPERTY_SYNC_METHOD_READ) {
-        display->sync_properties_read_all_required |= (1 << property_id);
+        display->sync_prop_read_required |= (1 << property_id);
     } else {
-        display->sync_properties_write_all_required |= (1 << property_id);
+        display->sync_prop_write_required |= (1 << property_id);
     }
 
     return ESP_OK;
@@ -113,46 +108,24 @@ esp_err_t display_property_indicate_desynchronized(of_display_t *display, cc_pro
 
 //---------------------------------------------------------------------------------------------------------------------
 
-void display_property_indicate_synchronized(void *userdata, cc_prop_id_t property_id)
+esp_err_t display_property_indicate_synchronized(of_display_t *display, cc_prop_id_t property_id)
 {
-    of_display_t *display = (of_display_t *)userdata;
-
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
     ESP_RETURN_ON_FALSE(property_id < OF_CC_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
 
     /* Reset the synchronisation flags for display. */
-    display->sync_properties_write_all_required &= ~(1 << property_id);
-    display->sync_properties_read_all_required &= ~(1 << property_id);
+    display->sync_prop_read_required &= ~(1 << property_id);
+    display->sync_prop_write_required &= ~(1 << property_id);
 
-    /* Indicate that all modules have been synchronized. */
-    for (uint16_t i = 0; i < display_size_get(display); i++) {
-        module_property_indicate_synchronized(display_module_get(display, i), property_id);
+    /* Reset the synchronization flags for all modules if required. */
+    if (display->sync_prop_write_required_broadcast_possible & (1 << property_id)) {
+        display->sync_prop_write_required_broadcast_possible &= ~(1 << property_id);
+        for (uint16_t i = 0; i < display_size_get(display); i++) {
+            module_property_indicate_synchronized(display_module_get(display, i), property_id);
+        }
     }
 
     return ESP_OK;
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-
-bool display_property_is_desynchronized(of_display_t *display, cc_prop_id_t property_id,
-                                        property_sync_method_t sync_method)
-{
-    /* Validate inputs. */
-    if (display == NULL) {
-        ESP_LOGE(TAG, "Module is NULL");
-        return false;
-    }
-
-    if (property_id >= PROPERTIES_MAX) {
-        ESP_LOGE(TAG, "Invalid property id");
-        return false;
-    }
-
-    if (sync_method == PROPERTY_SYNC_METHOD_READ) {
-        return (display->sync_properties_read_all_required & (1 << property_id));
-    }
-    /*else*/
-    return (display->sync_properties_write_all_required & (1 << property_id));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -163,7 +136,12 @@ void display_property_promote_write_seq_to_write_all(of_display_t *display)
         return;
     }
 
-    for (cc_prop_id_t property_id = PROPERTY_NONE + 1; property_id < PROPERTIES_MAX; property_id++) {
+    for (cc_prop_id_t property_id = 0; property_id < OF_CC_PROP_CNT; property_id++) {
+
+        if (!(display->sync_prop_write_required & (1 << property_id))) {
+            continue; // Property is not marked for writing.
+        }
+
         /* Get the property handler. */
         const property_handler_t *property_handler = property_handler_get_by_id(property_id);
 
@@ -186,7 +164,7 @@ void display_property_promote_write_seq_to_write_all(of_display_t *display)
 
         /* If all modules are the same and the property has been updated, promote the write all. */
         if (all_modules_are_same && module_property_updated) {
-            ESP_LOGI(TAG, "Promoting [%s] property to write all", chain_comm_property_name_by_id(property_id));
+            ESP_LOGI(TAG, "Promoting [%s] property to write all", cc_prop_list[property_id].attribute.name);
             display_property_indicate_desynchronized(display, property_id, PROPERTY_SYNC_METHOD_WRITE);
             for (uint16_t i = 0; i < display_size_get(display); i++) {
                 module_a = display_module_get(display, i);
@@ -239,14 +217,19 @@ static bool of_display_resize(void *model_userdata, uint16_t module_count)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static bool of_display_module_exists_and_must_be_written(void *model_userdata, uint16_t node_idx, uint8_t property,
-                                                         bool *must_be_written)
+static bool of_display_module_exists_and_must_be_written(void *model_userdata, uint16_t node_idx,
+                                                         cc_prop_id_t property_id, bool *must_be_written)
 {
     of_display_t *display = (of_display_t *)model_userdata;
-    if (node_idx >= display->module_count) {
+
+    module_t *module = display_module_get(display, node_idx);
+    if (module == NULL) {
         *must_be_written = false;
         return false;
     }
+
+    *must_be_written = module_property_is_desynchronized(module, property_id);
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -254,21 +237,36 @@ static bool of_display_module_exists_and_must_be_written(void *model_userdata, u
 static void of_display_module_error_set(void *model_userdata, uint16_t node_idx, cc_node_err_t error,
                                         cc_node_state_t state)
 {
-    of_display_t *display = (of_display_t *)model_userdata;
+    // of_display_t *display = (of_display_t *)model_userdata;
+    (void)model_userdata;
+
+    ESP_LOGE(TAG, "Module %d error: %s, state: %s", node_idx, cc_node_error_to_str(error), cc_node_state_to_str(state));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static cc_action_t of_display_prop_sync_required(void *model_userdata, cc_prop_id_t *property_id)
+static cc_action_t of_display_prop_sync_required(void *model_userdata, cc_prop_id_t property_id)
 {
     of_display_t *display = (of_display_t *)model_userdata;
+
+    /* It should not be possible that a property is both read and written at the same time. */
+
+    if (display->sync_prop_read_required & (1 << property_id)) {
+        return CC_ACTION_READ;
+    } else if (display->sync_prop_write_required & (1 << property_id)) {
+        return CC_ACTION_WRITE;
+    } else if (display->sync_prop_write_required_broadcast_possible & (1 << property_id)) {
+        return CC_ACTION_BROADCAST;
+    }
+    return -1; /* No synchronization required. */
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-static void of_display_prop_sync_done(void *model_userdata, cc_prop_id_t *property_id)
+static void of_display_prop_sync_done(void *model_userdata, cc_prop_id_t property_id)
 {
     of_display_t *display = (of_display_t *)model_userdata;
+    display_property_indicate_synchronized(display, property_id);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

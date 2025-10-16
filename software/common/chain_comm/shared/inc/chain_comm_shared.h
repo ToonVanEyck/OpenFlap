@@ -98,7 +98,7 @@ typedef bool (*uart_is_busy_cb_t)(void *uart_userdata);
  *
  * \param[in] uart_userdata Pointer to uart ctx.
  */
-typedef bool (*uart_flush_rx_buff_cb_t)(void *uart_userdata);
+typedef void (*uart_flush_rx_buff_cb_t)(void *uart_userdata);
 
 /**
  * \brief Chain communication property GET / SET handler callback.
@@ -163,7 +163,7 @@ typedef enum { CC_NODE_ERROR_GENERATOR(GENERATE_1ST_FIELD) } cc_node_err_t;
 /**
  * \brief Chain communication property id type.
  */
-typedef uint16_t cc_prop_id_t;
+typedef int16_t cc_prop_id_t;
 
 /**
  * \brief Chain communication property handler.

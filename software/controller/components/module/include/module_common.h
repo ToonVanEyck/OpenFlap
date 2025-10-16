@@ -87,7 +87,7 @@ typedef struct {
     minimum_rotation_property_t minimum_rotation;  /**< Minimum rotation property. */
     ir_threshold_property_t ir_threshold;          /**< IR threshold property. */
     /** Indicates witch properties need to be synchronized by writing to actual modules. */
-    uint64_t sync_properties_write_seq_required;
+    uint64_t sync_prop_write_required;
 } module_t;
 
 //---------------------------------------------------------------------------------------------------------------------

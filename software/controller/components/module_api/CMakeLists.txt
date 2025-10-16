@@ -6,5 +6,5 @@ idf_component_register(
     INCLUDE_DIRS 
         "include"
     REQUIRES 
-        property_handler webserver module display
+        property_handler webserver module openflap_display
 )

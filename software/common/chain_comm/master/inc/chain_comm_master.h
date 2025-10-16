@@ -5,8 +5,8 @@
 #define CC_MASTER_READ_NODE_ERRORS (-1) /**< Use as property with the master read function to read node errors. */
 
 typedef bool (*cc_master_node_cnt_update_cb_t)(void *userdata, uint16_t node_cnt);
-typedef bool (*cc_master_node_exists_and_must_be_written_cb_t)(void *userdata, uint16_t node_idx, uint8_t property,
-                                                               bool *must_be_written);
+typedef bool (*cc_master_node_exists_and_must_be_written_cb_t)(void *userdata, uint16_t node_idx,
+                                                               cc_prop_id_t property_id, bool *must_be_written);
 typedef void (*cc_master_node_error_set_cb_t)(void *userdata, uint16_t node_idx, cc_node_err_t error,
                                               cc_node_state_t state);
 

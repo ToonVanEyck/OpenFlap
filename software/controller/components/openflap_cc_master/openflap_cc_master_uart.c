@@ -1,5 +1,6 @@
 #include "openflap_cc_master_uart.h"
 
+#include "driver/gpio.h"
 #include "hal/gpio_hal.h"
 #include "rom/gpio.h"
 #include "soc/gpio_sig_map.h"
@@ -8,14 +9,7 @@
 //                                                   MACROS a DEFINES
 //======================================================================================================================
 
-#define UART_BUF_SIZE (1024)
-#define UART_NUM      UART_NUM_1
-#define COL_START_PIN (2)
-#define TX_COL_PIN    (47)
-#define RX_COL_PIN    (45)
-#define ROW_START_PIN (6)
-#define TX_ROW_PIN    (5)
-#define RX_ROW_PIN    (4)
+#define TAG "OF_CC_MASTER_UART"
 
 //======================================================================================================================
 //                                                   FUNCTION PROTOTYPES
@@ -30,8 +24,11 @@ void of_cc_master_uart_flush_rx_buff(void *uart_userdata);
 //                                                   PUBLIC FUNCTIONS
 //======================================================================================================================
 
-esp_err_t cc_master_uart_init(of_cc_master_uart_ctx_t uart_ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg)
+esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg)
 {
+    ESP_RETURN_ON_FALSE(uart_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "uart_ctx is NULL");
+    ESP_RETURN_ON_FALSE(uart_cb_cfg != NULL, ESP_ERR_INVALID_ARG, TAG, "uart_cb_cfg is NULL");
+
     uart_config_t uart_config = {
         .baud_rate  = 115200,
         .data_bits  = UART_DATA_8_BITS,
@@ -54,8 +51,8 @@ esp_err_t cc_master_uart_init(of_cc_master_uart_ctx_t uart_ctx, cc_master_uart_c
     ESP_RETURN_ON_ERROR(gpio_config(&io_conf), TAG, "Failed to configure COL_START_PIN and ROW_START_PIN as inputs");
 
     /* Configure the context. */
-    memset(uart_ctx, 0, sizeof(*uart_ctx));
-    uart_ctx->uart_num = UART_NUM;
+    uart_ctx->uart_num         = UART_NUM;
+    uart_ctx->rx_timeout_ticks = 0;
 
     /* Configure the callback functions. */
     uart_cb_cfg->read             = of_cc_master_uart_read;
@@ -68,9 +65,11 @@ esp_err_t cc_master_uart_init(of_cc_master_uart_ctx_t uart_ctx, cc_master_uart_c
 
 //----------------------------------------------------------------------------------------------------------------------
 
-esp_err_t of_cc_master_uart_deinit(void)
+esp_err_t of_cc_master_uart_deinit(of_cc_master_uart_ctx_t *uart_ctx)
 {
-    uart_driver_delete(UART_NUM);
+    ESP_RETURN_ON_FALSE(uart_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "uart_ctx is NULL");
+
+    uart_driver_delete(uart_ctx->uart_num);
     return ESP_OK;
 }
 

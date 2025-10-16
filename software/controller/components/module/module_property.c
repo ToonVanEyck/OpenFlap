@@ -11,10 +11,10 @@ esp_err_t module_property_indicate_desynchronized(module_t *module, cc_prop_id_t
 {
     /* Validate inputs. */
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");
-    ESP_RETURN_ON_FALSE(property_id < PROPERTIES_MAX, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+    ESP_RETURN_ON_FALSE(property_id < OF_CC_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
 
     /* Indicate that the property has been desynchronized. */
-    module->sync_properties_write_seq_required |= (1 << property_id);
+    module->sync_prop_write_required |= (1 << property_id);
 
     return ESP_OK;
 }
@@ -25,10 +25,10 @@ esp_err_t module_property_indicate_synchronized(module_t *module, cc_prop_id_t p
 {
     /* Validate inputs. */
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");
-    ESP_RETURN_ON_FALSE(property_id < PROPERTIES_MAX, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+    ESP_RETURN_ON_FALSE(property_id < OF_CC_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
 
     /* Indicate that the property has been synchronized. */
-    module->sync_properties_write_seq_required &= ~(1 << property_id);
+    module->sync_prop_write_required &= ~(1 << property_id);
 
     return ESP_OK;
 }
@@ -43,12 +43,12 @@ bool module_property_is_desynchronized(module_t *module, cc_prop_id_t property_i
         return false;
     }
 
-    if (property_id >= PROPERTIES_MAX) {
+    if (property_id >= OF_CC_PROP_CNT) {
         ESP_LOGE(TAG, "Invalid property id");
         return false;
     }
 
-    return (module->sync_properties_write_seq_required & (1 << property_id));
+    return (module->sync_prop_write_required & (1 << property_id));
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ firmware_update_property_t *firmware_update_new(void)
     firmware_update->reff_cnt = 1;
 
     /* Allocate the data. */
-    uint16_t size = chain_comm_property_write_attributes_get(PROPERTY_FIRMWARE_UPDATE)->static_property_size - 2;
+    uint16_t size         = OF_FIRMWARE_UPDATE_PAGE_SIZE;
     firmware_update->data = calloc(size, 1);
     if (firmware_update->data == NULL) {
         free(firmware_update);

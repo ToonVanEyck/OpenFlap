@@ -6,6 +6,15 @@
 #include "esp_check.h"
 #include "esp_log.h"
 
+#define UART_BUF_SIZE (1024)
+#define UART_NUM      UART_NUM_1
+#define COL_START_PIN (2)
+#define TX_COL_PIN    (47)
+#define RX_COL_PIN    (45)
+#define ROW_START_PIN (6)
+#define TX_ROW_PIN    (5)
+#define RX_ROW_PIN    (4)
+
 typedef struct {
     uart_port_t uart_num;        /**< UART port number. */
     TickType_t rx_timeout_ticks; /**< Timeout for UART read operations. */
@@ -21,14 +30,18 @@ typedef struct {
  *
  * @return ESP_OK on success.
  */
-esp_err_t cc_master_uart_init(of_cc_master_uart_ctx_t uart_ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg);
+esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg);
 
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
  * @brief Deinitialize the UART for chain communication.
+ *
+ * @param[in] uart_ctx UART configuration context.
+ *
+ * @return ESP_OK on success.
  */
-esp_err_t of_cc_master_uart_deinit(void);
+esp_err_t of_cc_master_uart_deinit(of_cc_master_uart_ctx_t *uart_ctx);
 
 //----------------------------------------------------------------------------------------------------------------------
 

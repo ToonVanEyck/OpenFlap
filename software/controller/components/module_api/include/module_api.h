@@ -1,8 +1,8 @@
 #pragma once
 
-#include "display.h"
 #include "esp_err.h"
 #include "module.h"
+#include "openflap_display.h"
 #include "webserver.h"
 
 /**

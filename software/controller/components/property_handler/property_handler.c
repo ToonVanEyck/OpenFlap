@@ -13,7 +13,7 @@ extern const property_handler_t PROPERTY_HANDLER_COLOR;
 extern const property_handler_t PROPERTY_HANDLER_MOTION;
 extern const property_handler_t PROPERTY_HANDLER_IR_THRESHOLD;
 
-const property_handler_t *property_handler_get_by_id(property_id_t id)
+const property_handler_t *property_handler_get_by_id(cc_prop_id_t id)
 {
     static const property_handler_t *PROPERTY_HANDLERS[] = {
         &PROPERTY_HANDLER_OFFSET,          &PROPERTY_HANDLER_CHARACTER,        &PROPERTY_HANDLER_CHARACTER_SET,

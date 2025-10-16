@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "chain_comm_abi.h"
 #include "esp_log.h"
+#include "openflap_properties.h"
 
 /** Character Set properties */
 typedef struct {
@@ -77,7 +77,7 @@ typedef struct {
     firmware_version_property_t *firmware_version; /**< Firmware version property. */
     uint32_t firmware_crc;                         /**< CRC of the firmware. */
     firmware_update_property_t *firmware_update;   /**< Firmware update property. */
-    command_property_t command;                    /**< Command property. */
+    command_property_cmd_t command;                /**< Command property. */
     module_info_property_t module_info;            /**< Module info property. */
     character_set_property_t *character_set;       /**< Character set property. */
     character_index_property_t character_index;    /**< Current index of the character in the charactermap. */

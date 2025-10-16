@@ -1,10 +1,10 @@
 #include "module_api_firmware_endpoints.h"
-#include "chain_comm_abi.h"
 #include "display.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "firmware_update_property.h"
 #include "module.h"
+#include "openflap_properties.h"
 #include "property_handler_command.h"
 #include "webserver.h"
 
@@ -17,7 +17,7 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
 
 esp_err_t module_api_firmware_handler(httpd_req_t *req)
 {
-    display_t *display = (display_t *)req->user_ctx;
+    of_display_t *display = (of_display_t *)req->user_ctx;
 
     const chain_comm_binary_attributes_t *firmware_write_attr =
         chain_comm_property_write_attributes_get(PROPERTY_FIRMWARE_UPDATE);
@@ -34,7 +34,7 @@ esp_err_t module_api_firmware_handler(httpd_req_t *req)
 static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_t data_len, size_t data_offset,
                                                size_t total_data_len)
 {
-    display_t *display = (display_t *)user_ctx;
+    of_display_t *display = (of_display_t *)user_ctx;
 
     ESP_LOGI(TAG, "writing %d %d/%d bytes", data_len, data_offset + data_len, total_data_len);
 
@@ -52,11 +52,8 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
         module_property_indicate_desynchronized(module, PROPERTY_FIRMWARE_UPDATE);
     }
 
-    /* Notify that we have updated the display modules. */
-    display_event_desynchronized(display);
-    /* Wait for synchronisation event. */
-    ESP_RETURN_ON_ERROR(display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000)), TAG,
-                        "Failed to wait for synchronisation event");
+    /* Synchronize. */
+    ESP_RETURN_ON_ERROR(of_display_synchronize(display, 5000), TAG, "Failed to synchronize display.");
 
     if (data_offset + data_len == total_data_len) {
         ESP_LOGI(TAG, "Module OTA complete. Rebooting modules...");
@@ -67,11 +64,8 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
             property_handler_command_set(module, CMD_REBOOT);
             module_property_indicate_desynchronized(module, PROPERTY_COMMAND);
         }
-        /* Notify that we have updated the display modules. */
-        display_event_desynchronized(display);
-        /* Wait for synchronisation event. */
-        ESP_RETURN_ON_ERROR(display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000)), TAG,
-                            "Failed to wait for synchronisation event");
+        /* Synchronize. */
+        ESP_RETURN_ON_ERROR(of_display_synchronize(display, 5000), TAG, "Failed to synchronize display.");
     }
 
     return ESP_OK;

@@ -1,10 +1,10 @@
 #include "module_api_endpoints.h"
 #include "cJSON.h"
-#include "chain_comm_abi.h"
 #include "display.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "module.h"
+#include "openflap_properties.h"
 #include "property_handler.h"
 
 #define MODULE_INDEX_KEY_STR "module"
@@ -13,20 +13,20 @@
 
 esp_err_t module_api_get_handler(httpd_req_t *req)
 {
-    display_t *display = (display_t *)req->user_ctx;
-    esp_err_t err      = ESP_OK;
+    of_display_t *display = (of_display_t *)req->user_ctx;
+    esp_err_t err         = ESP_OK;
 
     /* Desynchronize all properties which can be read through json. to force them to be read. */
-    for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
+    for (cc_prop_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
         const property_handler_t *property_handler = property_handler_get_by_id(property);
         if ((property_handler != NULL) && (property_handler->to_json != NULL)) {
             display_property_indicate_desynchronized(display, property, PROPERTY_SYNC_METHOD_READ);
         }
     }
     ESP_LOGI(TAG, "Display desynchronized");
-    display_event_desynchronized(display);
-    /* Wait for synchronisation event. */
-    err = display_event_wait_for_synchronized(display, pdMS_TO_TICKS(5000));
+
+    /* Synchronize */
+    err = of_display_synchronize(display, 5000);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to synchronize display");
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, NULL);
@@ -42,7 +42,7 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
         cJSON_AddNumberToObject(module_json, MODULE_INDEX_KEY_STR, i);
 
         /* Get all properties from a module. */
-        for (property_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
+        for (cc_prop_id_t property = PROPERTY_NONE + 1; property < PROPERTIES_MAX; property++) {
             /* Get the property handler. */
             const char *property_name                  = chain_comm_property_name_by_id(property);
             const property_handler_t *property_handler = property_handler_get_by_id(property);
@@ -82,7 +82,7 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
 
 esp_err_t module_api_post_handler(httpd_req_t *req)
 {
-    display_t *display = (display_t *)req->user_ctx;
+    of_display_t *display = (of_display_t *)req->user_ctx;
 
     ESP_LOGI(TAG, "POST data length: %d", req->content_len);
 
@@ -153,7 +153,7 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             }
 
             /* Get the property handler. */
-            property_id_t property_id                  = chain_comm_property_id_by_name(property_json->string);
+            cc_prop_id_t property_id                   = chain_comm_property_id_by_name(property_json->string);
             const property_handler_t *property_handler = property_handler_get_by_id(property_id);
             if (property_handler == NULL) {
                 ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
@@ -191,7 +191,7 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
     httpd_resp_sendstr(req, "OK");
 
     /* Notify that we have updated the display modules. */
-    display_event_desynchronized(display);
+    of_display_synchronize(display, 0);
 
     return ESP_OK;
 }

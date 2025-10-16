@@ -7,7 +7,7 @@
 
 #define TAG "MODULE_PROPERTY"
 
-esp_err_t module_property_indicate_desynchronized(module_t *module, property_id_t property_id)
+esp_err_t module_property_indicate_desynchronized(module_t *module, cc_prop_id_t property_id)
 {
     /* Validate inputs. */
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");
@@ -21,7 +21,7 @@ esp_err_t module_property_indicate_desynchronized(module_t *module, property_id_
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t module_property_indicate_synchronized(module_t *module, property_id_t property_id)
+esp_err_t module_property_indicate_synchronized(module_t *module, cc_prop_id_t property_id)
 {
     /* Validate inputs. */
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");
@@ -35,7 +35,7 @@ esp_err_t module_property_indicate_synchronized(module_t *module, property_id_t 
 
 //---------------------------------------------------------------------------------------------------------------------
 
-bool module_property_is_desynchronized(module_t *module, property_id_t property_id)
+bool module_property_is_desynchronized(module_t *module, cc_prop_id_t property_id)
 {
     /* Validate inputs. */
     if (module == NULL) {

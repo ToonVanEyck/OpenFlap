@@ -11,4 +11,4 @@
  *
  * \return esp_err_t
  */
-esp_err_t property_handler_command_set(module_t *module, command_property_t command);
+esp_err_t property_handler_command_set(module_t *module, command_property_cmd_t command);

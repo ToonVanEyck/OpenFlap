@@ -5,5 +5,5 @@ idf_component_register(
     INCLUDE_DIRS 
         "include"
     REQUIRES 
-        webserver chain_comm_abi
+        webserver openflap_properties
 )

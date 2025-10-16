@@ -1,8 +1,8 @@
-#include "chain_comm_abi.h"
 #include "esp_err.h"
 #include "esp_system.h"
 #include "memory_checks.h"
 #include "module.h"
+#include "openflap_properties.h"
 #include "property_handler.h"
 #include "unity.h"
 #include <string.h>

@@ -19,11 +19,11 @@ static esp_err_t command_from_json(module_t *module, const cJSON *json)
     assert(module != NULL);
     assert(json != NULL);
 
-    command_property_t *command = &module->command;
+    command_property_cmd_t *command = &module->command;
 
     ESP_RETURN_ON_FALSE(cJSON_IsString(json), ESP_ERR_INVALID_ARG, PROPERTY_TAG, "Expected a string");
 
-    for (command_property_t cmd = CMD_NO_COMMAND + 1; cmd < CMD_MAX; cmd++) {
+    for (command_property_cmd_t cmd = CMD_NO_COMMAND + 1; cmd < CMD_MAX; cmd++) {
         if (strcmp(json->valuestring, chain_comm_command_name_get(cmd)) == 0) {
             *command = cmd;
             return ESP_OK;
@@ -49,7 +49,7 @@ static esp_err_t command_to_binary(uint8_t **bin, uint16_t *bin_size, const modu
     assert(bin_size != NULL);
     assert(module != NULL);
 
-    const command_property_t *command = &module->command;
+    const command_property_cmd_t *command = &module->command;
 
     *bin_size = chain_comm_property_write_attributes_get(PROPERTY_COMMAND)->static_property_size;
 
@@ -93,7 +93,7 @@ const property_handler_t PROPERTY_HANDLER_COMMAND = {
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-esp_err_t property_handler_command_set(module_t *module, command_property_t command)
+esp_err_t property_handler_command_set(module_t *module, command_property_cmd_t command)
 {
     assert(module != NULL);
 

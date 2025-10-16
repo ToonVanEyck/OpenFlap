@@ -22,8 +22,8 @@ TEST_CASE("Test module http API post handler", "[module_api][qemu]")
     webserver_ctx_t webserver_ctx;
     TEST_ASSERT_EQUAL(webserver_init(&webserver_ctx), ESP_OK);
 
-    display_t display;
-    TEST_ASSERT_EQUAL(display_init(&display), ESP_OK);
+    of_display_t display;
+    TEST_ASSERT_EQUAL(of_display_init(&display), ESP_OK);
     TEST_ASSERT_EQUAL(module_api_init(&webserver_ctx, &display), ESP_OK);
 
     ESP_LOGI(TAG, "Webserver started");

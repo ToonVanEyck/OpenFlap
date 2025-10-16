@@ -1,0 +1,17 @@
+set(CHAIN_COMM_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../common/chain_comm)
+set(OPENFLAP_PROPERTIES_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../common/openflap_properties)
+
+idf_component_register(
+    SRCS 
+        ${CHAIN_COMM_SRC_DIR}/shared/chain_comm_shared.c
+        ${CHAIN_COMM_SRC_DIR}/master/chain_comm_master.c
+        ${OPENFLAP_PROPERTIES_SRC_DIR}/openflap_properties.c
+        "chain_comm_esp.c"
+    INCLUDE_DIRS 
+        ${CHAIN_COMM_SRC_DIR}/shared/inc
+        ${CHAIN_COMM_SRC_DIR}/master/inc
+        ${OPENFLAP_PROPERTIES_SRC_DIR}/inc
+        "include"
+    REQUIRES 
+        esp_driver_uart esp_driver_gpio esp_rom 
+)

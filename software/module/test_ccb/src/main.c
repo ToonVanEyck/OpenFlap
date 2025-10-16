@@ -46,7 +46,7 @@ int main(void)
     debug_term_init(&of_ctx);
 
     /* Initialize chain communication and property handlers. */
-    chain_comm_init(&of_ctx.cc_node_ctx, &of_ctx.of_hal.uart_driver);
+    of_cc_master_init(&of_ctx.cc_node_ctx, &of_ctx.of_hal.uart_driver);
     property_handlers_init(&of_ctx);
 
     /* Print boot messages. */

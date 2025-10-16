@@ -40,13 +40,13 @@ void app_main(void)
     ESP_LOGI(TAG, "Connected to network!");
 
     /* Initialize the OpenFlap display. */
-    display_t display;
-    ESP_GOTO_ON_ERROR(display_init(&display), verify_firmware, TAG, "Failed to initialize OpenFlap display");
+    of_display_t display;
+    ESP_GOTO_ON_ERROR(of_display_init(&display), verify_firmware, TAG, "Failed to initialize OpenFlap display");
     ESP_LOGI(TAG, "Display initialized!");
 
     /* Initialize the chain communication. */
-    chain_comm_ctx_t chain_comm_ctx;
-    ESP_GOTO_ON_ERROR(chain_comm_init(&chain_comm_ctx, &display), verify_firmware, TAG,
+    of_cc_master_ctx_t chain_comm_ctx;
+    ESP_GOTO_ON_ERROR(of_cc_master_init(&chain_comm_ctx, &display), verify_firmware, TAG,
                       "Failed to initialize chain comm");
 
     /* Start the web server. */

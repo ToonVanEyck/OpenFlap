@@ -13,6 +13,6 @@ idf_component_register(
         "property_handlers/motion_property.c"
         "property_handlers/ir_threshold_property.c"
     INCLUDE_DIRS "include"
-    REQUIRES json chain_comm_abi module)
+    REQUIRES json openflap_properties module)
 
     

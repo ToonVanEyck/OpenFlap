@@ -102,7 +102,6 @@ void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, 
     assert(master_cb_cfg->node_error_set != NULL);
     assert(uart_cb_cfg != NULL);
     assert(uart_cb_cfg->read != NULL);
-    assert(uart_cb_cfg->cnt_readable != NULL);
     assert(uart_cb_cfg->write != NULL);
     assert(uart_cb_cfg->read_timeout_set != NULL);
     assert(uart_cb_cfg->flush_rx_buff != NULL);

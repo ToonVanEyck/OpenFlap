@@ -11,7 +11,7 @@
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t module_api_init(webserver_ctx_t *webserver_ctx, display_t *display)
+esp_err_t module_api_init(webserver_ctx_t *webserver_ctx, of_display_t *display)
 {
     ESP_RETURN_ON_FALSE(display != NULL, ESP_ERR_INVALID_ARG, TAG, "Display is NULL");
 

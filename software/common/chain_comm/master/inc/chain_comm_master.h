@@ -29,7 +29,6 @@ typedef enum {
 
 typedef struct {
     uart_read_cb_t read;
-    uart_cnt_readable_cb_t cnt_readable;
     uart_write_cb_t write;
     uart_read_timeout_set_cb_t read_timeout_set;
     uart_flush_rx_buff_cb_t flush_rx_buff;
@@ -87,7 +86,7 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
  *
  * \param[inout] ctx Pointer to the #cc_master_ctx_t structure containing the context information.
  * \param[in] property_id The ID of the property to write.
- * \param[in] node_cnt The number of nodes to write the property to.
+ * \param[in] node_cnt The number of nodes to write the property to. (Must be 0 for broadcast.)
  * \param[in] staged_write If true, the property will be staged and not applied immediately.
  * \param[in] broadcast If true, the property read from node 1 will be written to all nodes.
  *

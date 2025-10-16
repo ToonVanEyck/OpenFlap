@@ -12,7 +12,7 @@
  * \retval ESP_OK The property has been indicated as desynchronized.
  * \retval ESP_ERR_INVALID_ARG The module is NULL or the property id is invalid.
  */
-esp_err_t module_property_indicate_desynchronized(module_t *module, property_id_t property_id);
+esp_err_t module_property_indicate_desynchronized(module_t *module, cc_prop_id_t property_id);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ esp_err_t module_property_indicate_desynchronized(module_t *module, property_id_
  * \retval ESP_OK The property has been indicated as synchronized.
  * \retval ESP_ERR_INVALID_ARG The display is NULL or the property id is invalid.
  */
-esp_err_t module_property_indicate_synchronized(module_t *module, property_id_t property_id);
+esp_err_t module_property_indicate_synchronized(module_t *module, cc_prop_id_t property_id);
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ esp_err_t module_property_indicate_synchronized(module_t *module, property_id_t 
  * \retval true The property is desynchronized.
  * \retval false The property is synchronized.
  */
-bool module_property_is_desynchronized(module_t *module, property_id_t property_id);
+bool module_property_is_desynchronized(module_t *module, cc_prop_id_t property_id);
 
 //---------------------------------------------------------------------------------------------------------------------
 

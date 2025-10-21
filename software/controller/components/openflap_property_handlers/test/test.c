@@ -3,7 +3,7 @@
 #include "memory_checks.h"
 #include "module.h"
 #include "openflap_properties.h"
-#include "property_handler.h"
+#include "openflap_property_handler.h"
 #include "unity.h"
 #include <string.h>
 

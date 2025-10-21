@@ -103,12 +103,44 @@ typedef void (*uart_flush_rx_buff_cb_t)(void *uart_userdata);
 /**
  * \brief Chain communication property GET / SET handler callback.
  *
+ * \param[inout] userdata Pointer to user data.
  * \param[in] node_idx Index of the node for which the property is requested. Only used by the master.
  * \param[in] buf Pointer to the data buffer.
  * \param[inout] size Pointer to the size of the data buffer.
- * \param[in] userdata Pointer to user data.
  */
 typedef bool (*cc_prop_handler_cb_t)(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *size);
+
+/**
+ * \brief Chain communication property GET / SET alternate handler callback.
+ *
+ * \param[inout] userdata Pointer to user data.
+ * \param[in] node_idx Index of the node for which the property is requested. Only used by the master.
+ * \param[inout] data Pointer to a data structure to be interpreted by the handler.
+ *
+ * \return true on success, false on failure.
+ */
+typedef bool (*cc_prop_handler_alt_cb_t)(void *userdata, uint16_t node_idx, void *data);
+
+/**
+ * \brief Chain communication property GET / SET alternate handler callback.
+ *
+ * \param[inout] userdata Pointer to user data.
+ * \param[in] node_idx Index of the node for which the property is requested. Only used by the master.
+ * \param[inout] data Pointer to a data structure to be interpreted by the handler.
+ *
+ * \return true on success, false on failure.
+ */
+typedef bool (*cc_prop_handler_alt_cb_t)(void *userdata, uint16_t node_idx, void *data);
+
+/**
+ * \brief Chain communication property GET / SET alternate handler callback.
+ *
+ * \param[inout] userdata_a Pointer to user data A to compare.
+ * \param[inout] userdata_b Pointer to user data B to compare.
+ *
+ * \return true if equal, false otherwise.
+ */
+typedef bool (*cc_prop_compare_cb_t)(const void *userdata_a, const void *userdata_b);
 
 typedef enum {
     CC_ACTION_READ      = 0, /**< Read property data from all nodes. */
@@ -171,6 +203,11 @@ typedef int16_t cc_prop_id_t;
 typedef struct {
     cc_prop_handler_cb_t get; /**< Read the property from the node or buffer into a buffer. */
     cc_prop_handler_cb_t set; /**< Write the property to the node or buffer from a buffer. */
+#ifdef CC_HANDLER_ALTERNATE_ENABLE
+    cc_prop_handler_alt_cb_t get_alt; /**< Alternate read handler using a data structure. */
+    cc_prop_handler_alt_cb_t set_alt; /**< Alternate write handler using a data structure. */
+    cc_prop_compare_cb_t compare;     /**< Compare two property data structures. */
+#endif
 } cc_prop_handler_t;
 
 /**

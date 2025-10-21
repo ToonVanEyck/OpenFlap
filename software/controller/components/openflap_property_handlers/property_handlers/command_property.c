@@ -1,6 +1,6 @@
 #include "esp_check.h"
+#include "openflap_property_handler.h"
 #include "property_handler_command.h"
-#include "property_handler_common.h"
 
 #include <string.h>
 
@@ -92,14 +92,5 @@ const property_handler_t PROPERTY_HANDLER_COMMAND = {
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
-
-esp_err_t property_handler_command_set(module_t *module, command_property_cmd_t command)
-{
-    assert(module != NULL);
-
-    module->command = command;
-
-    return ESP_OK;
-}
 
 #undef PROPERTY_TAG

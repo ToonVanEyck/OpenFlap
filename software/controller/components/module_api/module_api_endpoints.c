@@ -1,11 +1,12 @@
-#include "module_api_endpoints.h"
+#include "openflap_property_handler.h"
+
 #include "cJSON.h"
 #include "esp_check.h"
 #include "esp_log.h"
-#include "module.h"
+#include "module_api_endpoints.h"
 #include "openflap_display.h"
+#include "openflap_module.h"
 #include "openflap_properties.h"
-#include "property_handler.h"
 
 #define MODULE_INDEX_KEY_STR "module"
 
@@ -17,10 +18,9 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
     esp_err_t err         = ESP_OK;
 
     /* Desynchronize all properties which can be read through json. to force them to be read. */
-    for (cc_prop_id_t property = 0; property < OF_CC_PROP_CNT; property++) {
-        const property_handler_t *property_handler = property_handler_get_by_id(property);
-        if ((property_handler != NULL) && (property_handler->to_json != NULL)) {
-            display_property_indicate_desynchronized(display, property, PROPERTY_SYNC_METHOD_READ);
+    for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
+        if (cc_prop_list[prop_id].handler.get_alt != NULL) {
+            display_property_indicate_desynchronized(display, prop_id, PROPERTY_SYNC_METHOD_READ);
         }
     }
     ESP_LOGI(TAG, "Display desynchronized");
@@ -42,20 +42,19 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
         cJSON_AddNumberToObject(module_json, MODULE_INDEX_KEY_STR, i);
 
         /* Get all properties from a module. */
-        for (cc_prop_id_t property_id = 0; property_id < OF_CC_PROP_CNT; property_id++) {
+        for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
             /* Get the property handler. */
-            const char *property_name                  = cc_prop_list[property_id].attribute.name;
-            const property_handler_t *property_handler = property_handler_get_by_id(property_id);
+            const char *property_name = cc_prop_list[prop_id].attribute.name;
 
             /* Check if the property can be converted to a JSON. */
-            if ((property_handler == NULL) || (property_handler->to_json == NULL)) {
+            if (cc_prop_list[prop_id].handler.get_alt == NULL) {
                 /* Property is not supported for reading. */
                 continue;
             }
 
             /* Call the property handler. */
             cJSON *property_json = cJSON_CreateObject();
-            if (property_handler->to_json(&property_json, module) == ESP_FAIL) {
+            if (!cc_prop_list[prop_id].handler.get_alt(module, i, &property_json)) {
                 ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_name);
                 continue;
             }
@@ -153,9 +152,8 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             }
 
             /* Get the property handler. */
-            cc_prop_id_t property_id                   = cc_prop_id_by_name(property_json->string);
-            const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-            if (property_handler == NULL) {
+            cc_prop_id_t prop_id = cc_prop_id_by_name(property_json->string);
+            if (prop_id == -1) {
                 ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
                 continue;
             }
@@ -169,20 +167,20 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             // }
 
             /* Check if the property is writable. */
-            if (property_handler->from_json == NULL) {
+            if (cc_prop_list[prop_id].handler.set_alt == NULL) {
                 ESP_LOGE("MODULE", "Property \"%s\" is not writable.", property_json->string);
                 continue;
             }
 
             /* Call the property handler. */
-            if (property_handler->from_json(module, property_json) == ESP_FAIL) {
+            if (!cc_prop_list[prop_id].handler.set_alt(module, module_index_json->valueint, property_json)) {
                 ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_json->string);
                 continue;
             }
 
             /* Indicate that the property needs to be written to the actual module. */
-            module_property_indicate_desynchronized(module, property_handler->id);
-            display_property_indicate_desynchronized(display, property_handler->id, PROPERTY_SYNC_METHOD_WRITE);
+            module_property_indicate_desynchronized(module, prop_id);
+            display_property_indicate_desynchronized(display, prop_id, PROPERTY_SYNC_METHOD_WRITE);
         }
     }
 

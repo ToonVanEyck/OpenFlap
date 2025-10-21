@@ -1,7 +1,7 @@
 #include "openflap_display.h"
 #include "esp_check.h"
 #include "esp_log.h"
-#include "property_handler.h"
+#include "openflap_property_handler.h"
 
 #include <string.h>
 
@@ -136,39 +136,36 @@ void display_property_promote_write_seq_to_write_all(of_display_t *display)
         return;
     }
 
-    for (cc_prop_id_t property_id = 0; property_id < OF_CC_PROP_CNT; property_id++) {
+    for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
 
-        if (!(display->sync_prop_write_required & (1 << property_id))) {
+        if (!(display->sync_prop_write_required & (1 << prop_id))) {
             continue; // Property is not marked for writing.
         }
 
-        /* Get the property handler. */
-        const property_handler_t *property_handler = property_handler_get_by_id(property_id);
-
         /* Check if the property can be compared. */
-        if ((property_handler == NULL) || (property_handler->compare == NULL)) {
+        if (cc_prop_list[prop_id].handler.compare == NULL) {
             continue;
         }
 
         /* Get the serialized data for the first module. */
         bool all_modules_are_same    = true;
         module_t *module_a           = display_module_get(display, 0);
-        bool module_property_updated = module_property_is_desynchronized(module_a, property_id);
+        bool module_property_updated = module_property_is_desynchronized(module_a, prop_id);
 
         /* Compare the serialized data for the next properties. */
         for (uint16_t i = 1; all_modules_are_same && i < display_size_get(display); i++) {
             module_t *module_b = display_module_get(display, i);
-            module_property_updated |= module_property_is_desynchronized(module_b, property_id);
-            all_modules_are_same &= property_handler->compare(module_a, module_b);
+            module_property_updated |= module_property_is_desynchronized(module_b, prop_id);
+            all_modules_are_same &= cc_prop_list[prop_id].handler.compare(module_a, module_b);
         }
 
         /* If all modules are the same and the property has been updated, promote the write all. */
         if (all_modules_are_same && module_property_updated) {
-            ESP_LOGI(TAG, "Promoting [%s] property to write all", cc_prop_list[property_id].attribute.name);
-            display_property_indicate_desynchronized(display, property_id, PROPERTY_SYNC_METHOD_WRITE);
+            ESP_LOGI(TAG, "Promoting [%s] property to write all", cc_prop_list[prop_id].attribute.name);
+            display_property_indicate_desynchronized(display, prop_id, PROPERTY_SYNC_METHOD_WRITE);
             for (uint16_t i = 0; i < display_size_get(display); i++) {
                 module_a = display_module_get(display, i);
-                module_property_indicate_synchronized(module_a, property_id);
+                module_property_indicate_synchronized(module_a, prop_id);
             }
         }
     }

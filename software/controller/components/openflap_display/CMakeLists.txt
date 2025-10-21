@@ -4,5 +4,5 @@ idf_component_register(
     INCLUDE_DIRS 
         "include"
     REQUIRES 
-        property_handler webserver module openflap_cc_master 
+        openflap_property_handlers webserver openflap_module openflap_cc_master 
 )

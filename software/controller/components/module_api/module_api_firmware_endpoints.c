@@ -1,11 +1,9 @@
 #include "module_api_firmware_endpoints.h"
 #include "esp_check.h"
 #include "esp_log.h"
-#include "firmware_update_property.h"
-#include "module.h"
 #include "openflap_display.h"
+#include "openflap_module.h"
 #include "openflap_properties.h"
-#include "property_handler_command.h"
 #include "webserver.h"
 
 #define TAG "MODULE_FIRMWARE_ENDPOINTS"
@@ -43,7 +41,7 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
         module_t *module = display_module_get(display, i);
 
         /* Set the firmware page. */
-        firmware_update_property_set(module, data_offset / data_len, (uint8_t *)data);
+        of_module_firmware_update_property_set(module, data_offset / data_len, (uint8_t *)data);
 
         /* Indicate that the firmware property has changed and needs to be written. */
         module_property_indicate_desynchronized(module, OF_CC_PROP_FIRMWARE_UPDATE);
@@ -58,7 +56,7 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
         for (uint16_t i = 0; i < display_size; i++) {
             module_t *module = display_module_get(display, i);
             /* All data has been transmitted, reboot the modules. */
-            property_handler_command_set(module, CMD_REBOOT);
+            of_module_command_set(module, CMD_REBOOT);
             module_property_indicate_desynchronized(module, OF_CC_PROP_COMMAND);
         }
         /* Synchronize. */

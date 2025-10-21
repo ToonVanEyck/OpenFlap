@@ -1,7 +1,7 @@
 #pragma once
 
 #include "esp_err.h"
-#include "module_common.h"
+#include "openflap_module_common.h"
 
 /**
  * \brief Indicate that a property of a module has been updated and and needs to be written to the actual module.

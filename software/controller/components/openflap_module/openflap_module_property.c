@@ -1,7 +1,7 @@
-#include "module_property.h"
+#include "openflap_module_property.h"
 #include "esp_check.h"
 #include "esp_log.h"
-#include "module.h"
+#include "openflap_module.h"
 
 #include <string.h>
 

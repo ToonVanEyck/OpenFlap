@@ -10,7 +10,7 @@
 #define UART_NUM      UART_NUM_1
 #define COL_START_PIN (2)
 #define TX_COL_PIN    (47)
-#define RX_COL_PIN    (45)
+#define RX_COL_PIN    (48)
 #define ROW_START_PIN (6)
 #define TX_ROW_PIN    (5)
 #define RX_ROW_PIN    (4)

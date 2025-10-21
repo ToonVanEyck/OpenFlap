@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 #include "esp_log.h"
-#include "module.h"
 #include "openflap_cc_master.h"
+#include "openflap_module.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>

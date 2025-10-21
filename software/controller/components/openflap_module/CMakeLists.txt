@@ -1,7 +1,7 @@
 idf_component_register(
     SRCS 
-        "module_property.c"
-        "module.c"
+        "openflap_module_property.c"
+        "openflap_module.c"
     INCLUDE_DIRS 
         "include"
     REQUIRES 

@@ -161,7 +161,7 @@ static void of_cc_master_task(void *arg)
             }
         }
 
-        ESP_LOGI(TAG, "Chain Comm Master Synchronization Completed.");
+        ESP_LOGI(TAG, "Chain Comm Master Synchronization Completed!");
         /* Indicate synchronization is done. */
         xEventGroupSetBits(ctx->event_handle, OF_CC_MASTER_MODEL_EVENT_SYNCHRONIZED);
     }

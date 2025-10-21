@@ -21,6 +21,8 @@ add_subdirectory(node)
 option(CC_STATE_STRINGS "Enable human-readable state names." ON)
 option(CC_ERROR_STRINGS "Enable human-readable error strings." ON)
 
+option(CC_HANDLER_ALTERNATE_ENABLE "Enable alternate chain comm handler." OFF)
+
 # Pass compile-time defines
 if(CC_STATE_STRINGS)
     target_compile_definitions(${PROJECT_NAME}_shared PUBLIC CC_STATE_STRINGS)
@@ -28,6 +30,10 @@ endif()
 
 if(CC_ERROR_STRINGS)
     target_compile_definitions(${PROJECT_NAME}_shared PUBLIC CC_ERROR_STRINGS)
+endif()
+
+if(CC_HANDLER_ALTERNATE_ENABLE)
+    target_compile_definitions(${PROJECT_NAME}_shared PUBLIC CC_HANDLER_ALTERNATE_ENABLE)
 endif()
 
 # Add the test executable

@@ -16,3 +16,5 @@ idf_component_register(
     REQUIRES 
         esp_driver_uart esp_driver_gpio esp_rom 
 )
+
+idf_build_set_property(COMPILE_DEFINITIONS "CC_HANDLER_ALTERNATE_ENABLE=1" APPEND)

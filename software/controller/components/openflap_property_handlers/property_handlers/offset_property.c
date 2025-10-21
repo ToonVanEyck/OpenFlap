@@ -1,5 +1,5 @@
 #include "esp_check.h"
-#include "property_handler_common.h"
+#include "openflap_property_handler.h"
 
 #define PROPERTY_TAG "OFFSET_PROPERTY_HANDLER"
 

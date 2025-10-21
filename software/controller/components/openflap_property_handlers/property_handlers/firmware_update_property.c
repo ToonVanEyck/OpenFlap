@@ -1,35 +1,10 @@
 #include "firmware_update_property.h"
 #include "esp_check.h"
-#include "property_handler_common.h"
+#include "openflap_property_handler.h"
 
 #include <string.h>
 
 #define PROPERTY_TAG "FIRMWARE_UPDATE_PROPERTY_HANDLER"
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-esp_err_t firmware_update_property_set(module_t *module, uint16_t index, const uint8_t *data)
-{
-    assert(module != NULL);
-    assert(data != NULL);
-
-    /* Create new firmware update property. */
-    firmware_update_property_t *new_firmware_update = firmware_update_new();
-    ESP_RETURN_ON_FALSE(new_firmware_update != NULL, ESP_ERR_NO_MEM, PROPERTY_TAG, "Failed to allocate memory");
-
-    /* Free the old data. */
-    firmware_update_free(module->firmware_update);
-
-    /* Update the module with the new firmware update. */
-    module->firmware_update = new_firmware_update;
-
-    /* Set the data. */
-    module->firmware_update->index = index;
-    uint16_t size = chain_comm_property_write_attributes_get(PROPERTY_FIRMWARE_UPDATE)->static_property_size - 2;
-    memcpy(module->firmware_update->data, data, size);
-
-    return ESP_OK;
-}
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

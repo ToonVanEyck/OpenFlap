@@ -1,7 +1,7 @@
 #include "chain_comm_esp.h"
 #include "memory_checks.h"
 #include "openflap_display.h"
-#include "property_handler.h"
+#include "openflap_property_handler.h"
 #include "unity.h"
 
 #define TAG      "CHAIN_COMM_TEST"

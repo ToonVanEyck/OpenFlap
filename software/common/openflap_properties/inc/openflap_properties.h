@@ -20,13 +20,17 @@
 
 #define OF_FIRMWARE_UPDATE_PAGE_SIZE 128 /**< Size of a firmware update page in bytes. */
 
+// clang-format off
+#define OF_PROP_CMD_GENERATOR(GENERATOR)                                                                                    \
+GENERATOR(CMD_UNDEFINED    = 0, "undefined"   )                                                                        \
+GENERATOR(CMD_REBOOT       = 1, "reboot"      )                                                                        \
+GENERATOR(CMD_MOTOR_UNLOCK = 2, "motor_unlock")
+// clang-format on
+
 /**
  * \brief Command property commands.
  */
-typedef enum {
-    CMD_REBOOT       = 0x01, /** Reboot the module. */
-    CMD_MOTOR_UNLOCK = 0x02, /** Unlock the motor. */
-} command_property_cmd_t;
+typedef enum { OF_PROP_CMD_GENERATOR(GENERATE_1ST_FIELD) CMD_MAX } command_property_cmd_t;
 
 /**
  * \brief Module types.
@@ -56,10 +60,33 @@ extern cc_prop_t cc_prop_list[OF_CC_PROP_CNT];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
- * \brief Get the property ID by its name.
+ * \brief Get the property ID by it's name.
  *
  * \param[in] name The name of the property.
  *
  * \return The property ID or -1 if the property does not exist.
  */
-cc_prop_id_t cc_prop_id_by_name(const char *name);
+cc_prop_id_t of_cc_prop_id_by_name(const char *name);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Get the command id by it's name.
+ *
+ * \param[in] name The name of the command.
+ *
+ * \return The property ID or -1 if the property does not exist.
+ */
+command_property_cmd_t of_cmd_id_by_name(const char *name);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Get the string representation of the command id.
+ *
+ * \param[in] id The command id.
+ * \return The string representation of the command id.
+ */
+const char *of_cmd_name_by_id(command_property_cmd_t id);
+
+//----------------------------------------------------------------------------------------------------------------------

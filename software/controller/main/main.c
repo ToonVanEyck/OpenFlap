@@ -15,7 +15,7 @@
 #include "openflap_display.h"
 #include "openflap_module.h"
 // #include "openflap_cc_master.h"
-#include "openflap_property_handler.h"
+#include "openflap_property_handlers.h"
 #include "utils.h"
 #include "webserver.h"
 

@@ -1,4 +1,4 @@
-#include "openflap_property_handler.h"
+#include "openflap_property_handlers.h"
 
 #define PROPERTY_TAG "MODULE_INFO_PROPERTY_HANDLER"
 

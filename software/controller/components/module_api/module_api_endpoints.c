@@ -1,4 +1,4 @@
-#include "openflap_property_handler.h"
+#include "openflap_property_handlers.h"
 
 #include "cJSON.h"
 #include "esp_check.h"
@@ -152,7 +152,7 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             }
 
             /* Get the property handler. */
-            cc_prop_id_t prop_id = cc_prop_id_by_name(property_json->string);
+            cc_prop_id_t prop_id = of_cc_prop_id_by_name(property_json->string);
             if (prop_id == -1) {
                 ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
                 continue;

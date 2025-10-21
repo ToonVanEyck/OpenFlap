@@ -1,7 +1,7 @@
 #include "openflap_display.h"
 #include "esp_check.h"
 #include "esp_log.h"
-#include "openflap_property_handler.h"
+#include "openflap_property_handlers.h"
 
 #include <string.h>
 

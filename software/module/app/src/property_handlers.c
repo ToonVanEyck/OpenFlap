@@ -48,11 +48,8 @@ bool property_command_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_
 
 bool property_module_info_get(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *size)
 {
-    *size                              = 0;
-    module_info_property_t module_info = {0};
-    module_info.column_end             = of_hal_is_column_end();
-    module_info.type                   = MODULE_TYPE_SPLITFLAP;
-    buf[(*size)++]                     = module_info.raw;
+    *size          = 0;
+    buf[(*size)++] = of_ctx->column_end;
     return true;
 }
 

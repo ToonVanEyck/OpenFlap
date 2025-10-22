@@ -78,7 +78,7 @@ typedef struct {
     uint32_t firmware_crc;                         /**< CRC of the firmware. */
     firmware_update_property_t *firmware_update;   /**< Firmware update property. */
     command_property_cmd_t command;                /**< Command property. */
-    module_info_property_t module_info;            /**< Module info property. */
+    bool column_end;                               /**< Column end property. */
     character_set_property_t *character_set;       /**< Character set property. */
     character_index_property_t character_index;    /**< Current index of the character in the charactermap. */
     offset_property_t offset;                      /**< offset property. */

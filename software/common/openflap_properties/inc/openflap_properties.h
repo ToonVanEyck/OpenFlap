@@ -21,7 +21,7 @@
 #define OF_FIRMWARE_UPDATE_PAGE_SIZE 128 /**< Size of a firmware update page in bytes. */
 
 // clang-format off
-#define OF_PROP_CMD_GENERATOR(GENERATOR)                                                                                    \
+#define OF_PROP_CMD_GENERATOR(GENERATOR)                                                                               \
 GENERATOR(CMD_UNDEFINED    = 0, "undefined"   )                                                                        \
 GENERATOR(CMD_REBOOT       = 1, "reboot"      )                                                                        \
 GENERATOR(CMD_MOTOR_UNLOCK = 2, "motor_unlock")
@@ -31,28 +31,6 @@ GENERATOR(CMD_MOTOR_UNLOCK = 2, "motor_unlock")
  * \brief Command property commands.
  */
 typedef enum { OF_PROP_CMD_GENERATOR(GENERATE_1ST_FIELD) CMD_MAX } command_property_cmd_t;
-
-/**
- * \brief Module types.
- */
-typedef enum {
-    MODULE_TYPE_UNKNOWN   = 0x00, /**< Unknown module type. */
-    MODULE_TYPE_SPLITFLAP = 0x01, /**< Split-flap module type. */
-} module_type_t;
-
-/**
- * \brief Module info.
- */
-typedef struct __attribute__((__packed__)) {
-    union {
-        struct {
-            bool column_end : 1;    /**< Indicates that this module is the last one in a column. */
-            module_type_t type : 4; /**< The type of the module. */
-            uint8_t reserved : 3;   /**< Reserved for future use. */
-        };
-        uint8_t raw; /**< The raw value of the module info. */
-    };
-} module_info_property_t;
 
 /* Extern list of property used by both the master and the nodes. */
 extern cc_prop_t cc_prop_list[OF_CC_PROP_CNT];
@@ -67,6 +45,27 @@ extern cc_prop_t cc_prop_list[OF_CC_PROP_CNT];
  * \return The property ID or -1 if the property does not exist.
  */
 cc_prop_id_t of_cc_prop_id_by_name(const char *name);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Get the command id by it's name.
+ *
+ * \param[in] name The name of the command.
+ *
+ * \return The property ID or -1 if the property does not exist.
+ */
+command_property_cmd_t of_cmd_id_by_name(const char *name);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * \brief Get the string representation of the command id.
+ *
+ * \param[in] id The command id.
+ * \return The string representation of the command id.
+ */
+const char *of_cmd_name_by_id(command_property_cmd_t id);
 
 //----------------------------------------------------------------------------------------------------------------------
 

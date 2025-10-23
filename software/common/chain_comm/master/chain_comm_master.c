@@ -225,6 +225,7 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
         } else {
             if (!ctx->prop_list[property_id].handler.set(ctx->prop_userdata, i, property_data, &data_size)) {
                 err = CC_MASTER_ERR_WRITE_CB;
+                CC_LOGE(TAG, "\"set\" callback failed for node %d", i);
             }
         }
     }
@@ -284,7 +285,7 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
         /* Get the property data. */
         CC_RETURN_ON_FALSE(ctx->prop_list[property_id].handler.get(
                                ctx->prop_userdata, i, property_data + CC_COBS_OVERHEAD_SIZE - 1, &unencoded_size),
-                           CC_MASTER_ERR_READ_CB, TAG, "Failed to get property data");
+                           CC_MASTER_ERR_READ_CB, TAG, "\"get\" callback failed for node %d", i);
 
         assert(unencoded_size <= CC_PROPERTY_SIZE_MAX);
 
@@ -319,9 +320,6 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
 
     /* Update the node count. */
     uint16_t node_cnt_rx = cc_header_node_cnt_get(rx_header);
-
-    printf("rx header: %02x %02x %02x, node cnt rx: %d , node cnt: %d\n", rx_header.raw[0], rx_header.raw[1],
-           rx_header.raw[2], node_cnt_rx, node_cnt);
 
     /* When we are not in broadcast mode, we expect the node count to be zero, If it is more than zero, the number of
      * nodes has dropped. It can't be less than zero because that would crash the node. When not in broadcast mode, the

@@ -197,6 +197,13 @@ bool of_hal_is_column_end(void)
 
 //----------------------------------------------------------------------------------------------------------------------
 
+bool of_hal_is_12V_ok(void)
+{
+    return LL_GPIO_IsInputPinSet(GPIOB, LL_GPIO_PIN_5);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void of_hal_encoder_values_get(uint16_t *encoder_values)
 {
     // Map the dma buffer to the encoder channels.

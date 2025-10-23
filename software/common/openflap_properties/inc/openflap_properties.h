@@ -49,6 +49,16 @@ cc_prop_id_t of_cc_prop_id_by_name(const char *name);
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
+ * \brief Get the string representation of the property ID.
+ *
+ * \param[in] id The property ID.
+ * \return The string representation of the property ID.
+ */
+const char *of_cc_prop_name_by_id(cc_prop_id_t id);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
  * \brief Get the command id by it's name.
  *
  * \param[in] name The name of the command.

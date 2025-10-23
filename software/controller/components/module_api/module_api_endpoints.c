@@ -55,7 +55,7 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
             /* Call the property handler. */
             cJSON *property_json = cJSON_CreateObject();
             if (!cc_prop_list[prop_id].handler.get_alt(module, i, &property_json)) {
-                ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_name);
+                ESP_LOGE(TAG, "Property \"%s\" is invalid.", property_name);
                 continue;
             }
 
@@ -154,27 +154,19 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             /* Get the property handler. */
             cc_prop_id_t prop_id = of_cc_prop_id_by_name(property_json->string);
             if (prop_id == -1) {
-                ESP_LOGE("MODULE", "Property \"%s\" not supported by controller.", property_json->string);
+                ESP_LOGE(TAG, "Property \"%s\" not supported by controller.", property_json->string);
                 continue;
             }
 
-            /* Get property field from the module. */
-            // module_t *module = module_property_get_by_id(module, property_handler->id);
-            // if (property == NULL) {
-            //     ESP_LOGE("MODULE", "Property \"%s\" not supported by module of type %d.", property_json->string,
-            //              module->module_info.type);
-            //     continue;
-            // }
-
             /* Check if the property is writable. */
             if (cc_prop_list[prop_id].handler.set_alt == NULL) {
-                ESP_LOGE("MODULE", "Property \"%s\" is not writable.", property_json->string);
+                ESP_LOGE(TAG, "Property \"%s\" is not writable.", property_json->string);
                 continue;
             }
 
             /* Call the property handler. */
             if (!cc_prop_list[prop_id].handler.set_alt(module, module_index_json->valueint, property_json)) {
-                ESP_LOGE("MODULE", "Property \"%s\" is invalid.", property_json->string);
+                ESP_LOGE(TAG, "Property \"%s\" is invalid.", property_json->string);
                 continue;
             }
 

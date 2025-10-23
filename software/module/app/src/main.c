@@ -66,7 +66,7 @@ int main(void)
                                      .cnt_readable  = (uart_cnt_readable_cb_t)uart_driver_cnt_readable,
                                      .write         = (uart_write_cb_t)uart_driver_write,
                                      .cnt_writable  = (uart_cnt_writable_cb_t)uart_driver_cnt_writable,
-                                     .tx_buff_empty = (uart_tx_buff_empty_cb_t)uart_driver_tx_in_progress,
+                                     .tx_buff_empty = (uart_tx_buff_empty_cb_t)uart_driver_tx_idle,
                                      .is_busy       = (uart_is_busy_cb_t)uart_driver_is_busy};
 
     cc_node_init(&of_ctx.cc_node_ctx, &uart_cb, &of_ctx.of_hal.uart_driver, cc_prop_list, OF_CC_PROP_CNT, &of_ctx);

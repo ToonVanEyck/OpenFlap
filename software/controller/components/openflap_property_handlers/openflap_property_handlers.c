@@ -513,7 +513,7 @@ bool character_from_bin(void *userdata, uint16_t node_idx, uint8_t *buf, size_t 
 
     module->character_index = buf[0];
 
-    return ESP_OK;
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -536,7 +536,7 @@ bool character_to_bin(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *s
     *size  = 1; /* Only one byte, the character index. */
     buf[0] = module->character_index;
 
-    return ESP_OK;
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

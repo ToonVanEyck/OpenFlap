@@ -42,8 +42,8 @@ esp_err_t of_display_init(of_display_t *display)
         .model_sync_done                 = of_display_prop_sync_done,
     };
 
-    ESP_RETURN_ON_ERROR(of_cc_master_init(&display->cc_master, display, &of_cc_master_cb_cfg), TAG,
-                        "Failed to initialize CC master");
+    ESP_RETURN_ON_ERROR(of_cc_master_init(&display->cc_master, display, &of_cc_master_cb_cfg, &display->module_count),
+                        TAG, "Failed to initialize CC master");
 
     return ESP_OK;
 }

@@ -63,7 +63,7 @@ void of_encoder_position_update(of_ctx_t *ctx)
     static uint8_t old_pattern = 0x00;
 
     /* Digitize the ADC signals using the configured IR thresholds. */
-    uint8_t new_pattern = (ctx->encoder.digital[ENC_CH_A] << 1) | (ctx->encoder.digital[ENC_CH_B] << 0);
+    uint8_t new_pattern = (ctx->encoder.digital[ENC_CH_A] << 0) | (ctx->encoder.digital[ENC_CH_B] << 1);
 
     int8_t qem = QEM[(old_pattern << 2) | new_pattern];
 
@@ -206,20 +206,20 @@ void motor_control_loop(of_ctx_t *ctx, uint32_t cl_tick)
         of_hal_motor_control(cl_speed, decay_setpoint);
     }
 
-    if (cl_tick % 10 == 1) {
-        rtt_scope_t rtt_scope = {
-            .setpoint     = ctx->encoder_rps_x100_setpoint,
-            .actual       = ctx->encoder_rps_x100_actual,
-            .p            = ctx->pid_ctx.p_error,
-            .i            = ctx->pid_ctx.i_error,
-            .d            = ctx->pid_ctx.d_error,
-            .pid_out      = pid_output,
-            .feed_forward = feed_forward_speed,
-            .cl_out       = cl_speed,
-            .decay        = decay_setpoint,
-        };
-        // rtt_scope_push(&rtt_scope, sizeof(rtt_scope));
-    }
+    // if (cl_tick % 10 == 1) {
+    // rtt_scope_t rtt_scope = {
+    //     .setpoint     = ctx->encoder_rps_x100_setpoint,
+    //     .actual       = ctx->encoder_rps_x100_actual,
+    //     .p            = ctx->pid_ctx.p_error,
+    //     .i            = ctx->pid_ctx.i_error,
+    //     .d            = ctx->pid_ctx.d_error,
+    //     .pid_out      = pid_output,
+    //     .feed_forward = feed_forward_speed,
+    //     .cl_out       = cl_speed,
+    //     .decay        = decay_setpoint,
+    // };
+    // rtt_scope_push(&rtt_scope, sizeof(rtt_scope));
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------------------------

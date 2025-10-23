@@ -7,7 +7,7 @@
 	(title_block
 		(title "Side Panel")
 		(date "${DATE}")
-		(rev "7.3.0")
+		(rev "7.3.1")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
@@ -13989,7 +13989,7 @@
 				)
 			)
 		)
-		(property "Value" "220K"
+		(property "Value" "75K"
 			(at 34.798 156.718 0)
 			(effects
 				(font

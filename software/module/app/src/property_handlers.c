@@ -49,7 +49,7 @@ bool property_command_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_
 bool property_module_info_get(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *size)
 {
     *size          = 0;
-    buf[(*size)++] = of_ctx->column_end;
+    buf[(*size)++] = of_hal_is_column_end() ? 1 : 0; // Is last module in column
     return true;
 }
 

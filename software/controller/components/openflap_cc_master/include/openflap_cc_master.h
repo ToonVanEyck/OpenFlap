@@ -75,7 +75,7 @@ typedef struct {
 
     of_cc_master_uart_ctx_t uart_ctx; /**< UART context. */
 
-    uint16_t node_cnt; /**< Current number of nodes in the chain. */
+    const uint16_t *node_cnt_ref; /**< A pointer to where the node count is stored. */
 
     /** Callback to check if the model requires synchronization. */
     of_cc_master_model_sync_required_cb model_sync_required;
@@ -90,12 +90,14 @@ typedef struct {
  * \param[in] ctx The chain communication context.
  * \param[in] model_userdata The model user data. Used as userdata for the property handlers.
  * \param[in] of_master_cb_cfg The chain communication master callback configuration.
+ * \param[in] node_cnt_ref A pointer to where the current node count is stored.
  *
  * \retval ESP_OK The chain communication was successfully initialized.
  * \retval ESP_ERR_INVALID_ARG The context or model user data is NULL.
  * \retval ESP_FAIL The chain communication failed to initialize.
  */
-esp_err_t of_cc_master_init(of_cc_master_ctx_t *ctx, void *model_userdata, of_cc_master_cb_cfg_t *of_master_cb_cfg);
+esp_err_t of_cc_master_init(of_cc_master_ctx_t *ctx, void *model_userdata, of_cc_master_cb_cfg_t *of_master_cb_cfg,
+                            const uint16_t *node_cnt_ref);
 
 //----------------------------------------------------------------------------------------------------------------------
 

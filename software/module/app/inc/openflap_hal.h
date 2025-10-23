@@ -134,6 +134,13 @@ bool of_hal_motor_is_running(void);
 bool of_hal_is_column_end(void);
 
 /**
+ * @brief Check if the module is receiving 12V power.
+ *
+ * @return true if it is receiving 12V power, false otherwise.
+ */
+bool of_hal_is_12V_ok(void);
+
+/**
  * @brief Get the current encoder adc values.
  *
  * @param[out] encoder_values The encoder values array of size #ENCODER_CHANNEL_COUNT.

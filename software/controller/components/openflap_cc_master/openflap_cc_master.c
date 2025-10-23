@@ -30,10 +30,19 @@ static void of_cc_master_task(void *arg);
 //                                                   PUBLIC FUNCTIONS
 //======================================================================================================================
 
-esp_err_t of_cc_master_init(of_cc_master_ctx_t *ctx, void *model_userdata, of_cc_master_cb_cfg_t *of_master_cb_cfg)
+esp_err_t of_cc_master_init(of_cc_master_ctx_t *ctx, void *model_userdata, of_cc_master_cb_cfg_t *of_master_cb_cfg,
+                            const uint16_t *node_cnt_ref)
 {
     ESP_RETURN_ON_FALSE(ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "cc_master context is NULL");
     ESP_RETURN_ON_FALSE(model_userdata != NULL, ESP_ERR_INVALID_ARG, TAG, "Model user data is NULL");
+    ESP_RETURN_ON_FALSE(of_master_cb_cfg != NULL, ESP_ERR_INVALID_ARG, TAG, "Master callback configuration is NULL");
+    ESP_RETURN_ON_FALSE(of_master_cb_cfg->node_cnt_update != NULL, ESP_ERR_INVALID_ARG, TAG,
+                        "node_cnt_update callback is NULL");
+    ESP_RETURN_ON_FALSE(of_master_cb_cfg->node_exists_and_must_be_written != NULL, ESP_ERR_INVALID_ARG, TAG,
+                        "node_exists_and_must_be_written callback is NULL");
+    ESP_RETURN_ON_FALSE(of_master_cb_cfg->node_error_set != NULL, ESP_ERR_INVALID_ARG, TAG,
+                        "node_error_set callback is NULL");
+    ESP_RETURN_ON_FALSE(node_cnt_ref != NULL, ESP_ERR_INVALID_ARG, TAG, "Node count reference is NULL");
 
     ctx->model_userdata      = model_userdata;
     ctx->model_sync_required = of_master_cb_cfg->model_sync_required;
@@ -44,6 +53,8 @@ esp_err_t of_cc_master_init(of_cc_master_ctx_t *ctx, void *model_userdata, of_cc
         .node_exists_and_must_be_written = of_master_cb_cfg->node_exists_and_must_be_written,
         .node_error_set                  = of_master_cb_cfg->node_error_set,
     };
+
+    ctx->node_cnt_ref = node_cnt_ref;
 
     /* Configure UART for chain communication. */
     cc_master_uart_cb_cfg_t uart_cb = {0};
@@ -133,27 +144,28 @@ static void of_cc_master_task(void *arg)
             cc_action_t required_action = ctx->model_sync_required(ctx->model_userdata, prop_id);
             switch (required_action) {
                 case CC_ACTION_READ:
-                    ESP_LOGI(TAG, "Model requires READ of property %d", prop_id);
+                    ESP_LOGI(TAG, "Model requires READ of property %s", of_cc_prop_name_by_id(prop_id));
                     if (cc_master_prop_read(&ctx->cc_master, prop_id) == CC_MASTER_OK) {
                         ctx->model_sync_done(ctx->model_userdata, prop_id);
                     } else {
-                        ESP_LOGW(TAG, "Failed to read property %d", prop_id);
+                        ESP_LOGE(TAG, "Failed to read property %s", of_cc_prop_name_by_id(prop_id));
                     }
                     break;
                 case CC_ACTION_WRITE:
-                    ESP_LOGI(TAG, "Model requires WRITE of property %d", prop_id);
-                    if (cc_master_prop_write(&ctx->cc_master, prop_id, ctx->node_cnt, false, false) == CC_MASTER_OK) {
+                    ESP_LOGI(TAG, "Model requires WRITE of property %s", of_cc_prop_name_by_id(prop_id));
+                    if (cc_master_prop_write(&ctx->cc_master, prop_id, *ctx->node_cnt_ref, false, false) ==
+                        CC_MASTER_OK) {
                         ctx->model_sync_done(ctx->model_userdata, prop_id);
                     } else {
-                        ESP_LOGW(TAG, "Failed to write property %d", prop_id);
+                        ESP_LOGE(TAG, "Failed to write property %s", of_cc_prop_name_by_id(prop_id));
                     }
                     break;
                 case CC_ACTION_BROADCAST:
-                    ESP_LOGI(TAG, "Model requires BROADCAST of property %d", prop_id);
+                    ESP_LOGI(TAG, "Model requires BROADCAST of property %s", of_cc_prop_name_by_id(prop_id));
                     if (cc_master_prop_write(&ctx->cc_master, prop_id, 0, false, true) == CC_MASTER_OK) {
                         ctx->model_sync_done(ctx->model_userdata, prop_id);
                     } else {
-                        ESP_LOGW(TAG, "Failed to broadcast property %d", prop_id);
+                        ESP_LOGE(TAG, "Failed to broadcast property %s", of_cc_prop_name_by_id(prop_id));
                     }
                     break;
                 default:

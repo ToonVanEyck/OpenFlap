@@ -18,6 +18,8 @@ static void debug_term_pid_tune(int argc, char *argv[], void *userdata);
 static void debug_term_ir_lims_set(int argc, char *argv[], void *userdata);
 static void debug_term_i_lim_update(int argc, char *argv[], void *userdata);
 static void debug_term_control_loop_toggle(int argc, char *argv[], void *userdata);
+static void debug_term_led(int argc, char *argv[], void *userdata);
+static void debug_term_info(int argc, char *argv[], void *userdata);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
@@ -37,6 +39,8 @@ void debug_term_init(of_ctx_t *of_ctx)
     simple_term_register_keyword("ir", debug_term_ir_lims_set, of_ctx);
     simple_term_register_keyword("i_lim", debug_term_i_lim_update, of_ctx);
     simple_term_register_keyword("cl", debug_term_control_loop_toggle, of_ctx);
+    simple_term_register_keyword("led", debug_term_led, of_ctx);
+    simple_term_register_keyword("info", debug_term_info, of_ctx);
 }
 
 //======================================================================================================================
@@ -93,7 +97,7 @@ static void debug_term_test_uart(int argc, char *argv[], void *userdata)
 
     printf("Sending %d bytes over uart: %s\n", (int)strlen(argv[1]), argv[1]);
 
-    uart_driver_write(&of_ctx->of_hal.uart_driver, (uint8_t *)argv[1], strlen(argv[1]), NULL);
+    uart_driver_write(&of_ctx->of_hal.uart_driver, (uint8_t *)argv[1], strlen(argv[1]));
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -286,4 +290,44 @@ static void debug_term_control_loop_toggle(int argc, char *argv[], void *userdat
     of_ctx->debug_flags.rps_x100_setpoint_override = false;
 
     printf("Motor control loop enabled\n");
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+static void debug_term_led(int argc, char *argv[], void *userdata)
+{
+
+    if (argc == 1) {
+        of_hal_led_toggle();
+        return;
+    }
+    if (argc == 2) {
+        int value = atoi(argv[1]);
+        if (value == 0 || value == 1) {
+            of_hal_led_set(value);
+            return;
+        }
+    }
+    printf("Usage: %s [value (0|1)]\n", argv[0]);
+}
+
+//------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Print some interesting debug information.
+ *
+ * @param[in] argc     Number of arguments.
+ * @param[in] argv     Argument values.
+ * @param[in] userdata A pointer to the openflap context.
+ */
+static void debug_term_info(int argc, char *argv[], void *userdata)
+{
+    (void)argc;
+    (void)argv;
+
+    of_ctx_t *ctx = (of_ctx_t *)userdata;
+
+    printf("Col-End      : %s\n", of_hal_is_column_end() ? "Yes" : "No");
+    printf("12V OK       : %s\n", of_hal_is_12V_ok() ? "Ok" : "Not Ok");
+    printf("Control Loop : %s\n", ctx->motor_control_override ? "Manual" : "Auto");
 }

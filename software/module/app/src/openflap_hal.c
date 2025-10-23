@@ -161,6 +161,12 @@ void of_hal_led_toggle()
 
 void of_hal_motor_control(int16_t speed, int16_t decay)
 {
+    /* Don't control the motor if there is no 12V. */
+    if (!of_hal_is_12V_ok()) {
+        speed = 0;
+        decay = 0;
+    }
+
     /* Clamp input values */
     speed = (speed < -1000) ? -1000 : (speed > 1000) ? 1000 : speed; // Clamp speed to [-1000, 1000]
     decay = (decay < 0) ? 0 : (decay > 1000) ? 1000 : decay;         // Clamp decay to [0, 1000]

@@ -479,8 +479,9 @@ function startCalibration() {
     for (let i = 0; i < moduleObjects.length; i++) {
         trySetLetter(i, moduleObjects[i].character_set[0]);
         moduleObjects[i].offset = 0;
+        moduleObjects[i].command = "offset_reset";
     }
-    modulesSetProperties(["character", "offset"]);
+    modulesSetProperties(["command"]);
     createModuleTable();
 }
 

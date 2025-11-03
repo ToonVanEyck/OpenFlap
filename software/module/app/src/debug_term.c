@@ -330,4 +330,7 @@ static void debug_term_info(int argc, char *argv[], void *userdata)
     printf("Col-End      : %s\n", of_hal_is_column_end() ? "Yes" : "No");
     printf("12V OK       : %s\n", of_hal_is_12V_ok() ? "Ok" : "Not Ok");
     printf("Control Loop : %s\n", ctx->motor_control_override ? "Manual" : "Auto");
-}
+    printf("Position     : %d\n", ctx->flap_position / ENCODER_PULSES_PER_SYMBOL);
+    printf("Setpoint     : %d\n", ctx->flap_setpoint / ENCODER_PULSES_PER_SYMBOL);
+    printf("Offset       : %d\n", ctx->of_config.encoder_offset);
+};

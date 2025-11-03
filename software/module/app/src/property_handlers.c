@@ -40,6 +40,15 @@ bool property_command_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_
             break;
         case CMD_MOTOR_UNLOCK:
             of_ctx->motor_control_override = false; /* Enable the motor control. */
+        case CMD_OFFSET_RESET:
+            /* Reset the offset to zero and set the flap setpoint to zero. */
+            of_ctx->flap_setpoint = 0;
+            of_ctx->flap_position =
+                flapIndex_wrap_calc((int16_t)(of_ctx->flap_position) - (int16_t)of_ctx->of_config.encoder_offset);
+            of_ctx->of_config.encoder_offset = 0;
+            distance_update(of_ctx);
+            of_ctx->store_config = true;
+            break;
         default:
             break;
     }
@@ -78,6 +87,12 @@ bool property_offset_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_t
     if (of_ctx->of_config.encoder_offset == buf[0]) {
         return false;
     }
+
+    if (of_ctx->flap_distance > 0) {
+        // Offset can only be changed when flap is not moving
+        return false;
+    }
+
     int16_t offset_delta             = (int16_t)of_ctx->of_config.encoder_offset - (int16_t)buf[0];
     of_ctx->of_config.encoder_offset = buf[0];
     of_ctx->flap_position            = flapIndex_wrap_calc((int16_t)(of_ctx->flap_position) + offset_delta);

@@ -24,7 +24,8 @@
 #define OF_PROP_CMD_GENERATOR(GENERATOR)                                                                               \
 GENERATOR(CMD_UNDEFINED    = 0, "undefined"   )                                                                        \
 GENERATOR(CMD_REBOOT       = 1, "reboot"      )                                                                        \
-GENERATOR(CMD_MOTOR_UNLOCK = 2, "motor_unlock")
+GENERATOR(CMD_MOTOR_UNLOCK = 2, "motor_unlock")                                                                        \
+GENERATOR(CMD_OFFSET_RESET = 3, "offset_reset")
 // clang-format on
 
 /**

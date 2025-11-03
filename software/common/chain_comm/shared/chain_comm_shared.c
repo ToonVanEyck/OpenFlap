@@ -107,17 +107,6 @@ bool cc_payload_cobs_decode(uint8_t *dst, size_t *dst_len, const uint8_t *src, s
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void cc_checksum_update(uint8_t *checksum, uint8_t data)
-{
-    if (checksum == NULL) {
-        return;
-    }
-
-    (*checksum) += data;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 uint8_t cc_checksum_calculate(const uint8_t *data, size_t size)
 {
     if (data == NULL || size == 0) {

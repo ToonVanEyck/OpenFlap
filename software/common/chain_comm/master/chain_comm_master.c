@@ -279,7 +279,7 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
     size_t property_size                       = 0;
     uint8_t property_data[CC_PAYLOAD_SIZE_MAX] = {0};
     /* Write the data.*/
-    for (int16_t i = 0; i < node_cnt; i++) {
+    for (int16_t i = node_cnt - 1; i >= 0; i--) {
         size_t unencoded_size = 0;
 
         /* Get the property data. */

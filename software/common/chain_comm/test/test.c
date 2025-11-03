@@ -238,29 +238,6 @@ void test_cc_checksum_calculate(void)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void test_cc_checksum_update(void)
-{
-    uint8_t checksum = 0;
-
-    /* No checksum provided. */
-    cc_checksum_update(NULL, 0); /* Should not crash */
-
-    /* Basic test case. */
-    checksum = 0;
-    cc_checksum_update(&checksum, 0);
-    TEST_ASSERT_EQUAL(0, checksum);
-    cc_checksum_update(&checksum, 1);
-    TEST_ASSERT_EQUAL(1, checksum);
-    cc_checksum_update(&checksum, 2);
-    TEST_ASSERT_EQUAL(3, checksum);
-    cc_checksum_update(&checksum, 3);
-    TEST_ASSERT_EQUAL(6, checksum);
-    cc_checksum_update(&checksum, 255);
-    TEST_ASSERT_EQUAL(5, checksum); /* Overflow */
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void test_cc_parity_check(void)
 {
     cc_msg_header_t header = {0};

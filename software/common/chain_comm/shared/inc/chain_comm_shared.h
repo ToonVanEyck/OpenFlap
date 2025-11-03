@@ -283,14 +283,6 @@ bool cc_payload_cobs_encode(uint8_t *dst, size_t *dst_len, const uint8_t *src, s
 bool cc_payload_cobs_decode(uint8_t *dst, size_t *dst_len, const uint8_t *src, size_t src_len);
 
 /**
- * \brief Update a checksum with a new byte of data.
- *
- * \param[inout] checksum Pointer to the checksum variable.
- * \param[in] data New byte of data to update the checksum with.
- */
-void cc_checksum_update(uint8_t *checksum, uint8_t data);
-
-/**
  * \brief Calculate the checksum of a data buffer.
  * Calculates an 8 bit checksum of an array of data. If the array is terminated with the checksum, the result will be
  * 0xFF.

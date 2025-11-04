@@ -46,6 +46,7 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
         /* Indicate that the firmware property has changed and needs to be written. */
         module_property_indicate_desynchronized(module, OF_CC_PROP_FIRMWARE_UPDATE);
     }
+    display_property_indicate_desynchronized(display, OF_CC_PROP_FIRMWARE_UPDATE, PROPERTY_SYNC_METHOD_WRITE);
 
     /* Synchronize. */
     ESP_RETURN_ON_ERROR(of_display_synchronize(display, 5000), TAG, "Failed to synchronize display.");
@@ -59,6 +60,7 @@ static esp_err_t module_firmware_chunk_handler(void *user_ctx, char *data, size_
             of_module_command_set(module, CMD_REBOOT);
             module_property_indicate_desynchronized(module, OF_CC_PROP_COMMAND);
         }
+        display_property_indicate_desynchronized(display, OF_CC_PROP_COMMAND, PROPERTY_SYNC_METHOD_WRITE);
         /* Synchronize. */
         ESP_RETURN_ON_ERROR(of_display_synchronize(display, 5000), TAG, "Failed to synchronize display.");
     }

@@ -19,6 +19,7 @@ size_t of_cc_master_uart_read(void *uart_userdata, uint8_t *data, size_t size);
 size_t of_cc_master_uart_write(void *uart_userdata, const uint8_t *data, size_t size);
 void of_cc_master_uart_read_timeout_set(void *uart_userdata, uint32_t timeout_ms);
 void of_cc_master_uart_flush_rx_buff(void *uart_userdata);
+void of_cc_master_uart_wait_tx_done(void *uart_userdata);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
@@ -59,6 +60,7 @@ esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_ua
     uart_cb_cfg->write            = of_cc_master_uart_write;
     uart_cb_cfg->read_timeout_set = of_cc_master_uart_read_timeout_set;
     uart_cb_cfg->flush_rx_buff    = of_cc_master_uart_flush_rx_buff;
+    uart_cb_cfg->wait_tx_done     = of_cc_master_uart_wait_tx_done;
 
     return ESP_OK;
 }
@@ -143,6 +145,14 @@ void of_cc_master_uart_flush_rx_buff(void *uart_userdata)
 {
     of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
     uart_flush_input(ctx->uart_num);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void of_cc_master_uart_wait_tx_done(void *uart_userdata)
+{
+    of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
+    uart_wait_tx_done(ctx->uart_num, portMAX_DELAY);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

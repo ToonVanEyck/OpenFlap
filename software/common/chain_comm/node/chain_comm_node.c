@@ -86,10 +86,13 @@ void cc_node_tick(cc_node_ctx_t *ctx, uint32_t tick_ms)
 
     if (ctx->next_state != CC_NODE_STATE_UNDEFINED) {
         CC_LOGD(TAG, "State: %s -> %s", cc_node_state_to_str(ctx->state), cc_node_state_to_str(ctx->next_state));
-        cc_node_timer_start(ctx);
         ctx->state      = ctx->next_state;
         ctx->next_state = CC_NODE_STATE_UNDEFINED;
         ctx->data_cnt   = 0;
+    }
+
+    if (ctx->uart.is_busy(ctx->uart_userdata)) {
+        cc_node_timer_start(ctx); /* Restart the timer. */
     }
 
     switch (ctx->state) {
@@ -140,7 +143,7 @@ void cc_node_state_rx_header(cc_node_ctx_t *ctx)
         return; /* No header byte received & No timeout occurred */
     }
 
-    cc_node_timer_start(ctx); /* Start the timer. */
+    cc_node_timer_start(ctx); /* Start the timer. We don't want a timeout in this state. */
 
     /* Handle the data. */
     if (ctx->data_cnt == 0) {      /* Handle first header byte. */
@@ -204,12 +207,10 @@ void cc_node_state_rx_header(cc_node_ctx_t *ctx)
 
 void cc_node_state_error(cc_node_ctx_t *ctx)
 {
-    /* While in error mode, read bytes and write zero's. */
+    /* While in error mode, read all bytes to flush them. */
     uint8_t data = 0;
-    while (cc_node_uart_read_if_writable(ctx, &data, 1)) {
-        data = 0;
-        ctx->uart.write(ctx->uart_userdata, &data, 1);
-    }
+    while (cc_node_uart_read_if_writable(ctx, &data, 1))
+        ;
     if (ctx->uart.is_busy(ctx->uart_userdata)) {
         cc_node_timer_start(ctx); /* Restart the timer. */
     } else if (cc_node_timer_elapsed(ctx)) {
@@ -267,6 +268,9 @@ void cc_node_state_tx_prop(cc_node_ctx_t *ctx)
                 unencoded_size                                    = 2;
                 ctx->property_data[CC_COBS_OVERHEAD_SIZE - 1 + 0] = ctx->last_error;
                 ctx->property_data[CC_COBS_OVERHEAD_SIZE - 1 + 1] = ctx->error_state;
+                /* Clear the last error and error state. */
+                ctx->last_error  = CC_NODE_ERR_NONE;
+                ctx->error_state = CC_NODE_STATE_UNDEFINED;
             } else if (ctx->property_id >= ctx->prop_list_size) {
                 cc_node_error_and_continue(ctx, CC_NODE_ERR_PROP_NOT_SUPPORTED); /* Property not supported. */
                 valid_property = false;

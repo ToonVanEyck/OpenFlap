@@ -237,7 +237,8 @@ static void of_display_module_error_set(void *model_userdata, uint16_t node_idx,
     // of_display_t *display = (of_display_t *)model_userdata;
     (void)model_userdata;
 
-    ESP_LOGE(TAG, "Module %d error: %s, state: %s", node_idx, cc_node_error_to_str(error), cc_node_state_to_str(state));
+    ESP_LOGE(TAG, "Module %d error: (%d) %s, state: (%d) %s", node_idx, error, cc_node_error_to_str(error), state,
+             cc_node_state_to_str(state));
 }
 
 //----------------------------------------------------------------------------------------------------------------------

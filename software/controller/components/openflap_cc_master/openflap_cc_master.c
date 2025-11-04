@@ -126,6 +126,14 @@ static void of_cc_master_task(void *arg)
     while (1) {
         /* Wait here until we receive a desynchronization event. */
         xEventGroupWaitBits(ctx->event_handle, OF_CC_MASTER_MODEL_EVENT_DESYNCHRONIZED, pdTRUE, pdFALSE, portMAX_DELAY);
+
+        /* Read a byte, we are not expecting data so data would indicate an error. */
+        uint8_t data = {0};
+        if (uart_read_bytes(ctx->uart_ctx.uart_num, &data, 1, 0)) {
+            ESP_LOGW(TAG, "Unexpected data received on chain-comm UART before synchronization.");
+            vTaskDelay(pdMS_TO_TICKS(CC_NODE_TIMEOUT_MS * 1.1));
+        }
+
         ESP_LOGI(TAG, "Chain Comm Master Synchronization Starting...");
 
         /* Reconfigure IOs if needed. */
@@ -142,34 +150,35 @@ static void of_cc_master_task(void *arg)
         /* Synchronize the model. */
         for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
             cc_action_t required_action = ctx->model_sync_required(ctx->model_userdata, prop_id);
-            switch (required_action) {
-                case CC_ACTION_READ:
-                    ESP_LOGI(TAG, "Model requires READ of property %s", of_cc_prop_name_by_id(prop_id));
-                    if (cc_master_prop_read(&ctx->cc_master, prop_id) == CC_MASTER_OK) {
-                        ctx->model_sync_done(ctx->model_userdata, prop_id);
-                    } else {
-                        ESP_LOGE(TAG, "Failed to read property %s", of_cc_prop_name_by_id(prop_id));
-                    }
-                    break;
-                case CC_ACTION_WRITE:
-                    ESP_LOGI(TAG, "Model requires WRITE of property %s", of_cc_prop_name_by_id(prop_id));
-                    if (cc_master_prop_write(&ctx->cc_master, prop_id, *ctx->node_cnt_ref, false, false) ==
-                        CC_MASTER_OK) {
-                        ctx->model_sync_done(ctx->model_userdata, prop_id);
-                    } else {
-                        ESP_LOGE(TAG, "Failed to write property %s", of_cc_prop_name_by_id(prop_id));
-                    }
-                    break;
-                case CC_ACTION_BROADCAST:
-                    ESP_LOGI(TAG, "Model requires BROADCAST of property %s", of_cc_prop_name_by_id(prop_id));
-                    if (cc_master_prop_write(&ctx->cc_master, prop_id, 0, false, true) == CC_MASTER_OK) {
-                        ctx->model_sync_done(ctx->model_userdata, prop_id);
-                    } else {
-                        ESP_LOGE(TAG, "Failed to broadcast property %s", of_cc_prop_name_by_id(prop_id));
-                    }
-                    break;
-                default:
-                    break; /* No synchronization required. */
+
+            if (required_action == CC_ACTION_READ) {
+                ESP_LOGI(TAG, "Model requires READ of property %s", of_cc_prop_name_by_id(prop_id));
+                cc_master_queue_prop_read(&ctx->cc_master, prop_id);
+            } else if (required_action == CC_ACTION_WRITE || required_action == CC_ACTION_BROADCAST) {
+                bool broadcast = (required_action == CC_ACTION_BROADCAST);
+                ESP_LOGI(TAG, "Model requires %s of property %s", broadcast ? "BROADCAST" : "WRITE",
+                         of_cc_prop_name_by_id(prop_id));
+                cc_master_queue_prop_write(&ctx->cc_master, prop_id, *ctx->node_cnt_ref, broadcast);
+            } else {
+                continue;
+            }
+
+            cc_master_err_t err = CC_MASTER_ERR_FAIL;
+            uint8_t attempt_cnt = 0;
+            uint32_t delay_ms   = 0;
+            do {
+                ESP_LOGI(TAG, "Attempt %d for property %s", attempt_cnt + 1, of_cc_prop_name_by_id(prop_id));
+                err = cc_master_communication_handler(&ctx->cc_master, &delay_ms);
+                vTaskDelay(pdMS_TO_TICKS(delay_ms));
+            } while (err != CC_MASTER_OK && attempt_cnt++ < 3);
+
+            if (err == CC_MASTER_OK) {
+                ESP_LOGI(TAG, "Synchronized property %s successfully", of_cc_prop_name_by_id(prop_id));
+                ctx->model_sync_done(ctx->model_userdata, prop_id);
+            } else {
+                ESP_LOGE(TAG, "Failed to synchronize property %s after %d attempts", of_cc_prop_name_by_id(prop_id),
+                         attempt_cnt);
+                break;
             }
         }
 

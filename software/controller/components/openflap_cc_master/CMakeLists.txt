@@ -18,3 +18,5 @@ idf_component_register(
 )
 
 idf_build_set_property(COMPILE_DEFINITIONS "CC_HANDLER_ALTERNATE_ENABLE=1" APPEND)
+idf_build_set_property(COMPILE_DEFINITIONS "CC_ERROR_STRINGS=1" APPEND)
+idf_build_set_property(COMPILE_DEFINITIONS "CC_STATE_STRINGS=1" APPEND)

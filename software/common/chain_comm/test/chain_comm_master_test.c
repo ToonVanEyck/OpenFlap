@@ -30,10 +30,10 @@ void cc_test_master_init(cc_test_master_ctx_t *ctx)
 
     cc_master_uart_cb_cfg_t uart_cb = {
         .read             = (uart_read_cb_t)uart_read,
-        .cnt_readable     = (uart_cnt_readable_cb_t)uart_cnt_readable,
         .write            = (uart_write_cb_t)uart_write,
         .read_timeout_set = (uart_read_timeout_set_cb_t)uart_read_timeout_set,
         .flush_rx_buff    = (uart_flush_rx_buff_cb_t)uart_flush_rx_buff,
+        .wait_tx_done     = NULL, /* TODO */
     };
 
     uart_delay_xth_tx(&ctx->uart, 0, 0); // No delay by default

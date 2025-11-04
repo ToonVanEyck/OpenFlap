@@ -105,6 +105,7 @@ void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, 
     assert(uart_cb_cfg->write != NULL);
     assert(uart_cb_cfg->read_timeout_set != NULL);
     assert(uart_cb_cfg->flush_rx_buff != NULL);
+    assert(uart_cb_cfg->wait_tx_done != NULL);
     assert(prop_list != NULL);
     assert(prop_list_size > 0);
 
@@ -114,6 +115,10 @@ void cc_master_init(cc_master_ctx_t *ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg, 
     ctx->uart           = *uart_cb_cfg;
     ctx->uart_userdata  = uart_userdata;
     ctx->master         = *master_cb_cfg;
+
+    uart_cb_cfg->read_timeout_set(uart_userdata, CC_NODE_TIMEOUT_MS);
+
+    ctx->queued.state = CC_MASTER_QUEUE_STATE_UNDEFINED;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -161,7 +166,6 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
 
     /* Receive the header. */
     cc_msg_header_t rx_header = {0};
-    ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(CC_ACTION_HEADER_SIZE));
     CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, CC_ACTION_HEADER_SIZE) ==
                            CC_ACTION_HEADER_SIZE,
                        CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive header");
@@ -191,9 +195,6 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
     for (uint16_t i = 0; i < node_cnt; i++) {
         uint8_t property_data[CC_PAYLOAD_SIZE_MAX] = {0};
         size_t data_size                           = CC_PROPERTY_SIZE_MAX;
-
-        /* Read the data. */
-        ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(1));
 
         /* Read data until the end of the message. */
         size_t read_cnt = CC_COBS_OVERHEAD_SIZE;
@@ -306,7 +307,6 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
 
     /* Receive the header. */
     cc_msg_header_t rx_header = {0};
-    ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(CC_ACTION_HEADER_SIZE));
     CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, CC_ACTION_HEADER_SIZE) ==
                            CC_ACTION_HEADER_SIZE,
                        CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive header");
@@ -335,7 +335,6 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
     if (broadcast) {
         /* Receive the property data */
         uint8_t property_data_rx[CC_PROPERTY_SIZE_MAX] = {0};
-        ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(property_size));
         CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, property_data_rx, property_size) == property_size,
                            CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive property data");
 
@@ -349,7 +348,7 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
 
 //----------------------------------------------------------------------------------------------------------------------
 
-cc_master_err_t cc_master_prop_node_err_check(cc_master_ctx_t *ctx, bool *node_errors_present)
+cc_master_err_t cc_master_sync_ack(cc_master_ctx_t *ctx, cc_sync_error_code_t *node_errors_present)
 {
     CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
     CC_RETURN_ON_FALSE(node_errors_present != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "node_errors_present is NULL");
@@ -362,12 +361,12 @@ cc_master_err_t cc_master_prop_node_err_check(cc_master_ctx_t *ctx, bool *node_e
     ctx->uart.flush_rx_buff(ctx->uart_userdata);
 
     /* Send the header. */
+    ctx->uart.wait_tx_done(ctx->uart_userdata);
     CC_RETURN_ON_FALSE(ctx->uart.write(ctx->uart_userdata, tx_header.raw, CC_SYNC_HEADER_SIZE) == CC_SYNC_HEADER_SIZE,
                        CC_MASTER_ERR_FAIL, TAG, "Failed to send SYNC header");
 
     /* Receive the header. */
     cc_msg_header_t rx_header = {0};
-    ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(CC_SYNC_HEADER_SIZE));
     CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, CC_SYNC_HEADER_SIZE) == CC_SYNC_HEADER_SIZE,
                        CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive SYNC header");
 
@@ -378,14 +377,9 @@ cc_master_err_t cc_master_prop_node_err_check(cc_master_ctx_t *ctx, bool *node_e
                        "Header sync type corrupted");
 
     /* Check header error bits. */
-    if (cc_header_sync_error_get(rx_header) == CC_SYNC_ERR_NONE) {
-        /* No errors, we can return. */
-        *node_errors_present = false;
-        return CC_MASTER_OK;
-    }
+    *node_errors_present = cc_header_sync_error_get(rx_header);
 
-    *node_errors_present = true;
-    return cc_master_prop_read(ctx, CC_MASTER_READ_NODE_ERRORS);
+    return CC_MASTER_OK;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -402,12 +396,12 @@ cc_master_err_t cc_master_prop_node_commit_prop(cc_master_ctx_t *ctx)
     ctx->uart.flush_rx_buff(ctx->uart_userdata);
 
     /* Send the header. */
+    ctx->uart.wait_tx_done(ctx->uart_userdata);
     CC_RETURN_ON_FALSE(ctx->uart.write(ctx->uart_userdata, tx_header.raw, CC_SYNC_HEADER_SIZE) == CC_SYNC_HEADER_SIZE,
                        CC_MASTER_ERR_FAIL, TAG, "Failed to send SYNC header");
 
     /* Receive the header. */
     cc_msg_header_t rx_header = {0};
-    ctx->uart.read_timeout_set(ctx->uart_userdata, RX_BYTES_TIMEOUT(CC_SYNC_HEADER_SIZE));
     CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, rx_header.raw, CC_SYNC_HEADER_SIZE) == CC_SYNC_HEADER_SIZE,
                        CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive SYNC header");
 
@@ -421,4 +415,105 @@ cc_master_err_t cc_master_prop_node_commit_prop(cc_master_ctx_t *ctx)
                        "Header error bits corrupted");
 
     return CC_MASTER_OK;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+cc_master_err_t cc_master_queue_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_id)
+{
+    CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
+
+    /* Check if another action is already queued. */
+    CC_RETURN_ON_FALSE(ctx->queued.state == CC_MASTER_QUEUE_STATE_UNDEFINED, CC_MASTER_ERR_QUEUE_FULL, TAG,
+                       "Another action is already queued");
+
+    /* Queue the read action. */
+    ctx->queued.state       = CC_MASTER_QUEUE_STATE_READ;
+    ctx->queued.prop_id     = property_id;
+    ctx->queued.attempt_cnt = 0;
+
+    return CC_MASTER_OK;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+cc_master_err_t cc_master_queue_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property_id, uint16_t node_cnt,
+                                           bool broadcast)
+{
+    CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
+
+    /* Check if another action is already queued. */
+    CC_RETURN_ON_FALSE(ctx->queued.state == CC_MASTER_QUEUE_STATE_UNDEFINED, CC_MASTER_ERR_QUEUE_FULL, TAG,
+                       "Another action is already queued");
+
+    /* Queue the write action. */
+    ctx->queued.state       = CC_MASTER_QUEUE_STATE_WRITE;
+    ctx->queued.prop_id     = property_id;
+    ctx->queued.node_cnt    = node_cnt;
+    ctx->queued.broadcast   = broadcast;
+    ctx->queued.attempt_cnt = 0;
+
+    return CC_MASTER_OK;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+cc_master_err_t cc_master_communication_handler(cc_master_ctx_t *ctx, uint32_t *next_tick_ms)
+{
+    CC_RETURN_ON_FALSE(ctx != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "ctx is NULL");
+    CC_RETURN_ON_FALSE(next_tick_ms != NULL, CC_MASTER_ERR_INVALID_ARG, TAG, "next_tick_ms is NULL");
+
+    cc_master_err_t err                      = CC_MASTER_OK;
+    cc_sync_error_code_t node_errors_present = CC_SYNC_ERR_NONE;
+
+    switch (ctx->queued.state) {
+        case CC_MASTER_QUEUE_STATE_READ:
+            err           = cc_master_prop_read(ctx, ctx->queued.prop_id);
+            *next_tick_ms = (err == CC_MASTER_OK) ? 0 : CC_NODE_RECOVERY_DELAY_MS;
+            break;
+
+        case CC_MASTER_QUEUE_STATE_WRITE:
+            err = cc_master_prop_write(ctx, ctx->queued.prop_id, ctx->queued.node_cnt, false, ctx->queued.broadcast);
+            *next_tick_ms = (err == CC_MASTER_OK) ? 0 : CC_NODE_RECOVERY_DELAY_MS;
+            if (err == CC_MASTER_OK) {
+                ctx->queued.state = CC_MASTER_QUEUE_STATE_SYNC_ACK;
+                err = cc_master_communication_handler(ctx, next_tick_ms); /* Immediately proceed to SYNC ACK */
+            }
+            break;
+
+        case CC_MASTER_QUEUE_STATE_SYNC_ACK:
+            err           = cc_master_sync_ack(ctx, &node_errors_present);
+            *next_tick_ms = (err == CC_MASTER_OK) ? 0 : CC_NODE_RECOVERY_DELAY_MS;
+            if (err == CC_MASTER_OK && node_errors_present != CC_SYNC_ERR_NONE) {
+                ctx->queued.state            = CC_MASTER_QUEUE_STATE_READ;
+                ctx->queued.original_prop_id = ctx->queued.prop_id; /* Store for later. */
+                ctx->queued.prop_id          = CC_MASTER_READ_NODE_ERRORS;
+                err = cc_master_communication_handler(ctx, next_tick_ms); /* Immediately proceed to READ NODE ERRORS */
+                *next_tick_ms = (err == CC_MASTER_OK) ? 0 : CC_NODE_RECOVERY_DELAY_MS;
+                if (err == CC_MASTER_OK) {
+                    /* Restore original property ID for next attempt. */
+                    ctx->queued.prop_id = ctx->queued.original_prop_id;
+                    ctx->queued.state   = CC_MASTER_QUEUE_STATE_WRITE;
+                    err                 = CC_MASTER_ERR_FAIL; /* Indicate that an error was present. */
+                }
+            }
+            break;
+
+        case CC_MASTER_QUEUE_STATE_UNDEFINED:
+            err           = CC_MASTER_ERR_QUEUE_EMPTY;
+            *next_tick_ms = 0;
+            break;
+
+        default:
+            err           = CC_MASTER_ERR_INVALID_ARG;
+            *next_tick_ms = 0;
+            break;
+    }
+
+    if (err == CC_MASTER_OK) {
+        /* Clear the queued action on success or timeout. */
+        ctx->queued.state = CC_MASTER_QUEUE_STATE_UNDEFINED;
+    }
+
+    return err;
 }

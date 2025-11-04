@@ -14,7 +14,11 @@
 #define CC_PAYLOAD_SIZE_MAX   (CC_PROPERTY_SIZE_MAX + CC_COBS_OVERHEAD_SIZE) /**< Maximum size of a payload. */
 
 #ifndef CC_NODE_TIMEOUT_MS
-#define CC_NODE_TIMEOUT_MS (50) /**< Time after which a timeout event occurs. */
+#define CC_NODE_TIMEOUT_MS (25) /**< Time after which a timeout event occurs. */
+#endif
+
+#ifndef CC_NODE_RECOVERY_DELAY_MS
+#define CC_NODE_RECOVERY_DELAY_MS (CC_NODE_TIMEOUT_MS + 5) /**< Time to wait to ensure a timeout occurs. */
 #endif
 
 #define CC_ACTION_HEADER_SIZE (3) /**< Size of the action header. */
@@ -99,6 +103,13 @@ typedef bool (*uart_is_busy_cb_t)(void *uart_userdata);
  * \param[in] uart_userdata Pointer to uart ctx.
  */
 typedef void (*uart_flush_rx_buff_cb_t)(void *uart_userdata);
+
+/**
+ * \brief Chain communication UART wait tx done callback.
+ *
+ * \param[in] uart_userdata Pointer to uart ctx.
+ */
+typedef void (*uart_wait_tx_done_cb_t)(void *uart_userdata);
 
 /**
  * \brief Chain communication property GET / SET handler callback.

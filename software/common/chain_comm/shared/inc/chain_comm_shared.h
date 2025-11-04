@@ -176,7 +176,7 @@ typedef enum {
     GENERATOR(CC_SYNC_ERR_NOT_SUPPORTED = (1 << 3), "Property Not Supported")
 
 #define CC_NODE_STATE_GENERATOR(GENERATOR)                                                                       \
-    GENERATOR(CC_NODE_STATE_UNDEFINED, NULL)                                                                     \
+    GENERATOR(CC_NODE_STATE_UNDEFINED,    "Undefined")                                                           \
     GENERATOR(CC_NODE_STATE_RX_HEADER,    "Receive Header")                                                      \
     GENERATOR(CC_NODE_STATE_ERROR,        "Error")                                                               \
     GENERATOR(CC_NODE_STATE_DEC_NODE_CNT, "Decrement Node Cnt")                                                  \

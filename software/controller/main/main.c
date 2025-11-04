@@ -63,6 +63,8 @@ void app_main(void)
                       "Failed to initialize controller OTA");
     ESP_LOGI(TAG, "Controller OTA endpoint started!");
 
+    // esp_log_level_set("*", ESP_LOG_WARN);
+
 verify_firmware:
     /* Verify the firmware. */
     bool startup_success = (ret == ESP_OK);

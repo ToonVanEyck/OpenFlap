@@ -184,7 +184,7 @@ bool firmware_update_compare(const void *userdata_a, const void *userdata_b)
     }
 
     /* Compare the character sets. */
-    return memcmp(firmware_a->data, firmware_b->data, OF_FIRMWARE_UPDATE_PAGE_SIZE + 2) == 0;
+    return memcmp(firmware_a->data, firmware_b->data, OF_FIRMWARE_UPDATE_PAGE_SIZE) == 0;
 }
 
 //======================================================================================================================

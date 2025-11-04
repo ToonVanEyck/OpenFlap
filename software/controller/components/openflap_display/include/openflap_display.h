@@ -24,8 +24,6 @@ typedef struct {
     uint64_t sync_prop_read_required;
     /** Indicates which properties need to be synchronized by writing to actual modules. */
     uint64_t sync_prop_write_required;
-    /** Indicates which properties may broadcast the property data of node 0 to all nodes. */
-    uint64_t sync_prop_write_required_broadcast_possible;
 } of_display_t;
 
 typedef enum {

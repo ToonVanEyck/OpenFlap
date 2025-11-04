@@ -164,13 +164,13 @@ static void of_cc_master_task(void *arg)
             }
 
             cc_master_err_t err = CC_MASTER_ERR_FAIL;
-            uint8_t attempt_cnt = 0;
+            uint8_t attempt_cnt = 1;
             uint32_t delay_ms   = 0;
             do {
-                ESP_LOGI(TAG, "Attempt %d for property %s", attempt_cnt + 1, of_cc_prop_name_by_id(prop_id));
+                ESP_LOGI(TAG, "Attempt %d for property %s", attempt_cnt, of_cc_prop_name_by_id(prop_id));
                 err = cc_master_communication_handler(&ctx->cc_master, &delay_ms);
                 vTaskDelay(pdMS_TO_TICKS(delay_ms));
-            } while (err != CC_MASTER_OK && attempt_cnt++ < 3);
+            } while (err != CC_MASTER_OK && attempt_cnt++ < 3); /* Max 3 Attempts. */
 
             if (err == CC_MASTER_OK) {
                 ESP_LOGI(TAG, "Synchronized property %s successfully", of_cc_prop_name_by_id(prop_id));

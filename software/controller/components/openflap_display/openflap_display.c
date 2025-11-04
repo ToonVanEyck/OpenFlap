@@ -116,13 +116,8 @@ esp_err_t display_property_indicate_synchronized(of_display_t *display, cc_prop_
     /* Reset the synchronisation flags for display. */
     display->sync_prop_read_required &= ~(1 << property_id);
     display->sync_prop_write_required &= ~(1 << property_id);
-
-    /* Reset the synchronization flags for all modules if required. */
-    if (display->sync_prop_write_required_broadcast_possible & (1 << property_id)) {
-        display->sync_prop_write_required_broadcast_possible &= ~(1 << property_id);
-        for (uint16_t i = 0; i < display_size_get(display); i++) {
-            module_property_indicate_synchronized(display_module_get(display, i), property_id);
-        }
+    for (uint16_t i = 0; i < display_size_get(display); i++) {
+        module_property_indicate_synchronized(display_module_get(display, i), property_id);
     }
 
     return ESP_OK;
@@ -252,9 +247,16 @@ static cc_action_t of_display_prop_sync_required(void *model_userdata, cc_prop_i
     if (display->sync_prop_read_required & (1 << property_id)) {
         return CC_ACTION_READ;
     } else if (display->sync_prop_write_required & (1 << property_id)) {
-        return CC_ACTION_WRITE;
-    } else if (display->sync_prop_write_required_broadcast_possible & (1 << property_id)) {
-        return CC_ACTION_BROADCAST;
+        module_t *module_0 = display_module_get(display, 0);
+        bool can_broadcast = module_property_is_desynchronized(module_0, property_id);
+        can_broadcast &= cc_prop_list[property_id].handler.compare != NULL;
+        for (int16_t i = 1; can_broadcast && i < display_size_get(display); i++) {
+            module_t *module_x = display_module_get(display, i);
+            can_broadcast &= module_property_is_desynchronized(module_x, property_id);
+            can_broadcast &= cc_prop_list[property_id].handler.compare(module_0, module_x);
+        }
+
+        return can_broadcast ? CC_ACTION_BROADCAST : CC_ACTION_WRITE;
     }
     return -1; /* No synchronization required. */
 }

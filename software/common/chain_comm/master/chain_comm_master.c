@@ -250,12 +250,8 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
                        "Property (%d) %s is not readable.", property_id, ctx->prop_list[property_id].attribute.name);
 
     /* Check If the node count is valid. */
-    if (broadcast) {
-        CC_RETURN_ON_FALSE(node_cnt == 0, CC_MASTER_ERR_INVALID_ARG, TAG, "Node count must be zero in broadcast mode");
-    } else {
-        CC_RETURN_ON_FALSE(node_cnt > 0, CC_MASTER_ERR_INVALID_ARG, TAG,
-                           "Node count must be greater than zero in non-broadcast mode");
-    }
+    CC_RETURN_ON_FALSE(broadcast || node_cnt > 0, CC_MASTER_ERR_INVALID_ARG, TAG,
+                       "Node count must be greater than zero in non-broadcast mode");
 
     CC_LOGI(TAG, "Writing Property (%d) %s to all Nodes.", property_id, ctx->prop_list[property_id].attribute.name);
 
@@ -264,7 +260,7 @@ cc_master_err_t cc_master_prop_write(cc_master_ctx_t *ctx, cc_prop_id_t property
     cc_header_action_set(&tx_header, broadcast ? CC_ACTION_BROADCAST : CC_ACTION_WRITE);
     cc_header_staging_bit_set(&tx_header, staged_write);
     cc_header_property_set(&tx_header, property_id);
-    cc_header_node_cnt_set(&tx_header, node_cnt);
+    cc_header_node_cnt_set(&tx_header, broadcast ? 0 : node_cnt);
     cc_header_parity_set(&tx_header, true);
 
     /* Flush uart RX buffer. */

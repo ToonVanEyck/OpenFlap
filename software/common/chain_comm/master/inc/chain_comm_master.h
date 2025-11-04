@@ -4,8 +4,6 @@
 
 #define CC_MASTER_READ_NODE_ERRORS (-1) /**< Use as property with the master read function to read node errors. */
 
-#define CC_MASTER_QUEUE_ACTION_ATTEMPT_CNT_MAX (3) /**< Maximum number of attempts for a queued action. */
-
 typedef bool (*cc_master_node_cnt_update_cb_t)(void *userdata, uint16_t node_cnt);
 typedef bool (*cc_master_node_exists_and_must_be_written_cb_t)(void *userdata, uint16_t node_idx,
                                                                cc_prop_id_t property_id, bool *must_be_written);

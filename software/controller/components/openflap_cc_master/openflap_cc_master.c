@@ -177,7 +177,7 @@ static void of_cc_master_task(void *arg)
                 ctx->model_sync_done(ctx->model_userdata, prop_id);
             } else {
                 ESP_LOGE(TAG, "Failed to synchronize property %s after %d attempts", of_cc_prop_name_by_id(prop_id),
-                         attempt_cnt);
+                         attempt_cnt - 1);
                 break;
             }
         }

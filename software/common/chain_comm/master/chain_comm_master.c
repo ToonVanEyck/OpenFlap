@@ -197,7 +197,7 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
         size_t data_size                           = CC_PROPERTY_SIZE_MAX;
 
         /* Read data until the end of the message. */
-        size_t read_cnt = CC_COBS_OVERHEAD_SIZE;
+        size_t read_cnt = 0;
         do {
             CC_RETURN_ON_FALSE(ctx->uart.read(ctx->uart_userdata, property_data + read_cnt, 1) == 1,
                                CC_MASTER_ERR_TIMEOUT, TAG, "Failed to receive read all data");
@@ -205,8 +205,7 @@ cc_master_err_t cc_master_prop_read(cc_master_ctx_t *ctx, cc_prop_id_t property_
         } while (property_data[read_cnt - 1] != 0x00 && read_cnt < CC_PAYLOAD_SIZE_MAX);
 
         /* Decode the payload. */
-        CC_RETURN_ON_FALSE(cc_payload_cobs_decode(property_data, &data_size, property_data + CC_COBS_OVERHEAD_SIZE,
-                                                  read_cnt - CC_COBS_OVERHEAD_SIZE),
+        CC_RETURN_ON_FALSE(cc_payload_cobs_decode(property_data, &data_size, property_data, read_cnt),
                            CC_MASTER_ERR_COBS_DEC, TAG, "Failed to decode COBS payload");
 
         if (data_size == 0) {

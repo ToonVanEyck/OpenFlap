@@ -40,6 +40,7 @@ bool property_command_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_
             break;
         case CMD_MOTOR_UNLOCK:
             of_ctx->motor_control_override = false; /* Enable the motor control. */
+            break;
         case CMD_OFFSET_RESET:
             /* Reset the offset to zero and set the flap setpoint to zero. */
             of_ctx->flap_setpoint = 0;
@@ -69,7 +70,7 @@ bool property_character_set_set(void *userdata, uint16_t node_idx, uint8_t *buf,
     }
 
     if (!memcmp(of_ctx->of_config.symbol_set, buf + 2, 4 * SYMBOL_CNT)) {
-        return false;
+        return true; /* Already Set. */
     }
     memcpy(of_ctx->of_config.symbol_set, buf + 2, 4 * SYMBOL_CNT);
     of_ctx->store_config = true;
@@ -85,7 +86,7 @@ bool property_character_set_get(void *userdata, uint16_t node_idx, uint8_t *buf,
 bool property_offset_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *size)
 {
     if (of_ctx->of_config.encoder_offset == buf[0]) {
-        return false;
+        return true; /* Already Set. */
     }
 
     if (of_ctx->flap_distance > 0) {
@@ -128,7 +129,7 @@ bool property_character_get(void *userdata, uint16_t node_idx, uint8_t *buf, siz
 bool minimum_rotation_property_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *size)
 {
     if (of_ctx->of_config.minimum_rotation == buf[0]) {
-        return false;
+        return true; /* Already Set. */
     }
     of_ctx->of_config.minimum_rotation = (buf[0] < SYMBOL_CNT ? buf[0] : SYMBOL_CNT);
     of_ctx->store_config               = true;
@@ -147,7 +148,7 @@ bool color_property_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_t 
     uint32_t foreground = (uint32_t)buf[0] << 16 | (uint32_t)buf[1] << 8 | (uint32_t)buf[2];
     uint32_t background = (uint32_t)buf[3] << 16 | (uint32_t)buf[4] << 8 | (uint32_t)buf[5];
     if (of_ctx->of_config.color.foreground == foreground && of_ctx->of_config.color.background == background) {
-        return false;
+        return true; /* Already Set. */
     }
     of_ctx->of_config.color.foreground = foreground;
     of_ctx->of_config.color.background = background;
@@ -171,7 +172,7 @@ bool motion_property_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_t
 {
     if (of_ctx->of_config.motion.min_pwm == buf[0] && of_ctx->of_config.motion.max_pwm == buf[1] &&
         of_ctx->of_config.motion.min_ramp_distance == buf[2] && of_ctx->of_config.motion.max_ramp_distance == buf[3]) {
-        return false;
+        return true; /* Already Set. */
     }
     of_ctx->of_config.motion.min_pwm           = (buf[0] >= 35 ? buf[0] : 35);
     of_ctx->of_config.motion.max_pwm           = (buf[1] <= 200 ? buf[1] : 200);
@@ -196,7 +197,7 @@ bool ir_threshold_property_set(void *userdata, uint16_t node_idx, uint8_t *buf, 
     uint16_t lower = (uint16_t)buf[0] << 8 | (uint16_t)buf[1];
     uint16_t upper = (uint16_t)buf[2] << 8 | (uint16_t)buf[3];
     if (of_ctx->of_config.ir_threshold.lower == lower && of_ctx->of_config.ir_threshold.upper == upper) {
-        return false;
+        return true; /* Already Set. */
     }
     if (lower > upper) {
         return false;

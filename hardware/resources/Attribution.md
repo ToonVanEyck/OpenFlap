@@ -15,3 +15,4 @@ Sources may not be the original creators of the models, but the files were found
 |[USB-C.stp](USB-C.stp) | [neal.wong-1 on grabcad](https://grabcad.com/library/usb-type-c16pin-vertical-type-1) |
 |[54-00286.STEP](54-00286.STEP) | [Digikey](https://www.digikey.be/en/models/16649077) |
 |[WS2812-0807.stp](WS2812-0807.stp) | [ilya.kopytov-1 on grabcad](https://grabcad.com/library/ws2812-0807-1) |
+|[XT30-STEP](XT30-STEP) | [stuplja-1 on grabcad](https://grabcad.com/library/xt30-male-connector-1) |

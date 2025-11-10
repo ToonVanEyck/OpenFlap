@@ -5,7 +5,7 @@ The controller is responsible for managing and communicating with the modules ov
 
 ![OpenFlap Controller Render](../hardware/controller/controller-3D_blender_top.png)
 
-The controller must be powered from a 12V power supply using the barrel jack connector. A USB port is provided for programming and debugging.
+The controller must be powered from a 12V power supply using the XT-30 connector. A USB port is provided for programming and debugging.
 
 ## Additional Resources
 

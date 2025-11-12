@@ -16,7 +16,7 @@ TEST_CASE("Test property_handler_get_by_id: ok", "[properties][qemu]")
 
 TEST_CASE("Test property_handler_get_by_id: id not found", "[properties][qemu]")
 {
-    const property_handler_t *property = property_handler_get_by_id(OF_CC_PROP_CNT);
+    const property_handler_t *property = property_handler_get_by_id(OF_MDL_PROP_CNT);
     TEST_ASSERT_NULL(property);
 }
 

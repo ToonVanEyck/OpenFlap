@@ -22,7 +22,7 @@ bool property_firmware_set(void *userdata, uint16_t node_idx, uint8_t *buf, size
 bool property_firmware_get(void *userdata, uint16_t node_idx, uint8_t *buf, size_t *size)
 {
     *size = strlen(GIT_VERSION);
-    strncpy((char *)buf, GIT_VERSION, CC_PAYLOAD_SIZE_MAX); // Reserve 4 bytes for checksum
+    strncpy((char *)buf, GIT_VERSION, MDL_PAYLOAD_SIZE_MAX); // Reserve 4 bytes for checksum
     // append checksum bytes
     buf[(*size)++] = (checksum >> 24) & 0xFF;
     buf[(*size)++] = (checksum >> 16) & 0xFF;
@@ -222,36 +222,36 @@ void property_handlers_init(of_ctx_t *ctx)
 {
     of_ctx = ctx;
 
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.set = NULL;
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.get = property_firmware_get;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.set = NULL;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.get = property_firmware_get;
 
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.set = property_firmware_set;
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.get = NULL;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.set = property_firmware_set;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.get = NULL;
 
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.set = property_command_set;
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.get = NULL;
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.set = property_command_set;
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.get = NULL;
 
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.set = NULL;
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.get = property_module_info_get;
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.set = NULL;
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.get = property_module_info_get;
 
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.get = property_offset_get;
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.set = property_offset_set;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.get = property_offset_get;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.set = property_offset_set;
 
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.set = property_character_set_set;
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.get = property_character_set_get;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.set = property_character_set_set;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.get = property_character_set_get;
 
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.set = property_character_set;
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.get = property_character_get;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.set = property_character_set;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.get = property_character_get;
 
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.set = minimum_rotation_property_set;
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.get = minimum_rotation_property_get;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.set = minimum_rotation_property_set;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.get = minimum_rotation_property_get;
 
-    cc_prop_list[OF_CC_PROP_COLOR].handler.set = color_property_set;
-    cc_prop_list[OF_CC_PROP_COLOR].handler.get = color_property_get;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.set = color_property_set;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.get = color_property_get;
 
-    cc_prop_list[OF_CC_PROP_MOTION].handler.set = motion_property_set;
-    cc_prop_list[OF_CC_PROP_MOTION].handler.get = motion_property_get;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.set = motion_property_set;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.get = motion_property_get;
 
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.set = ir_threshold_property_set;
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.get = ir_threshold_property_get;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.set = ir_threshold_property_set;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.get = ir_threshold_property_get;
 }

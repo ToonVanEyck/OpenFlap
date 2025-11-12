@@ -1,5 +1,4 @@
 /* Includes ------------------------------------------------------------------*/
-// #include "chain_comm.h"
 #include "debug_term.h"
 #include "interpolation.h"
 #include "openflap.h"
@@ -61,15 +60,15 @@ int main(void)
     // rtt_scope_init("u4");
     debug_term_init(&of_ctx);
 
-    /* Initialize chain communication and property handlers. */
-    cc_node_uart_cb_cfg_t uart_cb = {.read          = (uart_read_cb_t)uart_driver_read,
-                                     .cnt_readable  = (uart_cnt_readable_cb_t)uart_driver_cnt_readable,
-                                     .write         = (uart_write_cb_t)uart_driver_write,
-                                     .cnt_writable  = (uart_cnt_writable_cb_t)uart_driver_cnt_writable,
-                                     .tx_buff_empty = (uart_tx_buff_empty_cb_t)uart_driver_tx_idle,
-                                     .is_busy       = (uart_is_busy_cb_t)uart_driver_is_busy};
+    /* Initialize madelink and property handlers. */
+    mdl_node_uart_cb_cfg_t uart_cb = {.read          = (uart_read_cb_t)uart_driver_read,
+                                      .cnt_readable  = (uart_cnt_readable_cb_t)uart_driver_cnt_readable,
+                                      .write         = (uart_write_cb_t)uart_driver_write,
+                                      .cnt_writable  = (uart_cnt_writable_cb_t)uart_driver_cnt_writable,
+                                      .tx_buff_empty = (uart_tx_buff_empty_cb_t)uart_driver_tx_idle,
+                                      .is_busy       = (uart_is_busy_cb_t)uart_driver_is_busy};
 
-    cc_node_init(&of_ctx.cc_node_ctx, &uart_cb, &of_ctx.of_hal.uart_driver, cc_prop_list, OF_CC_PROP_CNT, &of_ctx);
+    mdl_node_init(&of_ctx.mdl_node_ctx, &uart_cb, &of_ctx.of_hal.uart_driver, mdl_prop_list, OF_MDL_PROP_CNT, &of_ctx);
     property_handlers_init(&of_ctx);
 
     /* Initialize the PID controller. */
@@ -120,8 +119,8 @@ int main(void)
          * the module above it. Normally this data would come from the module below it. */
         of_hal_uart_tx_pin_update(of_hal_is_column_end());
 
-        /* Run chain comm. */
-        cc_node_tick(&of_ctx.cc_node_ctx, of_hal_tick_count_get());
+        /* Run madelink node. */
+        mdl_node_tick(&of_ctx.mdl_node_ctx, of_hal_tick_count_get());
 
         /* Update the sense timer tick count. */
         sens_tick_curr = of_hal_sens_tick_count_get();

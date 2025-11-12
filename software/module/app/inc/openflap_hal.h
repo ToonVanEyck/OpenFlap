@@ -1,13 +1,5 @@
 /**
  * \file openflap_hal.h
- *
- * Used Peripherals:
- * - TIMER 1:
- *   - CH1 Input Capture of COMP2 event (motor commutator pulses).
- *   - CH3 & CH4 PWM output for motor control.
- *   - Tick timer for the system.
- * - TIMER 3: Quadrature encoder input.
- * - COMPARATOR 2: Motor commutator pulses.
  */
 
 #pragma once

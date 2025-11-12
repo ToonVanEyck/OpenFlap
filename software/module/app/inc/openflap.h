@@ -1,8 +1,8 @@
 #pragma once
 
-#include "chain_comm_node.h"
 #include "hardware_setup.h"
 #include "interpolation.h"
+#include "madelink_node.h"
 #include "openflap_hal.h"
 #include "openflap_properties.h"
 #include "pid.h"
@@ -17,7 +17,7 @@
 typedef struct of_ctx_tag {
     of_config_t of_config;              /**< The configuration data. */
     of_hal_ctx_t of_hal;                /**< The hardware abstraction layer context. */
-    cc_node_ctx_t cc_node_ctx;          /**< The chain communication node context. */
+    mdl_node_ctx_t mdl_node_ctx;        /**< The madelink node context. */
     pid_ctx_t pid_ctx;                  /**< The PID controller context. */
     uint16_t flap_setpoint;             /**< The desired position of flap wheel. */
     uint16_t flap_position;             /**< The current position of flap wheel. */

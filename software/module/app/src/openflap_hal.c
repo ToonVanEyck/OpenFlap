@@ -53,7 +53,7 @@ static void of_hal_gpio_init(void);  /**< GPIO initialization. */
 static void of_hal_tim1_init(void);  /**< TIM1 initialization. (IR LED / Master) */
 static void of_hal_tim3_init(void);  /**< TIM3 initialization. (Motor PWM / Slave) */
 static void of_hal_adc1_init(void);  /**< ADC1 initialization. (IR sensors) */
-static void of_hal_uart1_init(void); /**< UART1 initialization. (chain comm) */
+static void of_hal_uart1_init(void); /**< UART1 initialization. (Madelink) */
 
 static void *of_hal_uart_dma_w_ptr_get(void);        /**< Get the write pointer for UART DMA buffer. */
 static void of_hal_uart_tx_dma_start(size_t length); /**< Start a DMA transfer for UART TX. */

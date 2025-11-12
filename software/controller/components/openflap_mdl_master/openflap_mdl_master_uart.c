@@ -1,4 +1,4 @@
-#include "openflap_cc_master_uart.h"
+#include "openflap_mdl_master_uart.h"
 
 #include "driver/gpio.h"
 #include "hal/gpio_hal.h"
@@ -9,23 +9,23 @@
 //                                                   MACROS a DEFINES
 //======================================================================================================================
 
-#define TAG "OF_CC_MASTER_UART"
+#define TAG "OF_MDL_MASTER_UART"
 
 //======================================================================================================================
 //                                                   FUNCTION PROTOTYPES
 //======================================================================================================================
 
-size_t of_cc_master_uart_read(void *uart_userdata, uint8_t *data, size_t size);
-size_t of_cc_master_uart_write(void *uart_userdata, const uint8_t *data, size_t size);
-void of_cc_master_uart_read_timeout_set(void *uart_userdata, uint32_t timeout_ms);
-void of_cc_master_uart_flush_rx_buff(void *uart_userdata);
-void of_cc_master_uart_wait_tx_done(void *uart_userdata);
+size_t of_mdl_master_uart_read(void *uart_userdata, uint8_t *data, size_t size);
+size_t of_mdl_master_uart_write(void *uart_userdata, const uint8_t *data, size_t size);
+void of_mdl_master_uart_read_timeout_set(void *uart_userdata, uint32_t timeout_ms);
+void of_mdl_master_uart_flush_rx_buff(void *uart_userdata);
+void of_mdl_master_uart_wait_tx_done(void *uart_userdata);
 
 //======================================================================================================================
 //                                                   PUBLIC FUNCTIONS
 //======================================================================================================================
 
-esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg)
+esp_err_t of_mdl_master_uart_init(of_mdl_master_uart_ctx_t *uart_ctx, mdl_master_uart_cb_cfg_t *uart_cb_cfg)
 {
     ESP_RETURN_ON_FALSE(uart_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "uart_ctx is NULL");
     ESP_RETURN_ON_FALSE(uart_cb_cfg != NULL, ESP_ERR_INVALID_ARG, TAG, "uart_cb_cfg is NULL");
@@ -56,18 +56,18 @@ esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_ua
     uart_ctx->rx_timeout_ticks = 0;
 
     /* Configure the callback functions. */
-    uart_cb_cfg->read             = of_cc_master_uart_read;
-    uart_cb_cfg->write            = of_cc_master_uart_write;
-    uart_cb_cfg->read_timeout_set = of_cc_master_uart_read_timeout_set;
-    uart_cb_cfg->flush_rx_buff    = of_cc_master_uart_flush_rx_buff;
-    uart_cb_cfg->wait_tx_done     = of_cc_master_uart_wait_tx_done;
+    uart_cb_cfg->read             = of_mdl_master_uart_read;
+    uart_cb_cfg->write            = of_mdl_master_uart_write;
+    uart_cb_cfg->read_timeout_set = of_mdl_master_uart_read_timeout_set;
+    uart_cb_cfg->flush_rx_buff    = of_mdl_master_uart_flush_rx_buff;
+    uart_cb_cfg->wait_tx_done     = of_mdl_master_uart_wait_tx_done;
 
     return ESP_OK;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-esp_err_t of_cc_master_uart_deinit(of_cc_master_uart_ctx_t *uart_ctx)
+esp_err_t of_mdl_master_uart_deinit(of_mdl_master_uart_ctx_t *uart_ctx)
 {
     ESP_RETURN_ON_FALSE(uart_ctx != NULL, ESP_ERR_INVALID_ARG, TAG, "uart_ctx is NULL");
 
@@ -77,7 +77,7 @@ esp_err_t of_cc_master_uart_deinit(of_cc_master_uart_ctx_t *uart_ctx)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-esp_err_t of_cc_master_uart_reconfigure(bool controller_is_col_start, bool controller_is_row_start)
+esp_err_t of_mdl_master_uart_reconfigure(bool controller_is_col_start, bool controller_is_row_start)
 {
     gpio_reset_pin(RX_COL_PIN);
     gpio_set_direction(RX_COL_PIN, GPIO_MODE_INPUT);
@@ -117,41 +117,41 @@ esp_err_t of_cc_master_uart_reconfigure(bool controller_is_col_start, bool contr
 //                                                         PRIVATE FUNCTIONS
 //======================================================================================================================
 
-size_t of_cc_master_uart_read(void *uart_userdata, uint8_t *data, size_t size)
+size_t of_mdl_master_uart_read(void *uart_userdata, uint8_t *data, size_t size)
 {
-    of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
+    of_mdl_master_uart_ctx_t *ctx = (of_mdl_master_uart_ctx_t *)uart_userdata;
     return uart_read_bytes(ctx->uart_num, data, size, ctx->rx_timeout_ticks);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-size_t of_cc_master_uart_write(void *uart_userdata, const uint8_t *data, size_t size)
+size_t of_mdl_master_uart_write(void *uart_userdata, const uint8_t *data, size_t size)
 {
-    of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
+    of_mdl_master_uart_ctx_t *ctx = (of_mdl_master_uart_ctx_t *)uart_userdata;
     return uart_write_bytes(ctx->uart_num, (const char *)data, size);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void of_cc_master_uart_read_timeout_set(void *uart_userdata, uint32_t timeout_ms)
+void of_mdl_master_uart_read_timeout_set(void *uart_userdata, uint32_t timeout_ms)
 {
-    of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
-    ctx->rx_timeout_ticks        = pdMS_TO_TICKS(timeout_ms);
+    of_mdl_master_uart_ctx_t *ctx = (of_mdl_master_uart_ctx_t *)uart_userdata;
+    ctx->rx_timeout_ticks         = pdMS_TO_TICKS(timeout_ms);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void of_cc_master_uart_flush_rx_buff(void *uart_userdata)
+void of_mdl_master_uart_flush_rx_buff(void *uart_userdata)
 {
-    of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
+    of_mdl_master_uart_ctx_t *ctx = (of_mdl_master_uart_ctx_t *)uart_userdata;
     uart_flush_input(ctx->uart_num);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void of_cc_master_uart_wait_tx_done(void *uart_userdata)
+void of_mdl_master_uart_wait_tx_done(void *uart_userdata)
 {
-    of_cc_master_uart_ctx_t *ctx = (of_cc_master_uart_ctx_t *)uart_userdata;
+    of_mdl_master_uart_ctx_t *ctx = (of_mdl_master_uart_ctx_t *)uart_userdata;
     uart_wait_tx_done(ctx->uart_num, portMAX_DELAY);
 }
 

@@ -28,7 +28,6 @@ endif()
 target_compile_definitions(${App} PUBLIC GIT_VERSION="${GIT_VERSION}")
 
 target_compile_definitions(${App} PUBLIC
-    # CHAIN_COMM_DEBUG=1          # Print debug info for chain communication.
     SET_DEFAULT_CONFIG          # provide a default configuration in the binary.
 )
 

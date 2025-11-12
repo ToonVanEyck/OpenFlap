@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chain_comm_master.h"
+#include "madelink_master.h"
 
 #include "driver/uart.h"
 #include "esp_check.h"
@@ -18,7 +18,7 @@
 typedef struct {
     uart_port_t uart_num;        /**< UART port number. */
     TickType_t rx_timeout_ticks; /**< Timeout for UART read operations. */
-} of_cc_master_uart_ctx_t;
+} of_mdl_master_uart_ctx_t;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ typedef struct {
  *
  * @return ESP_OK on success.
  */
-esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_uart_cb_cfg_t *uart_cb_cfg);
+esp_err_t of_mdl_master_uart_init(of_mdl_master_uart_ctx_t *uart_ctx, mdl_master_uart_cb_cfg_t *uart_cb_cfg);
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ esp_err_t of_cc_master_uart_init(of_cc_master_uart_ctx_t *uart_ctx, cc_master_ua
  *
  * @return ESP_OK on success.
  */
-esp_err_t of_cc_master_uart_deinit(of_cc_master_uart_ctx_t *uart_ctx);
+esp_err_t of_mdl_master_uart_deinit(of_mdl_master_uart_ctx_t *uart_ctx);
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -51,4 +51,4 @@ esp_err_t of_cc_master_uart_deinit(of_cc_master_uart_ctx_t *uart_ctx);
  * @param controller_is_col_start True if the controller is mounted on top of a module.
  * @param controller_is_row_start True if the controller is connected to another top-con board.
  */
-esp_err_t of_cc_master_uart_reconfigure(bool controller_is_col_start, bool controller_is_row_start);
+esp_err_t of_mdl_master_uart_reconfigure(bool controller_is_col_start, bool controller_is_row_start);

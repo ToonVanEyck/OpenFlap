@@ -7,11 +7,11 @@
 
 #define TAG "MODULE_PROPERTY"
 
-esp_err_t module_property_indicate_desynchronized(module_t *module, cc_prop_id_t property_id)
+esp_err_t module_property_indicate_desynchronized(module_t *module, mdl_prop_id_t property_id)
 {
     /* Validate inputs. */
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");
-    ESP_RETURN_ON_FALSE(property_id < OF_CC_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+    ESP_RETURN_ON_FALSE(property_id < OF_MDL_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
 
     /* Indicate that the property has been desynchronized. */
     module->sync_prop_write_required |= (1 << property_id);
@@ -21,11 +21,11 @@ esp_err_t module_property_indicate_desynchronized(module_t *module, cc_prop_id_t
 
 //---------------------------------------------------------------------------------------------------------------------
 
-esp_err_t module_property_indicate_synchronized(module_t *module, cc_prop_id_t property_id)
+esp_err_t module_property_indicate_synchronized(module_t *module, mdl_prop_id_t property_id)
 {
     /* Validate inputs. */
     ESP_RETURN_ON_FALSE(module != NULL, ESP_ERR_INVALID_ARG, TAG, "Module is NULL");
-    ESP_RETURN_ON_FALSE(property_id < OF_CC_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
+    ESP_RETURN_ON_FALSE(property_id < OF_MDL_PROP_CNT, ESP_ERR_INVALID_ARG, TAG, "Invalid property id");
 
     /* Indicate that the property has been synchronized. */
     module->sync_prop_write_required &= ~(1 << property_id);
@@ -35,7 +35,7 @@ esp_err_t module_property_indicate_synchronized(module_t *module, cc_prop_id_t p
 
 //---------------------------------------------------------------------------------------------------------------------
 
-bool module_property_is_desynchronized(module_t *module, cc_prop_id_t property_id)
+bool module_property_is_desynchronized(module_t *module, mdl_prop_id_t property_id)
 {
     /* Validate inputs. */
     if (module == NULL) {
@@ -43,7 +43,7 @@ bool module_property_is_desynchronized(module_t *module, cc_prop_id_t property_i
         return false;
     }
 
-    if (property_id >= OF_CC_PROP_CNT) {
+    if (property_id >= OF_MDL_PROP_CNT) {
         ESP_LOGE(TAG, "Invalid property id");
         return false;
     }

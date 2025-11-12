@@ -1,0 +1,1 @@
+add_subdirectory(../../../common/madelink/ ${CMAKE_BINARY_DIR}/module/madelink)

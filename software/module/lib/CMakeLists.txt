@@ -10,7 +10,7 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ARM")
     add_subdirectory(flash)
     add_subdirectory(uart_driver)
     add_subdirectory(pid)
-    add_subdirectory(chain_comm)
+    add_subdirectory(madelink)
     add_subdirectory(puya_libs)
 
     target_link_libraries(openflap INTERFACE
@@ -22,7 +22,7 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ARM")
         uart_driver
         pid
         puya_ll
-        chain_comm_node
+        madelink_node
     )
 endif()
 

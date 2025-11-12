@@ -1267,71 +1267,71 @@ bool ir_threshold_compare(const void *userdata_a, const void *userdata_b)
 
 void of_property_handlers_init(void)
 {
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.set     = firmware_version_from_bin;
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.get     = NULL; /* Not implemented : Read Only */
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.get_alt = firmware_version_to_json;
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.set_alt = NULL; /* Not implemented : Read Only */
-    cc_prop_list[OF_CC_PROP_FIRMWARE_VERSION].handler.compare = firmware_version_compare;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.set     = firmware_version_from_bin;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.get     = NULL; /* Not implemented : Read Only */
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.get_alt = firmware_version_to_json;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.set_alt = NULL; /* Not implemented : Read Only */
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_VERSION].handler.compare = firmware_version_compare;
 
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.set     = NULL; /* Not implemented : Write Only */
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.get     = firmware_update_to_bin;
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.get_alt = NULL; /* Not implemented : Write Only */
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.set_alt = NULL; /* Special File Based write elsewhere. */
-    cc_prop_list[OF_CC_PROP_FIRMWARE_UPDATE].handler.compare = firmware_update_compare;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.set     = NULL; /* Not implemented : Write Only */
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.get     = firmware_update_to_bin;
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.get_alt = NULL; /* Not implemented : Write Only */
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.set_alt = NULL; /* Special File Based write elsewhere. */
+    mdl_prop_list[OF_MDL_PROP_FIRMWARE_UPDATE].handler.compare = firmware_update_compare;
 
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.set     = NULL; /* Not implemented : Write Only */
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.get     = command_to_bin;
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.get_alt = NULL; /* Not implemented : Write Only */
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.set_alt = command_from_json;
-    cc_prop_list[OF_CC_PROP_COMMAND].handler.compare = command_compare;
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.set     = NULL; /* Not implemented : Write Only */
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.get     = command_to_bin;
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.get_alt = NULL; /* Not implemented : Write Only */
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.set_alt = command_from_json;
+    mdl_prop_list[OF_MDL_PROP_COMMAND].handler.compare = command_compare;
 
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.set     = module_info_from_bin;
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.get     = NULL; /* Not implemented : Read Only */
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.get_alt = module_info_to_json;
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.set_alt = NULL; /* Not implemented : Read Only */
-    cc_prop_list[OF_CC_PROP_MODULE_INFO].handler.compare = NULL; /* Not implemented : Read Only */
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.set     = module_info_from_bin;
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.get     = NULL; /* Not implemented : Read Only */
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.get_alt = module_info_to_json;
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.set_alt = NULL; /* Not implemented : Read Only */
+    mdl_prop_list[OF_MDL_PROP_MODULE_INFO].handler.compare = NULL; /* Not implemented : Read Only */
 
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.set     = character_set_from_bin;
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.get     = character_set_to_bin;
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.get_alt = character_set_to_json;
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.set_alt = character_set_from_json;
-    cc_prop_list[OF_CC_PROP_CHARACTER_SET].handler.compare = character_set_compare;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.set     = character_set_from_bin;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.get     = character_set_to_bin;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.get_alt = character_set_to_json;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.set_alt = character_set_from_json;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER_SET].handler.compare = character_set_compare;
 
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.set     = character_from_bin;
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.get     = character_to_bin;
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.get_alt = character_to_json;
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.set_alt = character_from_json;
-    cc_prop_list[OF_CC_PROP_CHARACTER].handler.compare = character_compare;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.set     = character_from_bin;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.get     = character_to_bin;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.get_alt = character_to_json;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.set_alt = character_from_json;
+    mdl_prop_list[OF_MDL_PROP_CHARACTER].handler.compare = character_compare;
 
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.set     = offset_from_bin;
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.get     = offset_to_bin;
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.get_alt = offset_to_json;
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.set_alt = offset_from_json;
-    cc_prop_list[OF_CC_PROP_OFFSET].handler.compare = offset_compare;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.set     = offset_from_bin;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.get     = offset_to_bin;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.get_alt = offset_to_json;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.set_alt = offset_from_json;
+    mdl_prop_list[OF_MDL_PROP_OFFSET].handler.compare = offset_compare;
 
-    cc_prop_list[OF_CC_PROP_COLOR].handler.set     = color_from_bin;
-    cc_prop_list[OF_CC_PROP_COLOR].handler.get     = color_to_bin;
-    cc_prop_list[OF_CC_PROP_COLOR].handler.get_alt = color_to_json;
-    cc_prop_list[OF_CC_PROP_COLOR].handler.set_alt = color_from_json;
-    cc_prop_list[OF_CC_PROP_COLOR].handler.compare = color_compare;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.set     = color_from_bin;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.get     = color_to_bin;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.get_alt = color_to_json;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.set_alt = color_from_json;
+    mdl_prop_list[OF_MDL_PROP_COLOR].handler.compare = color_compare;
 
-    cc_prop_list[OF_CC_PROP_MOTION].handler.set     = motion_from_bin;
-    cc_prop_list[OF_CC_PROP_MOTION].handler.get     = motion_to_bin;
-    cc_prop_list[OF_CC_PROP_MOTION].handler.get_alt = motion_to_json;
-    cc_prop_list[OF_CC_PROP_MOTION].handler.set_alt = motion_from_json;
-    cc_prop_list[OF_CC_PROP_MOTION].handler.compare = motion_compare;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.set     = motion_from_bin;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.get     = motion_to_bin;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.get_alt = motion_to_json;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.set_alt = motion_from_json;
+    mdl_prop_list[OF_MDL_PROP_MOTION].handler.compare = motion_compare;
 
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.set     = min_rotation_from_bin;
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.get     = min_rotation_to_bin;
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.get_alt = min_rotation_to_json;
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.set_alt = min_rotation_from_json;
-    cc_prop_list[OF_CC_PROP_MINIMUM_ROTATION].handler.compare = min_rotation_compare;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.set     = min_rotation_from_bin;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.get     = min_rotation_to_bin;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.get_alt = min_rotation_to_json;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.set_alt = min_rotation_from_json;
+    mdl_prop_list[OF_MDL_PROP_MINIMUM_ROTATION].handler.compare = min_rotation_compare;
 
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.set     = ir_threshold_from_bin;
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.get     = ir_threshold_to_bin;
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.get_alt = ir_threshold_to_json;
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.set_alt = ir_threshold_from_json;
-    cc_prop_list[OF_CC_PROP_IR_THRESHOLD].handler.compare = ir_threshold_compare;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.set     = ir_threshold_from_bin;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.get     = ir_threshold_to_bin;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.get_alt = ir_threshold_to_json;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.set_alt = ir_threshold_from_json;
+    mdl_prop_list[OF_MDL_PROP_IR_THRESHOLD].handler.compare = ir_threshold_compare;
 }
 //======================================================================================================================
 //                                                         PRIVATE FUNCTIONS

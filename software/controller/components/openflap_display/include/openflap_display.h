@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "esp_log.h"
-#include "openflap_cc_master.h"
+#include "openflap_mdl_master.h"
 #include "openflap_module.h"
 
 #include <freertos/FreeRTOS.h>
@@ -15,7 +15,7 @@
  * \brief Display structure.
  */
 typedef struct {
-    of_cc_master_ctx_t cc_master; /**< Openflap Chain communication master context. */
+    of_mdl_master_ctx_t mdl_master; /**< Openflap Chain communication master context. */
 
     module_t **modules;    /**< Array of modules. */
     uint16_t module_count; /**< Number of modules. */
@@ -95,7 +95,7 @@ module_t *display_module_get(of_display_t *display, uint16_t module_index);
  * \retval ESP_OK The property has been indicated as desynchronized.
  * \retval ESP_ERR_INVALID_ARG The display is NULL or the property id is invalid.
  */
-esp_err_t display_property_indicate_desynchronized(of_display_t *display, cc_prop_id_t property_id,
+esp_err_t display_property_indicate_desynchronized(of_display_t *display, mdl_prop_id_t property_id,
                                                    property_sync_method_t sync_method);
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ esp_err_t display_property_indicate_desynchronized(of_display_t *display, cc_pro
  * \retval ESP_OK The property has been indicated as synchronized.
  * \retval ESP_ERR_INVALID_ARG The display is NULL or the property id is invalid.
  */
-esp_err_t display_property_indicate_synchronized(of_display_t *display, cc_prop_id_t property_id);
+esp_err_t display_property_indicate_synchronized(of_display_t *display, mdl_prop_id_t property_id);
 
 //---------------------------------------------------------------------------------------------------------------------
 

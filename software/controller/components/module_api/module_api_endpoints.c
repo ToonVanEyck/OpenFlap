@@ -18,8 +18,8 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
     esp_err_t err         = ESP_OK;
 
     /* Desynchronize all properties which can be read through json. to force them to be read. */
-    for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
-        if (cc_prop_list[prop_id].handler.get_alt != NULL) {
+    for (mdl_prop_id_t prop_id = 0; prop_id < OF_MDL_PROP_CNT; prop_id++) {
+        if (mdl_prop_list[prop_id].handler.get_alt != NULL) {
             display_property_indicate_desynchronized(display, prop_id, PROPERTY_SYNC_METHOD_READ);
         }
     }
@@ -42,19 +42,19 @@ esp_err_t module_api_get_handler(httpd_req_t *req)
         cJSON_AddNumberToObject(module_json, MODULE_INDEX_KEY_STR, i);
 
         /* Get all properties from a module. */
-        for (cc_prop_id_t prop_id = 0; prop_id < OF_CC_PROP_CNT; prop_id++) {
+        for (mdl_prop_id_t prop_id = 0; prop_id < OF_MDL_PROP_CNT; prop_id++) {
             /* Get the property handler. */
-            const char *property_name = cc_prop_list[prop_id].attribute.name;
+            const char *property_name = mdl_prop_list[prop_id].attribute.name;
 
             /* Check if the property can be converted to a JSON. */
-            if (cc_prop_list[prop_id].handler.get_alt == NULL) {
+            if (mdl_prop_list[prop_id].handler.get_alt == NULL) {
                 /* Property is not supported for reading. */
                 continue;
             }
 
             /* Call the property handler. */
             cJSON *property_json = cJSON_CreateObject();
-            if (!cc_prop_list[prop_id].handler.get_alt(module, i, &property_json)) {
+            if (!mdl_prop_list[prop_id].handler.get_alt(module, i, &property_json)) {
                 ESP_LOGE(TAG, "Property \"%s\" is invalid.", property_name);
                 continue;
             }
@@ -152,20 +152,20 @@ esp_err_t module_api_post_handler(httpd_req_t *req)
             }
 
             /* Get the property handler. */
-            cc_prop_id_t prop_id = of_cc_prop_id_by_name(property_json->string);
+            mdl_prop_id_t prop_id = of_mdl_prop_id_by_name(property_json->string);
             if (prop_id == -1) {
                 ESP_LOGE(TAG, "Property \"%s\" not supported by controller.", property_json->string);
                 continue;
             }
 
             /* Check if the property is writable. */
-            if (cc_prop_list[prop_id].handler.set_alt == NULL) {
+            if (mdl_prop_list[prop_id].handler.set_alt == NULL) {
                 ESP_LOGE(TAG, "Property \"%s\" is not writable.", property_json->string);
                 continue;
             }
 
             /* Call the property handler. */
-            if (!cc_prop_list[prop_id].handler.set_alt(module, module_index_json->valueint, property_json)) {
+            if (!mdl_prop_list[prop_id].handler.set_alt(module, module_index_json->valueint, property_json)) {
                 ESP_LOGE(TAG, "Property \"%s\" is invalid.", property_json->string);
                 continue;
             }

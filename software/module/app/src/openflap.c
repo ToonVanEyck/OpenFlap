@@ -129,7 +129,7 @@ void motor_state_update(of_ctx_t *ctx)
 
 void comms_state_update(of_ctx_t *ctx)
 {
-    if (cc_node_is_busy(&ctx->cc_node_ctx)) {
+    if (mdl_node_is_busy(&ctx->mdl_node_ctx)) {
         ctx->comms_active_timeout_tick = of_hal_tick_count_get() + COMMS_IDLE_TIMEOUT_MS;
         if (!ctx->comms_active) {
             ctx->comms_active = true;

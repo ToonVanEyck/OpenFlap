@@ -7,7 +7,7 @@
 	(title_block
 		(title "Top Connector")
 		(date "${DATE}")
-		(rev "3.0.0")
+		(rev "3.0.1")
 		(company "OpenFlap")
 		(comment 1 "${GIT_TAG}")
 		(comment 2 "Repo: github.com/ToonVanEyck/OpenFlap")
@@ -255,6 +255,108 @@
 						)
 					)
 					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "Connector:TestPoint"
+			(pin_numbers hide)
+			(pin_names
+				(offset 0.762) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 5.08 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3598,6 +3700,16 @@
 	)
 	(wire
 		(pts
+			(xy 135.89 193.04) (xy 135.89 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1705c5bd-3ed0-4c43-b7b0-ee13c5efe944")
+	)
+	(wire
+		(pts
 			(xy 40.64 35.56) (xy 39.37 35.56)
 		)
 		(stroke
@@ -3685,6 +3797,16 @@
 			(type default)
 		)
 		(uuid "2491ae8a-a66c-4447-9c54-489499185596")
+	)
+	(wire
+		(pts
+			(xy 139.7 194.31) (xy 139.7 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "26709d17-5304-4598-906c-207fcb775687")
 	)
 	(wire
 		(pts
@@ -4478,6 +4600,16 @@
 	)
 	(wire
 		(pts
+			(xy 139.7 195.58) (xy 135.89 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b310720d-4fa0-40df-a8d3-e81c0588093c")
+	)
+	(wire
+		(pts
 			(xy 90.17 200.66) (xy 90.17 207.01)
 		)
 		(stroke
@@ -4495,16 +4627,6 @@
 			(type default)
 		)
 		(uuid "b56bdd91-3315-4554-84dd-401365898d47")
-	)
-	(wire
-		(pts
-			(xy 135.89 193.04) (xy 135.89 195.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b8d265e6-b657-4812-b711-cceb255477d0")
 	)
 	(wire
 		(pts
@@ -6015,84 +6137,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C_Polarized_Small")
-		(at 76.2 200.66 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "48b8c1fe-8078-4f64-8067-b2d387764480")
-		(property "Reference" "C4"
-			(at 69.85 199.39 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "22uF"
-			(at 69.85 201.422 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:CP_Elec_5x5.4"
-			(at 76.2 200.66 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 76.2 200.66 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Polarized capacitor, small symbol"
-			(at 76.2 200.66 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "LCSC" "C280399"
-			(at 76.2 200.66 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "ec599ab5-21eb-41d0-a24f-54fb5fe56ecd")
-		)
-		(pin "2"
-			(uuid "e155371f-e17e-47d9-8b9f-eab6d4bfaab8")
-		)
-		(instances
-			(project ""
-				(path "/af031611-7aa5-43e1-8885-232b80813f15"
-					(reference "C4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C_Small")
 		(at 87.63 200.66 0)
 		(unit 1)
@@ -6234,6 +6278,84 @@
 			(project ""
 				(path "/af031611-7aa5-43e1-8885-232b80813f15"
 					(reference "L1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Polarized_Small")
+		(at 76.2 200.66 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "4eb74ea0-d7cc-4622-800b-cd980991b1a0")
+		(property "Reference" "C4"
+			(at 69.85 199.39 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "220uF"
+			(at 68.834 201.422 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:CP_Elec_6.3x7.7"
+			(at 76.2 200.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 76.2 200.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Polarized capacitor, small symbol"
+			(at 76.2 200.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C280399"
+			(at 76.2 200.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "3322e784-b089-40aa-8cc6-5f6f4214a46c")
+		)
+		(pin "2"
+			(uuid "58418bda-30ae-4177-925f-9a84fa5b27ae")
+		)
+		(instances
+			(project "top_connector"
+				(path "/af031611-7aa5-43e1-8885-232b80813f15"
+					(reference "C4")
 					(unit 1)
 				)
 			)
@@ -6436,6 +6558,74 @@
 			(project "Top Connector"
 				(path "/af031611-7aa5-43e1-8885-232b80813f15"
 					(reference "#FLG04")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 139.7 194.31 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "61b1dea8-e4e3-44f0-ae1c-4ca00865f0ab")
+		(property "Reference" "TP1"
+			(at 144.272 191.008 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 138.43 189.23 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 134.62 194.31 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 134.62 194.31 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 139.7 194.31 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "234dee47-9567-4223-8341-108806ba6fb5")
+		)
+		(instances
+			(project "top_connector"
+				(path "/af031611-7aa5-43e1-8885-232b80813f15"
+					(reference "TP1")
 					(unit 1)
 				)
 			)

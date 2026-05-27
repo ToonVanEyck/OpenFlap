@@ -7991,7 +7991,7 @@
 		)
 		(uuid "c050d54d-37fc-47bf-81ac-063b3b283a3a")
 	)
-	(text "12V to 5V 2A Buck convertor.\n5V to 3.3V 250mA LDO."
+	(text "12V to 5V 2A Buck convertor.\n5V to 3.3V 600mA LDO."
 		(exclude_from_sim no)
 		(at 86.36 193.294 0)
 		(effects

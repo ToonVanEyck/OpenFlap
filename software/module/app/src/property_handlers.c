@@ -94,7 +94,7 @@ bool property_offset_set(void *userdata, uint16_t node_idx, uint8_t *buf, size_t
         return false;
     }
 
-    int16_t offset_delta             = (int16_t)of_ctx->of_config.encoder_offset - (int16_t)buf[0];
+    int16_t offset_delta             = (int16_t)buf[0] - (int16_t)of_ctx->of_config.encoder_offset;
     of_ctx->of_config.encoder_offset = buf[0];
     of_ctx->flap_position            = flapIndex_wrap_calc((int16_t)(of_ctx->flap_position) + offset_delta);
     distance_update(of_ctx);

@@ -188,10 +188,10 @@ static esp_err_t networking_wifi_setup(const networking_config_t *config)
                 },
         };
         if (config->wifi.station.ssid) {
-            strcpy((char *)wifi_config.sta.ssid, config->wifi.station.ssid);
+            snprintf((char *)wifi_config.sta.ssid, sizeof(wifi_config.sta.ssid), "%s", config->wifi.station.ssid);
         }
         if (config->wifi.station.password) {
-            strcpy((char *)wifi_config.sta.password, config->wifi.station.password);
+            snprintf((char *)wifi_config.sta.password, sizeof(wifi_config.sta.password), "%s", config->wifi.station.password);
         }
         ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_STA, &wifi_config), TAG, "Failed to set wifi station config.");
     }
@@ -211,10 +211,10 @@ static esp_err_t networking_wifi_setup(const networking_config_t *config)
                 },
         };
         if (config->wifi.access_point.ssid) {
-            strcpy((char *)wifi_config.sta.ssid, config->wifi.access_point.ssid);
+            snprintf((char *)wifi_config.ap.ssid, sizeof(wifi_config.ap.ssid), "%s", config->wifi.access_point.ssid);
         }
         if (config->wifi.access_point.password) {
-            strcpy((char *)wifi_config.ap.password, config->wifi.access_point.password);
+            snprintf((char *)wifi_config.ap.password, sizeof(wifi_config.ap.password), "%s", config->wifi.access_point.password);
         }
         ESP_RETURN_ON_ERROR(esp_wifi_set_config(WIFI_IF_AP, &wifi_config), TAG,
                             "Failed to set wifi access point config.");
